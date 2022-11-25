@@ -1,3 +1,3 @@
-import "./random.js";
+import "./utils.js";
 import "./cook.js";
 import "./djsAddition.js";
