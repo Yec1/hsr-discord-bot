@@ -9,7 +9,7 @@ export default {
 	 * @param {Message} message
 	 * @param {String[]} args
 	 */
-	run: async (client, message, args) => {
+	execute: async (client, message, args) => {
 		message.channel.send(`${client.ws.ping} ws ping`);
 	}
 };

@@ -19,6 +19,7 @@
 		"discord bot"
 	],
 	"dependencies": {
+		"discord-banner": "^1.6.7",
 		"discord.js": "^14.6.0",
 		"dotenv": "^10.0.0",
 		"fast-glob": "^3.2.12",

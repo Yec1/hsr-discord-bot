@@ -1,6 +1,5 @@
 import "dotenv/config";
 import "./services/index.js";
-
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 const client = new Client({
 	intents: [

@@ -1,7 +1,13 @@
 import { client } from "../index.js";
 import { ApplicationCommandOptionType, range } from "discord.js";
+import { UserProfile, GuildProfile } from "../core/Profile.js";
 
 client.on("interactionCreate", async interaction => {
+	const p = await UserProfile(interaction);
+	await p.checkAndUpdate();
+
+	const g = await GuildProfile(interaction);
+	await g.checkAndUpdate();
 	if (interaction.isCommand()) {
 		await interaction.deferReply({ ephemeral: false }).catch(() => {});
 

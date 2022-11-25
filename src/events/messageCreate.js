@@ -1,4 +1,5 @@
 import { client } from "../index.js";
+import { UserProfile, GuildProfile } from "../core/Profile.js";
 
 client.on("messageCreate", async message => {
 	if (
@@ -7,6 +8,12 @@ client.on("messageCreate", async message => {
 		!message.content.toLowerCase().startsWith(client.config.prefix)
 	)
 		return;
+
+	const p = await UserProfile(message);
+	await p.checkAndUpdate();
+
+	const g = await GuildProfile(message);
+	await g.checkAndUpdate();
 
 	const [cmd, ...args] = message.content
 		.slice(client.config.prefix.length)
@@ -18,5 +25,5 @@ client.on("messageCreate", async message => {
 		client.commands.message.find(c => c.alias?.includes(cmd.toLowerCase()));
 
 	if (!command) return;
-	await command.run(client, message, args);
+	await command.execute(client, message, args);
 });
