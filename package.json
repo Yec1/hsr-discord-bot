@@ -22,7 +22,6 @@
 		"discord.js": "^14.6.0",
 		"dotenv": "^10.0.0",
 		"fast-glob": "^3.2.12",
-		"module-alias": "^2.2.2",
 		"quickmongo": "^5.2.0"
 	},
 	"devDependencies": {
@@ -34,9 +33,5 @@
 	},
 	"overrides": {
 		"discord-api-types": "0.37.14"
-	},
-	"_moduleAliases": {
-		"~/": "./src/",
-		"@services": "./src/services"
 	}
 }
