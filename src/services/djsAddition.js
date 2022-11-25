@@ -1,7 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 import { client } from "../index.js";
 
-const text = ["你好", "讓Discord更方便"];
+const text = ["Hello World!", "讓Discord更方便"];
 
 Object.defineProperties(EmbedBuilder.prototype, {
 	setConfig: {
