@@ -26,6 +26,12 @@ export default {
 			subcommand
 				.setName("avatar")
 				.setDescription("Get users avatar")
+				.setNameLocalizations({
+					"zh-TW": "頭貼"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "獲得用戶的頭貼"
+				})
 				.addUserOption(option =>
 					option
 						.setName("user")
@@ -43,6 +49,12 @@ export default {
 			subcommand
 				.setName("banner")
 				.setDescription("Get a user's banner or their accent color.")
+				.setNameLocalizations({
+					"zh-TW": "橫幅"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "獲得用戶的橫幅或橫幅顏色"
+				})
 				.addUserOption(option =>
 					option
 						.setName("user")
