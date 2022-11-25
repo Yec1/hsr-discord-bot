@@ -5,9 +5,9 @@
 	"main": "src/index.js",
 	"scripts": {
 		"start": "node --experimental-specifier-resolution=node .",
-		"lint": "eslint src --ext .js",
-		"lint:fix": "eslint src --ext .js --fix",
-		"format": "prettier --write src/**/*.{js,json,yaml,yml}",
+		"lint": "eslint src/**/* --ext .js",
+		"lint:fix": "eslint src/**/* --ext .js --fix",
+		"fmt": "prettier --write src/**/*.{js,json,yaml,yml}",
 		"test": "jest"
 	},
 	"repository": {
