@@ -1,0 +1,42 @@
+{
+	"name": "ice",
+	"version": "0.0.0",
+	"description": "Discord bot.",
+	"main": "src/index.js",
+	"scripts": {
+		"start": "node --experimental-specifier-resolution=node .",
+		"lint": "eslint src --ext .js",
+		"lint:fix": "eslint src --ext .js --fix",
+		"format": "prettier --write src/**/*.{js,json,yaml,yml}",
+		"test": "jest"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yeci226/iCE.git"
+	},
+	"type": "module",
+	"keywords": [
+		"discord bot"
+	],
+	"dependencies": {
+		"discord.js": "^14.6.0",
+		"dotenv": "^10.0.0",
+		"fast-glob": "^3.2.12",
+		"module-alias": "^2.2.2",
+		"quickmongo": "^5.2.0"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.16.0",
+		"@babel/preset-env": "^7.16.4",
+		"eslint": "^8.28.0",
+		"jest": "^27.3.1",
+		"prettier": "^2.4.1"
+	},
+	"overrides": {
+		"discord-api-types": "0.37.14"
+	},
+	"_moduleAliases": {
+		"~/": "./src/",
+		"@services": "./src/services"
+	}
+}

@@ -1,0 +1,18 @@
+# pkg
+node_modules
+
+# installers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+runner.log
+yarn-error.log
+
+.VSCodeCounter/
+
+# env
+config.json
+config.js
+.env
+*.tmp
