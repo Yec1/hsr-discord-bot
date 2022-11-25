@@ -1,5 +1,3 @@
-import "./src/core/loader.js";
-
 // import _glob from "glob";
 // import { promisify } from "util";
 
