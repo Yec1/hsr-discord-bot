@@ -45,6 +45,7 @@ export default {
             components: [
                 new ActionRowBuilder().addComponents(
                     new ButtonBuilder()
+                    .setLabel('完整圖片')
                     .setEmoji('🖼️')
                     .setURL(member.user.displayAvatarURL({ size: 4096, dynamic: true }))
                     .setStyle(5)
