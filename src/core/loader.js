@@ -63,7 +63,7 @@ export class Loader {
 			slashArr.push(file.data);
 		}
 		console.log(
-			`loaded ${events.length} events, ${slashArr.length} slashs, ${msgArr.length} message commands`
+			`Loaded ${events.length} events, ${slashArr.length} slashs, ${msgArr.length} message commands`
 		);
 		this.client.on("ready", async () => {
 			await this.client.guilds.cache
