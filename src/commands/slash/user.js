@@ -17,10 +17,12 @@ export default {
 		.setName("user")
 		.setDescription("Get info of a selected user")
 		.setNameLocalizations({
-			"zh-TW": "用戶信息"
+			"zh-TW": "用戶信息",
+			"ja": "ユーザー情報"
 		})
 		.setDescriptionLocalizations({
-			"zh-TW": "獲得用戶的信息"
+			"zh-TW": "獲得用戶的信息",
+			"ja": "ユーザーの情報を取得する"
 		})
 		.addSubcommand(subcommand =>
 			subcommand
