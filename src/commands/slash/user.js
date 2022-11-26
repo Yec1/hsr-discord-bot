@@ -22,7 +22,7 @@ export default {
 		})
 		.setDescriptionLocalizations({
 			"zh-TW": "獲得用戶的信息",
-			"ja": "ユーザーの情報を取得する"
+			"ja": "ユーザーの情報を取得"
 		})
 		.addSubcommand(subcommand =>
 			subcommand
