@@ -4,6 +4,8 @@ import {
 	EmbedBuilder
 } from "discord.js";
 
+import { translate } from "../../services/translate.js"
+
 export default {
 	data: new SlashCommandBuilder()
 		.setName("ping")
@@ -26,7 +28,7 @@ export default {
 				new EmbedBuilder()
 					.setConfig()
 					.setDescription(
-						`\`\`\`ini\n[ Latency ] :: ${
+						`\`\`\`ini\n[ ` + translate("Latency") + ` ] :: ${
 							Date.now() - interaction.createdTimestamp
 						}ms\`\`\``
 					)
