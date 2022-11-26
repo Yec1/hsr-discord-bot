@@ -1,6 +1,11 @@
 import { client } from "../index.js";
-import { ApplicationCommandOptionType, range } from "discord.js";
+import {
+	CommandInteraction,
+	ApplicationCommandOptionType,
+	range
+} from "discord.js";
 import { UserProfile, GuildProfile } from "../core/Profile.js";
+import { i18nMixin, tl3 } from "../services/i18n.js";
 
 client.on("interactionCreate", async interaction => {
 	const p = await UserProfile(interaction);
@@ -8,6 +13,8 @@ client.on("interactionCreate", async interaction => {
 
 	const g = await GuildProfile(interaction);
 	await g.checkAndUpdate();
+
+	const i18n = i18nMixin(g.lang || tl3(interaction.locale) || "en");
 	if (interaction.isCommand()) {
 		await interaction.deferReply({ ephemeral: false }).catch(() => {});
 
@@ -33,7 +40,7 @@ client.on("interactionCreate", async interaction => {
 		);
 
 		try {
-			command.execute(client, interaction, args);
+			command.execute(client, interaction, args, i18n);
 		} catch (e) {
 			interaction.editReply({
 				content: "哦喲，好像出了一點小問題，請重試",

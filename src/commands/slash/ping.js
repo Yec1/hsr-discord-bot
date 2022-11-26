@@ -4,8 +4,6 @@ import {
 	EmbedBuilder
 } from "discord.js";
 
-import { translate } from "../../services/translate.js"
-
 export default {
 	data: new SlashCommandBuilder()
 		.setName("ping")
@@ -22,15 +20,17 @@ export default {
 	 * @param {CommandInteraction} interaction
 	 * @param {String[]} args
 	 */
-	async execute(client, interaction) {
+	async execute(client, interaction, args, tr) {
 		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
 					.setDescription(
-						`\`\`\`ini\n[ ` + translate("Latency") + ` ] :: ${
-							Date.now() - interaction.createdTimestamp
-						}ms\`\`\``
+						"```ini\n[ " +
+							tr("latency") +
+							` ] :: ${
+								Date.now() - interaction.createdTimestamp
+							}ms\`\`\``
 					)
 			]
 		});
