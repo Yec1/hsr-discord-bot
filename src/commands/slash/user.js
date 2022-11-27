@@ -99,7 +99,7 @@ export default {
 	 * @param {CommandInteraction} interaction
 	 * @param {String[]} args
 	 */
-	async execute(client, interaction, args) {
+	async execute(client, interaction, args, tr) {
 		const member = interaction.guild.members.cache.get(args[1]);
 		if (args[0] == "avatar") {
 			await interaction.editReply({
@@ -116,7 +116,7 @@ export default {
 				components: [
 					new ActionRowBuilder().addComponents(
 						new ButtonBuilder()
-							.setLabel("完整圖片")
+							.setLabel(tr("user_Full_Image")) //完整圖片
 							.setEmoji("🖼️")
 							.setURL(
 								member.user.displayAvatarURL({
@@ -150,7 +150,7 @@ export default {
 				components: [
 					new ActionRowBuilder().addComponents(
 						new ButtonBuilder()
-							.setLabel("完整圖片")
+							.setLabel(tr("user_Full_Image")) //完整圖片
 							.setEmoji("🖼️")
 							.setURL(banner)
 							.setStyle(5)
@@ -158,8 +158,12 @@ export default {
 				]
 			});
 		} else {
-			await interaction.editReply({
-				content: "功能未開放。"
+			await interaction.editReply({ 
+				embeds: [
+					new EmbedBuilder()
+					.setConfig()
+					.setDescription(tr("Cmd_ComingSoon"))
+				]
 			});
 		}
 	}
