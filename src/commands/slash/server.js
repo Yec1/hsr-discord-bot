@@ -13,21 +13,23 @@ export default {
 		.setDescription("Get info of server")
 		.setNameLocalizations({
 			"zh-TW": "伺服器信息",
-			ja: "undefined"
+			ja: "サーバー"
 		})
 		.setDescriptionLocalizations({
 			"zh-TW": "獲得伺服器的信息",
-			ja: "undefined"
+			ja: "サーバー情報を返事する"
 		})
 		.addSubcommand(subcommand =>
 			subcommand
 				.setName("info")
 				.setDescription("Get servers info")
 				.setNameLocalizations({
-					"zh-TW": "資訊"
+					"zh-TW": "資訊",
+					ja: "情報"
 				})
 				.setDescriptionLocalizations({
-					"zh-TW": "獲得伺服器資訊"
+					"zh-TW": "獲得伺服器資訊",
+					ja: "サーバー情報を返事する"
 				})
 		)
 		.addSubcommand(subcommand =>
@@ -35,10 +37,12 @@ export default {
 				.setName("settings")
 				.setDescription("Change bot in servers settings")
 				.setNameLocalizations({
-					"zh-TW": "設定"
+					"zh-TW": "設定",
+					ja: "設定"
 				})
 				.setDescriptionLocalizations({
-					"zh-TW": "更改機器人在伺服器的設定"
+					"zh-TW": "更改機器人在伺服器的設定",
+					ja: "ボットを設定する"
 				})
 		),
 	/**
