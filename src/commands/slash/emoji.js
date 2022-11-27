@@ -12,11 +12,11 @@ export default {
 		.setDescription("Show large emoji")
 		.setNameLocalizations({
 			"zh-TW": "放大表符",
-			ja: "undefined"
+			ja: "絵文字"
 		})
 		.setDescriptionLocalizations({
 			"zh-TW": "查看放大的表情符號",
-			ja: "undefined"
+			ja: "絵文字を引き伸ばす"
 		})
 		.addStringOption(string =>
 			string
@@ -24,11 +24,11 @@ export default {
 				.setDescription("Put emojis here")
 				.setNameLocalizations({
 					"zh-TW": "表情符號",
-					ja: "undefined"
+					ja: "エモジ"
 				})
 				.setDescriptionLocalizations({
 					"zh-TW": "在這放入表情符號",
-					ja: "undefined"
+					ja: "ここに絵文字を入力する"
 				})
 				.setRequired(true)
 		),
