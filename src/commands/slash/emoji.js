@@ -4,8 +4,7 @@ import {
 	SlashCommandBuilder,
 	EmbedBuilder
 } from "discord.js";
-
-import { parse } from "twemoji-parser";
+import { emojiParser } from "../../services/parser.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -22,7 +21,7 @@ export default {
 		.addStringOption(string =>
 			string
 				.setName("emoji")
-				.setDescription("Put emoji here")
+				.setDescription("Put emojis here")
 				.setNameLocalizations({
 					"zh-TW": "表情符號",
 					ja: "undefined"
@@ -40,18 +39,16 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr) {
-		const emoji = interaction.options.getString("emoji");
-		let customemoji = parseEmoji(emoji);
-		if (customemoji.id) {
-			const Link = `https://cdn.discordapp.com/emojis/${customemoji.id}.${
-				customemoji.animated ? "gif" : "png"
-			}?size=4096`;
+		let [emoji] = emojiParser(args[0]);
+		if (emoji) {
 			await interaction.editReply({
-				embeds: [new EmbedBuilder().setConfig().setImage(Link)]
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
+						.setImage(emoji.url + "?size=4096")
+				]
 			});
-		}
-		let CheckEmoji = parse(emoji, { assetType: "png" });
-		if (!CheckEmoji[0]) {
+		} else {
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -62,11 +59,5 @@ export default {
 			});
 			return;
 		}
-		await interaction.editReply({
-			embeds: [
-				new EmbedBuilder().setConfig().setDescription(tr("emojiPublic")) //你可以在不加入伺服器的情況下使用此表情符號
-			],
-			ephemeral: true
-		});
 	}
 };
