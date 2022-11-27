@@ -1,11 +1,11 @@
 import {
-  parseEmoji,
+	parseEmoji,
 	CommandInteraction,
 	SlashCommandBuilder,
 	EmbedBuilder
 } from "discord.js";
 
-import { parse } from 'twemoji-parser'
+import { parse } from "twemoji-parser";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -13,23 +13,23 @@ export default {
 		.setDescription("Show large emoji")
 		.setNameLocalizations({
 			"zh-TW": "放大表符",
-			"ja": 'undefined'
+			ja: "undefined"
 		})
 		.setDescriptionLocalizations({
 			"zh-TW": "查看放大的表情符號",
-			"ja": 'undefined'
+			ja: "undefined"
 		})
 		.addStringOption(string =>
 			string
-				.setName('emoji')
-				.setDescription('Put emoji here')
+				.setName("emoji")
+				.setDescription("Put emoji here")
 				.setNameLocalizations({
 					"zh-TW": "表情符號",
-					"ja": 'undefined'
+					ja: "undefined"
 				})
 				.setDescriptionLocalizations({
 					"zh-TW": "在這放入表情符號",
-					"ja": 'undefined'
+					ja: "undefined"
 				})
 				.setRequired(true)
 		),
@@ -40,35 +40,33 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr) {
-		const emoji = interaction.options.getString('emoji')
+		const emoji = interaction.options.getString("emoji");
 		let customemoji = parseEmoji(emoji);
 		if (customemoji.id) {
-			const Link = `https://cdn.discordapp.com/emojis/${
-				customemoji.id}.${customemoji.animated ? "gif" : "png"}?size=4096`;
-			await interaction.editReply({ embeds: [
-					new EmbedBuilder()
-						.setConfig()
-						.setImage(Link)
-				]
+			const Link = `https://cdn.discordapp.com/emojis/${customemoji.id}.${
+				customemoji.animated ? "gif" : "png"
+			}?size=4096`;
+			await interaction.editReply({
+				embeds: [new EmbedBuilder().setConfig().setImage(Link)]
 			});
 		}
 		let CheckEmoji = parse(emoji, { assetType: "png" });
 		if (!CheckEmoji[0]) {
-			await interaction.editReply({ embeds: [
-					new EmbedBuilder()         
-						.setConfig()         
+			await interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
 						.setDescription(tr("emojiErr")) //我沒有找到這個表情符號
-				], 
-				ephemeral: true 
+				],
+				ephemeral: true
 			});
 			return;
 		}
-		await interaction.editReply({ embeds: [
-				new EmbedBuilder()
-					.setConfig()
-					.setDescription(tr('emojiPublic')) //你可以在不加入伺服器的情況下使用此表情符號
-			], 
-			ephemeral: true 
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder().setConfig().setDescription(tr("emojiPublic")) //你可以在不加入伺服器的情況下使用此表情符號
+			],
+			ephemeral: true
 		});
 	}
 };

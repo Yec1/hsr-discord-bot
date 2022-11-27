@@ -18,11 +18,11 @@ export default {
 		.setDescription("Get info of a selected user")
 		.setNameLocalizations({
 			"zh-TW": "用戶信息",
-			"ja": "ユーザー情報"
+			ja: "ユーザー情報"
 		})
 		.setDescriptionLocalizations({
 			"zh-TW": "獲得用戶的信息",
-			"ja": "ユーザーの情報を取得"
+			ja: "ユーザーの情報を取得"
 		})
 		.addSubcommand(subcommand =>
 			subcommand
@@ -158,11 +158,11 @@ export default {
 				]
 			});
 		} else {
-			await interaction.editReply({ 
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
-					.setConfig()
-					.setDescription(tr("Cmd_ComingSoon"))
+						.setConfig()
+						.setDescription(tr("Cmd_ComingSoon"))
 				]
 			});
 		}

@@ -10,11 +10,11 @@ export default {
 		.setDescription("Replies with Pong!")
 		.setNameLocalizations({
 			"zh-TW": "延遲",
-			"ja": 'ピン'
+			ja: "ピン"
 		})
 		.setDescriptionLocalizations({
 			"zh-TW": "查看機器人延遲",
-			"ja": 'ボットのレイテンシを測定'
+			ja: "ボットのレイテンシを測定"
 		}),
 	/**
 	 *
