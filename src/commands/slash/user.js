@@ -29,20 +29,24 @@ export default {
 				.setName("avatar")
 				.setDescription("Get users avatar")
 				.setNameLocalizations({
-					"zh-TW": "頭貼"
+					"zh-TW": "頭貼",
+					ja: "アイコン"
 				})
 				.setDescriptionLocalizations({
-					"zh-TW": "獲得用戶的頭貼"
+					"zh-TW": "獲得用戶的頭貼",
+					ja: "ユーザーアイコンを返事する"
 				})
 				.addUserOption(option =>
 					option
 						.setName("user")
 						.setDescription("User who you want to get avatar")
 						.setNameLocalizations({
-							"zh-TW": "用戶"
+							"zh-TW": "用戶",
+							ja: "ユーザー"
 						})
 						.setDescriptionLocalizations({
-							"zh-TW": "你想查看頭貼的用戶"
+							"zh-TW": "你想查看頭貼的用戶",
+							ja: "ユーザーを入力して"
 						})
 						.setRequired(true)
 				)
