@@ -140,7 +140,7 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setDescription(
-							`Color: ${
+							`color: ${
 								data.banner_color || data.color || "none"
 							}`
 						)
