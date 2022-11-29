@@ -54,7 +54,15 @@ const langs = {
 	server_Channel_Count: "Channels",
 	server_Text_Channel: "Texts",
 	server_Voice_Channel: "Voices",
-	server_Boost_Count: "Boosts"
+	server_Boost_Count: "Boosts",
+	//info.js
+	infoSwitch: "Switch",
+	botDesc: "Hello! I am iCE, a Discord bot that serves multiple functions, click the button below to see more about me",
+	botDevs: "Bot Developer",
+	botUptime: "Uptime",
+	botServers: "Server Counts",
+	botMemoryUsage: "Memory Usage",
+	infoRefresh: "Refresh",
 };
 
 export default langs;

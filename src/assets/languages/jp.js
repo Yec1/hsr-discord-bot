@@ -61,7 +61,15 @@ const langs = {
 	server_Channel_Count: "チャンネル数",
 	server_Text_Channel: "メッセージチャンネル",
 	server_Voice_Channel: "ボイスチャンネル",
-	server_Boost_Count: "ブースト数"
+	server_Boost_Count: "ブースト数",
+	//info.js
+	infoSwitch: "切換",
+	botDesc: "你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊",
+	botDevs: "機器人開發者",
+	botUptime: "上線時間",
+	botServers: "伺服器數量",
+	botMemoryUsage: "記憶體使用率",
+	infoRefresh: "刷新",
 };
 
 export default langs;
