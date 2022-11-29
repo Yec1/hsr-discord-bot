@@ -93,7 +93,6 @@ export default {
 
         client.on('interactionCreate', interaction => {
             if(!interaction.isButton()) return;
-            interaction.deferUpdate();
             if(interaction.customId === "infoswitch"){
                 Page2 = new EmbedBuilder()
                 .setConfig()
