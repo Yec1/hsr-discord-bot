@@ -63,13 +63,13 @@ const langs = {
 	server_Voice_Channel: "ボイスチャンネル",
 	server_Boost_Count: "ブースト数",
 	//info.js
-	infoSwitch: "切換",
-	botDesc: "你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊",
-	botDevs: "機器人開發者",
-	botUptime: "上線時間",
-	botServers: "伺服器數量",
-	botMemoryUsage: "記憶體使用率",
-	infoRefresh: "刷新",
+	infoSwitch: "スイッチ",
+	botDesc: "こんにちは！私はiCEと申します、複数の機能を提供する Discord ボットです。下のボタンを押すと、私に関する詳細情報をチェックします！",
+	botDevs: "デベロッパー",
+	botUptime: "アップタイム",
+	botServers: "サーバー数",
+	botMemoryUsage: "メモリ使用率",
+	infoRefresh: "リフレッシュ",
 };
 
 export default langs;
