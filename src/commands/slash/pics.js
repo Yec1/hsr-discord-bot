@@ -36,7 +36,7 @@ export default {
                         name: 'waifu',
                         name_localizations: {
                             "zh-TW": "老婆",
-                            ja: "カワイイ"
+                            ja: "ワイフ"
                         },
                         value: 'waifu'
                     },
