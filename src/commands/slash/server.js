@@ -17,7 +17,7 @@ export default {
 		})
 		.setDescriptionLocalizations({
 			"zh-TW": "獲得伺服器的信息",
-			ja: "サーバー情報を返事する"
+			ja: "サーバー情報を取得"
 		})
 		.addSubcommand(subcommand =>
 			subcommand
@@ -29,7 +29,7 @@ export default {
 				})
 				.setDescriptionLocalizations({
 					"zh-TW": "獲得伺服器資訊",
-					ja: "サーバー情報を返事する"
+					ja: "サーバー情報を取得"
 				})
 		)
 		.addSubcommand(subcommand =>
