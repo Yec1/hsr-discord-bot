@@ -8,7 +8,7 @@ const langs = {
 	enabled: "Enabled",
 	//emoji.js
 	emoj_iErr: "I can't find this emoji",
-	emoji_Public: "You can use this emoji without joining the server",
+	emoji_Public: "You can use this emoji anywhere",
 	//user.js
 	user_Full_Image: "Full Image",
 	//server.js
@@ -58,7 +58,7 @@ const langs = {
 	//info.js
 	infoSwitch: "Switch",
 	botDesc: "Hello! I am iCE, a Discord bot that serves multiple functions, click the button below to see more about me",
-	botDevs: "Bot Developer",
+	botDevs: "Bot Developers",
 	botUptime: "Uptime",
 	botServers: "Server Counts",
 	botMemoryUsage: "Memory Usage",
