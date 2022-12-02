@@ -1,7 +1,7 @@
 const langs = {
 	
 	//Common
-	Cmd_ComingSoon: "もうすぐオープンする",
+	Cmd_ComingSoon: "もうすぐやってくる",
 	latency: "レイテンシー",
 	none: "なし",
 	unknown: "未知",
@@ -18,7 +18,7 @@ const langs = {
 	//server.js
 	
 	//filter
-	filter_NoRole: "ロールなしユーザー",
+	filter_NoRole: "ロールがないユーザー",
 	filter_Everyone: "全てのユーザー",
 	
 	//verification
@@ -44,7 +44,7 @@ const langs = {
 	server_Name: "名前",
 	server_Owner: "オーナー",
 	server_Region: "地域",
-	server_Unknown_Region: "みち地域",
+	server_Unknown_Region: "未知",
 	server_Tier: "ブーストレベル",
 	server_Tier_Lvl: "レべル",
 	server_Filter_Lvl: "フィルタレベル",
@@ -64,7 +64,7 @@ const langs = {
 	server_Boost_Count: "ブースト数",
 	//info.js
 	infoSwitch: "スイッチ",
-	botDesc: "こんにちは！私はiCEと申します、複数の機能を提供する Discord ボットです。下のボタンを押すと、私に関する詳細情報をチェックします！",
+	botDesc: "こんにちは！私はiCEで、複数の機能を提供する Discord ボットです。この下のボタンを押すと、私に関する詳細情報をディスプレイします。",
 	botDevs: "デベロッパー",
 	botUptime: "アップタイム",
 	botServers: "サーバー数",
