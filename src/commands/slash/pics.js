@@ -12,11 +12,11 @@ export default {
 		.setDescription("Get some pictures")
 		.setNameLocalizations({
 			"zh-TW": "圖片",
-			ja: "undefined"
+			ja: "イメージ"
 		})
 		.setDescriptionLocalizations({
 			"zh-TW": "召喚一些圖片",
-			ja: "undefined"
+			ja: "いくつかのイメージを呼び出す"
 		})
         .addStringOption(option =>
             option
@@ -24,11 +24,11 @@ export default {
                 .setDescription('Pictures category')
                 .setNameLocalizations({
                     "zh-TW": "類型",
-                    ja: "undefined"
+                    ja: "タイプ"
                 })
                 .setDescriptionLocalizations({
                     "zh-TW": "圖片的類型",
-                    ja: "undefined"
+                    ja: "イメージのタイプ"
                 })
                 .setRequired(true)
                 .addChoices(
@@ -36,7 +36,7 @@ export default {
                         name: 'waifu',
                         name_localizations: {
                             "zh-TW": "老婆",
-                            ja: "undefined"
+                            ja: "カワイイ"
                         },
                         value: 'waifu'
                     },
@@ -44,7 +44,7 @@ export default {
                         name: 'neko',
                         name_localizations: {
                             "zh-TW": "貓娘",
-                            ja: "undefined"
+                            ja: "猫娘"
                         },
                         value: 'neko'
                     }                    
