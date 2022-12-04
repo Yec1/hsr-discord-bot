@@ -6,6 +6,13 @@ const langs = {
 	unknown: "Unknown",
 	disabled: "Disabled",
 	enabled: "Enabled",
+	volume: "Volume",
+	duration: "Duration",
+	requestby: "Request By",
+	pause: "Pause",
+	resume: "Resume",
+	track: "Track",
+	queue: "Queue",
 	//emoji.js
 	emoj_iErr: "I can't find this emoji",
 	emoji_Public: "You can use this emoji anywhere",
@@ -63,6 +70,21 @@ const langs = {
 	botServers: "Server Counts",
 	botMemoryUsage: "Memory Usage",
 	infoRefresh: "Refresh",
+	//music.js
+	musicNotinChannel: "You are not in voice channel!",
+	musicNoSong: "There is no song in queue",
+	musicSearch: "Searching...",
+	musicStop: "Music stoped!",
+	musicNoSongNext: "There is no song after this song",
+	musicSkip: "Skipped! Now playing:\n",
+	musicNoSongPre: "There is no song previous this song",
+	musicPre: "Now playing\n",
+	musicResume: "Music resumed!",
+	musicPause: "Music paused!",
+	musicNoPause: "The queue is not paused!",
+	musicEmpty: "Voice channel is empty! Leaving the channel...",
+	musicPlayed: "All music has been played",
+	
 };
 
 export default langs;

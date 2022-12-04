@@ -7,6 +7,13 @@ const langs = {
 	unknown: "未知",
 	disabled: "ディセーブル",
 	enabled: "エネーブル",
+	volume: "音量",
+	duration: "時間",
+	requestby: "請求者",
+	pause: "暫停",
+	resume: "繼續",
+	track: "單曲",
+	queue: "歌單",
 	
 	//emoji.js
 	emoj_iErr: "この絵文字が見つけない",
@@ -70,6 +77,20 @@ const langs = {
 	botServers: "サーバー数",
 	botMemoryUsage: "メモリ使用率",
 	infoRefresh: "リフレッシュ",
+	//music.js
+	musicNotinChannel: "你不在語音頻道！",
+	musicNoSong: "歌單中沒有歌曲",
+	musicSearch: "搜尋中...",
+	musicStop: "音樂已停止！",
+	musicNoSongNext: "在這首歌曲後已沒有新的歌曲",
+	musicSkip: "已跳過！現在播放\n",
+	musicNoSongPre: "在這首歌曲前沒有已播放的歌曲",
+	musicPre: "現在播放\n",
+	musicResume: "音樂已繼續！",
+	musicPause: "音樂已暫停！",
+	musicNoPause: "目前歌單沒有被暫停！",
+	musicEmpty: "語音頻道沒有人！正在離開...",
+	musicPlayed: "所有歌曲已播放完畢！",
 };
 
 export default langs;
