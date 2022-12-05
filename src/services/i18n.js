@@ -1,5 +1,6 @@
 import en from "../assets/languages/en.js";
 import tw from "../assets/languages/tw.js";
+import jp from "../assets/languages/jp.js";
 
 const langs = { en, tw };
 
