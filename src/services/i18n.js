@@ -2,7 +2,7 @@ import en from "../assets/languages/en.js";
 import tw from "../assets/languages/tw.js";
 import jp from "../assets/languages/jp.js";
 
-const langs = { en, tw };
+const langs = { en, tw, jp};
 
 export function i18nMixin(lang) {
 	if (!Object.keys(langs).includes(lang))
