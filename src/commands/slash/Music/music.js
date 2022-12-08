@@ -175,7 +175,6 @@ export default {
 					ephemeral: true 
 				});
 			  }
-
 			  if (!queue.playing) {
 				interaction.reply({ embeds: [
 					new EmbedBuilder()
@@ -185,9 +184,45 @@ export default {
 					ephemeral: true 
 				});
 			  }
-			  if (res.playlist) queue.addTracks(res.tracks); else queue.addTrack(res.tracks[0]);
-			  if (!queue.connection) await queue.connect(interaction.member.voice.channel);
-			  if (!queue.playing) await queue.play();
+			  try {
+				if (!queue.connection) await queue.connect(interaction.member.voice.channel);
+				if(res.playlist) { 
+					queue.addTracks(res.tracks)
+					queue.metadata.send({ embeds: [
+							new EmbedBuilder()
+								.setConfig()
+								.setTitle(res.tracks[0].playlist.title)
+								.setURL(res.tracks[0].playlist.url)
+								.setImage(res.tracks[0].playlist.thumbnail.url)
+								.addField(
+									'Volume', //tr('volume')
+									`> **${queue.volume}%**`,
+									true
+								)
+								.addField(
+									'Length', //tr('length')
+									`> ${res.tracks.length}`,
+									true
+								)
+								.addField(
+									'Request By', //tr('requestby')
+									`> ${res.tracks[0].requestedBy}`,
+									true
+								)
+						]
+					})
+				} else queue.addTrack(res.tracks[0]);
+				if (!queue.playing) await queue.play();
+			  } catch(err){
+				console.error(err);
+				await queue.destroy();
+				return await interaction.channel.send({ embeds: [
+						new EmbedBuilder()
+							.setConfig()
+							.setDescription("This media doesn't seem to be working right now, please try again later.")
+					]
+				});
+			}
 		}
 		// if (args[0] == "stop") {
 		// 	queue.stop()
