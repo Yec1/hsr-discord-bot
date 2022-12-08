@@ -31,18 +31,18 @@ import { i18nMixin, tl3 } from "../services/i18n.js";
     })
     .on('trackAdd', (queue, track) => {
         if(queue.tracks.length === 1) return;
+        const embed = embed(queue, track)
+        if(queue.tracks.length === 1){
+            embed.addField(
+                'Position', //tr('position')
+                `> ${queue.tracks.length}`,
+                true
+            )
+        }
         queue.metadata.send({ 
-            embeds:[
-                embed(queue, track)
-            ]
+            embeds:[embed]
         }) 
     })
-    .on('tracksAdd', (queue, tracks) =>
-        queue.metadata.send({ embeds: [
-                embed(queue, tracks)
-            ]
-        })
-    )
     .on('connectionError', (queue, error) => { 
         // if(queue.npmessage && queue.npmessage.editable) {
         //     queue.npmessage.delete().catch(error=> {});
@@ -253,13 +253,6 @@ function embed(queue, type){
         `> ${type.requestedBy}`,
         true
     )
-    if(queue.tracks.length !== 0){
-        embed.addField(
-            'Position', //tr('position')
-            `> ${queue.tracks.length}`,
-            true
-        )
-    }
     return embed;
 }
 
