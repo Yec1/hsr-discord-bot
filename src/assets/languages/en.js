@@ -13,6 +13,7 @@ const langs = {
 	resume: "Resume",
 	track: "Track",
 	queue: "Queue",
+	position: "Position",
 	//emoji.js
 	emoj_iErr: "I can't find this emoji",
 	emoji_Public: "You can use this emoji anywhere",
@@ -71,12 +72,13 @@ const langs = {
 	botMemoryUsage: "Memory Usage",
 	infoRefresh: "Refresh",
 	//music.js
+	musicCantJoin: "I can't join your channel!",
 	musicNotinChannel: "You are not in voice channel!",
 	musicNoSong: "There is no song in queue",
 	musicSearch: "Searching...",
 	musicStop: "Music stoped!",
 	musicNoSongNext: "There is no song after this song",
-	musicSkip: "Skipped! Now playing:\n",
+	musicSkip: "Skipped\n",
 	musicNoSongPre: "There is no song previous this song",
 	musicPre: "Now playing\n",
 	musicResume: "Music resumed!",

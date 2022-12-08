@@ -13,6 +13,7 @@ const langs = {
 	resume: "繼續",
 	track: "單曲",
 	queue: "歌單",
+	position: "位置",
 	//emoji.js
 	emoj_iErr: "我沒有找到這個表情符號",
 	emoji_Public: "你可以在不加入伺服器的情況下使用此表情符號",
@@ -75,12 +76,13 @@ const langs = {
 	botMemoryUsage: "記憶體使用率",
 	infoRefresh: "刷新",
 	//music.js
+	musicCantJoin: "我無法加入你的頻道",
+	musicNoRes: "找不到歌曲",
 	musicNotinChannel: "你不在語音頻道！",
 	musicNoSong: "歌單中沒有歌曲",
 	musicSearch: "搜尋中...",
 	musicStop: "音樂已停止！",
-	musicNoSongNext: "在這首歌曲後已沒有新的歌曲",
-	musicSkip: "已跳過！現在播放\n",
+	musicSkip: "已跳過\n",
 	musicNoSongPre: "在這首歌曲前沒有已播放的歌曲",
 	musicPre: "現在播放\n",
 	musicResume: "音樂已繼續！",
