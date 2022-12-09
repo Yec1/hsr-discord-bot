@@ -15,6 +15,7 @@
 		"quotes": ["error", "double"],
 		"semi": ["error", "always"],
 		"no-unused-vars": "off",
-		"prefer-const": "off"
+		"prefer-const": "off",
+		"no-unreachable": "off"
 	}
 }

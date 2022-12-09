@@ -4,7 +4,8 @@
 	"description": "Discord bot.",
 	"main": "src/index.js",
 	"scripts": {
-		"start": "node --experimental-specifier-resolution=node .",
+		"start": "node .",
+		"dev": "cross-env NODE_ENV=dev node --experimental-specifier-resolution=node .",
 		"lint": "eslint src/**/* --ext .js",
 		"lint:fix": "eslint src/**/* --ext .js --fix",
 		"fmt": "prettier --write src/**/*.{js,json,yaml,yml}",
@@ -22,7 +23,6 @@
 		"@discordjs/opus": "^0.8.0",
 		"@discordjs/voice": "^0.14.0",
 		"discord-banner": "^1.6.7",
-		"discord-player": "^5.3.2",
 		"discord.js": "^14.6.0",
 		"dotenv": "^10.0.0",
 		"fast-glob": "^3.2.12",
@@ -33,6 +33,7 @@
 	"devDependencies": {
 		"@babel/core": "^7.16.0",
 		"@babel/preset-env": "^7.16.4",
+		"cross-env": "^7.0.3",
 		"eslint": "^8.28.0",
 		"jest": "^27.3.1",
 		"prettier": "^2.4.1"

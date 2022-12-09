@@ -14,7 +14,6 @@ export class Loader {
 	}
 	async load() {
 		const { db } = this.client;
-		await db.connect();
 		console.log(`connected to MongoDB, ping: ${await db.ping()}`);
 		const messages = await glob(
 			`${process.cwd()}/src/commands/message/**/*.js`

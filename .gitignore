@@ -13,6 +13,6 @@ yarn-error.log
 
 # env
 config.json
-config.js
 .env
+.env.*
 *.tmp
