@@ -7,13 +7,13 @@ const langs = {
 	unknown: "未知",
 	disabled: "ディセーブル",
 	enabled: "エネーブル",
-	volume: "音量",
+	volume: "ボリューム",
 	duration: "時間",
 	requestby: "請求者",
-	pause: "暫停",
-	resume: "繼續",
+	pause: "休止",
+	resume: "続く",
 	track: "單曲",
-	queue: "歌單",
+	queue: "キュー",
 	
 	//emoji.js
 	emoj_iErr: "この絵文字が見つけない",
