@@ -9,6 +9,11 @@ const langs = {
 	volume: "Volume",
 	duration: "Duration",
 	requestby: "Request By",
+	choose: "Choose one song!",
+	chooseFooter:
+		"if you do not choose, it will automaticly play the first song.",
+	noReceive: "Didnt receive any interaction, defaulting to <z>.",
+	receive: "playing <z>.",
 	pause: "Pause",
 	resume: "Resume",
 	track: "Track",
@@ -65,7 +70,8 @@ const langs = {
 	server_Boost_Count: "Boosts",
 	//info.js
 	infoSwitch: "Switch",
-	botDesc: "Hello! I am iCE, a Discord bot that serves multiple functions, click the button below to see more about me",
+	botDesc:
+		"Hello! I am iCE, a Discord bot that serves multiple functions, click the button below to see more about me",
 	botDevs: "Bot Developers",
 	botUptime: "Uptime",
 	botServers: "Server Counts",
@@ -85,8 +91,7 @@ const langs = {
 	musicPause: "Music paused!",
 	musicNoPause: "The queue is not paused!",
 	musicEmpty: "Voice channel is empty! Leaving the channel...",
-	musicPlayed: "All music has been played",
-	
+	musicPlayed: "All music has been played"
 };
 
 export default langs;

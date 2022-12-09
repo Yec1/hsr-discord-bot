@@ -27,6 +27,7 @@
 		"dotenv": "^10.0.0",
 		"fast-glob": "^3.2.12",
 		"moment": "^2.29.4",
+		"play-dl": "^1.9.6",
 		"quickmongo": "^5.2.0",
 		"waifu.pics-wrapper": "^1.0.0"
 	},

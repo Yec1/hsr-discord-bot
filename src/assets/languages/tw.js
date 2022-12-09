@@ -9,6 +9,8 @@ const langs = {
 	volume: "音量",
 	duration: "時間",
 	requestby: "請求者",
+	choose: "選一首歌！",
+	chooseFooter: "如果你沒選的話，將會自動播放第一首。",
 	pause: "暫停",
 	resume: "繼續",
 	track: "單曲",
@@ -69,7 +71,8 @@ const langs = {
 	server_Offline: "離線",
 	//info.js
 	infoSwitch: "切換",
-	botDesc: "你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊",
+	botDesc:
+		"你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊",
 	botDevs: "機器人開發者",
 	botUptime: "上線時間",
 	botServers: "伺服器數量",
@@ -89,8 +92,7 @@ const langs = {
 	musicPause: "音樂已暫停！",
 	musicNoPause: "目前歌單沒有被暫停！",
 	musicEmpty: "語音頻道沒有人！正在離開...",
-	musicPlayed: "所有歌曲已播放完畢！",
-
+	musicPlayed: "所有歌曲已播放完畢！"
 };
 
 export default langs;
