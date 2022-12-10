@@ -29,6 +29,7 @@ import {
 } from "@discordjs/voice";
 import { i18nMixin } from "./i18n.js";
 import play, { YouTubeVideo, yt_validate } from "play-dl";
+import { finished } from "stream";
 
 /**
  * class for global music handling. should be in the client.
@@ -158,7 +159,7 @@ export class Queue extends EventEmitter {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
-					.setDescription("my job is done, c u next time")
+					.setDescription(this.tr("musicPlayed"))
 			]
 		});
 		this.player.stop();

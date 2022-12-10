@@ -187,6 +187,8 @@ export default {
 				],
 				ephemeral: false
 			});
+		} else if (args[0] == "stop") {
+			queue.destroy();
 		}
 	}
 };

@@ -90,7 +90,12 @@ const langs = {
 	musicPause: "音樂已暫停！",
 	musicNoPause: "目前歌單沒有被暫停！",
 	musicEmpty: "語音頻道沒有人！正在離開...",
-	musicPlayed: "所有歌曲已播放完畢！"
+	musicPlayed: "所有歌曲已播放完畢！",
+	choose: "選一首歌！",
+	addedToQueue: "已添加 %s 至歌單",
+	chooseFooter: "若未選擇將會自動播放第一首歌曲",
+	noReceive: "未收到回應，開始播放 <z>",
+	receive: "現在開始播放 <z>.",
 };
 
 export default langs;

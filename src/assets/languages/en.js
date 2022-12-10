@@ -9,12 +9,6 @@ const langs = {
 	volume: "Volume",
 	duration: "Duration",
 	requestby: "Request By",
-	choose: "Choose one song!",
-	addedToQueue: "Added %s to queue.",
-	chooseFooter:
-		"if you do not choose, it will automaticly play the first song.",
-	noReceive: "Didnt receive any interaction, defaulting to <z>.",
-	receive: "playing <z>.",
 	pause: "Pause",
 	resume: "Resume",
 	track: "Track",
@@ -92,7 +86,13 @@ const langs = {
 	musicPause: "Music paused!",
 	musicNoPause: "The queue is not paused!",
 	musicEmpty: "Voice channel is empty! Leaving the channel...",
-	musicPlayed: "All music has been played"
+	musicPlayed: "All music has been played",
+	choose: "Choose one song!",
+	addedToQueue: "Added %s to queue.",
+	chooseFooter:
+		"if you do not choose, it will automaticly play the first song.",
+	noReceive: "Didnt receive any interaction, defaulting to <z>.",
+	receive: "Now playing <z>.",
 };
 
 export default langs;
