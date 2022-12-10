@@ -10,6 +10,7 @@ const langs = {
 	duration: "Duration",
 	requestby: "Request By",
 	choose: "Choose one song!",
+	addedToQueue: "Added %s to queue.",
 	chooseFooter:
 		"if you do not choose, it will automaticly play the first song.",
 	noReceive: "Didnt receive any interaction, defaulting to <z>.",

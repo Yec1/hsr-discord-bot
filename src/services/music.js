@@ -154,7 +154,16 @@ export class Queue extends EventEmitter {
 	}
 
 	destroy() {
+		this.channel.send({
+			embeds: [
+				new EmbedBuilder()
+					.setConfig()
+					.setDescription("my job is done, c u next time")
+			]
+		});
 		this.player.stop();
+		if (this.connection.state.status != "destroyed")
+			this.connection.destroy();
 		this.client.music.delete(this.guild.id, this);
 	}
 
@@ -168,6 +177,8 @@ export class Queue extends EventEmitter {
 	 * @private
 	 */
 	async __play() {
+		if (!this.started) this.started = true;
+
 		const song = this.queue[0];
 
 		this.channel.send({
@@ -176,7 +187,10 @@ export class Queue extends EventEmitter {
 					.setConfig()
 					.setTitle(song.info.title || "-")
 					.setURL(song.info.url)
-					.setImage(song.info.thumbnails[0].url)
+					.setImage(
+						song.info.thumbnails[song.info.thumbnails.length - 1]
+							.url
+					)
 					.addField(
 						this.tr("requestby"),
 						`> ${song.member || this.member}`,
@@ -205,51 +219,41 @@ export class Queue extends EventEmitter {
 		const i = this;
 		const fn = () => {
 			i.checkNext();
-			i.player.off(AudioPlayerStatus.Idle);
+			i.player.off(AudioPlayerStatus.Idle, fn);
 		};
 		this.player.on(AudioPlayerStatus.Idle, fn);
 	}
 
 	async play(urlOrQuery, { member } = {}) {
 		if (member) this.member = member;
-		if (
-			urlOrQuery.startsWith("https") &&
-			yt_validate(urlOrQuery) === "video"
-		) {
-			const song = await play.search(urlOrQuery, {
-				limit: 1
-			})[0];
-			if (!song) return;
-			this.queue.push({
-				stream: await play.stream(urlOrQuery),
-				info: song
+		let yt_info = await play.search(urlOrQuery, {
+			limit: 5
+		});
+		if (yt_info.length == 0) {
+			this.channel.send({
+				embeds: [
+					new EmbedBuilder()
+						.setDescription(this.tr("musicNoRes"))
+						.setConfig()
+				]
 			});
-			this.__play(urlOrQuery);
-		} else {
-			let yt_info = await play.search(urlOrQuery, {
-				limit: 5
+		}
+		/**
+		 * @type {YouTubeVideo}
+		 */
+		let song;
+		if (yt_info.length > 1)
+			song = await this.collectSong(yt_info, {
+				edit: this.started
 			});
-			if (yt_info.length == 0) {
-				this.channel.send({
-					embeds: [
-						new EmbedBuilder()
-							.setDescription(this.tr("musicNoRes"))
-							.setConfig()
-					]
-				});
-			}
-			/**
-			 * @type {YouTubeVideo}
-			 */
-			let song;
-			if (yt_info.length > 1) song = await this.collectSong(yt_info);
-			else song = yt_info[0];
+		else song = yt_info[0];
 
-			this.queue.push({
-				stream: await play.stream(song.url),
-				info: song,
-				member: this.member
-			});
+		this.queue.push({
+			stream: await play.stream(song.url),
+			info: song,
+			member: this.member
+		});
+		if (!this.started) {
 			this.__play();
 		}
 	}
@@ -257,7 +261,7 @@ export class Queue extends EventEmitter {
 	 * open a collector to collect which song to chose, else return the 1st option
 	 * @type {(info: YouTubeVideo[]) => YouTubeVideo}
 	 */
-	async collectSong(info, { time } = { time: 50000 }) {
+	async collectSong(info, { time, edit } = { time: 50000, edit: false }) {
 		const row = new ActionRowBuilder();
 
 		info.forEach((_, i) =>
@@ -298,23 +302,59 @@ export class Queue extends EventEmitter {
 					i.user.id === this.member.id,
 				time: 15000
 			});
-			const n = parseInt(i.customId.replace("music_c_"));
-			await i.editReply({
-				embed: [
-					new EmbedBuilder().setConfig().setDescription(
-						this.tr("receive", {
-							z: `[${info[n].title || "-"}](${info[n].url})`
-						})
-					)
-				]
-			});
+			const n = parseInt(i.customId.replace("music_c_", "")) - 1;
+			if (!edit)
+				msg2.edit({
+					content: "",
+					embeds: [
+						new EmbedBuilder().setConfig().setDescription(
+							this.tr("receive", {
+								z: `[${info[n].title || "-"}](${info[n].url})`
+							})
+						)
+					],
+					components: []
+				});
+			else
+				msg2.edit({
+					embeds: [
+						new EmbedBuilder()
+							.setConfig()
+							.setDescription(
+								this.tr(
+									"addedToQueue",
+									`[${info[n].title || "-"}](${info[n].url})`
+								)
+							)
+					]
+				});
 			return info[n];
 		} catch {
-			msg2.edit(
-				this.tr("noReceive", {
-					z: `[${info[0].title || "-"}](${info[0].url})`
-				})
-			);
+			if (!edit)
+				msg2.edit({
+					content: "",
+					embeds: [
+						new EmbedBuilder().setConfig().setDescription(
+							this.tr("noReceive", {
+								z: `[${info[0].title || "-"}](${info[0].url})`
+							})
+						)
+					],
+					components: []
+				});
+			else
+				msg2.edit({
+					embeds: [
+						new EmbedBuilder()
+							.setConfig()
+							.setDescription(
+								this.tr(
+									"addedToQueue",
+									`[${info[0].title || "-"}](${info[0].url})`
+								)
+							)
+					]
+				});
 			return info[0];
 		}
 	}

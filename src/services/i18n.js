@@ -13,18 +13,23 @@ export function i18nMixin(lang) {
 		if (typeof str == "function") return str(options, ...args);
 		else if (typeof str != "string") return str;
 		else {
-			if (options)
+			if (options && isObj(options))
 				for (let [key, value] of Object.entries(options))
 					str = str.replace(`<${key}>`, `${value}`);
-			if (args)
+			if (typeof options == "string") args.push(options);
+			if (args) {
 				for (let [index, value] of Object.entries(args))
 					str = str
 						.replace("%s", `${value}`)
-						.replace(`%${index}%`, `${value}`);
+						.replaceAll(`%${index}%`, `${value}`);
+			}
 		}
 		return str;
 	};
 }
 export function tl3(str) {
 	if (str.startsWith("zh")) return "tw";
+}
+function isObj(k) {
+	return Object.prototype.toString.call(k) === "[object Object]";
 }
