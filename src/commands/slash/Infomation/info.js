@@ -31,10 +31,9 @@ export default {
 		function refresh() {
 			Page2 = new EmbedBuilder()
 				.setConfig()
+				.setImage("https://media.discordapp.net/attachments/1050727525644513322/1050727572595544144/snowed.png?width=1253&height=671")
 				.setDescription(
-					`\`\`\`` +
-						tr("botDesc") + //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
-						`\`\`\``
+					`\`\`\`${tr("botDesc")}\`\`\`` //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
 				)
 				.addField(
 					tr("botUptime"), //上線時間
@@ -43,7 +42,7 @@ export default {
 				)
 				.addField(
 					tr("latency"), //延遲
-					Date.now() - interaction.createdTimestamp + `ms`,
+					client.ws.ping + `ms`,
 					true
 				)
 				.addField(
@@ -80,10 +79,9 @@ export default {
 
 		const Page1 = new EmbedBuilder()
 			.setConfig()
+			.setImage("https://media.discordapp.net/attachments/1050727525644513322/1050727572595544144/snowed.png?width=1253&height=671")
 			.setDescription(
-				`\`\`\`` +
-					tr("botDesc") + //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
-					`\`\`\``
+				`\`\`\`${tr("botDesc")}\`\`\`` //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
 			)
 			.addField(
 				tr("botDevs"), //機器人開發者
