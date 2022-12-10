@@ -38,6 +38,7 @@ export class MusicManager extends Collection {}
 
 /**
  * class for guild music queue.
+ * this manages most playing
  * @extends {EventEmitter}
  */
 export class Queue extends EventEmitter {
@@ -70,6 +71,14 @@ export class Queue extends EventEmitter {
 	 */
 	channel;
 
+	/**
+	 * the latest requestor of this guild queue.
+	 */
+	member;
+
+	/**
+	 * pending connection.
+	 */
 	connection;
 
 	/**
@@ -82,8 +91,6 @@ export class Queue extends EventEmitter {
 	 */
 	paused = false;
 
-	initialMember;
-
 	/**
 	 * translate object where strings will use to handle during the context.
 	 * defaults to english if no translate handler is given
@@ -92,8 +99,9 @@ export class Queue extends EventEmitter {
 	tr = i18nMixin("en");
 
 	/**
-	 * queue of songs
-	 * @type {{ stream: any, info: YouTubeVideo }[]}
+	 * queue of songs.
+	 * the 0 index is always the nowplaying audio.
+	 * @type {{ stream: any, info: YouTubeVideo, by: any }[]}
 	 */
 	queue = [];
 
@@ -104,7 +112,7 @@ export class Queue extends EventEmitter {
 		if (!(vc instanceof VoiceChannel))
 			throw new Error("given channel not a instance of channel");
 
-		this.initialMember = member;
+		this.member = member;
 		this.channel = channel;
 		this.client = channel.client;
 		this.guild = channel.guild;
@@ -116,52 +124,94 @@ export class Queue extends EventEmitter {
 			guildId: this.guild.id,
 			adapterCreator: this.guild.voiceAdapterCreator
 		});
+
+		this.player = createAudioPlayer({
+			behaviors: {
+				noSubscriber: NoSubscriberBehavior.Play
+			}
+		});
+
+		this.connection.subscribe(this.player);
 	}
 
 	/**
 	 * either pauses or resumes the player.
 	 */
 	pause() {
-		if (this.player.paused) this.player.unpause(true);
-		else this.player.pause(true);
-		this.paused = !this.paused;
+		if (this.player.paused) {
+			this.player.unpause(true);
+			this.paused = false;
+		} else {
+			this.player.pause(true);
+			this.paused = true;
+		}
 	}
 
-	checkNext() {}
-	next() {}
+	checkNext() {
+		this.queue.splice(0, 1);
+		if (this.queue.length == 0) this.destroy();
+		else this.__play();
+	}
+
+	destroy() {
+		this.player.stop();
+		this.client.music.delete(this.guild.id, this);
+	}
+
+	next() {
+		this.player.stop();
+		this.checkNext();
+	}
 
 	/**
-	 * this **plays** the audio.
+	 * this starts 0st index audio.
 	 * @private
 	 */
-	async __play(n = 0) {
-		const song = this.queue[n];
+	async __play() {
+		const song = this.queue[0];
+
+		this.channel.send({
+			embeds: [
+				new EmbedBuilder()
+					.setConfig()
+					.setTitle(song.info.title || "-")
+					.setURL(song.info.url)
+					.setImage(song.info.thumbnails[0].url)
+					.addField(
+						this.tr("requestby"),
+						`> ${song.member || this.member}`,
+						true
+					)
+					.addField(
+						this.tr("duration"),
+						`> ${song.info.durationRaw}`,
+						true
+					)
+			]
+		});
+
 		let resource = createAudioResource(song.stream.stream, {
 			inputType: song.stream.type,
 			inlineVolume: true
 		});
 
-		const player = (this.player = createAudioPlayer({
-			behaviors: {
-				noSubscriber: NoSubscriberBehavior.Play
-			}
-		}));
-
-		this.connection.subscribe(player);
-		player.play(resource);
+		this.player.play(resource);
 		try {
-			await entersState(player, AudioPlayerStatus.Playing, 5_000);
+			await entersState(this.player, AudioPlayerStatus.Playing, 5_000);
 		} catch (error) {
 			console.error(error);
 		}
 
 		const i = this;
-		player.on(AudioPlayerStatus.Idle, () => {
+		const fn = () => {
 			i.checkNext();
-		});
+			i.player.off(AudioPlayerStatus.Idle);
+		};
+		this.player.on(AudioPlayerStatus.Idle, fn);
 	}
 
-	async play(urlOrQuery) {
+	async play(urlOrQuery, { member } = {}) {
+		if (member) this.member = member;
 		if (
 			urlOrQuery.startsWith("https") &&
 			yt_validate(urlOrQuery) === "video"
@@ -195,31 +245,12 @@ export class Queue extends EventEmitter {
 			if (yt_info.length > 1) song = await this.collectSong(yt_info);
 			else song = yt_info[0];
 
-			this.channel.send({
-				embeds: [
-					new EmbedBuilder()
-						.setConfig()
-						.setTitle(song.title || "-")
-						.setURL(song.url)
-						.setImage(song.thumbnails[0].url)
-						.addField(this.tr("volume"), `> **${0}%**`, true)
-						.addField(
-							this.tr("requestby"),
-							`> ${this.initialMember}`,
-							true
-						)
-						.addField(
-							this.tr("duration"),
-							`> ${song.durationRaw}`,
-							true
-						)
-				]
-			});
 			this.queue.push({
 				stream: await play.stream(song.url),
-				info: song
+				info: song,
+				member: this.member
 			});
-			this.__play(0);
+			this.__play();
 		}
 	}
 	/**
@@ -241,7 +272,7 @@ export class Queue extends EventEmitter {
 		 * @type {Message}
 		 */
 		const msg2 = await this.channel.send({
-			content: `<@${this.initialMember.id}>`,
+			content: `<@${this.member.id}>`,
 			embeds: [
 				new EmbedBuilder()
 					.setConfig(this.tr("chooseFooter"))
@@ -264,7 +295,7 @@ export class Queue extends EventEmitter {
 			const i = await msg2.awaitMessageComponent({
 				filter: i =>
 					i.customId.startsWith("music_c_") &&
-					i.user.id === this.initialMember.id,
+					i.user.id === this.member.id,
 				time: 15000
 			});
 			const n = parseInt(i.customId.replace("music_c_"));
