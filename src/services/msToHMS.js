@@ -4,5 +4,5 @@ export function msToHMS(ms) {
     seconds = seconds % 3600;
     const minutes = parseInt( seconds / 60 );
     seconds = seconds % 60;
-    return (`${hours}:${minutes}:${~~(seconds)}`);
+    if(hours === 0) return (`${minutes}:${~~(seconds)}`); else return (`${hours}:${minutes}:${~~(seconds)}`); 
 }
