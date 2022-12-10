@@ -202,18 +202,14 @@ export class Queue extends EventEmitter {
 						.setTitle(song.title || "-")
 						.setURL(song.url)
 						.setImage(song.thumbnails[0].url)
+						.addField(this.tr("volume"), `> **${0}%**`, true)
 						.addField(
-							this.tr('volume'),
-							`> **${0}%**`,
-							true
-						)
-						.addField(
-							this.tr('requestby'),
+							this.tr("requestby"),
 							`> ${this.initialMember}`,
 							true
 						)
 						.addField(
-							this.tr('duration'),
+							this.tr("duration"),
 							`> ${song.durationRaw}`,
 							true
 						)

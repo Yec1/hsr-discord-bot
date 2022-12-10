@@ -1,5 +1,4 @@
 const langs = {
-	
 	//Common
 	Cmd_ComingSoon: "もうすぐやってくる",
 	latency: "レイテンシー",
@@ -14,24 +13,24 @@ const langs = {
 	resume: "続く",
 	track: "單曲",
 	queue: "キュー",
-	
+
 	//emoji.js
 	emoj_iErr: "この絵文字が見つけない",
 	emoji_Public: "この絵文字はどこでも使える",
-	
+
 	//user.js
 	user_Full_Image: "元イメージ",
-	
+
 	//server.js
-	
+
 	//filter
 	filter_NoRole: "ロールがないユーザー",
 	filter_Everyone: "全てのユーザー",
-	
+
 	//verification
 	verify_Low: "低",
 	verify_Medium: "中",
-	
+
 	//regions
 	br: "ブラジル",
 	eu: "ヨーロッパ",
@@ -71,7 +70,8 @@ const langs = {
 	server_Boost_Count: "ブースト数",
 	//info.js
 	infoSwitch: "スイッチ",
-	botDesc: "こんにちは！私はiCEで、複数の機能を提供する Discord ボットです。この下のボタンを押すと、私に関する詳細情報をディスプレイします。",
+	botDesc:
+		"こんにちは！私はiCEで、複数の機能を提供する Discord ボットです。この下のボタンを押すと、私に関する詳細情報をディスプレイします。",
 	botDevs: "デベロッパー",
 	botUptime: "アップタイム",
 	botServers: "サーバー数",
@@ -90,7 +90,7 @@ const langs = {
 	musicPause: "音樂已暫停！",
 	musicNoPause: "目前歌單沒有被暫停！",
 	musicEmpty: "語音頻道沒有人！正在離開...",
-	musicPlayed: "所有歌曲已播放完畢！",
+	musicPlayed: "所有歌曲已播放完畢！"
 };
 
 export default langs;

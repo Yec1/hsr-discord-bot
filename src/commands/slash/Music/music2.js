@@ -130,27 +130,33 @@ export default {
 			});
 		}
 		const queue = client.music.get(interaction.guild.id);
-		if(args[0] !== "play") {
-			if (!queue) return interaction.reply({ embeds: [
-					new EmbedBuilder()
-						.setConfig()
-						.setDescription(`\`${interaction.user.tag}\` `+ tr('musicNoSong'))
-				],
-				ephemeral: true
-			})
+		if (args[0] !== "play") {
+			if (!queue)
+				return interaction.reply({
+					embeds: [
+						new EmbedBuilder()
+							.setConfig()
+							.setDescription(
+								`\`${interaction.user.tag}\` ` +
+									tr("musicNoSong")
+							)
+					],
+					ephemeral: true
+				});
 		}
 		if (args[0] == "play") {
 			const song = interaction.options.getString("music");
 			if (client.music.has(interaction.guild.id))
 				client.music.get(interaction.guild.id).play(song);
 
-				interaction.reply({ embeds: [
+			interaction.reply({
+				embeds: [
 					new EmbedBuilder()
 						.setDescription(tr("musicSearch"))
 						.setConfig()
-					], 
-					ephemeral: true 
-				});
+				],
+				ephemeral: true
+			});
 			new Queue(
 				{
 					vc: interaction.member.voice.channel,
@@ -160,22 +166,26 @@ export default {
 				{ tr }
 			).play(song);
 		} else if (args[0] == "resume" || args[0] == "pause") {
-			queue.pause()
-			interaction.reply({ embeds: [
-				new EmbedBuilder()
-					.setDescription(queue.paused ? tr("musicPause") : tr("musicResume"))
-					.setConfig()
-				], 
-				ephemeral: false 
+			queue.pause();
+			interaction.reply({
+				embeds: [
+					new EmbedBuilder()
+						.setDescription(
+							queue.paused ? tr("musicPause") : tr("musicResume")
+						)
+						.setConfig()
+				],
+				ephemeral: false
 			});
 		} else if (args[0] == "skip") {
-			queue.next()
-			interaction.reply({ embeds: [
-				new EmbedBuilder()
-					.setDescription(tr("musicSkip"))
-					.setConfig()
-				], 
-				ephemeral: false 
+			queue.next();
+			interaction.reply({
+				embeds: [
+					new EmbedBuilder()
+						.setDescription(tr("musicSkip"))
+						.setConfig()
+				],
+				ephemeral: false
 			});
 		}
 	}
