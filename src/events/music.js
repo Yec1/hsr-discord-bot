@@ -14,6 +14,19 @@ client.on("interactionCreate", async interaction => {
 	if (interaction.isButton())
 		await interaction.deferUpdate({ ephemeral: true }).catch(() => {});
 	else return;
+	if (!interaction.member.voice.channel) {
+		return interaction.followUp({
+			embeds: [
+				new EmbedBuilder()
+					.setConfig()
+					.setDescription(
+						`\`${interaction.user.tag}\` ` +
+							tr("musicNotinChannel")
+					)
+			],
+			ephemeral: true
+		});
+	}
 	const queue = client.music.get(interaction.guild.id);
 	if(!queue && (
 				interaction.customId === "pause" || 
