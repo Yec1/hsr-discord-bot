@@ -4,7 +4,7 @@ import {
 	EmbedBuilder,
 	ComponentType,
 	ActionRowBuilder,
-	SelectMenuBuilder
+	StringSelectMenuBuilder 
 } from "discord.js";
 
 export default {
@@ -26,43 +26,30 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr) {
-		const home = new EmbedBuilder()
-			.setConfig("Welcome to the help panel.")
-			.setDescription(
-				"Im a fully functional multipurpose bot! \n\nUnlock exclusive benefits by purchasing a premium membership: **[Buy Premium](https://nothing.here)** \n\n**All Link:** [Support](https://discord.gg/tGQCdQZUqR)"
-			);
-
-		const info = new EmbedBuilder()
-			.setConfig("Commands")
-			.addField("Hello", "Heres my second page", true);
-
-		const components = state => [
-			new ActionRowBuilder().addComponents(
-				new SelectMenuBuilder()
-					.setCustomId("help-menu")
-					.setPlaceholder("Please Select a Category")
-					.setDisabled(state)
-					.addOptions([
-						{
-							label: "Home",
-							value: "home",
-							description: "Go home",
-							emoji: "🏠"
-						},
-						{
-							label: "Info",
-							value: "info",
-							description: "See info commands",
-							emoji: "ℹ"
-						}
-					])
-			)
-		];
-
 		interaction.reply({
-			embeds: [home],
+			embeds: [
+				new EmbedBuilder()
+					.setConfig("Welcome to the help panel.")
+					.setDescription(
+						"Im a fully functional multipurpose bot! \n\nUnlock exclusive benefits by purchasing a premium membership: **[Buy Premium](https://nothing.here)** \n\n**All Link:** [Support](https://discord.gg/tGQCdQZUqR)"
+					)
+			],
 			allowedMentions: { repliedUser: false },
-			components: components(false)
+			// components: [
+			// 	new ActionRowBuilder().addComponents(
+			// 		new StringSelectMenuBuilder()
+			// 			.setCustomId('help-menu')
+			// 			.setPlaceholder('Please Select a Category')
+			// 			.addOptions([
+			// 				{
+			// 					label: `Info`,
+			// 					value: `info`,
+			// 					description: `List of my commands`,
+			// 					emoji: `ℹ`,
+			// 				},
+			// 			]),
+			// 	)
+			// ]
 		});
 
 		const filter = interaction =>
@@ -75,10 +62,14 @@ export default {
 		});
 
 		collector.on("collect", interaction => {
-			if (interaction.values[0] === "home") {
-				interaction.reply({ embeds: [home], ephemeral: true });
-			} else if (interaction.values[0] === "info") {
-				interaction.reply({ embeds: [info], ephemeral: true });
+			if (interaction.values[0] === "info") {
+				interaction.reply({ embeds: [
+						new EmbedBuilder()
+							.setConfig("Commands")
+							.addField("Hello", "Heres my second page", true)
+					], 
+					ephemeral: true 
+				});
 			}
 		});
 	}
