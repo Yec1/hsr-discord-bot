@@ -13,7 +13,8 @@ const {
 	ButtonBuilder,
 	ButtonStyle,
 	VoiceChannel,
-	StringSelectMenuBuilder
+	StringSelectMenuBuilder,
+	ComponentType
 } = _d;
 import {
 	createAudioPlayer,
@@ -323,7 +324,7 @@ export class Queue extends EventEmitter {
 		info.forEach((v, i) => {
 			menu.addOptions(
 				{
-					label: v.title || "-",
+					label: v.title|| "-",
 					value: `music_c_${i + 1}`,
 				},
 			)
@@ -342,17 +343,15 @@ export class Queue extends EventEmitter {
 				new ActionRowBuilder().addComponents(menu)
 			]
 		});
-		try {
-			/**
-			 * @type {ButtonInteraction}
-			 */
+		try {			
 			const i = await msg2.awaitMessageComponent({
 				filter: i =>
-					i.customId.startsWith("music_c_") &&
+					i.values[0].startsWith("music_c_") &&
 					i.user.id === this.member.id,
+				componentType: ComponentType.SelectMenu,
 				time: 15000
 			});
-			const n = parseInt(i.customId.replace("music_c_", "")) - 1;
+			const n = parseInt(i.values[0].replace("music_c_", "")) - 1;
 			if (!edit)
 				msg2.edit({
 					content: "",
@@ -380,7 +379,8 @@ export class Queue extends EventEmitter {
 					components: []
 				});
 			return info[n];
-		} catch {
+			
+		} catch (e){
 			if (!edit)
 				msg2.edit({
 					content: "",
