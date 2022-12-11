@@ -327,12 +327,6 @@ export class Queue extends EventEmitter {
 					value: `music_c_${i + 1}`,
 				},
 			)
-			// row.addComponents(
-			// 	new ButtonBuilder()
-			// 		.setCustomId(`music_c_${i + 1}`)
-			// 		.setLabel(`${i + 1}`)
-			// 		.setStyle(ButtonStyle.Primary)
-			// )
 		});
 		/**
 		 * @type {Message}
@@ -343,15 +337,6 @@ export class Queue extends EventEmitter {
 				new EmbedBuilder()
 					.setConfig(this.tr("chooseFooter"))
 					.setTitle(this.tr("choose"))
-					
-					// .setDescription(
-					// 	info
-					// 		.map(
-					// 			(v, i) =>
-					// 				`${i + 1}. [${v.title || "-"}](${v.url})`
-					// 		)
-					// 		.join("\n")
-					// )
 			],
 			components: [
 				new ActionRowBuilder().addComponents(menu)

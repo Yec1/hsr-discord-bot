@@ -24,7 +24,7 @@
 		"@discordjs/voice": "^0.14.0",
 		"@hikariware/ms": "^1.0.0",
 		"discord-banner": "^1.6.7",
-		"discord.js": "^14.6.0",
+		"discord.js": "^14.7.1",
 		"dotenv": "^10.0.0",
 		"fast-glob": "^3.2.12",
 		"moment": "^2.29.4",
@@ -39,8 +39,5 @@
 		"eslint": "^8.28.0",
 		"jest": "^27.3.1",
 		"prettier": "^2.4.1"
-	},
-	"overrides": {
-		"discord-api-types": "0.37.14"
 	}
 }
