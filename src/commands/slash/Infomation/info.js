@@ -7,7 +7,6 @@ import {
 	ButtonBuilder
 } from "discord.js";
 import os from "os";
-import { msToHMS } from "../../../services/msToHMS.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -30,6 +29,9 @@ export default {
 	async execute(client, interaction, args, tr) {
 		var page2;
 		function refresh(i) {
+			var usedMemory = os.totalmem() - os.freemem(),
+			totalMemory = os.totalmem();
+			var getpercentage = ((usedMemory / totalMemory) * 100).toFixed(2) + "%";
 			page2 = new EmbedBuilder()
 				.setConfig()
 				.setImage(
@@ -38,11 +40,11 @@ export default {
 				.setDescription(
 					`\`\`\`${tr("botDesc")}\`\`\`` //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
 				)
-				.addField(
-					tr("botUptime"), //上線時間
-					msToHMS(client.uptime),
-					true
-				)
+				// .addField(
+				// 	tr("botUptime"), //上線時間
+				// 	client.uptime,
+				// 	true
+				// )
 				.addField(
 					tr("latency"), //延遲
 					`${Math.abs(Date.now() - i.createdTimestamp)}ms`,
@@ -94,12 +96,10 @@ export default {
                 > [Yeci](https://github.com/yeci226)
                 > [Mantou](https://github.com/Mantou1233)
                 > [Cookie](https://github.com/Cooookie16)
-                `
+                `,
+				true
 			);
 
-		var usedMemory = os.totalmem() - os.freemem(),
-			totalMemory = os.totalmem();
-		var getpercentage = ((usedMemory / totalMemory) * 100).toFixed(2) + "%";
 		refresh(interaction);
 		await interaction.reply({
 			embeds: [Page1],
