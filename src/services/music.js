@@ -1,6 +1,7 @@
 import { EventEmitter } from "events";
 // prettier-ignore
 import _d from "discord.js";
+import { getComponent } from "./components.js";
 const {
 	Message,
 	Channel,
@@ -149,7 +150,7 @@ export class Queue extends EventEmitter {
 	}
 
 	nowplaying() {
-		return this.queue[0]
+		return this.queue[0];
 	}
 
 	checkNext() {
@@ -182,53 +183,15 @@ export class Queue extends EventEmitter {
 	 * @private
 	 */
 	async __play() {
-		const loop = new ButtonBuilder()
-			.setEmoji(`🔄`)
-			.setCustomId('loop')
-			.setLabel(this.tr('none'))
-			.setStyle(3);
+		const { resume, back, stop, skip, loop, pause } = getComponent(
+			"music",
+			this.tr
+		);
 
-		const back = new ButtonBuilder()
-			.setEmoji(`⏮`)
-			.setCustomId('back')
-			.setStyle(2);
-
-		const stop = new ButtonBuilder()
-			.setEmoji(`⏹`)
-			.setCustomId('stop')
-			.setStyle(4);
-
-		const skip = new ButtonBuilder()
-			.setEmoji(`⏭`)
-			.setCustomId('skip')
-			.setStyle(2)
-
-		const pause = new ButtonBuilder()
-			.setEmoji(`⏸`)
-			.setLabel(this.tr('pause'))
-			.setCustomId('pause')
-			.setStyle(3);;
-
-		const resume = new ButtonBuilder()
-			.setEmoji(`▶`)
-			.setLabel(this.tr('resume'))
-			.setCustomId('resume')
-			.setStyle(3);
-
-		const loopt = new ButtonBuilder()
-			.setEmoji(`🔂`)
-			.setCustomId('loopt')
-			.setLabel(this.tr('track'))
-			.setStyle(3);
-
-		const loopq = new ButtonBuilder()
-			.setEmoji(`🔁`)
-			.setCustomId('loopq')
-			.setLabel(this.tr('queue'))
-			.setStyle(3);
-
-		var row = new ActionRowBuilder()
-		/*if(queue.repeatMode === 0)*/ this.queue.paused? row.addComponents(resume, back, stop, skip, loop) : row.addComponents(pause, back, stop, skip, loop)
+		var row = new ActionRowBuilder();
+		/*if(queue.repeatMode === 0)*/ this.queue.paused
+			? row.addComponents(resume, back, stop, skip, loop)
+			: row.addComponents(pause, back, stop, skip, loop);
 		// else if(queue.repeatMode === 1) queue.paused? row.addComponents(resume, back, stop, skip, loopt) : row.addComponents(pause, back, stop, skip, loopt)
 		// else if(queue.repeatMode === 2) queue.paused? row.addComponents(resume, back, stop, skip, loopq) : row.addComponents(pause, back, stop, skip, loopq)
 
@@ -319,15 +282,13 @@ export class Queue extends EventEmitter {
 	 */
 	async collectSong(info, { time, edit } = { time: 50000, edit: false }) {
 		const menu = new StringSelectMenuBuilder()
-				.setCustomId('music-menu')
-				.setPlaceholder('Please Select a Music')
+			.setCustomId("music-menu")
+			.setPlaceholder("Please Select a Music");
 		info.forEach((v, i) => {
-			menu.addOptions(
-				{
-					label: v.title|| "-",
-					value: `music_c_${i + 1}`,
-				},
-			)
+			menu.addOptions({
+				label: v.title || "-",
+				value: `music_c_${i + 1}`
+			});
 		});
 		/**
 		 * @type {Message}
@@ -339,11 +300,9 @@ export class Queue extends EventEmitter {
 					.setConfig(this.tr("chooseFooter"))
 					.setTitle(this.tr("choose"))
 			],
-			components: [
-				new ActionRowBuilder().addComponents(menu)
-			]
+			components: [new ActionRowBuilder().addComponents(menu)]
 		});
-		try {			
+		try {
 			const i = await msg2.awaitMessageComponent({
 				filter: i =>
 					i.values[0].startsWith("music_c_") &&
@@ -379,8 +338,7 @@ export class Queue extends EventEmitter {
 					components: []
 				});
 			return info[n];
-			
-		} catch (e){
+		} catch (e) {
 			if (!edit)
 				msg2.edit({
 					content: "",

@@ -16,10 +16,6 @@ We are using **[Prettier](https://prettier.io)** to format the code. You can run
 - Use `camelCase` for `Function names`, `Variables`, etc. and `PascalCase` for `Class name`
 - Do not make unused variables/imports
 - Don't forget to write `JSDOC`
-- Always write function return type:
-```ts
-const sum = (): number => 2 + 2;
-```
 
 - Use English language
 
