@@ -92,7 +92,7 @@ const langs = {
 	chooseFooter:
 		"if you do not choose, it will automaticly play the first song.",
 	noReceive: "Didnt receive any interaction, defaulting to <z>.",
-	receive: "Now playing <z>.",
+	receive: "Now playing <z>."
 };
 
 export default langs;

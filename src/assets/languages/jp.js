@@ -95,7 +95,7 @@ const langs = {
 	addedToQueue: "已添加 %s 至歌單",
 	chooseFooter: "若未選擇將會自動播放第一首歌曲",
 	noReceive: "未收到回應，開始播放 <z>",
-	receive: "現在開始播放 <z>.",
+	receive: "現在開始播放 <z>."
 };
 
 export default langs;
