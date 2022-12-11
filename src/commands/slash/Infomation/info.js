@@ -2,6 +2,7 @@ import {
 	CommandInteraction,
 	SlashCommandBuilder,
 	EmbedBuilder,
+	ComponentType,
 	ActionRowBuilder,
 	ButtonBuilder
 } from "discord.js";
@@ -27,15 +28,11 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr) {
-		var Page2;
-		function refresh() {
-			Page2 = new EmbedBuilder()
+		var page2;
+		function refresh(i) {
+			page2 = new EmbedBuilder()
 				.setConfig()
-				.setDescription(
-					`\`\`\`` +
-						tr("botDesc") + //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
-						`\`\`\``
-				)
+				.setDescription(`\`\`\`${tr("botDesc")}\`\`\``)
 				.addField(
 					tr("botUptime"), //上線時間
 					msToHMS(client.uptime),
@@ -43,7 +40,7 @@ export default {
 				)
 				.addField(
 					tr("latency"), //延遲
-					Date.now() - interaction.createdTimestamp + `ms`,
+					`${Math.abs(Date.now() - i.createdTimestamp)}ms`,
 					true
 				)
 				.addField(
@@ -61,18 +58,18 @@ export default {
 
 		const row = new ActionRowBuilder().addComponents(
 			new ButtonBuilder()
-				.setCustomId("infoswitch")
+				.setCustomId("info_s_switch")
 				.setLabel(tr("infoSwitch")) //切換
 				.setStyle(2)
 		);
 
 		const row2 = new ActionRowBuilder().addComponents(
 			new ButtonBuilder()
-				.setCustomId("infoswitch")
+				.setCustomId("info_s_switch")
 				.setLabel(tr("infoSwitch")) //切換
 				.setStyle(2),
 			new ButtonBuilder()
-				.setCustomId("inforefresh")
+				.setCustomId("info_s_refresh")
 				.setLabel(tr("infoRefresh")) //刷新
 				.setEmoji("🔄")
 				.setStyle(1)
@@ -80,11 +77,7 @@ export default {
 
 		const Page1 = new EmbedBuilder()
 			.setConfig()
-			.setDescription(
-				`\`\`\`` +
-					tr("botDesc") + //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
-					`\`\`\``
-			)
+			.setDescription(`\`\`\`${tr("botDesc")}\`\`\``)
 			.addField(
 				tr("botDevs"), //機器人開發者
 				`
@@ -97,17 +90,24 @@ export default {
 		var usedMemory = os.totalmem() - os.freemem(),
 			totalMemory = os.totalmem();
 		var getpercentage = ((usedMemory / totalMemory) * 100).toFixed(2) + "%";
-		refresh();
+		refresh(interaction);
 		await interaction.reply({
 			embeds: [Page1],
 			components: [row]
 		});
 
-		client.on("interactionCreate", interaction => {
+		const filter = _ => true;
+
+		const collector = interaction.channel.createMessageComponentCollector({
+			filter,
+			componentType: ComponentType.Button
+		});
+
+		collector.on("collect", interaction => {
 			if (!interaction.isButton()) return;
-			if (interaction.customId === "infoswitch") {
-				refresh();
-				let pages = [Page1, Page2];
+			if (interaction.customId === "info_s_switch") {
+				refresh(interaction);
+				let pages = [Page1, page2];
 				if (++curPage > pages.length) curPage = 1;
 				if (curPage === 2)
 					return interaction.message.edit({
@@ -120,10 +120,10 @@ export default {
 						components: [row]
 					});
 			}
-			if (interaction.customId === "inforefresh") {
-				refresh();
+			if (interaction.customId === "info_s_refresh") {
+				refresh(interaction);
 				return interaction.message.edit({
-					embeds: [Page2],
+					embeds: [page2],
 					components: [row2]
 				});
 			}

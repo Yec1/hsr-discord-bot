@@ -144,10 +144,9 @@ export default {
 					ephemeral: true
 				});
 		}
+
 		if (args[0] == "play") {
 			const song = interaction.options.getString("music");
-			if (client.music.has(interaction.guild.id))
-				client.music.get(interaction.guild.id).play(song);
 
 			interaction.reply({
 				embeds: [
@@ -157,7 +156,11 @@ export default {
 				],
 				ephemeral: true
 			});
-			new Queue(
+
+			if (queue)
+				return void client.music.get(interaction.guild.id).play(song);
+
+			return void new Queue(
 				{
 					vc: interaction.member.voice.channel,
 					channel: interaction.channel,
@@ -187,6 +190,8 @@ export default {
 				],
 				ephemeral: false
 			});
+		} else if (args[0] == "stop") {
+			queue.destroy();
 		}
 	}
 };

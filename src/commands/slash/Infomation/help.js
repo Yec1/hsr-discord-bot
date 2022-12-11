@@ -2,9 +2,9 @@ import {
 	CommandInteraction,
 	SlashCommandBuilder,
 	EmbedBuilder,
-    ComponentType,
-    ActionRowBuilder,
-    SelectMenuBuilder,
+	ComponentType,
+	ActionRowBuilder,
+	SelectMenuBuilder
 } from "discord.js";
 
 export default {
@@ -27,62 +27,59 @@ export default {
 	 */
 	async execute(client, interaction, args, tr) {
 		const home = new EmbedBuilder()
-            .setDescription(
-                `Im a fully functional multipurpose bot! \n\nUnlock exclusive benefits by purchasing a premium membership: **[Buy Premium](https://nothing.here)** \n\n**All Link:** [Support](https://discord.gg/tGQCdQZUqR)`,
-            )
-            .setConfig("Welcome to the help panel.")
+			.setConfig("Welcome to the help panel.")
+			.setDescription(
+				"Im a fully functional multipurpose bot! \n\nUnlock exclusive benefits by purchasing a premium membership: **[Buy Premium](https://nothing.here)** \n\n**All Link:** [Support](https://discord.gg/tGQCdQZUqR)"
+			);
 
-        const info = new EmbedBuilder()
-            .addFields(
-                `Hello`,
-                `Heres my second page`,
-                true
-            )
-            .setConfig('Commands')
+		const info = new EmbedBuilder()
+			.setConfig("Commands")
+			.addField("Hello", "Heres my second page", true);
 
-        const components = (state) => [
-            new ActionRowBuilder().addComponents(
-            new SelectMenuBuilder()
-                .setCustomId('help-menu')
-                .setPlaceholder('Please Select a Category')
-                .setDisabled(state)
-                .addOptions([
-                {
-                    label: `Home`,
-                    value: `home`,
-                    description: `Go home`,
-                    emoji: `🏠`,
-                },
-                {
-                    label: `Info`,
-                    value: `info`,
-                    description: `See info commands`,
-                    emoji: `ℹ`,
-                },
-                ]),
-            ),
-        ];
+		const components = state => [
+			new ActionRowBuilder().addComponents(
+				new SelectMenuBuilder()
+					.setCustomId("help-menu")
+					.setPlaceholder("Please Select a Category")
+					.setDisabled(state)
+					.addOptions([
+						{
+							label: "Home",
+							value: "home",
+							description: "Go home",
+							emoji: "🏠"
+						},
+						{
+							label: "Info",
+							value: "info",
+							description: "See info commands",
+							emoji: "ℹ"
+						}
+					])
+			)
+		];
 
-        interaction.reply({
-            embeds: [home],
-            allowedMentions: { repliedUser: false },
-            components: components(true),
-        });
+		interaction.reply({
+			embeds: [home],
+			allowedMentions: { repliedUser: false },
+			components: components(false)
+		});
 
-        const filter = (interaction) => interaction.user.id === interaction.author.id;
+		const filter = interaction =>
+			interaction.user.id === interaction.member.id;
 
-        const collector = message.channel.createMessageComponentCollector({
-            filter,
-            componentType: ComponentType.SelectMenu,
-            max: 10,
-        });
+		const collector = interaction.channel.createMessageComponentCollector({
+			filter,
+			componentType: ComponentType.SelectMenu,
+			max: 10
+		});
 
-        collector.on('collect', (interaction) => {
-            if (interaction.values[0] === 'home') {
-                interaction.reply({ embeds: [home], ephemeral: true });
-            } else if (interaction.values[0] === 'info') {
-                interaction.reply({ embeds: [info], ephemeral: true });
-            }
-        });
+		collector.on("collect", interaction => {
+			if (interaction.values[0] === "home") {
+				interaction.reply({ embeds: [home], ephemeral: true });
+			} else if (interaction.values[0] === "info") {
+				interaction.reply({ embeds: [info], ephemeral: true });
+			}
+		});
 	}
 };
