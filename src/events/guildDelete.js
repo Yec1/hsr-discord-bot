@@ -8,7 +8,7 @@ client.on("guildDelete", guild => {
 		embeds: [
 			new EmbedBuilder()
 				.setThumbnail(guild.iconURL())
-				.setTitle(`已離開伺服器`)
+				.setTitle("已離開伺服器")
 				.addField("名稱", `\`${guild.name}\``, false)
 				.addField("ID", `\`${guild.id}\``, false)
 				.addField("擁有者", `<@${guild.ownerId}>`, false)
