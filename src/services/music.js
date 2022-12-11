@@ -12,7 +12,8 @@ const {
 	ActionRowBuilder,
 	ButtonBuilder,
 	ButtonStyle,
-	VoiceChannel
+	VoiceChannel,
+	StringSelectMenuBuilder
 } = _d;
 import {
 	createAudioPlayer,
@@ -316,16 +317,23 @@ export class Queue extends EventEmitter {
 	 * @type {(info: YouTubeVideo[]) => YouTubeVideo}
 	 */
 	async collectSong(info, { time, edit } = { time: 50000, edit: false }) {
-		const row = new ActionRowBuilder();
-
-		info.forEach((_, i) =>
-			row.addComponents(
-				new ButtonBuilder()
-					.setCustomId(`music_c_${i + 1}`)
-					.setLabel(`${i + 1}`)
-					.setStyle(ButtonStyle.Primary)
+		const menu = new StringSelectMenuBuilder()
+				.setCustomId('music-menu')
+				.setPlaceholder('Please Select a Music')
+		info.forEach((v, i) => {
+			menu.addOptions(
+				{
+					label: v.title || "-",
+					value: `music_c_${i + 1}`,
+				},
 			)
-		);
+			// row.addComponents(
+			// 	new ButtonBuilder()
+			// 		.setCustomId(`music_c_${i + 1}`)
+			// 		.setLabel(`${i + 1}`)
+			// 		.setStyle(ButtonStyle.Primary)
+			// )
+		});
 		/**
 		 * @type {Message}
 		 */
@@ -335,16 +343,19 @@ export class Queue extends EventEmitter {
 				new EmbedBuilder()
 					.setConfig(this.tr("chooseFooter"))
 					.setTitle(this.tr("choose"))
-					.setDescription(
-						info
-							.map(
-								(v, i) =>
-									`${i + 1}. [${v.title || "-"}](${v.url})`
-							)
-							.join("\n")
-					)
+					
+					// .setDescription(
+					// 	info
+					// 		.map(
+					// 			(v, i) =>
+					// 				`${i + 1}. [${v.title || "-"}](${v.url})`
+					// 		)
+					// 		.join("\n")
+					// )
 			],
-			components: [row]
+			components: [
+				new ActionRowBuilder().addComponents(menu)
+			]
 		});
 		try {
 			/**

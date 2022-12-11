@@ -35,21 +35,21 @@ export default {
 					)
 			],
 			allowedMentions: { repliedUser: false },
-			// components: [
-			// 	new ActionRowBuilder().addComponents(
-			// 		new StringSelectMenuBuilder()
-			// 			.setCustomId('help-menu')
-			// 			.setPlaceholder('Please Select a Category')
-			// 			.addOptions([
-			// 				{
-			// 					label: `Info`,
-			// 					value: `info`,
-			// 					description: `List of my commands`,
-			// 					emoji: `ℹ`,
-			// 				},
-			// 			]),
-			// 	)
-			// ]
+			components: [
+				new ActionRowBuilder().addComponents(
+					new StringSelectMenuBuilder()
+						.setCustomId('help-menu')
+						.setPlaceholder('Please Select a Category')
+						.addOptions([
+							{
+								label: `Info`,
+								value: `info`,
+								description: `List of my commands`,
+								emoji: `ℹ`,
+							},
+						]),
+				)
+			]
 		});
 
 		const filter = interaction =>
