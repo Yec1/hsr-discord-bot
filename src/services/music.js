@@ -29,8 +29,6 @@ import {
 } from "@discordjs/voice";
 import { i18nMixin } from "./i18n.js";
 import play, { YouTubeVideo, yt_validate } from "play-dl";
-import { finished } from "stream";
-
 /**
  * class for global music handling. should be in the client.
  * @extends {Collection}
@@ -148,6 +146,10 @@ export class Queue extends EventEmitter {
 		}
 	}
 
+	nowplaying() {
+		return this.queue[0]
+	}
+
 	checkNext() {
 		this.queue.splice(0, 1);
 		if (this.queue.length == 0) this.destroy();
@@ -178,6 +180,56 @@ export class Queue extends EventEmitter {
 	 * @private
 	 */
 	async __play() {
+		const loop = new ButtonBuilder()
+			.setEmoji(`🔄`)
+			.setCustomId('loop')
+			.setLabel(this.tr('none'))
+			.setStyle(3);
+
+		const back = new ButtonBuilder()
+			.setEmoji(`⏮`)
+			.setCustomId('back')
+			.setStyle(2);
+
+		const stop = new ButtonBuilder()
+			.setEmoji(`⏹`)
+			.setCustomId('stop')
+			.setStyle(4);
+
+		const skip = new ButtonBuilder()
+			.setEmoji(`⏭`)
+			.setCustomId('skip')
+			.setStyle(2)
+
+		const pause = new ButtonBuilder()
+			.setEmoji(`⏸`)
+			.setLabel(this.tr('pause'))
+			.setCustomId('pause')
+			.setStyle(3);;
+
+		const resume = new ButtonBuilder()
+			.setEmoji(`▶`)
+			.setLabel(this.tr('resume'))
+			.setCustomId('resume')
+			.setStyle(3);
+
+		const loopt = new ButtonBuilder()
+			.setEmoji(`🔂`)
+			.setCustomId('loopt')
+			.setLabel(this.tr('track'))
+			.setStyle(3);
+
+		const loopq = new ButtonBuilder()
+			.setEmoji(`🔁`)
+			.setCustomId('loopq')
+			.setLabel(this.tr('queue'))
+			.setStyle(3);
+
+		var row = new ActionRowBuilder()
+		/*if(queue.repeatMode === 0)*/ this.queue.paused? row.addComponents(resume, back, stop, skip, loop) : row.addComponents(pause, back, stop, skip, loop)
+		// else if(queue.repeatMode === 1) queue.paused? row.addComponents(resume, back, stop, skip, loopt) : row.addComponents(pause, back, stop, skip, loopt)
+		// else if(queue.repeatMode === 2) queue.paused? row.addComponents(resume, back, stop, skip, loopq) : row.addComponents(pause, back, stop, skip, loopq)
+
 		if (!this.started) this.started = true;
 
 		const song = this.queue[0];
@@ -202,7 +254,8 @@ export class Queue extends EventEmitter {
 						`> ${song.info.durationRaw}`,
 						true
 					)
-			]
+			],
+			components: [row]
 		});
 
 		let resource = createAudioResource(song.stream.stream, {
@@ -327,7 +380,8 @@ export class Queue extends EventEmitter {
 									`[${info[n].title || "-"}](${info[n].url})`
 								)
 							)
-					]
+					],
+					components: []
 				});
 			return info[n];
 		} catch {
@@ -354,7 +408,8 @@ export class Queue extends EventEmitter {
 									`[${info[0].title || "-"}](${info[0].url})`
 								)
 							)
-					]
+					],
+					components: []
 				});
 			return info[0];
 		}

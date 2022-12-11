@@ -192,6 +192,8 @@ export default {
 			});
 		} else if (args[0] == "stop") {
 			queue.destroy();
-		}
+		} /* else if (args[0] == "previous") {
+			queue.previous();
+		} */
 	}
 };

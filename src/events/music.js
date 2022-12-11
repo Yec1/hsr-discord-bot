@@ -14,58 +14,91 @@ client.on("interactionCreate", async interaction => {
 	if (interaction.isButton())
 		await interaction.deferUpdate({ ephemeral: true }).catch(() => {});
 	else return;
-	// const queue = client.player.getQueue(interaction.guildId);
-	// if(!queue) return interaction.message.edit({ embeds: [
-	//         new EmbedBuilder()
-	//             .setConfig()
-	//             .setDescription(tr('musicNoSong'))
-	//     ]
-	// });
-	// const track = queue.current;
-	// if(interaction.customId === "pause"){
-	//     queue.setPaused(true);
-	//     return interaction.message.edit({
-	//         embeds: [
-	//             embed(queue, track)
-	//         ],
-	//         components: [
-	//             check(queue)
-	//         ]
-	//     })
-	// }
-	// if(interaction.customId === "resume"){
-	//     queue.setPaused(false);
-	//     return interaction.message.edit({
-	//         embeds: [
-	//             embed(queue, track)
-	//         ],
-	//         components: [
-	//             check(queue)
-	//         ]
-	//     })
-	// }
-	// if(interaction.customId === "stop"){
-	//     await queue.destroy();
-	//     return interaction.message.edit({
-	//         embeds: [
-	//             new EmbedBuilder()
-	//                 .setConfig()
-	//                 .setDescription(`\`${interaction.user.tag}\` ` + tr('musicStop'))
-	//         ],
-	//         components: []
-	//     })
-	// }
-	// if(interaction.customId === "skip"){
-	//     await queue.skip()
-	//     return interaction.message.edit({
-	//         embeds: [
-	//             new EmbedBuilder()
-	//                 .setConfig()
-	//                 .setDescription(`\`${interaction.user.tag}\` ` + tr('musicSkip') + ` **${queue.current.title}** `)
-	//         ],
-	//         components: []
-	//     })
-	// }
+	const queue = client.music.get(interaction.guild.id);
+	if(!queue && (
+				interaction.customId === "pause" || 
+				interaction.customId === "resume" || 
+				interaction.customId === "skip" || 
+				interaction.customId === "back" || 
+				interaction.customId === "stop" ||
+				interaction.customId === "loop" ||
+				interaction.customId === "loopt" ||
+				interaction.customId === "loopq"
+			)
+		) return interaction.message.edit({ embeds: [
+	        new EmbedBuilder()
+	            .setConfig()
+	            .setDescription(tr('musicNoSong'))
+	    ],
+		components: []
+	});
+	const loop = new ButtonBuilder()
+	.setEmoji(`🔄`)
+	.setCustomId('loop')
+	.setLabel(tr('none')) //tr('none')
+	.setStyle(3);
+
+	const back = new ButtonBuilder()
+	  .setEmoji(`⏮`)
+	  .setCustomId('back')
+	  .setStyle(2);
+
+	const stop = new ButtonBuilder()
+	  .setEmoji(`⏹`)
+	  .setCustomId('stop')
+	  .setStyle(4);
+
+	const skip = new ButtonBuilder()
+	  .setEmoji(`⏭`)
+	  .setCustomId('skip')
+	  .setStyle(2)
+
+	const pause = new ButtonBuilder()
+	  .setEmoji(`⏸`)
+	  .setLabel(tr('pause')) //tr('pause')
+	  .setCustomId('pause')
+	  .setStyle(3);;
+
+	const resume = new ButtonBuilder()
+	  .setEmoji(`▶`)
+	  .setLabel(tr('resume')) //tr('resume')
+	  .setCustomId('resume')
+	  .setStyle(3);
+
+	const loopt = new ButtonBuilder()
+	  .setEmoji(`🔂`)
+	  .setCustomId('loopt')
+	  .setLabel(tr('track')) //tr('track')
+	  .setStyle(3);
+
+	const loopq = new ButtonBuilder()
+	  .setEmoji(`🔁`)
+	  .setCustomId('loopq')
+	  .setLabel(tr('queue')) //tr('queue')
+	  .setStyle(3);
+	if(interaction.customId === "pause" || interaction.customId === "resume"){
+	    queue.pause();
+		return interaction.message.edit({
+			embeds: [
+			    embed(queue)
+			],
+			components: [
+				check(queue)
+			]
+		})
+	}
+	if(interaction.customId === "stop"){
+	    queue.destroy();
+		return interaction.message.edit({
+			components: []
+		})
+	}
+	if(interaction.customId === "skip"){
+	    queue.next()
+		return interaction.message.edit({
+			components: []
+		})
+	}
 	// if(interaction.customId === "back"){
 	//     if (!queue.previousTracks[1]) return interaction.reply({ embeds: [
 	//         new EmbedBuilder()
@@ -116,82 +149,34 @@ client.on("interactionCreate", async interaction => {
 	//         ]
 	//     })
 	// }
+	function embed(queue){
+		var song = queue.nowplaying();
+		const embed = new EmbedBuilder()
+		.setConfig()
+		.setTitle(song.info.title || "-")
+		.setURL(song.info.url)
+		.setImage(
+			song.info.thumbnails[song.info.thumbnails.length - 1]
+				.url
+		)
+		.addField(
+			tr("requestby"), //this.tr("requestby")
+			`> ${song.member || this.member}`,
+			true
+		)
+		.addField(
+			tr("duration"), //this.tr("duration")
+			`> ${song.info.durationRaw}`,
+			true
+		)
+		return embed;
+	}
+	
+	function check(queue){
+		var row = new ActionRowBuilder()
+		/*if(queue.repeatMode === 0)*/ queue.paused? row.addComponents(resume, back, stop, skip, loop) : row.addComponents(pause, back, stop, skip, loop)
+		// else if(queue.repeatMode === 1) queue.paused? row.addComponents(resume, back, stop, skip, loopt) : row.addComponents(pause, back, stop, skip, loopt)
+		// else if(queue.repeatMode === 2) queue.paused? row.addComponents(resume, back, stop, skip, loopq) : row.addComponents(pause, back, stop, skip, loopq)
+		return row;
+	}
 });
-
-// function embed(queue, type){
-//     const embed = new EmbedBuilder()
-//     .setConfig()
-//     .setTitle(type.title)
-//     .setURL(type.url)
-//     .setImage(type.thumbnail)
-//     .addField(
-//         'Volume', //tr('volume')
-//         `> **${queue.volume}%**`,
-//         true
-//     )
-//     .addField(
-//         'Duration', //tr('duration')
-//         `> ${type.duration}`,
-//         true
-//     )
-//     .addField(
-//         'Request By', //tr('requestby')
-//         `> ${type.requestedBy}`,
-//         true
-//     )
-//     return embed;
-// }
-
-//     const loop = new ButtonBuilder()
-//       .setEmoji(`🔄`)
-//       .setCustomId('loop')
-//       .setLabel('None') //tr('none')
-//       .setStyle(3);
-
-//       const back = new ButtonBuilder()
-//         .setEmoji(`⏮`)
-//         .setCustomId('back')
-//         .setStyle(2);
-
-//       const stop = new ButtonBuilder()
-//         .setEmoji(`⏹`)
-//         .setCustomId('stop')
-//         .setStyle(4);
-
-//       const skip = new ButtonBuilder()
-//         .setEmoji(`⏭`)
-//         .setCustomId('skip')
-//         .setStyle(2)
-
-//       const pause = new ButtonBuilder()
-//         .setEmoji(`⏸`)
-//         .setLabel('Pause') //tr('pause')
-//         .setCustomId('pause')
-//         .setStyle(3);;
-
-//       const resume = new ButtonBuilder()
-//         .setEmoji(`▶`)
-//         .setLabel('Resume') //tr('resume')
-//         .setCustomId('resume')
-//         .setStyle(3);
-
-//       const loopt = new ButtonBuilder()
-//         .setEmoji(`🔂`)
-//         .setCustomId('loopt')
-//         .setLabel('Track') //tr('track')
-//         .setStyle(3);
-
-//       const loopq = new ButtonBuilder()
-//         .setEmoji(`🔁`)
-//         .setCustomId('loopq')
-//         .setLabel('Queue') //tr('queue')
-//         .setStyle(3);
-
-// function check(queue){
-//     var row = new ActionRowBuilder()
-//     if(queue.repeatMode === 0) if (queue.connection.paused) row.addComponents(resume, back, stop, skip, loop); else row.addComponents(pause, back, stop, skip, loop)
-//     else if(queue.repeatMode === 1) if (queue.connection.paused) row.addComponents(resume, back, stop, skip, loopt); else row.addComponents(pause, back, stop, skip, loopt)
-//     else if(queue.repeatMode === 2) if (queue.connection.paused) row.addComponents(resume, back, stop, skip, loopq); else row.addComponents(pause, back, stop, skip, loopq)
-//     return row;
-
-// }
