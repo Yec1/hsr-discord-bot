@@ -30,8 +30,9 @@ export default {
 		var page2;
 		function refresh(i) {
 			var usedMemory = os.totalmem() - os.freemem(),
-			totalMemory = os.totalmem();
-			var getpercentage = ((usedMemory / totalMemory) * 100).toFixed(2) + "%";
+				totalMemory = os.totalmem();
+			var getpercentage =
+				((usedMemory / totalMemory) * 100).toFixed(2) + "%";
 			page2 = new EmbedBuilder()
 				.setConfig()
 				.setImage(
