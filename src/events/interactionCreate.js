@@ -15,9 +15,9 @@ client.on("interactionCreate", async interaction => {
 	await g.checkAndUpdate();
 
 	const i18n = i18nMixin(g.lang || tl3(interaction.locale) || "en");
-	// if (interaction.isButton()) {
-	// 	await interaction.deferUpdate().catch(() => {});
-	// }
+	if (interaction.isButton()) {
+		await interaction.deferUpdate().catch(() => {});
+	}
 	if (interaction.isCommand()) {
 		//await interaction.deferReply({ /*ephemeral: false*/ }).catch(() => {});
 
