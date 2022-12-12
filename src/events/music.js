@@ -51,7 +51,7 @@ client.on("interactionCreate", async interaction => {
 			],
 			components: []
 		});
-	const { resume, back, stop, skip, loop, pause } = getComponent("music");
+	const { resume, back, stop, skip, loop, pause } = getComponent("music", tr);
 
 	if (id === "pause" || id === "resume") {
 		queue.pause();
