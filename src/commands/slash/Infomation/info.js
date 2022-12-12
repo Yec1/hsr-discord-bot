@@ -6,6 +6,7 @@ import {
 	ActionRowBuilder,
 	ButtonBuilder
 } from "discord.js";
+import pretty_ms from "pretty-ms";
 import os from "os";
 
 export default {
@@ -30,8 +31,9 @@ export default {
 		var page2;
 		function refresh(i) {
 			var usedMemory = os.totalmem() - os.freemem(),
-			totalMemory = os.totalmem();
-			var getpercentage = ((usedMemory / totalMemory) * 100).toFixed(2) + "%";
+				totalMemory = os.totalmem();
+			var getpercentage =
+				((usedMemory / totalMemory) * 100).toFixed(2) + "%";
 			page2 = new EmbedBuilder()
 				.setConfig()
 				.setImage(
@@ -40,11 +42,13 @@ export default {
 				.setDescription(
 					`\`\`\`${tr("botDesc")}\`\`\`` //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
 				)
-				// .addField(
-				// 	tr("botUptime"), //上線時間
-				// 	client.uptime,
-				// 	true
-				// )
+				.addField(
+					tr("botUptime"), //上線時間
+					pretty_ms(client.uptime, {
+						colonNotation: true
+					}),
+					true
+				)
 				.addField(
 					tr("latency"), //延遲
 					`${Math.abs(Date.now() - i.createdTimestamp)}ms`,
@@ -82,7 +86,7 @@ export default {
 				.setStyle(1)
 		);
 
-		const Page1 = new EmbedBuilder()
+		const page1 = new EmbedBuilder()
 			.setConfig()
 			.setImage(
 				"https://media.discordapp.net/attachments/1050727525644513322/1050727572595544144/snowed.png?width=1253&height=671"
@@ -101,23 +105,26 @@ export default {
 			);
 
 		refresh(interaction);
-		await interaction.reply({
-			embeds: [Page1],
+		const resp = await interaction.reply({
+			embeds: [page1],
 			components: [row]
 		});
+		const filter = i => true;
 
-		const filter = _ => true;
-
-		const collector = interaction.channel.createMessageComponentCollector({
+		const collector = resp.createMessageComponentCollector({
 			filter,
 			componentType: ComponentType.Button
 		});
 
 		collector.on("collect", interaction => {
 			if (!interaction.isButton()) return;
+			interaction.reply({
+				content: "refreshing...",
+				ephemeral: true
+			});
 			if (interaction.customId === "info_s_switch") {
 				refresh(interaction);
-				let pages = [Page1, page2];
+				let pages = [page1, page2];
 				if (++curPage > pages.length) curPage = 1;
 				if (curPage === 2)
 					return interaction.message.edit({

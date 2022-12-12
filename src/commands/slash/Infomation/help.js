@@ -4,7 +4,7 @@ import {
 	EmbedBuilder,
 	ComponentType,
 	ActionRowBuilder,
-	StringSelectMenuBuilder 
+	StringSelectMenuBuilder
 } from "discord.js";
 
 export default {
@@ -38,16 +38,16 @@ export default {
 			components: [
 				new ActionRowBuilder().addComponents(
 					new StringSelectMenuBuilder()
-						.setCustomId('help-menu')
-						.setPlaceholder('Please Select a Category')
+						.setCustomId("help-menu")
+						.setPlaceholder("Please Select a Category")
 						.addOptions([
 							{
-								label: `Info`,
-								value: `info`,
-								description: `List of my commands`,
-								emoji: `ℹ`,
-							},
-						]),
+								label: "Info",
+								value: "info",
+								description: "List of my commands",
+								emoji: "ℹ"
+							}
+						])
 				)
 			]
 		});
@@ -63,12 +63,13 @@ export default {
 
 		collector.on("collect", interaction => {
 			if (interaction.values[0] === "info") {
-				interaction.reply({ embeds: [
+				interaction.reply({
+					embeds: [
 						new EmbedBuilder()
 							.setConfig("Commands")
 							.addField("Hello", "Heres my second page", true)
-					], 
-					ephemeral: true 
+					],
+					ephemeral: true
 				});
 			}
 		});
