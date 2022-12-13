@@ -208,7 +208,7 @@ export default {
 						.addField("ID", ` \`${member.user.id}\` `, true)
 						.addField(
 							tr("user_nick"),
-							member.nickname === null
+							!member.nickname
 								? ` \`${tr("none")}\` `
 								: ` \`${member.nickname}\` `,
 							true
