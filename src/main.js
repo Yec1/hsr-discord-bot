@@ -1,5 +1,5 @@
 import config from "./config.js";
-import emoji from "./emoji.js";
+import emoji from "./assets/emoji.js";
 import { client } from "./index.js";
 
 import { Loader } from "./core/Loader.js";
