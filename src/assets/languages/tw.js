@@ -19,6 +19,13 @@ const langs = {
 	emoji_Public: "你可以在不加入伺服器的情況下使用此表情符號",
 	//user.js
 	user_Full_Image: "完整圖片",
+	user_header: " 的資訊",
+	user_tag: "標籤",
+	user_nick: "匿稱",
+	user_badge: "徽章",
+	user_status: "狀態",
+	user_createdate: "創建日期",
+	user_joindate: "加入日期",
 	//server.js
 	//filter
 	filter_NoRole: "無身分者",

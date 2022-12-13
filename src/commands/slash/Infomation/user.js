@@ -11,6 +11,8 @@ banner(client.config.token, {
 	cacheTime: 60 * 60 * 1000
 });
 import { getUserBanner } from "discord-banner";
+import moment from "moment";
+const emoji = client.emoji;
 
 export default {
 	data: new SlashCommandBuilder()
@@ -164,43 +166,76 @@ export default {
 		} else if (args[0] == "info") {
 			const member = interaction.guild.members.cache.get(args[1]);
 			const statuses = {
-				online: client.emoji.online,
-				dnd: client.emoji.dnd,
-				idle: client.emoji.idle,
-				offline: client.emoji.offline,
+				online: emoji.online,
+				dnd: emoji.dnd,
+				idle: emoji.idle,
+				offline: emoji.offline
 			};
 			const flags = {
-				"": " ",
-				"DISCORD_EMPLOYEE": client.emoji.staff,
-				"DISCORD_PARTNER": client.emoji.partner,
-				"BUGHUNTER_LEVEL_1": client.emoji.bughunter1,
-				"BUGHUNTER_LEVEL_2": client.emoji.bughunter2,
-				"HYPESQUAD_EVENTS": client.emoji.hypesquadevents,
-				"HypeSquadOnlineHouse1": client.emoji.hypesquadbrilliance,
-				"HypeSquadOnlineHouse2": client.emoji.hypesquadbravery,
-				"HypeSquadOnlineHouse3": client.emoji.hypesquadbalance,
-				"EARLY_SUPPORTER": client.emoji.earlysupporter,
-				"TEAM_USER": client.emoji.hypesquadbalance,
-				"VERIFIED_BOT": client.emoji.verify,
-				"EARLY_VERIFIED_DEVELOPER": client.emoji.botdev,
-				"ActiveDeveloper": client.emoji.activedeveloper
-			};			
-
-			console.log(member.user.flags.toArray())
+				Staff: emoji.staff,
+				CertifiedModerator: emoji.certifiedmod,
+				Partner: emoji.partner,
+				BugHunterLevel1: emoji.bughunter1,
+				BugHunterLevel2: emoji.bughunter2,
+				Hypesquad: emoji.hypesquadevents,
+				HypeSquadOnlineHouse1: emoji.hypesquadbrilliance,
+				HypeSquadOnlineHouse2: emoji.hypesquadbravery,
+				HypeSquadOnlineHouse3: emoji.hypesquadbalance,
+				PremiumEarlySupporter: emoji.earlysupporter,
+				TeamPseudoUser: emoji.hypesquadbalance,
+				VerifiedBot: emoji.verify,
+				VerifiedDeveloper: emoji.botdev,
+				ActiveDeveloper: emoji.activedeveloper
+			};
+			const userFlags = (await member.user.fetchFlags()).toArray();
 
 			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
-						.setThumbnail(member.user.displayAvatarURL({
-							size: 4096,
-							dynamic: true
-						}))
-						.addField("Tag", member.user.tag, true)
-						.addField("ID", member.user.id, true)
-						.addField("Nick", member.nickname === null ? tr("none") : member.nickname, true)
-						.addField("Status", member.presence ? statuses[member.presence.status] : client.emoji.offline, true)
-						// .addField("Badge", flags[member.user.flags.toArray()], true)
+						.setTitle(member.user.username + tr("user_header"))
+						.setThumbnail(
+							member.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							})
+						)
+						.addField(
+							tr("user_tag"),
+							` \`${member.user.tag}\` `,
+							true
+						)
+						.addField("ID", ` \`${member.user.id}\` `, true)
+						.addField(
+							tr("user_nick"),
+							member.nickname === null
+								? ` \`${tr("none")}\` `
+								: ` \`${member.nickname}\` `,
+							true
+						)
+						.addField(
+							tr("user_badge"),
+							userFlags.map(flag => flags[flag]).join(" ") ||
+								tr("none"),
+							true
+						)
+						.addField(
+							tr("user_status"),
+							member.presence
+								? statuses[member.presence.status]
+								: emoji.offline,
+							true
+						)
+						.addField(
+							tr("user_createdate"),
+							`<t:${moment(member.user.createdAt).unix()}:F>`,
+							false
+						)
+						.addField(
+							tr("user_joindate"),
+							`<t:${moment(member.joinedAt).unix()}:F>`,
+							true
+						)
 				]
 			});
 		} else {

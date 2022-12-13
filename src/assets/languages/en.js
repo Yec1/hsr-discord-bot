@@ -19,14 +19,21 @@ const langs = {
 	emoji_Public: "You can use this emoji anywhere",
 	//user.js
 	user_Full_Image: "Full Image",
+	user_header: "'s Profile",
+	user_tag: "Tag",
+	user_nick: "Nick",
+	user_badge: "Badge",
+	user_status: "Status",
+	user_createdate: "Create Date",
+	user_joindate: "Join Date",
 	//server.js
-	//filter
+	///filter
 	filter_NoRole: "No Roles",
 	filter_Everyone: "Everyone",
-	//verification
+	///verification
 	verify_Low: "Low",
 	verify_Medium: "Medium",
-	//regions
+	///regions
 	br: "Brazil",
 	eu: "Europe",
 	hk: "Hongkong",
