@@ -118,10 +118,6 @@ export default {
 
 		collector.on("collect", interaction => {
 			if (!interaction.isButton()) return;
-			interaction.reply({
-				content: "refreshing...",
-				ephemeral: true
-			});
 			if (interaction.customId === "info_s_switch") {
 				refresh(interaction);
 				let pages = [page1, page2];

@@ -17,11 +17,11 @@ export default {
 		.setName("user")
 		.setDescription("Get info of a selected user")
 		.setNameLocalizations({
-			"zh-TW": "用戶信息",
+			"zh-TW": "用戶資訊",
 			ja: "ユーザー情報"
 		})
 		.setDescriptionLocalizations({
-			"zh-TW": "獲得用戶的信息",
+			"zh-TW": "獲得用戶的資訊",
 			ja: "ユーザーの情報を取得"
 		})
 		.addSubcommand(subcommand =>
@@ -79,10 +79,10 @@ export default {
 				.setName("info")
 				.setDescription("Get user info")
 				.setNameLocalizations({
-					"zh-TW": "查看用戶的信息"
+					"zh-TW": "資訊"
 				})
 				.setDescriptionLocalizations({
-					"zh-TW": "查看用戶的信息"
+					"zh-TW": "查看用戶的資訊"
 				})
 				.addUserOption(option =>
 					option
@@ -92,7 +92,7 @@ export default {
 							"zh-TW": "用戶"
 						})
 						.setDescriptionLocalizations({
-							"zh-TW": "你想查看用戶信息的用戶"
+							"zh-TW": "你想查看用戶資訊的用戶"
 						})
 						.setRequired(true)
 				)
@@ -159,6 +159,48 @@ export default {
 							.setURL(banner)
 							.setStyle(5)
 					)
+				]
+			});
+		} else if (args[0] == "info") {
+			const member = interaction.guild.members.cache.get(args[1]);
+			const statuses = {
+				online: client.emoji.online,
+				dnd: client.emoji.dnd,
+				idle: client.emoji.idle,
+				offline: client.emoji.offline,
+			};
+			const flags = {
+				"": " ",
+				"DISCORD_EMPLOYEE": client.emoji.staff,
+				"DISCORD_PARTNER": client.emoji.partner,
+				"BUGHUNTER_LEVEL_1": client.emoji.bughunter1,
+				"BUGHUNTER_LEVEL_2": client.emoji.bughunter2,
+				"HYPESQUAD_EVENTS": client.emoji.hypesquadevents,
+				"HypeSquadOnlineHouse1": client.emoji.hypesquadbrilliance,
+				"HypeSquadOnlineHouse2": client.emoji.hypesquadbravery,
+				"HypeSquadOnlineHouse3": client.emoji.hypesquadbalance,
+				"EARLY_SUPPORTER": client.emoji.earlysupporter,
+				"TEAM_USER": client.emoji.hypesquadbalance,
+				"VERIFIED_BOT": client.emoji.verify,
+				"EARLY_VERIFIED_DEVELOPER": client.emoji.botdev,
+				"ActiveDeveloper": client.emoji.activedeveloper
+			};			
+
+			console.log(member.user.flags.toArray())
+
+			await interaction.reply({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
+						.setThumbnail(member.user.displayAvatarURL({
+							size: 4096,
+							dynamic: true
+						}))
+						.addField("Tag", member.user.tag, true)
+						.addField("ID", member.user.id, true)
+						.addField("Nick", member.nickname === null ? tr("none") : member.nickname, true)
+						.addField("Status", member.presence ? statuses[member.presence.status] : client.emoji.offline, true)
+						// .addField("Badge", flags[member.user.flags.toArray()], true)
 				]
 			});
 		} else {
