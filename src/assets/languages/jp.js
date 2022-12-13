@@ -76,6 +76,11 @@ const langs = {
 	server_Text_Channel: "メッセージチャンネル",
 	server_Voice_Channel: "ボイスチャンネル",
 	server_Boost_Count: "ブースト数",
+	server_Other: "其他",
+	server_Online: "線上",
+	server_Idle: "閒置",
+	server_DnD: "勿擾",
+	server_Offline: "離線",
 	//info.js
 	infoSwitch: "スイッチ",
 	botDesc:
