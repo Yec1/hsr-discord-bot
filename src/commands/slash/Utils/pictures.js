@@ -1,9 +1,12 @@
 import {
 	CommandInteraction,
 	SlashCommandBuilder,
-	EmbedBuilder
+	EmbedBuilder,
+	ActionRowBuilder,
+	ButtonBuilder
 } from "discord.js";
-import { getSFWImage } from "waifu.pics-wrapper";
+import nekoclient from "nekos.life";
+const neko = new nekoclient();
 
 export default {
 	data: new SlashCommandBuilder()
@@ -56,15 +59,24 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr) {
+		const category = interaction.options.getString("category")
+		var image2;
+		if(category === "waifu") image2 = await neko.waifu();
+		else if (category === "neko") image2 = await neko.neko();
 		await interaction.reply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
-					.setImage(
-						await getSFWImage(
-							interaction.options.getString("category")
-						)
-					)
+					.setImage(image2.url)
+			],
+			components: [
+				new ActionRowBuilder().addComponents(
+					new ButtonBuilder()
+						.setLabel(tr("user_Full_Image")) //完整圖片
+						.setEmoji("🖼️")
+						.setURL(image2.url)
+						.setStyle(5),
+				)
 			]
 		});
 	}
