@@ -1,4 +1,5 @@
 import config from "./config.js";
+import emoji from "./emoji.js";
 import { client } from "./index.js";
 
 import { Loader } from "./core/Loader.js";
@@ -7,6 +8,7 @@ import { MusicManager } from "./services/music.js";
 
 // Global Variables
 client.config = config;
+client.emoji = emoji;
 client.db = new Database(process.env.MONGO);
 await client.db.connect();
 if (process.env.DB_TABLE) client.db = new client.db.table(process.env.DB_TABLE);
