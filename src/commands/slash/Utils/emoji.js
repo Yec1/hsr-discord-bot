@@ -53,7 +53,9 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
-						.setDescription(tr("emojiErr")) //我沒有找到這個表情符號
+						.setDescription(
+							client.emoji.cross + ` ` + tr("emojiErr")
+						) //我沒有找到這個表情符號
 				],
 				ephemeral: true
 			});
