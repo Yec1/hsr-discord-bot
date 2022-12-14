@@ -51,7 +51,7 @@ client.on("interactionCreate", async interaction => {
 				new EmbedBuilder()
 					.setConfig()
 					.setDescription(
-						client.emoji.cross + ` ` + tr("musicNoSong")
+						client.emoji.cross + " " + tr("musicNoSong")
 					)
 			],
 			components: []
