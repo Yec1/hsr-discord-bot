@@ -154,14 +154,19 @@ export class Queue extends EventEmitter {
 	}
 
 	check() {
-		const list = this.queue.map(
-			(song, i) =>
-				`**${i + 1}** - [${song.info.title}](${song.info.url}) - \`${
-					song.info.durationRaw
-				}\` ` +
-				this.tr("requestby") +
-				` ${song.member}`
-		);
+		let list;
+		if (this.queue[0] === undefined) {
+			list = false;
+		} else {
+			list = this.queue.map(
+				(song, i) =>
+					`**${i + 1}** - [${song.info.title}](${
+						song.info.url
+					}) - \`${song.info.durationRaw}\` ` +
+					this.tr("requestby") +
+					` ${song.member}`
+			);
+		}
 		return list;
 	}
 
@@ -176,7 +181,9 @@ export class Queue extends EventEmitter {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
-					.setDescription(this.tr("musicPlayed"))
+					.setDescription(
+						this.client.emoji.check + ` ` + this.tr("musicPlayed")
+					)
 			]
 		});
 		this.player.stop();
@@ -258,13 +265,17 @@ export class Queue extends EventEmitter {
 	async play(urlOrQuery, { member } = {}) {
 		if (member) this.member = member;
 		let yt_info = await play.search(urlOrQuery, {
-			limit: 5
+			limit: 10
 		});
 		if (yt_info.length == 0) {
 			this.channel.send({
 				embeds: [
 					new EmbedBuilder()
-						.setDescription(this.tr("musicNoRes"))
+						.setDescription(
+							this.client.emoji.cross +
+								` ` +
+								this.tr("musicNoRes")
+						)
 						.setConfig()
 				]
 			});
@@ -299,6 +310,7 @@ export class Queue extends EventEmitter {
 		info.forEach((v, i) => {
 			menu.addOptions({
 				label: v.title || "-",
+				description: v.durationRaw + ` - ` + v.channel?.name,
 				value: `music_c_${i + 1}`
 			});
 		});
