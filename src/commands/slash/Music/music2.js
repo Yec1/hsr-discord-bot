@@ -139,7 +139,7 @@ export default {
 					new EmbedBuilder()
 						.setConfig()
 						.setDescription(
-							`\`${interaction.user.tag}\` ` +
+							`${client.emoji.cross} \`${interaction.user.tag}\` ` +
 								tr("musicNotinChannel")
 						)
 				],
@@ -154,7 +154,7 @@ export default {
 						new EmbedBuilder()
 							.setConfig()
 							.setDescription(
-								`\`${interaction.user.tag}\` ` +
+								`${client.emoji.cross} \`${interaction.user.tag}\` ` +
 									tr("musicNoSong")
 							)
 					],
@@ -191,7 +191,9 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setDescription(
-							queue.paused ? tr("musicPause") : tr("musicResume")
+							client.emoji.check + ` ` + queue.paused
+								? tr("musicPause")
+								: tr("musicResume")
 						)
 						.setConfig()
 				],
@@ -202,7 +204,9 @@ export default {
 			interaction.reply({
 				embeds: [
 					new EmbedBuilder()
-						.setDescription(tr("musicSkip"))
+						.setDescription(
+							client.emoji.check + ` ` + tr("musicSkip")
+						)
 						.setConfig()
 				],
 				ephemeral: false
@@ -214,6 +218,33 @@ export default {
 		} */ else if (args[0] == "queue") {
 			var page = 0;
 			var embed, list, mapping, pages;
+
+			function getEmbed(interaction) {
+				list = queue.check();
+				if (list === false) {
+					pages = 0;
+					return (embed = new EmbedBuilder()
+						.setConfig(`${tr("page")} ${page + 1}/1`)
+						.setDescription(tr("queue_no_song"))
+						.setThumbnail(
+							interaction.guild.iconURL({
+								size: 4096,
+								dynamic: true
+							})
+						));
+				}
+				mapping = load.chunk(list, 10);
+				pages = mapping.map(s => s.join("\n"));
+				return (embed = new EmbedBuilder()
+					.setConfig(`${tr("page")} ${page + 1}/${pages.length}`)
+					.setDescription(pages[page])
+					.setThumbnail(
+						interaction.guild.iconURL({
+							size: 4096,
+							dynamic: true
+						})
+					));
+			}
 
 			const row = new ActionRowBuilder().addComponents([
 				new ButtonBuilder()
