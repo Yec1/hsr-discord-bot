@@ -37,31 +37,33 @@ export default {
 			page2 = new EmbedBuilder()
 				.setConfig()
 				.setImage(
-					"https://media.discordapp.net/attachments/1050727525644513322/1050727572595544144/snowed.png?width=1253&height=671"
+					"https://media.discordapp.net/attachments/1050727525644513322/1052600155314077756/ice_banner.png?width=1253&height=671"
 				)
 				.setDescription(
 					`\`\`\`${tr("botDesc")}\`\`\`` //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
 				)
 				.addField(
 					tr("botUptime"), //上線時間
-					pretty_ms(client.uptime, {
+					`${client.emoji.line2} ${pretty_ms(client.uptime, {
 						colonNotation: true
-					}),
+					})}`,
 					true
 				)
 				.addField(
 					tr("latency"), //延遲
-					`${Math.abs(Date.now() - i.createdTimestamp)}ms`,
+					`${client.emoji.line2} ${Math.abs(
+						Date.now() - i.createdTimestamp
+					)}ms`,
 					true
 				)
 				.addField(
 					tr("botServers"), //伺服器數量
-					`${client.guilds.cache.size} `,
+					`${client.emoji.line2} ${client.guilds.cache.size} `,
 					true
 				)
 				.addField(
 					tr("botMemoryUsage"), //記憶體使用率
-					getpercentage,
+					`${client.emoji.line2} ${getpercentage}`,
 					true
 				);
 		}
@@ -89,7 +91,7 @@ export default {
 		const page1 = new EmbedBuilder()
 			.setConfig()
 			.setImage(
-				"https://media.discordapp.net/attachments/1050727525644513322/1050727572595544144/snowed.png?width=1253&height=671"
+				"https://media.discordapp.net/attachments/1050727525644513322/1052600155314077756/ice_banner.png?width=1253&height=671"
 			)
 			.setDescription(
 				`\`\`\`${tr("botDesc")}\`\`\`` //你好！我是 iCE，一個提供多種功能的Discord機器人，按下下方按鈕以查看更多關於我的資訊
