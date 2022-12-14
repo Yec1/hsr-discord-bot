@@ -20,5 +20,7 @@ export default {
 	verify: "<:verify:1052066157936517122>",
 	certifiedmod: "<:certifiedmod:1052158136011726898>",
 	line1: "<:line1:1052192617737224224>",
-	line2: "<:line2:1052192615329697823>"
+	line2: "<:line2:1052192615329697823>",
+	cross: "<:cross:1052197745194172506>",
+	check: "<:check:1052196975430357054>"
 };
