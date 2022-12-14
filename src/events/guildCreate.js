@@ -1,7 +1,7 @@
 import { client } from "../index.js";
 import { WebhookClient, EmbedBuilder } from "discord.js";
 import moment from "moment";
-const webhook = new WebhookClient({ url: process.env.JLWebhook });
+const webhook = new WebhookClient({ url: process.env.JLWEBHOOK });
 
 client.on("guildCreate", guild => {
 	webhook.send({

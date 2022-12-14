@@ -182,6 +182,7 @@ export default {
 					true
 				);
 			var page3;
+			// eslint-disable-next-line no-inner-declarations
 			function refresh(i) {
 				page3 = new EmbedBuilder()
 					.setConfig()

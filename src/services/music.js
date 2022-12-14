@@ -182,11 +182,13 @@ export class Queue extends EventEmitter {
 				new EmbedBuilder()
 					.setConfig()
 					.setDescription(
-						this.client.emoji.check + ` ` + this.tr("musicPlayed")
+						`${this.client.emoji.check} ${this.tr("musicPlayed")}`
 					)
 			]
 		});
+		this.player.removeAllListeners(AudioPlayerStatus.Idle);
 		this.player.stop();
+
 		if (this.connection.state.status != "destroyed")
 			this.connection.destroy();
 		this.client.music.delete(this.guild.id, this);
@@ -272,9 +274,9 @@ export class Queue extends EventEmitter {
 				embeds: [
 					new EmbedBuilder()
 						.setDescription(
-							this.client.emoji.cross +
-								` ` +
-								this.tr("musicNoRes")
+							`${this.client.emoji.cross} ${this.tr(
+								"musicNoRes"
+							)}`
 						)
 						.setConfig()
 				]
@@ -310,7 +312,7 @@ export class Queue extends EventEmitter {
 		info.forEach((v, i) => {
 			menu.addOptions({
 				label: v.title || "-",
-				description: v.durationRaw + ` - ` + v.channel?.name,
+				description: `${v.durationRaw} - ${v.channel?.name}`,
 				value: `music_c_${i + 1}`
 			});
 		});
