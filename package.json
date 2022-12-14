@@ -29,10 +29,10 @@
 		"fast-glob": "^3.2.12",
 		"lodash": "^4.17.21",
 		"moment": "^2.29.4",
-		"nekos.life": "^3.0.0",
 		"play-dl": "^1.9.6",
 		"pretty-ms": "^8.0.0",
-		"quickmongo": "^5.2.0"
+		"quickmongo": "^5.2.0",
+		"waifu.pics-wrapper": "^1.0.0"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.16.0",
