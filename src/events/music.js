@@ -27,7 +27,8 @@ client.on("interactionCreate", async interaction => {
 				new EmbedBuilder()
 					.setConfig()
 					.setDescription(
-						`\`${interaction.user.tag}\` ` + tr("musicNotinChannel")
+						`${client.emoji.cross} \`${interaction.user.tag}\` ` +
+							tr("musicNotinChannel")
 					)
 			],
 			ephemeral: true
@@ -47,7 +48,11 @@ client.on("interactionCreate", async interaction => {
 	)
 		return interaction.message.edit({
 			embeds: [
-				new EmbedBuilder().setConfig().setDescription(tr("musicNoSong"))
+				new EmbedBuilder()
+					.setConfig()
+					.setDescription(
+						client.emoji.cross + ` ` + tr("musicNoSong")
+					)
 			],
 			components: []
 		});
@@ -129,16 +134,8 @@ client.on("interactionCreate", async interaction => {
 			.setTitle(song.info.title || "-")
 			.setURL(song.info.url)
 			.setImage(song.info.thumbnails[song.info.thumbnails.length - 1].url)
-			.addField(
-				tr("requestby"), //this.tr("requestby")
-				`> ${song.member || this.member}`,
-				true
-			)
-			.addField(
-				tr("duration"), //this.tr("duration")
-				`> ${song.info.durationRaw}`,
-				true
-			);
+			.addField(tr("requestby"), `> ${song.member || this.member}`, true)
+			.addField(tr("duration"), `> ${song.info.durationRaw}`, true);
 		return embed;
 	}
 
