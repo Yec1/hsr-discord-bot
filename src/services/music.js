@@ -153,6 +153,18 @@ export class Queue extends EventEmitter {
 		return this.queue[0];
 	}
 
+	check() {
+		const list = this.queue.map(
+			(song, i) =>
+				`**${i + 1}** - [${song.info.title}](${song.info.url}) - \`${
+					song.info.durationRaw
+				}\` ` +
+				this.tr("requestby") +
+				` ${song.member}`
+		);
+		return list;
+	}
+
 	checkNext() {
 		this.queue.splice(0, 1);
 		if (this.queue.length == 0) this.destroy();
@@ -325,6 +337,7 @@ export class Queue extends EventEmitter {
 				});
 			else
 				msg2.edit({
+					content: "",
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
@@ -353,6 +366,7 @@ export class Queue extends EventEmitter {
 				});
 			else
 				msg2.edit({
+					content: "",
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
