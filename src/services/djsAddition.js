@@ -1,7 +1,25 @@
 import { EmbedBuilder } from "discord.js";
 import { client } from "../index.js";
+import moment from "moment";
 
-const text = ["Hello World!", "讓Discord更方便"];
+const day = [
+	"星期天",
+	"星期一",
+	"星期二",
+	"星期三",
+	"星期四",
+	"星期五",
+	"星期六"
+];
+
+const text = [
+	"Hello World!",
+	"讓Discord更方便",
+	`今天是${day[moment().weekday()]}`,
+	"點擊我的頭像查看更多資訊",
+	"U-Uribo...",
+	"Sussy?"
+];
 
 Object.defineProperties(EmbedBuilder.prototype, {
 	setConfig: {
