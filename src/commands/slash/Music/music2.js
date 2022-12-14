@@ -1,9 +1,13 @@
 import {
 	CommandInteraction,
 	SlashCommandBuilder,
-	EmbedBuilder
+	EmbedBuilder,
+	ActionRowBuilder,
+	ButtonBuilder,
+	ComponentType
 } from "discord.js";
 import { Queue } from "../../../services/music.js";
+import load from "lodash";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -108,6 +112,19 @@ export default {
 					"zh-TW": "繼續當前音樂！",
 					ja: "undefined"
 				})
+		)
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName("queue")
+				.setDescription("List the music queue")
+				.setNameLocalizations({
+					"zh-TW": "隊列",
+					ja: "queue"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "查看音樂播放列表",
+					ja: "undefined"
+				})
 		),
 	/**
 	 *
@@ -194,6 +211,53 @@ export default {
 			queue.destroy();
 		} /* else if (args[0] == "previous") {
 			queue.previous();
-		} */
+		} */ else if (args[0] == "queue") {
+			var page = 0;
+			var embed, list, mapping, pages;
+
+			const row = new ActionRowBuilder().addComponents([
+				new ButtonBuilder()
+					.setCustomId("queue_back")
+					.setEmoji("⬅")
+					.setStyle(1),
+				new ButtonBuilder()
+					.setCustomId("queue_next")
+					.setEmoji("➡")
+					.setStyle(1)
+			]);
+
+			getEmbed(interaction);
+			const resp = await interaction.reply({
+				embeds: [embed],
+				components: [row]
+			});
+
+			const filter = i => true;
+
+			const collector = resp.createMessageComponentCollector({
+				filter,
+				componentType: ComponentType.Button
+			});
+
+			collector.on("collect", interaction => {
+				if (!interaction.isButton()) return;
+				if (interaction.customId === "queue_next") {
+					page = page + 1 < pages.length ? ++page : 0;
+					getEmbed(interaction);
+					return interaction.message.edit({
+						embeds: [embed],
+						components: [row]
+					});
+				}
+				if (interaction.customId === "queue_back") {
+					page = page > 0 ? --page : pages.length - 1;
+					getEmbed(interaction);
+					return interaction.message.edit({
+						embeds: [embed],
+						components: [row]
+					});
+				}
+			});
+		}
 	}
 };
