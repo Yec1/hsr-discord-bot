@@ -21,6 +21,7 @@ export default {
 	certifiedmod: "<:certifiedmod:1052158136011726898>",
 	line1: "<:line1:1052192617737224224>",
 	line2: "<:line2:1052192615329697823>",
-	cross: "<:cross:1052197745194172506>",
-	check: "<:check:1052196975430357054>"
+	cross: "<:cross_red:1052585871863468172>",
+	check: "<:check_green:1052585870202519552>",
+	warning: "<:warning_yellow:1052588542120972328>"
 };

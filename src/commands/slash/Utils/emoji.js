@@ -54,7 +54,7 @@ export default {
 					new EmbedBuilder()
 						.setConfig()
 						.setDescription(
-							client.emoji.cross + ` ` + tr("emojiErr")
+							`${client.emoji.cross} ${tr("emojiErr")}`
 						) //我沒有找到這個表情符號
 				],
 				ephemeral: true

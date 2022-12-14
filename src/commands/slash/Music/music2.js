@@ -139,7 +139,7 @@ export default {
 					new EmbedBuilder()
 						.setConfig()
 						.setDescription(
-							`${client.emoji.cross} \`${interaction.user.tag}\` ` +
+							`${client.emoji.warning} \`${interaction.user.tag}\` ` +
 								tr("musicNotinChannel")
 						)
 				],
@@ -191,7 +191,7 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setDescription(
-							client.emoji.check + ` ` + queue.paused
+							`${client.emoji.check} ${queue.paused}`
 								? tr("musicPause")
 								: tr("musicResume")
 						)
@@ -205,7 +205,7 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setDescription(
-							client.emoji.check + ` ` + tr("musicSkip")
+							`${client.emoji.check} ${tr("musicSkip")}`
 						)
 						.setConfig()
 				],
