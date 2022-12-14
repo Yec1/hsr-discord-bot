@@ -14,6 +14,7 @@ const langs = {
 	track: "Track",
 	queue: "Queue",
 	position: "Position",
+	page: "Page",
 	//emoji.js
 	emoj_iErr: "I can't find this emoji",
 	emoji_Public: "You can use this emoji anywhere",
@@ -80,7 +81,9 @@ const langs = {
 	chooseFooter:
 		"if you do not choose, it will automaticly play the first song.",
 	noReceive: "Didnt receive any interaction, defaulting to <z>.",
-	receive: "Now playing <z>."
+	receive: "Now playing <z>.",
+	queue_no_song:
+		"There are currently no songs in the playlist, you can add songs and check again"
 };
 
 export default langs;

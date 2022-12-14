@@ -14,6 +14,7 @@ const langs = {
 	track: "單曲",
 	queue: "歌單",
 	position: "位置",
+	page: "頁數",
 	//emoji.js
 	emoj_iErr: "我沒有找到這個表情符號",
 	emoji_Public: "你可以在不加入伺服器的情況下使用此表情符號",
@@ -79,7 +80,8 @@ const langs = {
 	addedToQueue: "已添加 %s 至歌單",
 	chooseFooter: "若未選擇將會自動播放第一首歌曲",
 	noReceive: "未收到回應，開始播放 <z>",
-	receive: "現在開始播放 <z>."
+	receive: "現在開始播放 <z>.",
+	queue_no_song: "播放列表中目前沒有歌曲，您可以添加歌曲再查看"
 };
 
 export default langs;

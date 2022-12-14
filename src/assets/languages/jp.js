@@ -14,6 +14,7 @@ const langs = {
 	track: "單曲",
 	queue: "キュー",
 	position: "位置",
+	page: "頁數",
 
 	//emoji.js
 	emoj_iErr: "この絵文字が見つけない",
@@ -30,29 +31,6 @@ const langs = {
 	user_joindate: "加入日期",
 
 	//server.js
-
-	//filter
-	filter_NoRole: "ロールがないユーザー",
-	filter_Everyone: "全てのユーザー",
-
-	//verification
-	verify_Low: "低",
-	verify_Medium: "中",
-
-	//regions
-	br: "ブラジル",
-	eu: "ヨーロッパ",
-	hk: "ホンコン",
-	in: "インド",
-	jp: "日本",
-	ru: "ロシア",
-	sg: "シンガポール",
-	za: "南アフリカ",
-	au: "オーストラリア",
-	"us-c": "中央アメリカ",
-	"us-e": "東アメリカ",
-	"us-w": "西アメリカ",
-	"us-s": "南アメリカ",
 	server_Info: "サーバー情報",
 	server_General: "一般",
 	server_Name: "名前",
@@ -61,8 +39,6 @@ const langs = {
 	server_Unknown_Region: "未知",
 	server_Tier: "ブーストレベル",
 	server_Tier_Lvl: "レべル",
-	server_Filter_Lvl: "フィルタレベル",
-	server_Verification_Lvl: "検証レベル",
 	server_Time_Created: "サーバー作成日時",
 	server_Statistics: "サーバー狀態",
 	server_Role_Count: "ロール数",
@@ -109,7 +85,8 @@ const langs = {
 	addedToQueue: "已添加 %s 至歌單",
 	chooseFooter: "若未選擇將會自動播放第一首歌曲",
 	noReceive: "未收到回應，開始播放 <z>",
-	receive: "現在開始播放 <z>."
+	receive: "現在開始播放 <z>.",
+	queue_no_song: "播放列表中目前沒有歌曲，您可以添加歌曲再查看"
 };
 
 export default langs;
