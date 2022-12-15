@@ -91,7 +91,7 @@ export default {
 
 			var curPage = 1;
 			const page1 = new EmbedBuilder()
-				.setConfig()
+				.setConfig(`${tr("page")} 1/3`)
 				.setTitle(tr("server_Info") + " - " + tr("server_General")) //伺服器資訊
 				.setThumbnail(
 					interaction.guild.iconURL({
@@ -130,7 +130,7 @@ export default {
 				);
 
 			const page2 = new EmbedBuilder()
-				.setConfig()
+				.setConfig(`${tr("page")} 2/3`)
 				.setTitle(tr("server_Info") + " - " + tr("server_Statistics")) //伺服器資訊
 				.setThumbnail(
 					interaction.guild.iconURL({
@@ -182,10 +182,9 @@ export default {
 					true
 				);
 			var page3;
-			// eslint-disable-next-line no-inner-declarations
 			function refresh(i) {
 				page3 = new EmbedBuilder()
-					.setConfig()
+					.setConfig(`${tr("page")} 3/3`)
 					.setTitle(tr("server_Info") + " - " + tr("server_Other")) //伺服器資訊
 					.setThumbnail(
 						i.guild.iconURL({
