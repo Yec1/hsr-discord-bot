@@ -139,12 +139,12 @@ export class Queue extends EventEmitter {
 	/**
 	 * either pauses or resumes the player.
 	 */
-	pause() {
-		if (this.player.paused) {
-			this.player.unpause(true);
+	pause(queue) {
+		if (queue.paused) {
+			this.player.unpause();
 			this.paused = false;
 		} else {
-			this.player.pause(true);
+			this.player.pause();
 			this.paused = true;
 		}
 	}
