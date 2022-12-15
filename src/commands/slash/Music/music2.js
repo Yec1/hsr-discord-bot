@@ -203,14 +203,16 @@ export default {
 				{ tr }
 			).play(song);
 		} else if (args[0] == "resume" || args[0] == "pause") {
-			queue.pause();
+			queue.pause(queue);
 			interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setDescription(
-							`${client.emoji.check} ${queue.paused}`
-								? tr("musicPause")
-								: tr("musicResume")
+							`${client.emoji.check} ${
+								queue.paused
+									? tr("musicPause")
+									: tr("musicResume")
+							}`
 						)
 						.setConfig()
 				],
