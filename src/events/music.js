@@ -59,7 +59,7 @@ client.on("interactionCreate", async interaction => {
 	const { resume, back, stop, skip, loop, pause } = getComponent("music", tr);
 
 	if (id === "pause" || id === "resume") {
-		queue.pause();
+		queue.pause(queue);
 		return interaction.message.edit({
 			embeds: [embed(queue)],
 			components: [check(queue)]
