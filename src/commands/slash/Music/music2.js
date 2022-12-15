@@ -147,6 +147,7 @@ export default {
 			});
 		}
 		const queue = client.music.get(interaction.guild.id);
+
 		if (args[0] !== "play") {
 			if (!queue)
 				return interaction.reply({
@@ -160,11 +161,27 @@ export default {
 					],
 					ephemeral: true
 				});
+			else {
+				if (
+					queue.player._state.status === "idle" ||
+					queue.player._state.status === "buffering"
+				)
+					return interaction.reply({
+						embeds: [
+							new EmbedBuilder()
+								.setConfig()
+								.setDescription(
+									`${client.emoji.cross} \`${interaction.user.tag}\` ` +
+										tr("musicNoSong")
+								)
+						],
+						ephemeral: true
+					});
+			}
 		}
 
 		if (args[0] == "play") {
 			const song = interaction.options.getString("music");
-
 			interaction.reply({
 				embeds: [
 					new EmbedBuilder()
