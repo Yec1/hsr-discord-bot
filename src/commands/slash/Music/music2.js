@@ -236,33 +236,31 @@ export default {
 			queue.previous();
 		} */ else if (args[0] == "queue") {
 			var page = 0;
-			var embed, list, mapping, pages;
-
-			function getEmbed(interaction) {
-				list = queue.check();
+			var list, mapping, pages, embed;
+			function getEmbed() {
+				embed = new EmbedBuilder().setThumbnail(
+					interaction.guild.iconURL({
+						size: 4096,
+						dynamic: true
+					})
+				);
+				list = queue.check(embed);
 				if (list === false) {
 					pages = 0;
-					return (embed = new EmbedBuilder()
+					return embed
 						.setConfig(`${tr("page")} ${page + 1}/1`)
-						.setDescription(tr("queue_no_song"))
-						.setThumbnail(
-							interaction.guild.iconURL({
-								size: 4096,
-								dynamic: true
-							})
-						));
+						.setDescription(tr("queue_no_song"));
+				} else if (list.length === 1) {
+					pages = 0;
+					page = 1;
+					return embed.setConfig(`${tr("page")} ${page}/1`);
 				}
-				mapping = load.chunk(list, 10);
-				pages = mapping.map(s => s.join("\n"));
-				return (embed = new EmbedBuilder()
-					.setConfig(`${tr("page")} ${page + 1}/${pages.length}`)
-					.setDescription(pages[page])
-					.setThumbnail(
-						interaction.guild.iconURL({
-							size: 4096,
-							dynamic: true
-						})
-					));
+				mapping = load.chunk(list, 9);
+				console.log(mapping);
+				pages = mapping.map(s => s.join(" "));
+				return embed.setConfig(
+					`${tr("page")} ${page + 1}/${pages.length}`
+				);
 			}
 
 			const row = new ActionRowBuilder().addComponents([
@@ -276,7 +274,7 @@ export default {
 					.setStyle(1)
 			]);
 
-			getEmbed(interaction);
+			getEmbed();
 			const resp = await interaction.reply({
 				embeds: [embed],
 				components: [row]
@@ -293,7 +291,7 @@ export default {
 				if (!interaction.isButton()) return;
 				if (interaction.customId === "queue_next") {
 					page = page + 1 < pages.length ? ++page : 0;
-					getEmbed(interaction);
+					getEmbed();
 					return interaction.message.edit({
 						embeds: [embed],
 						components: [row]
@@ -301,7 +299,7 @@ export default {
 				}
 				if (interaction.customId === "queue_back") {
 					page = page > 0 ? --page : pages.length - 1;
-					getEmbed(interaction);
+					getEmbed();
 					return interaction.message.edit({
 						embeds: [embed],
 						components: [row]
