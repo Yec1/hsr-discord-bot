@@ -153,19 +153,18 @@ export class Queue extends EventEmitter {
 		return this.queue[0];
 	}
 
-	check() {
-		let list;
+	check(embed) {
+		var list;
 		if (this.queue[0] === undefined) {
 			list = false;
 		} else {
-			list = this.queue.map(
-				(song, i) =>
-					`**${i + 1}** - [${song.info.title}](${
-						song.info.url
-					}) - \`${song.info.durationRaw}\` ` +
-					this.tr("requestby") +
-					` ${song.member}`
-			);
+			list = this.queue.map((song, i) => {
+				embed.addField(
+					`${i + 1}. ${song.info.title}`,
+					` \`${song.info.durationRaw}\` - ${song.member} `,
+					true
+				);
+			});
 		}
 		return list;
 	}
