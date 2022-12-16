@@ -15,7 +15,6 @@ const langs = {
 	queue: "キュー",
 	position: "位置",
 	page: "頁數",
-
 	//emoji.js
 	emoj_iErr: "この絵文字が見つけない",
 	emoji_Public: "この絵文字はどこでも使える",
