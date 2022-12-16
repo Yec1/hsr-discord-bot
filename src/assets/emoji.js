@@ -23,5 +23,12 @@ export default {
 	line2: "<:line2:1052192615329697823>",
 	cross: "<:cross_red:1052585871863468172>",
 	check: "<:check_green:1052585870202519552>",
-	warning: "<:warning_yellow:1052588542120972328>"
+	warning: "<:warning_yellow:1052588542120972328>",
+	back: "<:left_skip:1052974030854049792>",
+	skip: "<:right_skip:1052974032628240484>",
+	loopq: "<:loop:1052974036587642971>",
+	loopt: "<:loop_one:1052974034612138014>",
+	pause: "<:pause:1052970482498011226>",
+	play: "<:play:1052969860277211216>",
+	stop: "<:stop:1052974038244392970>"
 };
