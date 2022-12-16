@@ -244,6 +244,7 @@ export default {
 		} */ else if (args[0] == "queue") {
 			var page = 0;
 			var list, mapping, pages, embed;
+			// eslint-disable-next-line no-inner-declarations
 			function getEmbed() {
 				embed = new EmbedBuilder().setThumbnail(
 					interaction.guild.iconURL({
