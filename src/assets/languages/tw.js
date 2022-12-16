@@ -81,7 +81,9 @@ const langs = {
 	chooseFooter: "若未選擇將會自動播放第一首歌曲",
 	noReceive: "未收到回應，開始播放 <z>",
 	receive: "現在開始播放 <z>.",
-	queue_no_song: "播放列表中目前沒有歌曲，您可以添加歌曲再查看"
+	queue_no_song: "播放列表中目前沒有歌曲，您可以添加歌曲再查看",
+	select_a_music: "請選擇一首歌曲",
+	add_to_playlist: "已添加 <z> 首歌曲至歌單"
 };
 
 export default langs;

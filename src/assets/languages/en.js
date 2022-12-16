@@ -83,7 +83,9 @@ const langs = {
 	noReceive: "Didnt receive any interaction, defaulting to <z>.",
 	receive: "Now playing <z>.",
 	queue_no_song:
-		"There are currently no songs in the playlist, you can add songs and check again"
+		"There are currently no songs in the playlist, you can add songs and check again",
+	select_a_music: "Please Select a Music",
+	add_to_playlist: "Added <z> songs to queue"
 };
 
 export default langs;
