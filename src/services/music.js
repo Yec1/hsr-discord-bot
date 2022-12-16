@@ -118,6 +118,7 @@ export class Queue extends EventEmitter {
 		this.channel = channel;
 		this.client = channel.client;
 		this.guild = channel.guild;
+		this.emoji = this.client.emoji;
 		if (tr && typeof tr == "function") this.tr = tr;
 		this.client.music.set(this.guild.id, this);
 
@@ -181,7 +182,7 @@ export class Queue extends EventEmitter {
 				new EmbedBuilder()
 					.setConfig()
 					.setDescription(
-						`${this.client.emoji.check} ${this.tr("musicPlayed")}`
+						`${this.emoji.check} ${this.tr("musicPlayed")}`
 					)
 			]
 		});
@@ -205,7 +206,8 @@ export class Queue extends EventEmitter {
 	async __play() {
 		const { resume, back, stop, skip, loop, pause } = getComponent(
 			"music",
-			this.tr
+			this.tr,
+			this.emoji
 		);
 
 		var row = new ActionRowBuilder();
@@ -265,39 +267,69 @@ export class Queue extends EventEmitter {
 
 	async play(urlOrQuery, { member } = {}) {
 		if (member) this.member = member;
-		let yt_info = await play.search(urlOrQuery, {
-			limit: 10
-		});
-		if (yt_info.length == 0) {
-			this.channel.send({
+		if (
+			urlOrQuery.startsWith("https") &&
+			(await play.validate(urlOrQuery)).valueOf(Promise) === "yt_playlist"
+		) {
+			const playlist = await play.playlist_info(urlOrQuery, {
+				incomplete: true
+			});
+			const videos = await playlist.all_videos();
+			for (let track of videos) {
+				this.queue.push({
+					stream: await play.stream(track.url),
+					info: track,
+					member: this.member
+				});
+			}
+			await this.channel.send({
 				embeds: [
-					new EmbedBuilder()
-						.setDescription(
-							`${this.client.emoji.cross} ${this.tr(
-								"musicNoRes"
-							)}`
-						)
-						.setConfig()
+					new EmbedBuilder().setConfig().setDescription(
+						`${this.emoji.check} ${this.member} ${this.tr(
+							"add_to_playlist",
+							{
+								z: `${playlist.total_videos}`
+							}
+						)}`
+					)
 				]
 			});
-		}
-		/**
-		 * @type {YouTubeVideo}
-		 */
-		let song;
-		if (yt_info.length > 1)
-			song = await this.collectSong(yt_info, {
-				edit: this.started
+			if (!this.started) {
+				this.__play();
+			}
+		} else {
+			let yt_info = await play.search(urlOrQuery, {
+				limit: 10
 			});
-		else song = yt_info[0];
+			if (yt_info.length == 0) {
+				this.channel.send({
+					embeds: [
+						new EmbedBuilder()
+							.setDescription(
+								`${this.emoji.cross} ${this.tr("musicNoRes")}`
+							)
+							.setConfig()
+					]
+				});
+			}
+			/**
+			 * @type {YouTubeVideo}
+			 */
+			let song;
+			if (yt_info.length > 1)
+				song = await this.collectSong(yt_info, {
+					edit: this.started
+				});
+			else song = yt_info[0];
 
-		this.queue.push({
-			stream: await play.stream(song.url),
-			info: song,
-			member: this.member
-		});
-		if (!this.started) {
-			this.__play();
+			this.queue.push({
+				stream: await play.stream(song.url),
+				info: song,
+				member: this.member
+			});
+			if (!this.started) {
+				this.__play();
+			}
 		}
 	}
 	/**
@@ -307,7 +339,7 @@ export class Queue extends EventEmitter {
 	async collectSong(info, { time, edit } = { time: 50000, edit: false }) {
 		const menu = new StringSelectMenuBuilder()
 			.setCustomId("music-menu")
-			.setPlaceholder("Please Select a Music");
+			.setPlaceholder(this.tr("select_a_music"));
 		info.forEach((v, i) => {
 			menu.addOptions({
 				label: v.title || "-",
