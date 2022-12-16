@@ -133,13 +133,14 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr) {
+		const emoji = client.emoji;
 		if (!interaction.member.voice.channel) {
 			return interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
 						.setDescription(
-							`${client.emoji.warning} \`${interaction.user.tag}\` ` +
+							`${emoji.warning} <@${interaction.user.id}> ` +
 								tr("musicNotinChannel")
 						)
 				],
@@ -155,7 +156,7 @@ export default {
 						new EmbedBuilder()
 							.setConfig()
 							.setDescription(
-								`${client.emoji.cross} \`${interaction.user.tag}\` ` +
+								`${emoji.cross} <@${interaction.user.id}> ` +
 									tr("musicNoSong")
 							)
 					],
@@ -171,7 +172,7 @@ export default {
 							new EmbedBuilder()
 								.setConfig()
 								.setDescription(
-									`${client.emoji.cross} \`${interaction.user.tag}\` ` +
+									`${emoji.cross} <@${interaction.user.id}> ` +
 										tr("musicNoSong")
 								)
 						],
@@ -208,10 +209,10 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setDescription(
-							`${client.emoji.check} ${
+							`${
 								queue.paused
-									? tr("musicPause")
-									: tr("musicResume")
+									? `${emoji.pause} ${tr("musicPause")}`
+									: `${emoji.play} ${tr("musicResume")}`
 							}`
 						)
 						.setConfig()
@@ -223,15 +224,21 @@ export default {
 			interaction.reply({
 				embeds: [
 					new EmbedBuilder()
-						.setDescription(
-							`${client.emoji.check} ${tr("musicSkip")}`
-						)
+						.setDescription(`${emoji.check} ${tr("musicSkip")}`)
 						.setConfig()
 				],
 				ephemeral: false
 			});
 		} else if (args[0] == "stop") {
 			queue.destroy();
+			interaction.reply({
+				embeds: [
+					new EmbedBuilder()
+						.setDescription(`${emoji.check}`)
+						.setConfig()
+				],
+				ephemeral: false
+			});
 		} /* else if (args[0] == "previous") {
 			queue.previous();
 		} */ else if (args[0] == "queue") {
@@ -256,7 +263,6 @@ export default {
 					return embed.setConfig(`${tr("page")} ${page}/1`);
 				}
 				mapping = load.chunk(list, 9);
-				console.log(mapping);
 				pages = mapping.map(s => s.join(" "));
 				return embed.setConfig(
 					`${tr("page")} ${page + 1}/${pages.length}`
@@ -266,11 +272,11 @@ export default {
 			const row = new ActionRowBuilder().addComponents([
 				new ButtonBuilder()
 					.setCustomId("queue_back")
-					.setEmoji("⬅")
+					.setEmoji(emoji.back)
 					.setStyle(1),
 				new ButtonBuilder()
 					.setCustomId("queue_next")
-					.setEmoji("➡")
+					.setEmoji(emoji.skip)
 					.setStyle(1)
 			]);
 
