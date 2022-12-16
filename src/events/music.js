@@ -27,7 +27,7 @@ client.on("interactionCreate", async interaction => {
 				new EmbedBuilder()
 					.setConfig()
 					.setDescription(
-						`${client.emoji.warning} \`${interaction.user.tag}\` ` +
+						`${client.emoji.warning} <@${interaction.user.id}> ` +
 							tr("musicNotinChannel")
 					)
 			],
@@ -47,16 +47,13 @@ client.on("interactionCreate", async interaction => {
 			id === "loopq")
 	)
 		return interaction.message.edit({
-			embeds: [
-				new EmbedBuilder()
-					.setConfig()
-					.setDescription(
-						`${client.emoji.cross} ${tr("musicNoSong")}`
-					)
-			],
 			components: []
 		});
-	const { resume, back, stop, skip, loop, pause } = getComponent("music", tr);
+	const { resume, back, stop, skip, loop, pause } = getComponent(
+		"music",
+		tr,
+		client.emoji
+	);
 
 	if (id === "pause" || id === "resume") {
 		queue.pause(queue);
