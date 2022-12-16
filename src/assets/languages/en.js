@@ -76,6 +76,7 @@ const langs = {
 	musicNoPause: "The queue is not paused!",
 	musicEmpty: "Voice channel is empty! Leaving the channel...",
 	musicPlayed: "All music has been played",
+	musicQueryTooLong: "You cannot search more than 100 characters!",
 	choose: "Choose one song!",
 	addedToQueue: "Added %s to queue.",
 	chooseFooter:
