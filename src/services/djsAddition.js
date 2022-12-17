@@ -15,10 +15,8 @@ const day = [
 const text = [
 	"Hello World!",
 	"讓Discord更方便",
-	`今天是${day[moment().weekday()]}`,
-	"點擊我的頭像查看更多資訊",
-	"U-Uribo...",
-	"Sussy?"
+	`今天是${day[moment().utcOffset(8).weekday()]}`,
+	"點擊我的頭像查看更多資訊"
 ];
 
 Object.defineProperties(EmbedBuilder.prototype, {

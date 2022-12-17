@@ -234,7 +234,11 @@ export default {
 			interaction.reply({
 				embeds: [
 					new EmbedBuilder()
-						.setDescription(`${emoji.check} ${tr("musicSkip")}`)
+						.setDescription(
+							`${emoji.check} <@${interaction.user.id}> ${tr(
+								"musicSkip"
+							)}`
+						)
 						.setConfig()
 				],
 				ephemeral: false
@@ -244,7 +248,11 @@ export default {
 			interaction.reply({
 				embeds: [
 					new EmbedBuilder()
-						.setDescription(`${emoji.check}`)
+						.setDescription(
+							`${emoji.check} <@${interaction.user.id}> ${tr(
+								"musicStop"
+							)}`
+						)
 						.setConfig()
 				],
 				ephemeral: false

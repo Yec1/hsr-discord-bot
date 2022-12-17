@@ -284,14 +284,18 @@ export class Queue extends EventEmitter {
 			}
 			await this.channel.send({
 				embeds: [
-					new EmbedBuilder().setConfig().setDescription(
-						`${this.emoji.check} ${this.member} ${this.tr(
-							"add_to_playlist",
-							{
-								z: `${playlist.total_videos}`
-							}
-						)}`
-					)
+					new EmbedBuilder()
+						.setConfig()
+						.setDescription(
+							`${this.emoji.check} ${this.member} ${this.tr(
+								"add_to_playlist",
+								{
+									list: `[${playlist.title}](${playlist.link})`,
+									z: `${playlist.total_videos}`
+								}
+							)}`
+						)
+						.setThumbnail(playlist.thumbnail?.url)
 				]
 			});
 			if (!this.started) {
@@ -372,11 +376,20 @@ export class Queue extends EventEmitter {
 				msg2.edit({
 					content: "",
 					embeds: [
-						new EmbedBuilder().setConfig().setDescription(
-							this.tr("receive", {
-								z: `[${info[n].title || "-"}](${info[n].url})`
-							})
-						)
+						new EmbedBuilder()
+							.setConfig()
+							.setDescription(
+								this.tr("receive", {
+									z: `[${info[n].title || "-"}](${
+										info[n].url
+									})`
+								})
+							)
+							.setThumbnail(
+								info[n].thumbnails[
+									info[n].thumbnails.length - 1
+								].url
+							)
 					],
 					components: []
 				});
@@ -392,6 +405,11 @@ export class Queue extends EventEmitter {
 									`[${info[n].title || "-"}](${info[n].url})`
 								)
 							)
+							.setThumbnail(
+								info[n].thumbnails[
+									info[n].thumbnails.length - 1
+								].url
+							)
 					],
 					components: []
 				});
@@ -401,11 +419,20 @@ export class Queue extends EventEmitter {
 				msg2.edit({
 					content: "",
 					embeds: [
-						new EmbedBuilder().setConfig().setDescription(
-							this.tr("noReceive", {
-								z: `[${info[0].title || "-"}](${info[0].url})`
-							})
-						)
+						new EmbedBuilder()
+							.setConfig()
+							.setDescription(
+								this.tr("noReceive", {
+									z: `[${info[0].title || "-"}](${
+										info[0].url
+									})`
+								})
+							)
+							.setThumbnail(
+								info[0].thumbnails[
+									info[0].thumbnails.length - 1
+								].url
+							)
 					],
 					components: []
 				});
@@ -420,6 +447,11 @@ export class Queue extends EventEmitter {
 									"addedToQueue",
 									`[${info[0].title || "-"}](${info[0].url})`
 								)
+							)
+							.setThumbnail(
+								info[0].thumbnails[
+									info[0].thumbnails.length - 1
+								].url
 							)
 					],
 					components: []

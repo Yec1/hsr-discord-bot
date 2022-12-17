@@ -3,6 +3,7 @@ import { EmbedBuilder, ButtonBuilder, ActionRowBuilder } from "discord.js";
 import { UserProfile, GuildProfile } from "../core/Profile.js";
 import { i18nMixin, tl3 } from "../services/i18n.js";
 import { getComponent } from "../services/components.js";
+const emoji = client.emoji;
 
 client.on("interactionCreate", async interaction => {
 	const p = await UserProfile(interaction);
@@ -27,7 +28,7 @@ client.on("interactionCreate", async interaction => {
 				new EmbedBuilder()
 					.setConfig()
 					.setDescription(
-						`${client.emoji.warning} <@${interaction.user.id}> ` +
+						`${emoji.warning} <@${interaction.user.id}> ` +
 							tr("musicNotinChannel")
 					)
 			],
@@ -52,7 +53,7 @@ client.on("interactionCreate", async interaction => {
 	const { resume, back, stop, skip, loop, pause } = getComponent(
 		"music",
 		tr,
-		client.emoji
+		emoji
 	);
 
 	if (id === "pause" || id === "resume") {
@@ -64,13 +65,33 @@ client.on("interactionCreate", async interaction => {
 	}
 	if (id === "stop") {
 		queue.destroy();
-		return interaction.message.edit({
+		interaction.followUp({
+			embeds: [
+				new EmbedBuilder()
+					.setDescription(
+						`${emoji.check} <@${interaction.user.id}> ${tr(
+							"musicStop"
+						)}`
+					)
+					.setConfig()
+			],
+			ephemeral: false,
 			components: []
 		});
 	}
 	if (id === "skip") {
 		queue.next();
-		return interaction.message.edit({
+		interaction.followUp({
+			embeds: [
+				new EmbedBuilder()
+					.setDescription(
+						`${emoji.check} <@${interaction.user.id}> ${tr(
+							"musicSkip"
+						)}`
+					)
+					.setConfig()
+			],
+			ephemeral: false,
 			components: []
 		});
 	}

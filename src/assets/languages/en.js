@@ -66,9 +66,9 @@ const langs = {
 	musicNotinChannel: "You are not in voice channel!",
 	musicNoSong: "There is no song in queue",
 	musicSearch: "Searching...",
-	musicStop: "Music stoped!",
 	musicNoSongNext: "There is no song after this song",
-	musicSkip: "Skipped\n",
+	musicStop: "Stop the playing!",
+	musicSkip: "Skipped current song",
 	musicNoSongPre: "There is no song previous this song",
 	musicPre: "Now playing\n",
 	musicResume: "Music resumed!",
@@ -85,8 +85,8 @@ const langs = {
 	receive: "Now playing <z>.",
 	queue_no_song:
 		"There are currently no songs in the playlist, you can add songs and check again",
-	select_a_music: "Please Select a Music",
-	add_to_playlist: "Added <z> songs to queue"
+	select_a_music: "Please Select a Song",
+	add_to_playlist: "Imported <z> songs from <list> to queue"
 };
 
 export default langs;

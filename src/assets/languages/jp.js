@@ -71,12 +71,12 @@ const langs = {
 	musicNotinChannel: "你不在語音頻道！",
 	musicNoSong: "歌單中沒有歌曲",
 	musicSearch: "搜尋中...",
-	musicStop: "音樂已停止！",
-	musicSkip: "已跳過\n",
+	musicStop: "停止了播放！",
+	musicSkip: "已跳過當前歌曲",
 	musicNoSongPre: "在這首歌曲前沒有已播放的歌曲",
 	musicPre: "現在播放\n",
-	musicResume: "音樂已繼續！",
-	musicPause: "音樂已暫停！",
+	musicResume: "歌曲已繼續！",
+	musicPause: "歌曲已暫停！",
 	musicNoPause: "目前歌單沒有被暫停！",
 	musicEmpty: "語音頻道沒有人！正在離開...",
 	musicPlayed: "所有歌曲已播放完畢！",
@@ -87,7 +87,7 @@ const langs = {
 	receive: "現在開始播放 <z>.",
 	queue_no_song: "播放列表中目前沒有歌曲，您可以添加歌曲再查看",
 	select_a_music: "請選擇一首歌曲",
-	add_to_playlist: "已添加 <z> 首歌曲至歌單"
+	add_to_playlist: "已從 <list> 匯入 <z> 首歌曲至歌單"
 };
 
 export default langs;
