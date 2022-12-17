@@ -94,6 +94,12 @@ export class Queue extends EventEmitter {
 	paused = false;
 
 	/**
+	 * 0 = none, 1 = track
+	 * @type {0 | 1}
+	 */
+	loop = 0;
+
+	/**
 	 * translate object where strings will use to handle during the context.
 	 * defaults to english if no translate handler is given
 	 * @type {(string: string) => any}
@@ -184,9 +190,11 @@ export class Queue extends EventEmitter {
 	}
 
 	checkNext() {
-		this.queue.splice(0, 1);
-		if (this.queue.length == 0) this.destroy();
-		else this.__play();
+		if (this.loop == 0) {
+			this.queue.splice(0, 1);
+			if (this.queue.length == 0) this.destroy();
+			else this.__play();
+		} else this.__play();
 	}
 
 	destroy() {

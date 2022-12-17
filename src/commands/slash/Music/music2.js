@@ -151,6 +151,9 @@ export default {
 					"zh-TW": "查看音樂播放列表",
 					ja: "undefined"
 				})
+		)
+		.addSubcommand(subcommand =>
+			subcommand.setName("loop").setDescription("Loop")
 		),
 	/**
 	 *
@@ -311,6 +314,9 @@ export default {
 				],
 				ephemeral: false
 			});
+		} else if (args[0] == "loop") {
+			if (!queue.loop) queue.loop = 1;
+			else queue.loop = 0;
 		} /* else if (args[0] == "previous") {
 			queue.previous();
 		} */ else if (args[0] == "queue") {
