@@ -74,19 +74,19 @@ export default {
 					ja: "undefined"
 				})
 		)
-		.addSubcommand(subcommand =>
-			subcommand
-				.setName("previous")
-				.setDescription("Play previous music!")
-				.setNameLocalizations({
-					"zh-TW": "返回",
-					ja: "previous"
-				})
-				.setDescriptionLocalizations({
-					"zh-TW": "播放前一首音樂！",
-					ja: "undefined"
-				})
-		)
+		// .addSubcommand(subcommand =>
+		// 	subcommand
+		// 		.setName("previous")
+		// 		.setDescription("Play previous music!")
+		// 		.setNameLocalizations({
+		// 			"zh-TW": "返回",
+		// 			ja: "previous"
+		// 		})
+		// 		.setDescriptionLocalizations({
+		// 			"zh-TW": "播放前一首音樂！",
+		// 			ja: "undefined"
+		// 		})
+		// )
 		.addSubcommand(subcommand =>
 			subcommand
 				.setName("pause")
@@ -153,7 +153,57 @@ export default {
 				})
 		)
 		.addSubcommand(subcommand =>
-			subcommand.setName("loop").setDescription("Loop")
+			subcommand
+				.setName("loop")
+				.setDescription("Change how playlist loop")
+				.setNameLocalizations({
+					"zh-TW": "循環",
+					ja: "loop"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "更改歌單循環方式",
+					ja: "undefined"
+				})
+				.addStringOption(option =>
+					option
+						.setName("select")
+						.setDescription("Select a loop mode")
+						.setNameLocalizations({
+							"zh-TW": "選擇",
+							ja: "select"
+						})
+						.setDescriptionLocalizations({
+							"zh-TW": "選擇循環的模式",
+							ja: "undefined"
+						})
+						.setRequired(true)
+						.addChoices(
+							{
+								name: "off",
+								name_localizations: {
+									"zh-TW": "無",
+									ja: "undefined"
+								},
+								value: "off"
+							},
+							{
+								name: "track",
+								name_localizations: {
+									"zh-TW": "單曲",
+									ja: "undefined"
+								},
+								value: "track"
+							},
+							{
+								name: "queue",
+								name_localizations: {
+									"zh-TW": "歌單",
+									ja: "undefined"
+								},
+								value: "queue"
+							}
+						)
+				)
 		),
 	/**
 	 *
@@ -320,8 +370,10 @@ export default {
 				ephemeral: false
 			});
 		} else if (args[0] == "loop") {
-			if (!queue.loop) queue.loop = 1;
-			else queue.loop = 0;
+			const mode = interaction.options.getString("select");
+			if (mode === "off") queue.loop = 0;
+			else if (mode === "track") queue.loop = 1;
+			else if (mode === "queue") queue.loop = 2;
 		} /* else if (args[0] == "previous") {
 			queue.previous();
 		} */ else if (args[0] == "queue") {

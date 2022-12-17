@@ -94,8 +94,8 @@ export class Queue extends EventEmitter {
 	paused = false;
 
 	/**
-	 * 0 = none, 1 = track
-	 * @type {0 | 1}
+	 * 0 = none, 1 = track, 2 = queue
+	 * @type {0 | 1 | 2}
 	 */
 	loop = 0;
 
@@ -194,7 +194,9 @@ export class Queue extends EventEmitter {
 			this.queue.splice(0, 1);
 			if (this.queue.length == 0) this.destroy();
 			else this.__play();
-		} else this.__play();
+		} else if (this.loop == 1) {
+			this.__play();
+		}
 	}
 
 	destroy() {
@@ -225,18 +227,22 @@ export class Queue extends EventEmitter {
 	 * @private
 	 */
 	async __play() {
-		const { resume, back, stop, skip, loop, pause } = getComponent(
-			"music",
-			this.tr,
-			this.emoji
-		);
+		const { resume, back, stop, skip, loop, pause, loopq, loopt } =
+			getComponent("music", this.tr, this.emoji);
 
 		var row = new ActionRowBuilder();
-		/*if(queue.repeatMode === 0)*/ this.queue.paused
-			? row.addComponents(resume, back, stop, skip, loop)
-			: row.addComponents(pause, back, stop, skip, loop);
-		// else if(queue.repeatMode === 1) queue.paused? row.addComponents(resume, back, stop, skip, loopt) : row.addComponents(pause, back, stop, skip, loopt)
-		// else if(queue.repeatMode === 2) queue.paused? row.addComponents(resume, back, stop, skip, loopq) : row.addComponents(pause, back, stop, skip, loopq)
+		if (this.loop === 0)
+			this.queue.paused
+				? row.addComponents(resume, back, stop, skip, loop)
+				: row.addComponents(pause, back, stop, skip, loop);
+		else if (this.loop === 1)
+			queue.paused
+				? row.addComponents(resume, back, stop, skip, loopt)
+				: row.addComponents(pause, back, stop, skip, loopt);
+		else if (this.loop === 2)
+			queue.paused
+				? row.addComponents(resume, back, stop, skip, loopq)
+				: row.addComponents(pause, back, stop, skip, loopq);
 
 		if (!this.started) this.started = true;
 
