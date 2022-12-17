@@ -183,6 +183,16 @@ export default {
 
 		if (args[0] == "play") {
 			const song = interaction.options.getString("music");
+			if (song.length > 99) {
+				return interaction.reply({
+					embeds: [
+						new EmbedBuilder()
+							.setDescription(tr("musicQueryTooLont"))
+							.setConfig()
+					],
+					ephemeral: true
+				});
+			}
 			interaction.reply({
 				embeds: [
 					new EmbedBuilder()

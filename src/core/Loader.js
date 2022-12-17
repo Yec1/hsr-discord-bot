@@ -6,10 +6,6 @@ import { uncook } from "../services/cook.js";
 const glob = promisify(_glob);
 export class Loader {
 	constructor(client) {
-		client.commands = {
-			slash: new Collection(),
-			message: new Collection()
-		};
 		this.client = client;
 	}
 	async load() {
