@@ -57,7 +57,7 @@ client.on("interactionCreate", async interaction => {
 	if (id === "pause" || id === "resume") {
 		queue.pause(queue);
 		return interaction.message.edit({
-			embeds: [embed(queue)],
+			embeds: [embed()],
 			components: [check(queue)]
 		});
 	}
@@ -115,25 +115,25 @@ client.on("interactionCreate", async interaction => {
 	if (id === "loop") {
 		queue.loop = 1;
 		return interaction.message.edit({
-			embeds: [embed(queue)],
+			embeds: [embed()],
 			components: [check(queue)]
 		});
 	}
 	if (id === "loopt") {
 		queue.loop = 2;
 		return interaction.message.edit({
-			embeds: [embed(queue)],
+			embeds: [embed()],
 			components: [check(queue)]
 		});
 	}
 	if (id === "loopq") {
 		queue.loop = 0;
 		return interaction.message.edit({
-			embeds: [embed(queue)],
+			embeds: [embed()],
 			components: [check(queue)]
 		});
 	}
-	function embed(queue) {
+	function embed() {
 		const embed = new EmbedBuilder()
 			.setConfig()
 			.setTitle(song.info.title || "-")
