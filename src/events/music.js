@@ -36,6 +36,7 @@ client.on("interactionCreate", async interaction => {
 		});
 	}
 	const queue = client.music.get(interaction.guild.id);
+	const song = queue.nowplaying();
 	if (
 		!queue &&
 		(id === "pause" ||
@@ -75,7 +76,6 @@ client.on("interactionCreate", async interaction => {
 					)
 					.setConfig()
 			],
-			ephemeral: false,
 			components: []
 		});
 	}
@@ -87,11 +87,14 @@ client.on("interactionCreate", async interaction => {
 					.setDescription(
 						`${emoji.check} <@${interaction.user.id}> ${tr(
 							"musicSkip"
-						)}`
+						)}\n[${song.info.title}](${song.info.url})`
+					)
+					.setThumbnail(
+						song.info.thumbnails[song.info.thumbnails.length - 1]
+							.url
 					)
 					.setConfig()
 			],
-			ephemeral: false,
 			components: []
 		});
 	}
@@ -146,7 +149,6 @@ client.on("interactionCreate", async interaction => {
 	//     })
 	// }
 	function embed(queue) {
-		var song = queue.nowplaying();
 		const embed = new EmbedBuilder()
 			.setConfig()
 			.setTitle(song.info.title || "-")

@@ -209,7 +209,6 @@ export default {
 					});
 			}
 		}
-
 		if (args[0] == "play") {
 			const song = interaction.options.getString("music");
 			if (song.length > 99) {
@@ -259,6 +258,7 @@ export default {
 				ephemeral: false
 			});
 		} else if (args[0] == "skip") {
+			const song = queue.nowplaying();
 			queue.next();
 			interaction.reply({
 				embeds: [
@@ -266,7 +266,12 @@ export default {
 						.setDescription(
 							`${emoji.check} <@${interaction.user.id}> ${tr(
 								"musicSkip"
-							)}`
+							)}\n[${song.info.title}](${song.info.url})`
+						)
+						.setThumbnail(
+							song.info.thumbnails[
+								song.info.thumbnails.length - 1
+							].url
 						)
 						.setConfig()
 				],
