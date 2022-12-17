@@ -42,12 +42,9 @@ class Profile {
 		return this.save();
 	}
 	async save() {
-		const data = JSON.parse(JSON.stringify(this));
-		delete data["__id"];
-		delete data["__schema"];
-		delete data["__prefix"];
 		return (
-			void (await db.set(`${this.__prefix}${this.__id}`, data)) ?? this
+			void (await db.set(`${this.__prefix}${this.__id}`, this.raw)) ??
+			this
 		);
 	}
 	get raw() {
