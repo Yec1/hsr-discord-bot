@@ -234,7 +234,7 @@ export class Queue extends EventEmitter {
 
 		const song = this.queue[0];
 		let duration = song.info.durationRaw;
-		if (duration === "0:00") duration = `🔴${tr("live")}`;
+		if (duration === "0:00") duration = `🔴 ${this.tr("live")}`;
 		this.channel.send({
 			embeds: [
 				new EmbedBuilder()
@@ -355,9 +355,11 @@ export class Queue extends EventEmitter {
 			.setCustomId("music-menu")
 			.setPlaceholder(this.tr("select_a_music"));
 		info.forEach((v, i) => {
+			let duration = v.durationRaw;
+			if (duration === "0:00") duration = `🔴 ${this.tr("live")}`;
 			menu.addOptions({
 				label: v.title || "-",
-				description: `${v.durationRaw} - ${v.channel?.name}`,
+				description: `${duration} - ${v.channel?.name}`,
 				value: `music_c_${i + 1}`
 			});
 		});
