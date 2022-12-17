@@ -16,6 +16,9 @@ const langs = {
 	position: "Position",
 	page: "Page",
 	live: "Live",
+	support_server: "Join Support Server!",
+	support:
+		"Encountered a bug or want to offer a suggestion?\nClick the button below to join the support server and create a post!",
 	//emoji.js
 	emoj_iErr: "I can't find this emoji",
 	emoji_Public: "You can use this emoji anywhere",

@@ -16,6 +16,8 @@ const langs = {
 	position: "位置",
 	page: "頁數",
 	live: "直播",
+	support_server: "加入支持伺服器！",
+	support: "遇到錯誤或想提供建議?\n請點擊下方按鈕加入支持伺服器並建立貼文！",
 	//emoji.js
 	emoj_iErr: "我沒有找到這個表情符號",
 	emoji_Public: "你可以在不加入伺服器的情況下使用此表情符號",
