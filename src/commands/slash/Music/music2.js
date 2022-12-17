@@ -115,6 +115,32 @@ export default {
 		)
 		.addSubcommand(subcommand =>
 			subcommand
+				.setName("volume")
+				.setDescription("Change the play volume!")
+				.setNameLocalizations({
+					"zh-TW": "音量",
+					ja: "volume"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "更改播放的音量數值",
+					ja: "undefined"
+				})
+				.addIntegerOption(Integer =>
+					Integer.setName("number")
+						.setDescription("You want to set the volume")
+						.setNameLocalizations({
+							"zh-TW": "數值",
+							ja: "number"
+						})
+						.setDescriptionLocalizations({
+							"zh-TW": "你想更改的音量",
+							ja: "undefined"
+						})
+						.setRequired(true)
+				)
+		)
+		.addSubcommand(subcommand =>
+			subcommand
 				.setName("queue")
 				.setDescription("List the music queue")
 				.setNameLocalizations({
@@ -243,6 +269,34 @@ export default {
 				],
 				ephemeral: false
 			});
+		} else if (args[0] == "volume") {
+			const number = interaction.options.getInteger("number");
+			if (number < 0 || number > 200)
+				return interaction.reply({
+					embeds: [
+						new EmbedBuilder()
+							.setDescription(
+								`${emoji.cross} <@${interaction.user.id}> ${tr(
+									"musicVolumeErr"
+								)}`
+							)
+							.setConfig()
+					],
+					ephemeral: true
+				});
+			queue.volume(number);
+			interaction.reply({
+				embeds: [
+					new EmbedBuilder()
+						.setDescription(
+							`${emoji.check} <@${interaction.user.id}> ${tr(
+								"musicChange"
+							)} ${number}%`
+						)
+						.setConfig()
+				],
+				ephemeral: false
+			});
 		} else if (args[0] == "stop") {
 			queue.destroy();
 			interaction.reply({
@@ -262,30 +316,64 @@ export default {
 		} */ else if (args[0] == "queue") {
 			var page = 0;
 			var list, mapping, pages, embed;
+
+			/*
+				addField Queue
+			*/
 			// eslint-disable-next-line no-inner-declarations
+			// function getEmbed() {
+			// 	embed = new EmbedBuilder().setThumbnail(
+			// 		interaction.guild.iconURL({
+			// 			size: 4096,
+			// 			dynamic: true
+			// 		})
+			// 	);
+			// 	list = queue.check(embed);
+			// 	if (list === false) {
+			// 		pages = 0;
+			// 		return embed
+			// 			.setConfig(`${tr("page")} ${page + 1}/1`)
+			// 			.setDescription(tr("queue_no_song"));
+			// 	} else if (list.length === 1) {
+			// 		pages = 0;
+			// 		page = 1;
+			// 		return embed.setConfig(`${tr("page")} ${page}/1`);
+			// 	}
+			// 	mapping = load.chunk(list, 9);
+			// 	pages = mapping.map(s => s.join(" "));
+			// 	return embed.setConfig(
+			// 		`${tr("page")} ${page + 1}/${pages.length}`
+			// 	);
+			// }
+
+			/*
+				setDescription Queue
+			*/
 			function getEmbed() {
-				embed = new EmbedBuilder().setThumbnail(
-					interaction.guild.iconURL({
-						size: 4096,
-						dynamic: true
-					})
-				);
-				list = queue.check(embed);
+				list = queue.check();
 				if (list === false) {
 					pages = 0;
-					return embed
+					return (embed = new EmbedBuilder()
 						.setConfig(`${tr("page")} ${page + 1}/1`)
-						.setDescription(tr("queue_no_song"));
-				} else if (list.length === 1) {
-					pages = 0;
-					page = 1;
-					return embed.setConfig(`${tr("page")} ${page}/1`);
+						.setDescription(tr("queue_no_song"))
+						.setThumbnail(
+							interaction.guild.iconURL({
+								size: 4096,
+								dynamic: true
+							})
+						));
 				}
-				mapping = load.chunk(list, 9);
-				pages = mapping.map(s => s.join(" "));
-				return embed.setConfig(
-					`${tr("page")} ${page + 1}/${pages.length}`
-				);
+				mapping = load.chunk(list, 10);
+				pages = mapping.map(s => s.join("\n"));
+				return (embed = new EmbedBuilder()
+					.setConfig(`${tr("page")} ${page + 1}/${pages.length}`)
+					.setDescription(pages[page])
+					.setThumbnail(
+						interaction.guild.iconURL({
+							size: 4096,
+							dynamic: true
+						})
+					));
 			}
 
 			const row = new ActionRowBuilder().addComponents([

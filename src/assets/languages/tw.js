@@ -15,6 +15,7 @@ const langs = {
 	queue: "歌單",
 	position: "位置",
 	page: "頁數",
+	live: "直播",
 	//emoji.js
 	emoj_iErr: "我沒有找到這個表情符號",
 	emoji_Public: "你可以在不加入伺服器的情況下使用此表情符號",
@@ -83,7 +84,9 @@ const langs = {
 	receive: "現在開始播放 <z>.",
 	queue_no_song: "播放列表中目前沒有歌曲，您可以添加歌曲再查看",
 	select_a_music: "請選擇一首歌曲",
-	add_to_playlist: "已從 <list> 匯入 <z> 首歌曲至歌單"
+	add_to_playlist: "已從 <list> 匯入 <z> 首歌曲至歌單",
+	musicChange: "已調整音量至",
+	musicVolumeErr: "音量只能介於 0 到 200 之間"
 };
 
 export default langs;

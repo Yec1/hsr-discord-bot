@@ -154,18 +154,31 @@ export class Queue extends EventEmitter {
 		return this.queue[0];
 	}
 
-	check(embed) {
+	volume(num) {
+		const player = this.connection.state.subscription?.player;
+		const volume = player.state.resource?.volume;
+		volume.setVolume(num / 100);
+	}
+
+	check() {
 		var list;
 		if (this.queue[0] === undefined) {
 			list = false;
 		} else {
-			list = this.queue.map((song, i) => {
-				embed.addField(
-					`${i + 1}. ${song.info.title}`,
-					` \`${song.info.durationRaw}\` - ${song.member} `,
-					true
-				);
-			});
+			/*
+				addField Queue
+			*/
+			// embed.addField(
+			// 	`${i + 1}. ${song.info.title}`,
+			// 	` \`${song.info.durationRaw}\` - ${song.member} `,
+			// 	true
+			// );
+			list = this.queue.map(
+				(song, i) =>
+					`${i + 1}. [${song.info.title}](${song.info.url})\n${
+						this.emoji.line2
+					} \`${song.info.durationRaw}\` - ${song.member}`
+			);
 		}
 		return list;
 	}
@@ -220,7 +233,8 @@ export class Queue extends EventEmitter {
 		if (!this.started) this.started = true;
 
 		const song = this.queue[0];
-
+		let duration = song.info.durationRaw;
+		if (duration === "0:00") duration = `🔴${tr("live")}`;
 		this.channel.send({
 			embeds: [
 				new EmbedBuilder()
@@ -236,11 +250,7 @@ export class Queue extends EventEmitter {
 						`> ${song.member || this.member}`,
 						true
 					)
-					.addField(
-						this.tr("duration"),
-						`> ${song.info.durationRaw}`,
-						true
-					)
+					.addField(this.tr("duration"), `> ${duration}`, true)
 			],
 			components: [row]
 		});

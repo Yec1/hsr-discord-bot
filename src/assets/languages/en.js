@@ -15,6 +15,7 @@ const langs = {
 	queue: "Queue",
 	position: "Position",
 	page: "Page",
+	live: "Live",
 	//emoji.js
 	emoj_iErr: "I can't find this emoji",
 	emoji_Public: "You can use this emoji anywhere",
@@ -86,7 +87,9 @@ const langs = {
 	queue_no_song:
 		"There are currently no songs in the playlist, you can add songs and check again",
 	select_a_music: "Please Select a Song",
-	add_to_playlist: "Imported <z> songs from <list> to queue"
+	add_to_playlist: "Imported <z> songs from <list> to queue",
+	musicChange: "Volume adjusted to",
+	musicVolumeErr: "Volume can only be between 0 and 200"
 };
 
 export default langs;
