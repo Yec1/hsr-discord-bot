@@ -290,6 +290,11 @@ export class Queue extends EventEmitter {
 	}
 
 	async play(urlOrQuery, { member } = {}) {
+		play.setToken({
+			youtube: {
+				cookie: process.env.COOKIE
+			}
+		});
 		if (member) this.member = member;
 		if (
 			urlOrQuery.startsWith("https") &&
