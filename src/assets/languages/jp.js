@@ -14,9 +14,9 @@ const langs = {
 	track: "單曲",
 	queue: "キュー",
 	position: "位置",
-	page: "頁數",
-	live: "直播",
-	support_server: "加入支持伺服器！",
+	page: "ページ",
+	live: "ライブ",
+	support_server: "サポートサーバーに參加！",
 	support: "遇到錯誤或想提供建議?\n請點擊下方按鈕加入支持伺服器並建立貼文！",
 	//emoji.js
 	emoj_iErr: "この絵文字が見つけない",
@@ -24,12 +24,12 @@ const langs = {
 
 	//user.js
 	user_Full_Image: "元イメージ",
-	user_header: " 的資訊",
-	user_tag: "標籤",
-	user_nick: "匿稱",
-	user_badge: "徽章",
+	user_header: " の情報",
+	user_tag: "タグ",
+	user_nick: "ニックネーム",
+	user_badge: "バッジ",
 	user_status: "狀態",
-	user_createdate: "創建日期",
+	user_createdate: "アカウント作成日時",
 	user_joindate: "加入日期",
 
 	//server.js
@@ -54,11 +54,11 @@ const langs = {
 	server_Text_Channel: "メッセージチャンネル",
 	server_Voice_Channel: "ボイスチャンネル",
 	server_Boost_Count: "ブースト数",
-	server_Other: "其他",
-	server_Online: "線上",
-	server_Idle: "閒置",
-	server_DnD: "勿擾",
-	server_Offline: "離線",
+	server_Other: "その他",
+	server_Online: "オンライン",
+	server_Idle: "退席中",
+	server_DnD: "取り込む中",
+	server_Offline: "オフライン",
 	//info.js
 	infoSwitch: "スイッチ",
 	botDesc:
