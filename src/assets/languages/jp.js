@@ -30,7 +30,7 @@ const langs = {
 	user_badge: "バッジ",
 	user_status: "狀態",
 	user_createdate: "アカウント作成日時",
-	user_joindate: "加入日期",
+	user_joindate: "參加日時",
 
 	//server.js
 	server_Info: "サーバー情報",
@@ -69,7 +69,7 @@ const langs = {
 	botMemoryUsage: "メモリ使用率",
 	infoRefresh: "リフレッシュ",
 	//music.js
-	musicCantJoin: "我無法加入你的頻道",
+	musicCantJoin: "あなたのチャンネルに参加できません",
 	musicNoRes: "找不到歌曲",
 	musicNotinChannel: "你不在語音頻道！",
 	musicNoSong: "歌單中沒有歌曲",
@@ -82,8 +82,8 @@ const langs = {
 	musicPause: "歌曲已暫停！",
 	musicNoPause: "目前歌單沒有被暫停！",
 	musicEmpty: "語音頻道沒有人！正在離開...",
-	musicPlayed: "所有歌曲已播放完畢！",
-	choose: "選一首歌！",
+	musicPlayed: "全部の曲は終わりました！",
+	choose: "１つ曲を選ぶ",
 	addedToQueue: "已添加 %s 至歌單",
 	chooseFooter: "若未選擇將會自動播放第一首歌曲",
 	noReceive: "未收到回應，開始播放 <z>",
