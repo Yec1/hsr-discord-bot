@@ -20,7 +20,7 @@ const langs = {
 	support:
 		"Encountered a bug or want to offer a suggestion?\nClick the button below to join the support server and create a post!",
 	//emoji.js
-	emoj_iErr: "I can't find this emoji",
+	emoji_Err: "I can't find this emoji",
 	emoji_Public: "You can use this emoji anywhere",
 	//user.js
 	user_Full_Image: "Full Image",
@@ -84,7 +84,7 @@ const langs = {
 	choose: "Choose one song!",
 	addedToQueue: "Added %s to queue.",
 	chooseFooter:
-		"if you do not choose, it will automaticly play the first song.",
+		"If you do not choose, it will automaticly play the first song.",
 	noReceive: "Didnt receive any interaction, defaulting to <z>.",
 	receive: "Now playing <z>.",
 	queue_no_song:
