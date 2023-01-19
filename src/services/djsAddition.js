@@ -12,16 +12,15 @@ const day = [
 	"星期六"
 ];
 
-const text = [
-	"Hello World!",
-	"讓Discord更方便",
-	`今天是${day[moment().utcOffset(8).weekday()]}`,
-	"點擊我的頭像查看更多資訊"
-];
-
 Object.defineProperties(EmbedBuilder.prototype, {
 	setConfig: {
 		value: function (footer) {
+			const text = [
+				"Hello World!",
+				"讓Discord更方便",
+				`今天是${day[moment().utcOffset(8).weekday()]}`,
+				"點擊我的頭像查看更多資訊"
+			];
 			var texts = "iCE - ";
 			if (footer === undefined)
 				texts += text[Math.floor(Math.random() * text.length)];
