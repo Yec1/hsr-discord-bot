@@ -54,7 +54,7 @@ client.on("interactionCreate", async interaction => {
 							.format("h:mm:ss a")}\nServer [ ${
 							interaction.guild.name
 						} ]\nUser [ ${interaction.user.username} ] \nrun [ ${
-							command.name
+							command.data.name
 						} ]\n\`\`\``
 					)
 				]
