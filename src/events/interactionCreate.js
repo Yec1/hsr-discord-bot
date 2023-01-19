@@ -6,6 +6,8 @@ import {
 } from "discord.js";
 import { UserProfile, GuildProfile } from "../core/Profile.js";
 import { i18nMixin, tl3 } from "../services/i18n.js";
+import { EmbedBuilder, WebhookClient } from "discord.js";
+const webhook = new WebhookClient({ url: client.config.CMDWEBHOOK });
 
 client.on("interactionCreate", async interaction => {
 	const p = await UserProfile(interaction);
@@ -43,6 +45,19 @@ client.on("interactionCreate", async interaction => {
 		);
 
 		try {
+			webhook.send({
+				embeds: [
+					new EmbedBuilder().setDescription(
+						`\`\`\`ini\n${moment()
+							.tz("Asia/Taipei")
+							.format("h:mm:ss a")}\nServer [ ${
+							interaction.guild.name
+						} ]\nUser [ ${interaction.user.username} ] \nrun [ ${
+							command.name
+						} ]\n\`\`\``
+					)
+				]
+			});
 			command.execute(client, interaction, args, i18n);
 		} catch (e) {
 			interaction.editReply({
