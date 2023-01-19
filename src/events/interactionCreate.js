@@ -7,6 +7,7 @@ import {
 import { UserProfile, GuildProfile } from "../core/Profile.js";
 import { i18nMixin, tl3 } from "../services/i18n.js";
 import { EmbedBuilder, WebhookClient } from "discord.js";
+import moment from "moment-timezone";
 const webhook = new WebhookClient({ url: client.config.CMDWEBHOOK });
 
 client.on("interactionCreate", async interaction => {
@@ -60,7 +61,8 @@ client.on("interactionCreate", async interaction => {
 			});
 			command.execute(client, interaction, args, i18n);
 		} catch (e) {
-			interaction.editReply({
+			console.log(e);
+			interaction.reply({
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true
 			});
@@ -72,7 +74,8 @@ client.on("interactionCreate", async interaction => {
 		try {
 			command.execute(client, interaction);
 		} catch (e) {
-			interaction.editReply({
+			console.log(e);
+			interaction.reply({
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true
 			});
