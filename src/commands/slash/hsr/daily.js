@@ -56,148 +56,148 @@ export default {
 						value: "off"
 					}
 				)
-				.addStringOption(option =>
-					option
-						.setName("time")
-						.setDescription("Automatic check-in time")
-						.setNameLocalizations({
-							"zh-TW": "簽到時間"
-						})
-						.setDescriptionLocalizations({
-							"zh-TW": "自動簽到的時間"
-						})
-						.setRequired(false)
-						.addChoices(
-							{
-								name: "01",
-								value: "1"
-							},
-							{
-								name: "02",
-								value: "2"
-							},
-							{
-								name: "03",
-								value: "3"
-							},
-							{
-								name: "04",
-								value: "4"
-							},
+		)
+		.addStringOption(option =>
+			option
+				.setName("time")
+				.setDescription("Automatic check-in time")
+				.setNameLocalizations({
+					"zh-TW": "簽到時間"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "自動簽到的時間"
+				})
+				.setRequired(false)
+				.addChoices(
+					{
+						name: "01",
+						value: "1"
+					},
+					{
+						name: "02",
+						value: "2"
+					},
+					{
+						name: "03",
+						value: "3"
+					},
+					{
+						name: "04",
+						value: "4"
+					},
 
-							{
-								name: "05",
-								value: "5"
-							},
-							{
-								name: "06",
-								value: "6"
-							},
+					{
+						name: "05",
+						value: "5"
+					},
+					{
+						name: "06",
+						value: "6"
+					},
 
-							{
-								name: "07",
-								value: "7"
-							},
-							{
-								name: "08",
-								value: "8"
-							},
-							{
-								name: "09",
-								value: "9"
-							},
-							{
-								name: "10",
-								value: "10"
-							},
-							{
-								name: "11",
-								value: "11"
-							},
-							{
-								name: "12",
-								value: "12"
-							},
-							{
-								name: "13",
-								value: "13"
-							},
-							{
-								name: "14",
-								value: "14"
-							},
-							{
-								name: "15",
-								value: "15"
-							},
-							{
-								name: "16",
-								value: "16"
-							},
-							{
-								name: "17",
-								value: "17"
-							},
-							{
-								name: "18",
-								value: "18"
-							},
-							{
-								name: "19",
-								value: "19"
-							},
-							{
-								name: "20",
-								value: "20"
-							},
-							{
-								name: "21",
-								value: "21"
-							},
-							{
-								name: "22",
-								value: "22"
-							},
-							{
-								name: "23",
-								value: "23"
-							},
-							{
-								name: "24",
-								value: "24"
-							}
-						)
+					{
+						name: "07",
+						value: "7"
+					},
+					{
+						name: "08",
+						value: "8"
+					},
+					{
+						name: "09",
+						value: "9"
+					},
+					{
+						name: "10",
+						value: "10"
+					},
+					{
+						name: "11",
+						value: "11"
+					},
+					{
+						name: "12",
+						value: "12"
+					},
+					{
+						name: "13",
+						value: "13"
+					},
+					{
+						name: "14",
+						value: "14"
+					},
+					{
+						name: "15",
+						value: "15"
+					},
+					{
+						name: "16",
+						value: "16"
+					},
+					{
+						name: "17",
+						value: "17"
+					},
+					{
+						name: "18",
+						value: "18"
+					},
+					{
+						name: "19",
+						value: "19"
+					},
+					{
+						name: "20",
+						value: "20"
+					},
+					{
+						name: "21",
+						value: "21"
+					},
+					{
+						name: "22",
+						value: "22"
+					},
+					{
+						name: "23",
+						value: "23"
+					},
+					{
+						name: "24",
+						value: "24"
+					}
 				)
-				.addStringOption(option =>
-					option
-						.setName("tag")
-						.setDescription(
-							"Whether mark in the automatic check-in, turn on this also turn on the automatic check-in"
-						)
-						.setNameLocalizations({
-							"zh-TW": "標註"
-						})
-						.setDescriptionLocalizations({
-							"zh-TW":
-								"是否在自動簽到中標註，開啟這個也相當於開啟了自動簽到"
-						})
-						.setRequired(false)
-						.addChoices(
-							{
-								name: "On",
-								name_localizations: {
-									"zh-TW": "開啟"
-								},
-								value: "true"
-							},
-							{
-								name: "Off",
-								name_localizations: {
-									"zh-TW": "關閉"
-								},
-								value: "false"
-							}
-						)
+		)
+		.addStringOption(option =>
+			option
+				.setName("tag")
+				.setDescription(
+					"Whether mark in the automatic check-in, turn on this also turn on the automatic check-in"
+				)
+				.setNameLocalizations({
+					"zh-TW": "標註"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW":
+						"是否在自動簽到中標註，開啟這個也相當於開啟了自動簽到"
+				})
+				.setRequired(false)
+				.addChoices(
+					{
+						name: "On",
+						name_localizations: {
+							"zh-TW": "開啟"
+						},
+						value: "true"
+					},
+					{
+						name: "Off",
+						name_localizations: {
+							"zh-TW": "關閉"
+						},
+						value: "false"
+					}
 				)
 		),
 
