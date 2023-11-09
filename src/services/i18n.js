@@ -1,8 +1,8 @@
 import en from "../assets/languages/en.js";
 import tw from "../assets/languages/tw.js";
-import jp from "../assets/languages/jp.js";
+import cn from "../assets/languages/cn.js";
 
-const langs = { en, tw, jp };
+const langs = { en, tw, cn };
 
 export function i18nMixin(lang) {
 	if (!Object.keys(langs).includes(lang))
@@ -27,7 +27,7 @@ export function i18nMixin(lang) {
 		return str;
 	};
 }
-export function tl3(str) {
+export function toI18nLang(str) {
 	if (str.startsWith("zh")) return "tw";
 }
 function isObj(k) {

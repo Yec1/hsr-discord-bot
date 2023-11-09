@@ -1,30 +1,45 @@
 import { client } from "../index.js";
-import { WebhookClient, EmbedBuilder } from "discord.js";
+import { Events, WebhookClient, EmbedBuilder } from "discord.js";
 import moment from "moment";
-const webhook = new WebhookClient({ url: process.env.JLWEBHOOK });
+const webhook = new WebhookClient({ url: client.config.JLWEBHOOK });
 
-client.on("guildDelete", guild => {
+client.on(Events.GuildDelete, async guild => {
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()
+				.setConfig("#E74C3C")
 				.setThumbnail(guild.iconURL())
 				.setTitle("已離開伺服器")
-				.addField("名稱", `\`${guild.name}\``, false)
-				.addField("ID", `\`${guild.id}\``, false)
-				.addField("擁有者", `<@${guild.ownerId}>`, false)
-				.addField("人數", `\`${guild.memberCount}\` 個成員`, false)
-				.addField(
-					"建立時間",
-					`<t:${moment(guild.createdAt).unix()}:F>`,
-					false
-				)
-				.addField(
-					`${client.user.username} 的伺服器數量`,
-					`\`${client.guilds.cache.size}\` 個伺服器`,
-					false
-				)
-				.addField("ID", `\`${guild.id}\``, false)
-				.setColor("#E74C3C")
+				.addFields({
+					name: "名稱",
+					value: `\`${guild.name}\``,
+					inline: false
+				})
+				.addFields({
+					name: "ID",
+					value: `\`${guild.id}\``,
+					inline: false
+				})
+				.addFields({
+					name: "擁有者",
+					value: `<@${guild.ownerId}>`,
+					inline: false
+				})
+				.addFields({
+					name: "人數",
+					value: `\`${guild.memberCount}\` 個成員`,
+					inline: false
+				})
+				.addFields({
+					name: "建立時間",
+					value: `<t:${moment(guild.createdAt).unix()}:F>`,
+					inline: false
+				})
+				.addFields({
+					name: `${client.user.username} 的伺服器數量`,
+					value: `\`${totalGuilds}\` 個伺服器`,
+					inline: false
+				})
 				.setTimestamp()
 		]
 	});

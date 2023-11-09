@@ -1,25 +1,11 @@
 import dotenv from "dotenv";
 import fs from "fs";
-
-if (process.env.NODE_ENV === "dev") {
-	Object.assign(
-		process.env,
-		dotenv.parse(fs.readFileSync("./.env.development"))
-	);
-} else {
-	Object.assign(
-		process.env,
-		dotenv.parse(fs.readFileSync("./.env.production"))
-	);
-}
-// if (!process.env.YARN_WRAP_OUTPUT)
-// 	console.log(
-// 		// eslint-disable-next-line quotes
-// 		'it is suggested to install yarn and use their command to start.\ninstall yarn and do "yarn start"!'
-// 	);
+Object.assign(process.env, dotenv.parse(fs.readFileSync("./.env")));
 
 import "./services/index.js";
 import { Client, GatewayIntentBits, Partials } from "discord.js";
+import { getInfo } from "discord-hybrid-sharding";
+
 const client = new Client({
 	intents: [
 		GatewayIntentBits.Guilds,
@@ -40,7 +26,9 @@ const client = new Client({
 	allowedMentions: {
 		parse: ["users"],
 		repliedUser: false
-	}
+	},
+	shards: getInfo().SHARD_LIST,
+	shardCount: getInfo().TOTAL_SHARDS
 });
 
 export { client };

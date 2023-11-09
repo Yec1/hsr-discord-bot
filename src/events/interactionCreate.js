@@ -1,23 +1,77 @@
 import { client } from "../index.js";
+import { ApplicationCommandOptionType } from "discord.js";
+import { i18nMixin, toI18nLang } from "../services/i18n.js";
 import {
-	CommandInteraction,
-	ApplicationCommandOptionType,
-	range
+	Events,
+	EmbedBuilder,
+	WebhookClient,
+	ChannelType,
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle
 } from "discord.js";
-import { UserProfile, GuildProfile } from "../core/Profile.js";
-import { i18nMixin, tl3 } from "../services/i18n.js";
-import { EmbedBuilder, WebhookClient } from "discord.js";
-import moment from "moment-timezone";
+import emoji from "../assets/emoji.js";
+import { QuickDB } from "quick.db";
+const db = new QuickDB();
+const FBwebhook = new WebhookClient({ url: client.config.FBWEBHOOK });
 const webhook = new WebhookClient({ url: client.config.CMDWEBHOOK });
 
-client.on("interactionCreate", async interaction => {
-	const p = await UserProfile(interaction);
-	await p.checkAndUpdate();
+client.on(Events.InteractionCreate, async interaction => {
+	if (interaction.channel.type == ChannelType.DM) return;
 
-	const g = await GuildProfile(interaction);
-	await g.checkAndUpdate();
+	const i18n = i18nMixin(
+		(await db?.has(`${interaction.user.id}.locale`))
+			? await db?.get(`${interaction.user.id}.locale`)
+			: toI18nLang(interaction.locale) || "en"
+	);
 
-	const i18n = i18nMixin(g.lang || tl3(interaction.locale) || "en");
+	if (interaction.isModalSubmit()) {
+		if (interaction.customId == "feedback") {
+			const feedback = interaction.fields.getTextInputValue("suggest");
+
+			await FBwebhook.send({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig("#FFFFFF")
+						.setAuthor({
+							name: `${interaction.user.username}`,
+							iconURL: interaction.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							}),
+							url: interaction.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							})
+						})
+						.setTimestamp()
+						.setDescription(`\`\`\`\n${feedback}\`\`\``)
+				]
+			});
+
+			await interaction.reply({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig("#FF9B9B")
+						.setTitle(i18n("feedback_Sus"))
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1126797186844348426/310737454_186864900516151_6902700007088914183_n.png"
+						)
+				],
+				components: [
+					new ActionRowBuilder().addComponents(
+						new ButtonBuilder()
+							.setStyle(ButtonStyle.Link)
+							.setURL("https://discord.gg/mPCEATJDve")
+							.setLabel(`${i18n("support")}`)
+							.setEmoji(emoji.s900001)
+					)
+				],
+				ephemeral: true
+			});
+		}
+	}
+
 	if (interaction.isButton()) {
 		await interaction.deferUpdate().catch(() => {});
 	}
@@ -41,25 +95,40 @@ client.on("interactionCreate", async interaction => {
 				});
 			} else if (option.value) args.push(option.value);
 		}
-		interaction.member = interaction.guild.members.cache.get(
-			interaction.user.id
-		);
 
 		try {
 			webhook.send({
 				embeds: [
-					new EmbedBuilder().setDescription(
-						`\`\`\`ini\n${moment()
-							.tz("Asia/Taipei")
-							.format("h:mm:ss a")}\nServer [ ${
-							interaction.guild.name
-						} ]\nUser [ ${interaction.user.username} ] \nrun [ ${
-							command.data.name
-						} ]\n\`\`\``
-					)
+					new EmbedBuilder()
+						.setTimestamp()
+						.setAuthor({
+							iconURL: interaction.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							}),
+							name: `${interaction.user.username} - ${interaction.user.id}`
+						})
+						.setThumbnail(
+							interaction.guild.iconURL({
+								size: 4096,
+								dynamic: true
+							})
+						)
+						.setDescription(
+							`\`\`\`${interaction.guild.name} - ${interaction.guild.id}\`\`\``
+						)
+						.addField(
+							command.data.name,
+							`${
+								interaction.options._subcommand
+									? `> ${interaction.options._subcommand}`
+									: "\u200b"
+							}`,
+							true
+						)
 				]
 			});
-			command.execute(client, interaction, args, i18n);
+			command.execute(client, interaction, args, i18n, db, emoji);
 		} catch (e) {
 			console.log(e);
 			interaction.reply({

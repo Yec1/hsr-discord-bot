@@ -1,7 +1,6 @@
 import _glob from "glob";
 import { promisify } from "util";
-import { Collection, ApplicationCommandType } from "discord.js";
-import { uncook } from "../services/cook.js";
+import { ApplicationCommandType } from "discord.js";
 
 const glob = promisify(_glob);
 export class Loader {
@@ -9,8 +8,6 @@ export class Loader {
 		this.client = client;
 	}
 	async load() {
-		const { db } = this.client;
-		console.log(`connected to MongoDB, ping: ${await db.ping()}`);
 		const messages = await glob(
 			`${process.cwd()}/src/commands/message/**/*.js`
 		);
@@ -61,12 +58,7 @@ export class Loader {
 			`Loaded ${events.length} events, ${slashArr.length} slashs, ${msgArr.length} message commands`
 		);
 		this.client.on("ready", async () => {
-			await this.client.guilds.cache
-				.get("1045302755557912666")
-				.commands.set(slashArr);
-
-			// Register for all the guilds the bot is in
-			// await client.application.commands.set(arrayOfSlashCommands);
+			await this.client.application.commands.set(slashArr);
 		});
 	}
 }
