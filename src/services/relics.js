@@ -3,13 +3,12 @@
 
 // this lazy() can be changed to getting the scores on web, etc
 // as long it is a function
-import acquireScore from "../assets/score.json" assert { type: "json" };
+import scoreJson from "../assets/score.json" assert { type: "json" };
 
 async function getRelicsScore(character) {
 	// const responses = await axios.get(
 	//   "https://raw.githubusercontent.com/Mar-7th/StarRailScore/master/score.json"
 	// );
-	const scoreJson = acquireScore();
 	// const scoreJson = responses.data;
 	const charScore = scoreJson[character.id];
 

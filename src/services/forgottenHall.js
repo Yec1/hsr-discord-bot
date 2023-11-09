@@ -5,10 +5,13 @@ import { QuickDB } from "quick.db";
 const db = new QuickDB();
 
 GlobalFonts.registerFromPath(
-	join("..", "assets", "URW-DIN-Arabic-Medium.ttf"),
+	join(".", "src", ".", "assets", "URW-DIN-Arabic-Medium.ttf"),
 	"URW DIN Arabic"
 );
-GlobalFonts.registerFromPath(join("..", "assets", "Hanyi.ttf"), "Hanyi");
+GlobalFonts.registerFromPath(
+	join(".", "src", ".", "assets", "Hanyi.ttf"),
+	"Hanyi"
+);
 
 const imageURL =
 	"https://act.hoyolab.com/app/community-game-records-sea/images/";

@@ -6,10 +6,13 @@ import { QuickDB } from "quick.db";
 const db = new QuickDB();
 
 GlobalFonts.registerFromPath(
-	join("..", "assets", "URW-DIN-Arabic-Medium.ttf"),
+	join(".", "src", ".", "assets", "URW-DIN-Arabic-Medium.ttf"),
 	"URW DIN Arabic"
 );
-GlobalFonts.registerFromPath(join("..", "assets", "YaHei.ttf"), "YaHei");
+GlobalFonts.registerFromPath(
+	join(".", "src", ".", "assets", "YaHei.ttf"),
+	"YaHei"
+);
 
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
@@ -106,7 +109,7 @@ async function mainPage(playerData, interaction) {
 	const ctx = canvas.getContext("2d");
 
 	// BG
-	const bg = await loadImageAsync("./src/services/assets/bg.jpg");
+	const bg = await loadImageAsync("./src/assets/bg.jpg");
 	ctx.drawImage(bg, 0, 0, 1920, 1080);
 
 	// Avatar
@@ -249,9 +252,8 @@ async function charPage(characters, playerData, num, interaction) {
 	const character = characters[num];
 	const canvas = createCanvas(1920, 1080);
 	const ctx = canvas.getContext("2d");
-
 	// BG
-	const bg = await loadImageAsync("./src/services/assets/bg.jpg");
+	const bg = await loadImageAsync("./src/assets/bg.jpg");
 	ctx.drawImage(bg, 0, 0, 1920, 1080);
 
 	// Name
