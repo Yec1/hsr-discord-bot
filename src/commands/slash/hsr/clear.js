@@ -22,7 +22,7 @@ export default {
 	 * @param {CommandInteraction} interaction
 	 * @param {String[]} args
 	 */
-	async execute(client, interaction, args, tr, db) {
+	async execute(client, interaction, args, tr, db, emoji) {
 		await db?.delete(`${interaction.user.id}`);
 
 		await interaction.reply({

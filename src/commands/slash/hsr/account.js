@@ -81,7 +81,7 @@ export default {
 	 * @param {CommandInteraction} interaction
 	 * @param {String[]} args
 	 */
-	async execute(client, interaction, args, tr, db) {
+	async execute(client, interaction, args, tr, db, emoji) {
 		const cmd = interaction.options.getString("options");
 		const userId = interaction.user.id;
 
