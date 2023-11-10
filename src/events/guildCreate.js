@@ -9,6 +9,16 @@ client.on(Events.GuildCreate, async guild => {
 	);
 	const totalGuilds = results.reduce((prev, val) => prev + val, 0);
 
+	client.user.setPresence({
+		activities: [
+			{
+				name: `${totalGuilds} 個伺服器`,
+				type: ActivityType.Watching
+			}
+		],
+		status: "online"
+	});
+
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()

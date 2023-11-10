@@ -4,6 +4,21 @@ import moment from "moment";
 const webhook = new WebhookClient({ url: client.config.JLWEBHOOK });
 
 client.on(Events.GuildDelete, async guild => {
+	const results = await client.cluster.broadcastEval(
+		c => c.guilds.cache.size
+	);
+	const totalGuilds = results.reduce((prev, val) => prev + val, 0);
+
+	client.user.setPresence({
+		activities: [
+			{
+				name: `${totalGuilds} 個伺服器`,
+				type: ActivityType.Watching
+			}
+		],
+		status: "online"
+	});
+
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()
