@@ -4,6 +4,7 @@ import { EmbedBuilder, WebhookClient } from "discord.js";
 import { QuickDB } from "quick.db";
 import { i18nMixin } from "../services/i18n.js";
 import moment from "moment-timezone";
+import emoji from "../assets/emoji.js";
 import { staminaColor } from "../services/request.js";
 const webhook = new WebhookClient({ url: client.config.LOGWEBHOOK });
 const db = new QuickDB();
