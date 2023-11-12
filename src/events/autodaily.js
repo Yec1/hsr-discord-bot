@@ -17,56 +17,43 @@ let sus = 0;
 
 export default async function dailyCheck() {
 	const daily = await db.get("autoDaily");
+	const autoDaily = Object.keys(daily);
+
+	// Log
 	const nowTime = new Date().toLocaleString("en-US", {
 		timeZone: "Asia/Taipei",
 		hour: "numeric",
 		hour12: false
 	});
-
 	const start_time = Date.now();
 	total = 0;
 	signed = 0;
 	fail = 0;
 	sus = 0;
 
-	const autoDaily = Object.keys(daily);
-	const promises = autoDaily.map(async id => {
-		const time = daily[id]?.time || "13";
-		if (parseInt(time) === nowTime) {
-			const uid = await db.get(`${id}.uid`);
-			const cookie = await db.get(`${id}.cookie`);
-			const locale = (await db.has(`${id}.locale`))
-				? await db.get(`${id}.locale`)
-				: "tw";
+	// Start
+	for (const id of autoDaily) {
+		const time = daily[id]?.time ? daily[id].time : "13";
 
-			const tr = i18nMixin(locale);
-			const channelId = daily[id].channelId;
-			const tag = daily[id].tag === "true" ? `<@${id}>` : "";
-			let channel;
-
-			try {
-				channel = await client.channels.fetch(channelId);
-			} catch (e) {}
-
-			if (await hasValidAccount(id, uid, cookie)) {
-				await dailySend(daily, id, uid, cookie, channel, tr);
-			} else {
-				await dailySend(daily, id, uid, cookie, channel, tr);
-			}
+		if (parseInt(time) == nowTime) {
+			if (
+				(await db?.has(`${id}.account`)) &&
+				(await db?.get(`${id}.account`))[0].uid &&
+				(await db?.get(`${id}.account`))[0].cookie
+			) {
+				const accounts = await db?.get(`${id}.account`);
+				for (const account of accounts)
+					await dailySend(daily, id, account.uid, account.cookie);
+			} else
+				await dailySend(
+					daily,
+					id,
+					await db?.get(`${id}.uid`),
+					await db?.get(`${id}.cookie`)
+				);
 		}
-	});
-
-	await Promise.all(promises);
-	UpdateStatistics(total, start_time, sus, fail, signed, nowTime);
-}
-
-async function hasValidAccount(id, uid, cookie) {
-	if (await db.has(`${id}.account`)) {
-		const accounts = await db.get(`${id}.account`);
-		return accounts.every(account => account.uid && account.cookie);
-	} else {
-		return uid && cookie;
 	}
+	UpdateStatistics(total, start_time, sus, fail, signed, nowTime);
 }
 
 async function dailySend(daily, id, uid, cookie) {
@@ -220,8 +207,8 @@ function UpdateStatistics(total, start_time, sus, fail, signed, nowTime) {
 					},
 					{
 						name: `花費時間 \`${parseFloat(
-							(end_time - start_time) / 1000
-						).toFixed(3)}\` 秒`,
+							((end_time - start_time) / 1000).toFixed(3)
+						)}\` 秒`,
 						value: "\u200b",
 						inline: true
 					},
