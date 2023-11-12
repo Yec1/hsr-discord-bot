@@ -98,104 +98,110 @@ async function notifySend(notify, id, uid, cookie) {
 			(userdb.expedition == "true" && expeditionNotify == true)
 		) {
 			sus++;
-			channel?.send({
-				content: tag,
-				embeds: [
-					new EmbedBuilder()
-						.setConfig(staminaColor(res.current_stamina))
-						.setTitle(title)
-						.setDescription(`<@${id}>`)
-						.setAuthor({
-							name: `${tr("notify_title")} - ${hsr.uid}`,
-							iconURL:
-								"https://media.discordapp.net/attachments/1057244827688910850/1121043103831293992/NoviceBookIcon.png"
-						})
-						.addFields(
-							{
-								name: `${emoji.stamina} ${tr(
-									"notify_stamina"
-								)} ${res.current_stamina} / ${
-									res.max_stamina
-								} ** ** ${tr("notify_re")} ${
-									res.stamina_recover_time <= 0
-										? `\`${tr("notify_reAll")}\``
-										: `<t:${
-												moment(new Date()).unix() +
-												res.stamina_recover_time
-										  }:R>`
-								}`,
-								value: "\u200b",
-								inline: false
-							},
-							{
-								name: `${emoji.reserve_stamina} ${tr(
-									"notify_staminaBack"
-								)} ${res.current_reserve_stamina} / 2400`,
-								value: "\u200b",
-								inline: false
-							},
-							{
-								name: `${emoji.daily} ${tr("notify_daily")} ${
-									res.current_train_score
-								} / ${res.max_train_score} ** ** ${tr(
-									"notify_end"
-								)} ${`<t:${moment(
-									new Date(
-										new Date().setDate(
-											new Date().getDate() + 1
-										)
-									).setHours(4, 0, 0, 0)
-								).unix()}:R>`}`,
-								value: "\u200b",
-								inline: false
-							},
-							{
-								name: `${emoji.rogue} ${tr("notify_rogue")} ${
-									res.current_rogue_score
-								} / ${res.max_rogue_score}`,
-								value: "\u200b",
-								inline: false
-							},
-							{
-								name: `${emoji.cocoon} ${tr("notify_cocoon")} ${
-									res.weekly_cocoon_cnt
-								} / ${res.weekly_cocoon_limit}`,
-								value: "\u200b",
-								inline: false
-							},
-							{
-								name: `${emoji.epedition} ${tr(
-									"notify_epedition"
-								)} ${res.accepted_epedition_num} / ${
-									res.total_expedition_num
-								}`,
-								value:
-									res.expeditions.length != 0
-										? res.expeditions
-												.map(expedition => {
-													return `• **${
-														expedition.name
-													}**：${
-														expedition.remaining_time <=
-														0
-															? `\`${tr(
-																	"notify_claim"
-															  )}\``
-															: `<t:${
-																	moment(
-																		new Date()
-																	).unix() +
-																	expedition.remaining_time
-															  }:R>`
-													}`;
-												})
-												.join("\n")
-										: "\u200b",
-								inline: false
-							}
-						)
-				]
-			});
+			channel
+				?.send({
+					content: tag,
+					embeds: [
+						new EmbedBuilder()
+							.setConfig(staminaColor(res.current_stamina))
+							.setTitle(title)
+							.setDescription(`<@${id}>`)
+							.setAuthor({
+								name: `${tr("notify_title")} - ${hsr.uid}`,
+								iconURL:
+									"https://media.discordapp.net/attachments/1057244827688910850/1121043103831293992/NoviceBookIcon.png"
+							})
+							.addFields(
+								{
+									name: `${emoji.stamina} ${tr(
+										"notify_stamina"
+									)} ${res.current_stamina} / ${
+										res.max_stamina
+									} ** ** ${tr("notify_re")} ${
+										res.stamina_recover_time <= 0
+											? `\`${tr("notify_reAll")}\``
+											: `<t:${
+													moment(new Date()).unix() +
+													res.stamina_recover_time
+											  }:R>`
+									}`,
+									value: "\u200b",
+									inline: false
+								},
+								{
+									name: `${emoji.reserve_stamina} ${tr(
+										"notify_staminaBack"
+									)} ${res.current_reserve_stamina} / 2400`,
+									value: "\u200b",
+									inline: false
+								},
+								{
+									name: `${emoji.daily} ${tr(
+										"notify_daily"
+									)} ${res.current_train_score} / ${
+										res.max_train_score
+									} ** ** ${tr("notify_end")} ${`<t:${moment(
+										new Date(
+											new Date().setDate(
+												new Date().getDate() + 1
+											)
+										).setHours(4, 0, 0, 0)
+									).unix()}:R>`}`,
+									value: "\u200b",
+									inline: false
+								},
+								{
+									name: `${emoji.rogue} ${tr(
+										"notify_rogue"
+									)} ${res.current_rogue_score} / ${
+										res.max_rogue_score
+									}`,
+									value: "\u200b",
+									inline: false
+								},
+								{
+									name: `${emoji.cocoon} ${tr(
+										"notify_cocoon"
+									)} ${res.weekly_cocoon_cnt} / ${
+										res.weekly_cocoon_limit
+									}`,
+									value: "\u200b",
+									inline: false
+								},
+								{
+									name: `${emoji.epedition} ${tr(
+										"notify_epedition"
+									)} ${res.accepted_epedition_num} / ${
+										res.total_expedition_num
+									}`,
+									value:
+										res.expeditions.length != 0
+											? res.expeditions
+													.map(expedition => {
+														return `• **${
+															expedition.name
+														}**：${
+															expedition.remaining_time <=
+															0
+																? `\`${tr(
+																		"notify_claim"
+																  )}\``
+																: `<t:${
+																		moment(
+																			new Date()
+																		).unix() +
+																		expedition.remaining_time
+																  }:R>`
+														}`;
+													})
+													.join("\n")
+											: "\u200b",
+									inline: false
+								}
+							)
+					]
+				})
+				.catch();
 		}
 	} catch (e) {
 		fail++;

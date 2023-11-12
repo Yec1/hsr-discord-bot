@@ -4,9 +4,7 @@ import schedule from "node-schedule";
 import notifyCheck from "./autonotify.js";
 import dailyCheck from "./autodaily.js";
 
-client.on(Events.ClientReady, async () => {
-	console.log(`[CLIENT] ${client.user.tag} 已經上線！`);
-
+async function updatePresence() {
 	const results = await client.cluster.broadcastEval(
 		c => c.guilds.cache.size
 	);
@@ -21,11 +19,16 @@ client.on(Events.ClientReady, async () => {
 		],
 		status: "online"
 	});
+}
 
+client.on(Events.ClientReady, async () => {
+	console.log(`[CLIENT] ${client.user.tag} 已經上線！`);
 	dailyCheck();
 
 	schedule.scheduleJob("0 * * * *", function () {
 		notifyCheck();
 		dailyCheck();
 	});
+
+	setInterval(updatePresence, 10000);
 });

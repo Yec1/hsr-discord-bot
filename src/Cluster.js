@@ -2,11 +2,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 Object.assign(process.env, dotenv.parse(fs.readFileSync("./.env")));
 
-import {
-	ClusterManager,
-	HeartbeatManager,
-	ReClusterManager
-} from "discord-hybrid-sharding";
+import { ClusterManager, HeartbeatManager } from "discord-hybrid-sharding";
 
 const manager = new ClusterManager(`${process.cwd()}/src/index.js`, {
 	totalShards: "auto",
@@ -27,15 +23,6 @@ manager.extend(
 	new HeartbeatManager({
 		interval: 2000,
 		maxMissedHeartbeats: 5
-	})
-);
-
-manager.extend(
-	new ReClusterManager({
-		restartMode: "gracefulSwitch",
-		totalClusters: "auto",
-		totalShards: "auto",
-		shardsPerClusters: 5
 	})
 );
 

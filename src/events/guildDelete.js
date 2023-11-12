@@ -1,5 +1,5 @@
 import { client } from "../index.js";
-import { Events, WebhookClient, EmbedBuilder } from "discord.js";
+import { Events, WebhookClient, EmbedBuilder, ActivityType } from "discord.js";
 import moment from "moment";
 const webhook = new WebhookClient({ url: client.config.JLWEBHOOK });
 
@@ -8,16 +8,6 @@ client.on(Events.GuildDelete, async guild => {
 		c => c.guilds.cache.size
 	);
 	const totalGuilds = results.reduce((prev, val) => prev + val, 0);
-
-	client.user.setPresence({
-		activities: [
-			{
-				name: `${totalGuilds} 個伺服器`,
-				type: ActivityType.Watching
-			}
-		],
-		status: "online"
-	});
 
 	webhook.send({
 		embeds: [
