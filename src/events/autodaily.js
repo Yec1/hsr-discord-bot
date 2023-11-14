@@ -100,54 +100,50 @@ async function dailySend(daily, id, uid, cookie) {
 			signed++;
 		} else {
 			sus++;
-			channel
-				?.send({
-					content: tag,
-					embeds: [
-						new EmbedBuilder()
-							.setConfig()
-							.setTitle(`${tr("auto")}${tr("daily_sign")}`)
-							.setThumbnail(todaySign?.icon)
-							.setDescription(
-								`<@${id}> ${tr("daily_desc", {
-									a: `\`${todaySign?.name}x${todaySign?.cnt}\``
-								})}${
-									info.month_last_day != true
-										? `\n\n${tr("daily_desc2", {
-												b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-										  })}`
-										: ""
-								}`
-							)
-							.addFields(
-								{
-									name: `${reward.month} ${tr(
-										"daily_month"
-									)}`,
-									value: "\u200b",
-									inline: true
-								},
-								{
-									name: tr("daily_signedDay", {
-										z:
-											info.month_last_day != true
-												? info.total_sign_day + 1
-												: info.total_sign_day
-									}),
-									value: "\u200b",
-									inline: true
-								},
-								{
-									name: tr("daily_missedDay", {
-										z: info.sign_cnt_missed
-									}),
-									value: "\u200b",
-									inline: true
-								}
-							)
-					]
-				})
-				.catch();
+			channel?.send({
+				content: tag,
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
+						.setTitle(`${tr("auto")}${tr("daily_sign")}`)
+						.setThumbnail(todaySign?.icon)
+						.setDescription(
+							`<@${id}> ${tr("daily_desc", {
+								a: `\`${todaySign?.name}x${todaySign?.cnt}\``
+							})}${
+								info.month_last_day != true
+									? `\n\n${tr("daily_desc2", {
+											b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
+									  })}`
+									: ""
+							}`
+						)
+						.addFields(
+							{
+								name: `${reward.month} ${tr("daily_month")}`,
+								value: "\u200b",
+								inline: true
+							},
+							{
+								name: tr("daily_signedDay", {
+									z:
+										info.month_last_day != true
+											? info.total_sign_day + 1
+											: info.total_sign_day
+								}),
+								value: "\u200b",
+								inline: true
+							},
+							{
+								name: tr("daily_missedDay", {
+									z: info.sign_cnt_missed
+								}),
+								value: "\u200b",
+								inline: true
+							}
+						)
+				]
+			});
 		}
 	} catch (e) {
 		fail++;
