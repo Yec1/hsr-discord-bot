@@ -482,7 +482,7 @@ async function warpLogImage(interaction, datas, title) {
 	const canvas = createCanvas(1370, 900);
 	const ctx = canvas.getContext("2d");
 
-	const bg = await loadImageAsync("./src/services/assets/warpbg.jpg");
+	const bg = await loadImageAsync("./src/assets/warpbg.jpg");
 	ctx.drawImage(bg, 0, 0, 1920, 1080);
 
 	// Draw Icon
