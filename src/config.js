@@ -6,5 +6,7 @@ export default {
 	LOGWEBHOOK:
 		"https://discord.com/api/webhooks/1124988227674177567/Di1QIvd_KGrTPnb8syZWdOLo1TZ1hYLk18NjAZRBMv3r1hNaprgVrSDLTAnQbEPC8z2m",
 	FBWEBHOOK:
-		"https://discord.com/api/webhooks/1126792668681351218/zNw6i5Lnb5HqKN8Yi59rjStWUekIL-Day56G7ycDnY89FaR3waTrjR05_Zxl9qoKQYhu"
+		"https://discord.com/api/webhooks/1126792668681351218/zNw6i5Lnb5HqKN8Yi59rjStWUekIL-Day56G7ycDnY89FaR3waTrjR05_Zxl9qoKQYhu",
+	ERRWEBHOOK:
+		"https://discord.com/api/webhooks/1119964172101361745/UTpcEpP9NMNZ027XgmYoxXcmbnfMqIUJzZF-MC6odHNn7hC1gOYwQ8DFumNgg4GHurQY"
 };

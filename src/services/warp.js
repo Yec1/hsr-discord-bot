@@ -29,6 +29,14 @@ const image_Header =
 
 const sleep = time => new Promise(res => setTimeout(res, time));
 
+async function loadImageAsync(url) {
+	try {
+		return await loadImage(url);
+	} catch {
+		return await loadImage(image_Header + "icon/element/None.png");
+	}
+}
+
 async function fetchWarpData(query, gachaType, id, endId) {
 	query.set("gacha_type", id);
 	query.set("end_id", endId);
@@ -256,13 +264,13 @@ async function warp(vers, type, interaction) {
 async function createImage(warpResults) {
 	const canvas = createCanvas(1920, 1080);
 	const ctx = canvas.getContext("2d");
-	const background = await loadImage(
+	const background = await loadImageAsync(
 		"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/warp-result.webp"
 	);
 	ctx.drawImage(background, 0, 0, 1920, 1080);
 
 	if (warpResults.length == 10) {
-		const ring = await loadImage(
+		const ring = await loadImageAsync(
 			"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/rings.webp"
 		);
 		ctx.drawImage(ring, -200, -300, 550, 550);
@@ -287,7 +295,7 @@ async function createImage(warpResults) {
 		let Num = 0;
 		for (const item of warpResults) {
 			Num++;
-			const image = await loadImage(
+			const image = await loadImageAsync(
 				`https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/warp-results/${item.name}.webp`
 			);
 
@@ -296,7 +304,7 @@ async function createImage(warpResults) {
 			ctx.rotate(radians);
 
 			if (item.rarity == 5) {
-				const fivestarbg = await loadImage(
+				const fivestarbg = await loadImageAsync(
 					`https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/warp-results/five-back.webp`
 				);
 				ctx.drawImage(fivestarbg, -image.width / 2, -image.height / 2);
@@ -313,23 +321,23 @@ async function createImage(warpResults) {
 		ctx.save();
 		ctx.translate(background.width / 2, background.height / 2);
 
-		const item = await loadImage(
+		const item = await loadImageAsync(
 			`https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/splash/${warpResults[0].name}.webp`
 		);
-		const star = await loadImage(
+		const star = await loadImageAsync(
 			"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/star.webp"
 		);
-		const Path = await loadImage(
+		const Path = await loadImageAsync(
 			`https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/path-${warpResults[0].path
 				.toLowerCase()
 				.replace(/\s+/g, "-")}.webp`
 		);
 
 		if (warpResults[0].element == "") {
-			const back = await loadImage(
+			const back = await loadImageAsync(
 				"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/glass-back.webp"
 			);
-			const front = await loadImage(
+			const front = await loadImageAsync(
 				"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/glass-front.webp"
 			);
 
@@ -381,7 +389,7 @@ async function createImage(warpResults) {
 				);
 			}
 		} else {
-			const element = await loadImage(
+			const element = await loadImageAsync(
 				`https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/elem-${warpResults[0].element.toLowerCase()}.webp`
 			);
 			ctx.drawImage(item, -item.width / 2, -item.height / 2);
@@ -474,11 +482,11 @@ async function warpLogImage(interaction, datas, title) {
 	const canvas = createCanvas(1370, 900);
 	const ctx = canvas.getContext("2d");
 
-	const bg = await loadImage("./src/services/assets/warpbg.jpg");
+	const bg = await loadImageAsync("./src/services/assets/warpbg.jpg");
 	ctx.drawImage(bg, 0, 0, 1920, 1080);
 
 	// Draw Icon
-	const drawIcon = await loadImage(
+	const drawIcon = await loadImageAsync(
 		image_Header + "icon/sign/DrawcardIcon.png"
 	);
 	ctx.drawImage(drawIcon, 50, 22.5, 64, 64);
@@ -512,7 +520,7 @@ async function warpLogImage(interaction, datas, title) {
 	ctx.fillText(`${datas.total}`, 400, 252.5);
 
 	ctx.drawImage(
-		await loadImage(image_Header + "icon/item/102.png"),
+		await loadImageAsync(image_Header + "icon/item/102.png"),
 		410,
 		225,
 		36,
@@ -533,7 +541,7 @@ async function warpLogImage(interaction, datas, title) {
 	ctx.fillText(`${datas.total * 160}`, 400, 302.5);
 
 	ctx.drawImage(
-		await loadImage(image_Header + "icon/item/900001.png"),
+		await loadImageAsync(image_Header + "icon/item/900001.png"),
 		410,
 		275,
 		36,
@@ -567,7 +575,7 @@ async function warpLogImage(interaction, datas, title) {
 	ctx.fillText(`${datas.average}`, 400, 402.5);
 
 	// Draw History Icon
-	const star = await loadImage(image_Header + "icon/deco/StarBig.png");
+	const star = await loadImageAsync(image_Header + "icon/deco/StarBig.png");
 	ctx.drawImage(star, 530, 103, 60, 60);
 
 	// Draw History Text
@@ -627,7 +635,7 @@ async function warpLogImage(interaction, datas, title) {
 				const id = res.id;
 				const type = res.type;
 				ctx.globalCompositeOperation = "source-over";
-				const image = await loadImage(
+				const image = await loadImageAsync(
 					image_Header +
 						(x + y == 0
 							? "icon/element/None.png"

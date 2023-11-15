@@ -92,11 +92,12 @@ async function saveLeaderboard(playerData) {
 	await db.set("LeaderBoard", leaderboard);
 }
 
-const loadedImages = {};
-
 async function loadImageAsync(url) {
-	if (!loadedImages[url]) loadedImages[url] = await loadImage(url);
-	return loadedImages[url];
+	try {
+		return await loadImage(url);
+	} catch {
+		return await loadImage(image_Header + "icon/element/None.png");
+	}
 }
 
 async function mainPage(playerData, interaction) {
