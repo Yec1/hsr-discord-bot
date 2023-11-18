@@ -70,7 +70,7 @@ export default {
 						})
 						.setRequired(false)
 				)
-				.addIntegerOption(option =>
+				.addStringOption(option =>
 					option
 						.setName("userid")
 						.setDescription("Enter the user ID you want to delete")
