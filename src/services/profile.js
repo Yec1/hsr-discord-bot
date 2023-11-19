@@ -225,7 +225,7 @@ async function mainPage(playerData, interaction) {
 	ctx.font = "bold 24px 'URW DIN Arabic' , Arial, sans-serif' ";
 	ctx.textAlign = "right";
 	ctx.fillText(
-		`${playerData.player.space_info.memory_data.level}/21`,
+		`${playerData.player.space_info.memory_data.chaos_level}/21`,
 		1200,
 		980
 	);
@@ -236,7 +236,7 @@ async function mainPage(playerData, interaction) {
 	ctx.font = "bold 24px 'URW DIN Arabic' , Arial, sans-serif' ";
 	ctx.textAlign = "right";
 	ctx.fillText(
-		`${playerData.player.space_info.memory_data.chaos_level}/10`,
+		`${playerData.player.space_info.memory_data.level}/10`,
 		1200,
 		1020
 	);
