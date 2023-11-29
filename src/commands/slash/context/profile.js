@@ -39,7 +39,7 @@ export default {
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
 		if (uid == null)
-			return interaction.reply({
+			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")
@@ -51,9 +51,7 @@ export default {
 				ephemeral: true
 			});
 
-		await interaction.deferReply();
-
-		await interaction.editReply({
+		replyOrfollowUp(interaction, {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -67,7 +65,7 @@ export default {
 		const playerData = await player(uid, interaction);
 
 		if (playerData.detail)
-			return await interaction.editReply({
+			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")
@@ -94,7 +92,7 @@ export default {
 			name: `${playerData.player.uid}.png`
 		});
 
-		await interaction.editReply({
+		replyOrfollowUp(interaction, {
 			embeds: [],
 			// embeds: [
 			//   new EmbedBuilder()

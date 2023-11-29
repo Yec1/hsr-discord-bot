@@ -153,6 +153,8 @@ const langs = {
 	news_info: "資訊",
 	news_seltype: "請選擇一種新聞類別",
 	news_selpost: "🐣 請選擇一篇文章",
+	draw_fail: "製圖失敗，請稍後再試！",
+	draw_wait: "您的製圖請求正在排隊，剩餘 <z> 位使用者",
 
 	year: "年",
 	month: "月",

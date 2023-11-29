@@ -8,6 +8,9 @@ import {
 } from "discord.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { indexImage } from "../../../services/forgottenHall.js";
+import Queue from "queue";
+
+const drawQueue = new Queue({ autostart: true, concurrency: 1 });
 
 export default {
 	data: new SlashCommandBuilder()
@@ -63,7 +66,7 @@ export default {
 
 			const res = await hsr.record.forgottenHall();
 			if (res.has_data == false)
-				return await interaction.reply({
+				return replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -75,21 +78,61 @@ export default {
 					ephemeral: true
 				});
 
-			await interaction.deferReply();
+			replyOrfollowUp(interaction, {
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
+						.setTitle(tr("profile_Searching"))
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+						)
+				]
+			});
 
 			const floor = res.all_floor_detail[0];
-			const imageBuffer = await indexImage(
+
+			await handleDrawRequest(
 				hsr.uid,
+				user.id,
 				res,
 				floor,
-				interaction
+				interaction,
+				tr
 			);
+		} catch (e) {
+			let desc = "";
+			const userdb = (await db?.has(`${user}.account`))
+				? (await db?.get(`${user}.account`))[0]
+				: await db?.get(`${user}`);
+			userdb?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
+			userdb?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
+
+			return replyOrfollowUp(interaction, {
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
+						.setTitle(`${tr("notify_failed")}`)
+						.setDescription(
+							`<@${user.id}>\n\n${desc}\n${tr("err_code")}${e}`
+						)
+				],
+				ephemeral: true
+			});
+		}
+	}
+};
+
+async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
+	const drawTask = async () => {
+		try {
+			const imageBuffer = await indexImage(uid, res, floor, interaction);
 			const image = new AttachmentBuilder(imageBuffer, {
 				name: `${floor.name}.png`
 			});
 
-			await interaction.editReply({
+			replyOrfollowUp(interaction, {
 				files: [image],
+				embeds: [],
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -111,32 +154,44 @@ export default {
 												r: `${floor.round_num}`
 											}
 										)}`,
-										value: `${user.id}-${i}`
+										value: `${userId}-${i}`
 									};
 								})
 							)
 					)
 				]
 			});
-		} catch (e) {
-			let desc = "";
-			const userdb = (await db?.has(`${user}.account`))
-				? (await db?.get(`${user}.account`))[0]
-				: await db?.get(`${user}`);
-			userdb?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
-			userdb?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
-
-			return await interaction.reply({
+		} catch (error) {
+			replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
-						.setTitle(`${tr("notify_failed")}`)
-						.setDescription(
-							`<@${user.id}>\n\n${desc}\n${tr("err_code")}${e}`
+						.setTitle(
+							`${tr("draw_fail")}\n${tr("err_code")}${error}`
 						)
-				],
-				ephemeral: true
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+						)
+				]
 			});
 		}
-	}
-};
+	};
+
+	drawQueue.push(drawTask);
+
+	if (drawQueue.length != 1)
+		replyOrfollowUp(interaction, {
+			embeds: [
+				new EmbedBuilder()
+					.setConfig()
+					.setTitle(
+						`${tr("draw_wait", {
+							z: drawQueue.length
+						})}`
+					)
+					.setThumbnail(
+						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+					)
+			]
+		});
+}

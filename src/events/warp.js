@@ -11,7 +11,10 @@ import {
 import { warpLog, warpLogImage } from "../services/warp.js";
 import { i18nMixin, toI18nLang } from "../services/i18n.js";
 import { QuickDB } from "quick.db";
+import Queue from "queue";
+
 const db = new QuickDB();
+const drawQueue = new Queue({ autostart: true, concurrency: 1 });
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (interaction.isModalSubmit()) {
@@ -23,7 +26,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		if (interaction.customId == "warp_query") {
 			const url = interaction.fields.getTextInputValue("warpUrl");
 
-			await interaction.reply({
+			replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -37,7 +40,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			const warpResults = await warpLog(url, interaction);
 
 			if (!warpResults)
-				return interaction.editReply({
+				return replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -49,111 +52,156 @@ client.on(Events.InteractionCreate, async interaction => {
 					]
 				});
 
-			async function UpdateEmbed(interaction, datas, title) {
-				const imageBuffer = await warpLogImage(
-					interaction,
-					datas,
-					title
-				);
-				const image = new AttachmentBuilder(imageBuffer, {
-					name: `${title}.png`
-				});
+			async function handleDrawRequest(interaction, datas, title) {
+				const drawTask = async () => {
+					try {
+						const imageBuffer = await warpLogImage(
+							interaction,
+							datas,
+							title
+						);
+						const image = new AttachmentBuilder(imageBuffer, {
+							name: `${title}.png`
+						});
 
-				// const description =
-				//   datas?.data.length > 0
-				//     ? datas.data
-				//         .map(({ name, count }) => {
-				//           const starEmoji =
-				//             count <= 60 ? emoji.yellowStar : emoji.whiteStar;
-				//           return `${starEmoji} ${name} \`${count}\` ${tr("warp")}`;
-				//         })
-				//         .join("\n")
-				//     : tr("none");
+						// const description =
+						//   datas?.data.length > 0
+						//     ? datas.data
+						//         .map(({ name, count }) => {
+						//           const starEmoji =
+						//             count <= 60 ? emoji.yellowStar : emoji.whiteStar;
+						//           return `${starEmoji} ${name} \`${count}\` ${tr("warp")}`;
+						//         })
+						//         .join("\n")
+						//     : tr("none");
 
-				// if (description.length > 2048)
-				//   description = description.slice(0, 2045) + "...";
+						// if (description.length > 2048)
+						//   description = description.slice(0, 2045) + "...";
 
-				// const average = datas.average;
-				// const sentenceMap = {
-				//   0: tr("warp_0"),
-				//   30: tr("warp_30"),
-				//   50: tr("warp_50"),
-				//   60: tr("warp_60"),
-				//   80: tr("warp_80"),
-				// };
+						// const average = datas.average;
+						// const sentenceMap = {
+						//   0: tr("warp_0"),
+						//   30: tr("warp_30"),
+						//   50: tr("warp_50"),
+						//   60: tr("warp_60"),
+						//   80: tr("warp_80"),
+						// };
 
-				// let sentence = "";
-				// for (const key in sentenceMap) {
-				//   if (average > key) sentence = sentenceMap[key];
-				//   else sentence = "\u200b";
-				// }
+						// let sentence = "";
+						// for (const key in sentenceMap) {
+						//   if (average > key) sentence = sentenceMap[key];
+						//   else sentence = "\u200b";
+						// }
 
-				interaction.message.edit({
-					embeds: [],
-					// embeds: [
-					//   new EmbedBuilder()
-					//     .setConfig()
-					//     .setTitle(`${emoji.DrawcardIcon} ${title}`)
-					//     .setDescription(description)
-					//     .setThumbnail(
-					//       interaction.user.displayAvatarURL({
-					//         size: 4096,
-					//         dynamic: true,
-					//       })
-					//     )
-					//     .addFields(
-					//       {
-					//         name: `${tr("total")} ${datas.total} ${tr("warp")} • ${
-					//           emoji.s900001
-					//         } ${datas.total * 160}`,
-					//         value: "\u200b",
-					//         inline: true,
-					//       },
-					//       {
-					//         name: tr("warp_pity", {
-					//           z: datas.pity,
-					//         }),
-					//         value: "\u200b",
-					//         inline: true,
-					//       },
-					//       {
-					//         name:
-					//           average == 0
-					//             ? tr("warp_nonAverage")
-					//             : tr("warp_average", {
-					//                 z: average,
-					//               }),
-					//         value: sentence,
-					//         inline: true,
-					//       }
-					//     )
-					//     .setImage(
-					//       "https://media.discordapp.net/attachments/1057244827688910850/1120335669764554752/background.png"
-					//     ),
-					// ],
-					components: [
-						new ActionRowBuilder().addComponents(
-							new StringSelectMenuBuilder()
-								.setCustomId("WarpMenu")
-								.setPlaceholder(tr("warp_selectMenuTitle"))
-								.addOptions(
-									new StringSelectMenuOptionBuilder()
-										.setLabel(tr("warp_typeCharacter"))
-										.setValue("character"),
-									new StringSelectMenuOptionBuilder()
-										.setLabel(tr("warp_typeLightcone"))
-										.setValue("lightcone"),
-									new StringSelectMenuOptionBuilder()
-										.setLabel(tr("warp_typeRegular"))
-										.setValue("regular")
+						interaction.message.edit({
+							embeds: [],
+							// embeds: [
+							//   new EmbedBuilder()
+							//     .setConfig()
+							//     .setTitle(`${emoji.DrawcardIcon} ${title}`)
+							//     .setDescription(description)
+							//     .setThumbnail(
+							//       interaction.user.displayAvatarURL({
+							//         size: 4096,
+							//         dynamic: true,
+							//       })
+							//     )
+							//     .addFields(
+							//       {
+							//         name: `${tr("total")} ${datas.total} ${tr("warp")} • ${
+							//           emoji.s900001
+							//         } ${datas.total * 160}`,
+							//         value: "\u200b",
+							//         inline: true,
+							//       },
+							//       {
+							//         name: tr("warp_pity", {
+							//           z: datas.pity,
+							//         }),
+							//         value: "\u200b",
+							//         inline: true,
+							//       },
+							//       {
+							//         name:
+							//           average == 0
+							//             ? tr("warp_nonAverage")
+							//             : tr("warp_average", {
+							//                 z: average,
+							//               }),
+							//         value: sentence,
+							//         inline: true,
+							//       }
+							//     )
+							//     .setImage(
+							//       "https://media.discordapp.net/attachments/1057244827688910850/1120335669764554752/background.png"
+							//     ),
+							// ],
+							components: [
+								new ActionRowBuilder().addComponents(
+									new StringSelectMenuBuilder()
+										.setCustomId("WarpMenu")
+										.setPlaceholder(
+											tr("warp_selectMenuTitle")
+										)
+										.addOptions(
+											new StringSelectMenuOptionBuilder()
+												.setLabel(
+													tr("warp_typeCharacter")
+												)
+												.setValue("character"),
+											new StringSelectMenuOptionBuilder()
+												.setLabel(
+													tr("warp_typeLightcone")
+												)
+												.setValue("lightcone"),
+											new StringSelectMenuOptionBuilder()
+												.setLabel(
+													tr("warp_typeRegular")
+												)
+												.setValue("regular")
+										)
 								)
-						)
-					],
-					files: [image]
-				});
+							],
+							files: [image]
+						});
+					} catch (error) {
+						replyOrfollowUp(interaction, {
+							embeds: [
+								new EmbedBuilder()
+									.setConfig()
+									.setTitle(
+										`製圖失敗，請稍後再試！\n${tr(
+											"err_code"
+										)}${error}`
+									)
+									.setThumbnail(
+										"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+									)
+							]
+						});
+					}
+				};
+
+				drawQueue.push(drawTask);
+
+				if (drawQueue.length != 1)
+					replyOrfollowUp(interaction, {
+						embeds: [
+							new EmbedBuilder()
+								.setConfig()
+								.setTitle(
+									`${tr("draw_wait", {
+										z: drawQueue.length
+									})}`
+								)
+								.setThumbnail(
+									"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+								)
+						]
+					});
 			}
 
-			const res = await interaction.editReply({
+			const res = replyOrfollowUp(interaction, {
 				embeds: [],
 				components: [
 					new ActionRowBuilder().addComponents(
@@ -196,21 +244,21 @@ client.on(Events.InteractionCreate, async interaction => {
 				});
 				switch (type) {
 					case "character":
-						UpdateEmbed(
+						handleDrawRequest(
 							interaction,
 							warpResults.character,
 							tr("warp_typeCharacter")
 						);
 						break;
 					case "lightcone":
-						UpdateEmbed(
+						handleDrawRequest(
 							interaction,
 							warpResults.light_cone,
 							tr("warp_typeLightcone")
 						);
 						break;
 					case "regular":
-						UpdateEmbed(
+						handleDrawRequest(
 							interaction,
 							warpResults.regular,
 							tr("warp_typeRegular")

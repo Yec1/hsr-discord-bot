@@ -58,7 +58,7 @@ export default {
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
 		if (uid == null && user == interaction.user)
-			return await interaction.reply({
+			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -68,9 +68,7 @@ export default {
 				ephemeral: true
 			});
 
-		await interaction.deferReply();
-
-		await interaction.editReply({
+		replyOrfollowUp(interaction, {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -146,14 +144,14 @@ export default {
 				}
 			);
 
-			await interaction.editReply({
+			replyOrfollowUp(interaction, {
 				embeds: [],
 				components: selectMenus.map(selectMenu => {
 					return new ActionRowBuilder().addComponents(selectMenu);
 				})
 			});
 		} catch (e) {
-			return await interaction.editReply({
+			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")

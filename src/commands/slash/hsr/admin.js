@@ -154,7 +154,7 @@ export default {
 				PermissionsBitField.Flags.ManageGuild
 			)
 		)
-			return await interaction.reply({
+			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setThumbnail(
@@ -177,7 +177,7 @@ export default {
 			const data = Object.keys(datas);
 
 			if (!userid)
-				return await interaction.reply({
+				return replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setThumbnail(
@@ -190,7 +190,7 @@ export default {
 				});
 
 			if (!data.includes(userid))
-				return await interaction.reply({
+				return replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setThumbnail(
@@ -213,7 +213,7 @@ export default {
 					channel => channel.id === userData.channelId
 				)
 			)
-				return await interaction.reply({
+				return replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setThumbnail(
@@ -230,7 +230,7 @@ export default {
 					ephemeral: true
 				});
 
-			await interaction.reply({
+			replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setThumbnail(
@@ -257,7 +257,7 @@ export default {
 					.permissionsIn(channel)
 					.has(PermissionsBitField.Flags.SendMessages)
 			)
-				return await interaction.reply({
+				return replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setThumbnail(
@@ -280,8 +280,6 @@ export default {
 				channel.type == ChannelType.PublicThread ||
 				channel.type == ChannelType.GuildVoice
 			) {
-				await interaction.deferReply({ ephemeral: true });
-
 				const keywords =
 					feature === "all" ? ["autoDaily", "autoNotify"] : [feature];
 				const datas = {};
@@ -329,7 +327,7 @@ export default {
 					}
 				}
 
-				await interaction.editReply({
+				replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setThumbnail(
@@ -346,7 +344,7 @@ export default {
 					]
 				});
 			} else
-				return await interaction.reply({
+				return replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setThumbnail(

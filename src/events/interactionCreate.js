@@ -49,7 +49,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				]
 			});
 
-			await interaction.reply({
+			replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#FF9B9B")
@@ -75,15 +75,22 @@ client.on(Events.InteractionCreate, async interaction => {
 	if (interaction.isButton()) {
 		await interaction.deferUpdate().catch(() => {});
 	}
-	if (interaction.isCommand()) {
-		//await interaction.deferReply({ /*ephemeral: false*/ }).catch(() => {});
 
+	if (interaction.isCommand()) {
 		const command = client.commands.slash.get(interaction.commandName);
 		if (!command)
-			return interaction.followUp({
+			return replyOrfollowUp(interaction, {
 				content: "An error has occured",
 				ephemeral: true
 			});
+
+		if (command.data.name != "account" || command.data.name != "warp") {
+		} else
+			await interaction
+				.deferReply({
+					/*ephemeral: false*/
+				})
+				.catch(() => {});
 
 		const args = [];
 
@@ -97,54 +104,61 @@ client.on(Events.InteractionCreate, async interaction => {
 		}
 
 		try {
-			webhook.send({
-				embeds: [
-					new EmbedBuilder()
-						.setTimestamp()
-						.setAuthor({
-							iconURL: interaction.user.displayAvatarURL({
-								size: 4096,
-								dynamic: true
-							}),
-							name: `${interaction.user.username} - ${interaction.user.id}`
-						})
-						.setThumbnail(
-							interaction.guild.iconURL({
-								size: 4096,
-								dynamic: true
+			command.execute(client, interaction, args, i18n, db, emoji).then(
+				webhook.send({
+					embeds: [
+						new EmbedBuilder()
+							.setTimestamp()
+							.setFooter({
+								text: `花費 ${(
+									(Date.now() -
+										interaction.createdTimestamp) /
+									1000
+								).toFixed(2)} 秒`
 							})
-						)
-						.setDescription(
-							`\`\`\`${interaction.guild.name} - ${interaction.guild.id}\`\`\``
-						)
-						.addField(
-							command.data.name,
-							`${
-								interaction.options._subcommand
-									? `> ${interaction.options._subcommand}`
-									: "\u200b"
-							}`,
-							true
-						)
-				]
-			});
-			command.execute(client, interaction, args, i18n, db, emoji);
+							.setAuthor({
+								iconURL: interaction.user.displayAvatarURL({
+									size: 4096,
+									dynamic: true
+								}),
+								name: `${interaction.user.username} - ${interaction.user.id}`
+							})
+							.setThumbnail(
+								interaction.guild.iconURL({
+									size: 4096,
+									dynamic: true
+								})
+							)
+							.setDescription(
+								`\`\`\`${interaction.guild.name} - ${interaction.guild.id}\`\`\``
+							)
+							.addField(
+								command.data.name,
+								`${
+									interaction.options._subcommand
+										? `> ${interaction.options._subcommand}`
+										: "\u200b"
+								}`,
+								true
+							)
+					]
+				})
+			);
 		} catch (e) {
 			console.log(e);
-			interaction.reply({
+			replyOrfollowUp(interaction, {
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true
 			});
 		}
 	} else if (interaction.isContextMenuCommand()) {
-		await interaction.deferReply({ ephemeral: false });
 		const command = client.commands.slash.get(interaction.commandName);
 		if (!command) return;
 		try {
 			command.execute(client, interaction);
 		} catch (e) {
 			console.log(e);
-			interaction.reply({
+			replyOrfollowUp(interaction, {
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true
 			});

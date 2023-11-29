@@ -253,7 +253,7 @@ export default {
 		if (cmd == "simulator") {
 			const userCD = await warpSimCD.getUser(interaction.user.id);
 			if (userCD)
-				return await interaction.reply({
+				return replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder().setConfig("#E76161").setTitle(
 							tr("wait", {
@@ -350,7 +350,7 @@ export default {
 			video = rarityToUrl[maxRarity][ImageType].url;
 			videoTime = rarityToUrl[maxRarity][ImageType].time;
 
-			const resMessage = await interaction.editReply({
+			const resMessage = replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -432,41 +432,41 @@ export default {
 				if (!interaction.isButton()) return;
 				if (interaction.customId == "warp_skip") {
 					await interaction.deferUpdate();
-					if (
-						(await db.has(`${interaction.user.id}.vote`)) &&
-						new Date().getUTCDate() ==
-							(await db.get(`${interaction.user.id}.vote`))
-					)
-						collector.stop();
-					else
-						return interaction.followUp({
-							embeds: [
-								new EmbedBuilder()
-									.setConfig("#E76161")
-									.setThumbnail(
-										"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-									)
-									.setTitle(tr("vote_Msg"))
-							],
-							components: [
-								new ActionRowBuilder().addComponents(
-									new ButtonBuilder()
-										.setEmoji("🎈")
-										.setURL(
-											"https://discordservers.tw/bots/895191125512581171"
-										)
-										.setLabel(tr("vote"))
-										.setStyle(ButtonStyle.Link)
-								)
-							],
-							ephemeral: true,
-							fetchReply: true
-						});
+					// if (
+					// 	(await db.has(`${interaction.user.id}.vote`)) &&
+					// 	new Date().getUTCDate() ==
+					// 		(await db.get(`${interaction.user.id}.vote`))
+					// )
+					collector.stop();
+					// else
+					// 	return replyOrfollowUp(interaction, {
+					// 		embeds: [
+					// 			new EmbedBuilder()
+					// 				.setConfig("#E76161")
+					// 				.setThumbnail(
+					// 					"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+					// 				)
+					// 				.setTitle(tr("vote_Msg"))
+					// 		],
+					// 		components: [
+					// 			new ActionRowBuilder().addComponents(
+					// 				new ButtonBuilder()
+					// 					.setEmoji("🎈")
+					// 					.setURL(
+					// 						"https://discordservers.tw/bots/895191125512581171"
+					// 					)
+					// 					.setLabel(tr("vote"))
+					// 					.setStyle(ButtonStyle.Link)
+					// 			)
+					// 		],
+					// 		ephemeral: true,
+					// 		fetchReply: true
+					// 	});
 				}
 			});
 
 			collector.on("end", async () => {
-				await interaction.editReply({
+				replyOrfollowUp(interaction, {
 					embeds: [],
 					// embeds: [
 					//   new EmbedBuilder().setConfig()
@@ -569,7 +569,7 @@ export default {
 		if (cmd == "log") {
 			const type = interaction.options.getString("options");
 			if (type == "how")
-				await interaction.reply({
+				replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
