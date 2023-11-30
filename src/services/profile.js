@@ -669,7 +669,6 @@ async function charPage(characters, playerData, num, interaction) {
 		830
 	);
 
-	console.log("Done");
 	return canvas.toBuffer("image/png");
 }
 

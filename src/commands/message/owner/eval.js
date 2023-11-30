@@ -3,7 +3,7 @@ import { QuickDB } from "quick.db";
 const db = new QuickDB();
 
 export default {
-	name: "detail",
+	name: "eval",
 	/**
 	 *
 	 * @param {Client} client
