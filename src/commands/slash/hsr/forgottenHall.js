@@ -10,7 +10,7 @@ import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { indexImage } from "../../../services/forgottenHall.js";
 import Queue from "queue";
 
-const drawQueue = new Queue({ autostart: true, concurrency: N });
+const drawQueue = new Queue({ autostart: true });
 
 export default {
 	data: new SlashCommandBuilder()

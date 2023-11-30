@@ -13,7 +13,7 @@ import { QuickDB } from "quick.db";
 import Queue from "queue";
 
 const db = new QuickDB();
-const drawQueue = new Queue({ autostart: true, concurrency: N });
+const drawQueue = new Queue({ autostart: true });
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isStringSelectMenu()) return;

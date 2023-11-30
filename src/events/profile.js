@@ -16,7 +16,7 @@ import axios from "axios";
 import Queue from "queue";
 
 const db = new QuickDB();
-const drawQueue = new Queue({ autostart: true, concurrency: N });
+const drawQueue = new Queue({ autostart: true });
 
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
