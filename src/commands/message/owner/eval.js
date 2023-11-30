@@ -1,5 +1,7 @@
 import { Client, Message, EmbedBuilder } from "discord.js";
 import { QuickDB } from "quick.db";
+import { inspect } from "util";
+
 const db = new QuickDB();
 
 export default {
@@ -47,13 +49,11 @@ export default {
 			let output = undefined;
 			console.log = (...args) =>
 				(output = (output ? output : "") + args.join(" ") + "\n");
-			const evaled = await eval(cleanedCode);
+			const evaled = eval(cleanedCode);
 
 			getEmbed(
 				"Success",
-				output === undefined
-					? require("util").inspect(evaled)
-					: output.toString()
+				output === undefined ? inspect(evaled) : output.toString()
 			);
 		} catch (e) {
 			getEmbed("Failed", e);
