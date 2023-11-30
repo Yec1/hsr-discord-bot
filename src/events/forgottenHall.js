@@ -13,7 +13,7 @@ import { QuickDB } from "quick.db";
 import Queue from "queue";
 
 const db = new QuickDB();
-const drawQueue = new Queue({ autostart: true, concurrency: 1 });
+const drawQueue = new Queue({ autostart: true, concurrency: N });
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isStringSelectMenu()) return;
@@ -36,8 +36,8 @@ client.on(Events.InteractionCreate, async interaction => {
 					? LanguageEnum.TRADIIONAL_CHINESE
 					: LanguageEnum.ENGLISH
 				: interaction.locale == "zh-TW"
-				? LanguageEnum.TRADIIONAL_CHINESE
-				: LanguageEnum.ENGLISH,
+				  ? LanguageEnum.TRADIIONAL_CHINESE
+				  : LanguageEnum.ENGLISH,
 			uid: (await db.has(`${userId}.account`))
 				? (await db.get(`${userId}.account`))[0].uid
 				: await db.get(`${userId}.uid`)

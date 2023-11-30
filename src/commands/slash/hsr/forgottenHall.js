@@ -10,7 +10,7 @@ import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { indexImage } from "../../../services/forgottenHall.js";
 import Queue from "queue";
 
-const drawQueue = new Queue({ autostart: true, concurrency: 1 });
+const drawQueue = new Queue({ autostart: true, concurrency: N });
 
 export default {
 	data: new SlashCommandBuilder()
@@ -55,8 +55,8 @@ export default {
 						? LanguageEnum.TRADIIONAL_CHINESE
 						: LanguageEnum.ENGLISH
 					: interaction.locale == "zh-TW"
-					? LanguageEnum.TRADIIONAL_CHINESE
-					: LanguageEnum.ENGLISH,
+					  ? LanguageEnum.TRADIIONAL_CHINESE
+					  : LanguageEnum.ENGLISH,
 				uid:
 					(await db.has(`${user.id}.account`)) &&
 					(await db.get(`${user.id}.account`))[0].uid

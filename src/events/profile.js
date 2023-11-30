@@ -16,7 +16,7 @@ import axios from "axios";
 import Queue from "queue";
 
 const db = new QuickDB();
-const drawQueue = new Queue({ autostart: true, concurrency: 1 });
+const drawQueue = new Queue({ autostart: true, concurrency: N });
 
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
@@ -277,8 +277,8 @@ client.on(Events.InteractionCreate, async interaction => {
 						? LanguageEnum.TRADIIONAL_CHINESE
 						: LanguageEnum.ENGLISH
 					: interaction.locale == "zh-TW"
-					? LanguageEnum.TRADIIONAL_CHINESE
-					: LanguageEnum.ENGLISH,
+					  ? LanguageEnum.TRADIIONAL_CHINESE
+					  : LanguageEnum.ENGLISH,
 				uid: (await db.get(`${id}.account`))[0].uid
 					? (await db.get(`${id}.account`))[0].uid
 					: await db.get(`${id}.uid`)

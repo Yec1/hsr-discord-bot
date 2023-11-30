@@ -104,46 +104,45 @@ client.on(Events.InteractionCreate, async interaction => {
 		}
 
 		try {
-			command.execute(client, interaction, args, i18n, db, emoji).then(
-				webhook.send({
-					embeds: [
-						new EmbedBuilder()
-							.setTimestamp()
-							.setFooter({
-								text: `花費 ${(
-									(Date.now() -
-										interaction.createdTimestamp) /
-									1000
-								).toFixed(2)} 秒`
+			command.execute(client, interaction, args, i18n, db, emoji);
+
+			webhook.send({
+				embeds: [
+					new EmbedBuilder()
+						.setTimestamp()
+						.setFooter({
+							text: `花費 ${(
+								(Date.now() - interaction.createdTimestamp) /
+								1000
+							).toFixed(2)} 秒`
+						})
+						.setAuthor({
+							iconURL: interaction.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							}),
+							name: `${interaction.user.username} - ${interaction.user.id}`
+						})
+						.setThumbnail(
+							interaction.guild.iconURL({
+								size: 4096,
+								dynamic: true
 							})
-							.setAuthor({
-								iconURL: interaction.user.displayAvatarURL({
-									size: 4096,
-									dynamic: true
-								}),
-								name: `${interaction.user.username} - ${interaction.user.id}`
-							})
-							.setThumbnail(
-								interaction.guild.iconURL({
-									size: 4096,
-									dynamic: true
-								})
-							)
-							.setDescription(
-								`\`\`\`${interaction.guild.name} - ${interaction.guild.id}\`\`\``
-							)
-							.addField(
-								command.data.name,
-								`${
-									interaction.options._subcommand
-										? `> ${interaction.options._subcommand}`
-										: "\u200b"
-								}`,
-								true
-							)
-					]
-				})
-			);
+						)
+						.setDescription(
+							`\`\`\`${interaction.guild.name} - ${interaction.guild.id}\`\`\``
+						)
+						.addField(
+							command.data.name,
+							`${
+								interaction.options._subcommand
+									? `> ${interaction.options._subcommand}`
+									: "\u200b"
+							}`,
+							true
+						)
+				]
+			});
 		} catch (e) {
 			console.log(e);
 			replyOrfollowUp(interaction, {

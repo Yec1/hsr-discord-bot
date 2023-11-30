@@ -15,7 +15,7 @@ import {
 } from "../../../services/profile.js";
 import Queue from "queue";
 
-const drawQueue = new Queue({ autostart: true, concurrency: 1 });
+const drawQueue = new Queue({ autostart: true, concurrency: N });
 
 export default {
 	data: new SlashCommandBuilder()
@@ -62,20 +62,20 @@ export default {
 		const uid = interaction.options.getInteger("uid")
 			? interaction.options.getInteger("uid")
 			: (await db.has(
-					`${interaction.options.getUser("user")?.id}.account`
-			  ))
-			? (
-					await db.get(
 						`${interaction.options.getUser("user")?.id}.account`
-					)
-			  )[0].uid
-			: (await db.has(`${interaction.options.getUser("user")?.id}.uid`))
-			? await db.get(`${interaction.options.getUser("user")?.id}.uid`)
-			: (await db.has(`${interaction.user.id}.account`))
-			? (await db.get(`${interaction.user.id}.account`))[0].uid
-			: (await db.has(`${interaction.user.id}.uid`))
-			? await db.get(`${interaction.user.id}.uid`)
-			: null;
+			    ))
+			  ? (
+						await db.get(
+							`${interaction.options.getUser("user")?.id}.account`
+						)
+			    )[0].uid
+			  : (await db.has(`${interaction.options.getUser("user")?.id}.uid`))
+			    ? await db.get(`${interaction.options.getUser("user")?.id}.uid`)
+			    : (await db.has(`${interaction.user.id}.account`))
+			      ? (await db.get(`${interaction.user.id}.account`))[0].uid
+			      : (await db.has(`${interaction.user.id}.uid`))
+			        ? await db.get(`${interaction.user.id}.uid`)
+			        : null;
 
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
