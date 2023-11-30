@@ -109,7 +109,7 @@ export default {
 			userdb?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
 			userdb?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
 
-			await interaction.editReply({
+			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
