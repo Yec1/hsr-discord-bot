@@ -54,10 +54,9 @@ client.on(Events.InteractionCreate, async interaction => {
 		async function handleDrawRequest(i, userId, playerData, interaction) {
 			const drawTask = async () => {
 				try {
-					const characters = await loadCharacters(
-						interaction.user.id,
-						playerData.player.uid
-					);
+					const characters =
+						(await loadCharacters(playerData.player.uid)) ||
+						playerData.characters;
 
 					const imageBuffer =
 						i == "main"

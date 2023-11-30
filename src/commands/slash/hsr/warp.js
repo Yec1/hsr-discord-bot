@@ -350,7 +350,7 @@ export default {
 			video = rarityToUrl[maxRarity][ImageType].url;
 			videoTime = rarityToUrl[maxRarity][ImageType].time;
 
-			const resMessage = replyOrfollowUp(interaction, {
+			const resMessage = await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()

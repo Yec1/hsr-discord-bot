@@ -38,10 +38,7 @@ async function saveCharacters(playerData) {
 	);
 }
 
-async function loadCharacters(userId, uid) {
-	if (await db.has(`${userId}.characters`))
-		await db.delete(`${userId}.characters`);
-
+async function loadCharacters(uid) {
 	const allCharacters = (await db.get(`profile.${uid}.characters`)) || [];
 	return allCharacters;
 }

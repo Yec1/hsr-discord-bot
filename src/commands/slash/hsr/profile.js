@@ -122,7 +122,7 @@ export default {
 				]
 			});
 
-		saveCharacters(playerData);
+		// saveCharacters(playerData);
 		saveLeaderboard(playerData);
 		handleDrawRequest(user, playerData, interaction, tr, emoji);
 	}
@@ -131,10 +131,9 @@ export default {
 async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 	const drawTask = async () => {
 		try {
-			const characters = await loadCharacters(
-				interaction.user.id,
-				playerData.player.uid
-			);
+			const characters =
+				(await loadCharacters(playerData.player.uid)) ||
+				playerData.characters;
 
 			const imageBuffer = await mainPage(playerData, interaction);
 			const image = new AttachmentBuilder(imageBuffer, {
