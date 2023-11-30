@@ -227,7 +227,7 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 					.setConfig()
 					.setTitle(
 						`${tr("draw_wait", {
-							z: drawQueue.length
+							z: drawQueue.length - 1
 						})}`
 					)
 					.setThumbnail(

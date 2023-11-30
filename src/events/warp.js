@@ -191,7 +191,7 @@ client.on(Events.InteractionCreate, async interaction => {
 								.setConfig()
 								.setTitle(
 									`${tr("draw_wait", {
-										z: drawQueue.length
+										z: drawQueue.length - 1
 									})}`
 								)
 								.setThumbnail(

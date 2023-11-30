@@ -186,7 +186,7 @@ async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
 					.setConfig()
 					.setTitle(
 						`${tr("draw_wait", {
-							z: drawQueue.length
+							z: drawQueue.length - 1
 						})}`
 					)
 					.setThumbnail(
