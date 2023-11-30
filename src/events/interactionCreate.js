@@ -49,7 +49,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				]
 			});
 
-			replyOrfollowUp(interaction, {
+			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#FF9B9B")
@@ -79,7 +79,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	if (interaction.isCommand()) {
 		const command = client.commands.slash.get(interaction.commandName);
 		if (!command)
-			return replyOrfollowUp(interaction, {
+			return interaction.followUp({
 				content: "An error has occured",
 				ephemeral: true
 			});
@@ -145,7 +145,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			});
 		} catch (e) {
 			console.log(e);
-			replyOrfollowUp(interaction, {
+			await interaction.reply({
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true
 			});
@@ -157,7 +157,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			command.execute(client, interaction);
 		} catch (e) {
 			console.log(e);
-			replyOrfollowUp(interaction, {
+			await interaction.reply({
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true
 			});

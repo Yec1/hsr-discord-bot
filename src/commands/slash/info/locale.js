@@ -67,7 +67,7 @@ export default {
 				: toI18nLang(interaction.locale) || "en"
 		);
 
-		replyOrfollowUp(interaction, {
+		await interaction.reply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig("#FFD1DA")

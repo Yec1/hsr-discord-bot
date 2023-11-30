@@ -208,6 +208,8 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr, db, emoji) {
+		await interaction.deferReply({ ephemeral: true });
+
 		const user = interaction.options.getUser("user") ?? interaction.user;
 		try {
 			const auto = interaction.options.getString("autosign");
@@ -216,7 +218,7 @@ export default {
 
 			if (auto == "off") {
 				await db.delete(`autoDaily.${interaction.user.id}`);
-				return replyOrfollowUp(interaction, {
+				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -236,7 +238,7 @@ export default {
 							.cookie
 					)
 				)
-					return replyOrfollowUp(interaction, {
+					return await interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig("#E76161")
@@ -254,7 +256,7 @@ export default {
 					tag: tag ? tag : false
 				});
 
-				return replyOrfollowUp(interaction, {
+				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#A2CDB0")
@@ -287,8 +289,8 @@ export default {
 						? LanguageEnum.TRADIIONAL_CHINESE
 						: LanguageEnum.ENGLISH
 					: interaction.locale == "zh-TW"
-					? LanguageEnum.TRADIIONAL_CHINESE
-					: LanguageEnum.ENGLISH
+					  ? LanguageEnum.TRADIIONAL_CHINESE
+					  : LanguageEnum.ENGLISH
 			});
 
 			const info = await hsr.daily.info();
@@ -309,7 +311,7 @@ export default {
 			const res = await hsr.daily.claim();
 
 			if (res.code == -5003 || res.info.is_sign == true)
-				return replyOrfollowUp(interaction, {
+				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -322,7 +324,7 @@ export default {
 					]
 				});
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -366,7 +368,7 @@ export default {
 				]
 			});
 		} catch (e) {
-			return replyOrfollowUp(interaction, {
+			return await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")

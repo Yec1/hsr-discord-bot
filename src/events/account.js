@@ -26,7 +26,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		if (!interaction.customId.startsWith("uid")) return;
 
 		if (!(await db.has(`${interaction.user.id}.account`)))
-			return replyOrfollowUp(interaction, {
+			return await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")
@@ -42,7 +42,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			await interaction.update({ fetchReply: true });
 			const i = interaction.values[0];
 
-			return replyOrfollowUp(interaction, {
+			return await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -119,7 +119,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				await db.set(`${interaction.user.id}.account`, accounts);
 			}
 
-			return replyOrfollowUp(interaction, {
+			return await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#F6F1F1")
@@ -162,7 +162,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			const trimed_cookie = await trimCookie(cookie);
 
 			if (trimed_cookie == null)
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -183,8 +183,8 @@ client.on(Events.InteractionCreate, async interaction => {
 							? LanguageEnum.TRADIIONAL_CHINESE
 							: LanguageEnum.ENGLISH
 						: interaction.locale == "zh-TW"
-						? LanguageEnum.TRADIIONAL_CHINESE
-						: LanguageEnum.ENGLISH
+						  ? LanguageEnum.TRADIIONAL_CHINESE
+						  : LanguageEnum.ENGLISH
 				});
 
 				await hsr.daily.info();
@@ -194,7 +194,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				account[i].cookie = cookie;
 				await db.set(`${interaction.user.id}.account`, account);
 
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#F6F1F1")
@@ -210,7 +210,7 @@ client.on(Events.InteractionCreate, async interaction => {
 					ephemeral: true
 				});
 			} catch (e) {
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -224,12 +224,14 @@ client.on(Events.InteractionCreate, async interaction => {
 				});
 			}
 		} else if (interaction.customId.startsWith("uidEdit")) {
+			await interaction.deferReply({ ephemeral: true });
+
 			const i = interaction.customId.split("-")[1];
 			const uid = interaction.fields.getTextInputValue("uid");
 			const playerData = await player(uid, interaction);
 
 			if (playerData.detail == "Invalid uid")
-				return replyOrfollowUp(interaction, {
+				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -248,7 +250,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				(await db.get(`${interaction.user.id}.account`)) ?? "";
 
 			if (accounts.some(account => account.uid == uid))
-				return replyOrfollowUp(interaction, {
+				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -261,7 +263,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 			accounts[i].uid = uid;
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#F6F1F1")
@@ -274,11 +276,13 @@ client.on(Events.InteractionCreate, async interaction => {
 
 			await db.set(`${interaction.user.id}.account`, accounts);
 		} else if (interaction.customId == "uid_set") {
+			await interaction.deferReply({ ephemeral: true });
+
 			const uid = interaction.fields.getTextInputValue("uid");
 			const playerData = await player(uid, interaction);
 
 			if (playerData.detail == "Invalid uid")
-				return replyOrfollowUp(interaction, {
+				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -295,7 +299,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 			if (await db.has(`${interaction.user.id}.account`)) {
 				if ((await db.get(`${interaction.user.id}.account`)).length > 3)
-					return replyOrfollowUp(interaction, {
+					return await interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig("#E76161")
@@ -309,7 +313,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				const accounts = await db.get(`${interaction.user.id}.account`);
 
 				if (accounts.some(account => account.uid == uid))
-					return replyOrfollowUp(interaction, {
+					return await interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig("#E76161")
@@ -321,7 +325,7 @@ client.on(Events.InteractionCreate, async interaction => {
 					});
 			}
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#F6F1F1")

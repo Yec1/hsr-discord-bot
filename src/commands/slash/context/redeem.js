@@ -31,7 +31,7 @@ export default {
 		codes = codes?.slice(0, 5);
 
 		if (!codes)
-			return replyOrfollowUp(interaction, {
+			return await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")
@@ -43,7 +43,7 @@ export default {
 				ephemeral: true
 			});
 
-		replyOrfollowUp(interaction, {
+		await interaction.reply({
 			embeds: [
 				new EmbedBuilder()
 					.setTitle(`${emoji.s900001} ${tr("redeem_sus")}`)

@@ -66,7 +66,7 @@ export default {
 
 			const res = await hsr.record.forgottenHall();
 			if (res.has_data == false)
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -78,7 +78,9 @@ export default {
 					ephemeral: true
 				});
 
-			replyOrfollowUp(interaction, {
+			await interaction.deferReply();
+
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -107,7 +109,7 @@ export default {
 			userdb?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
 			userdb?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
 
-			return replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -130,7 +132,7 @@ async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
 				name: `${floor.name}.png`
 			});
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				files: [image],
 				embeds: [],
 				components: [
@@ -162,7 +164,7 @@ async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
 				]
 			});
 		} catch (error) {
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -180,7 +182,7 @@ async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length != 1)
-		replyOrfollowUp(interaction, {
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()

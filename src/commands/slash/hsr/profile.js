@@ -80,7 +80,7 @@ export default {
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
 		if (uid == null && user == interaction.user)
-			return replyOrfollowUp(interaction, {
+			return await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setTitle(tr("uid_non"))
@@ -93,7 +93,9 @@ export default {
 				ephemeral: true
 			});
 
-		replyOrfollowUp(interaction, {
+		await interaction.deferReply();
+
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -107,7 +109,7 @@ export default {
 		const playerData = await player(uid, interaction);
 
 		if (playerData.detail)
-			return replyOrfollowUp(interaction, {
+			return await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")
@@ -132,7 +134,7 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 	const drawTask = async () => {
 		try {
 			const characters =
-				(await loadCharacters(playerData.player.uid)) ||
+				// (await loadCharacters(playerData.player.uid)) ||
 				playerData.characters;
 
 			const imageBuffer = await mainPage(playerData, interaction);
@@ -140,7 +142,7 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 				name: `${playerData.player.uid}.png`
 			});
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [],
 				// embeds: [
 				//   new EmbedBuilder()
@@ -245,7 +247,7 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 				files: [image]
 			});
 		} catch (error) {
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -263,7 +265,7 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length != 1)
-		replyOrfollowUp(interaction, {
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()

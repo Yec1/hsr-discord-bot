@@ -25,7 +25,7 @@ export default {
 	async execute(client, interaction, args, tr, db, emoji) {
 		await db?.delete(`${interaction.user.id}`);
 
-		replyOrfollowUp(interaction, {
+		await interaction.reply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig("F6F1F1")

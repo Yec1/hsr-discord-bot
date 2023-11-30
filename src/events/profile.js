@@ -36,7 +36,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		const [uid, i, userId] = interaction.values[0].split("-");
 		const playerData = await player(uid, interaction);
 
-		replyOrfollowUp(interaction, {
+		await interaction.reply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -55,7 +55,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			const drawTask = async () => {
 				try {
 					const characters =
-						(await loadCharacters(playerData.player.uid)) ||
+						// (await loadCharacters(playerData.player.uid)) ||
 						playerData.characters;
 
 					const imageBuffer =
@@ -72,7 +72,7 @@ client.on(Events.InteractionCreate, async interaction => {
 					});
 
 					i == "main"
-						? replyOrfollowUp(interaction, {
+						? await interaction.editReply({
 								embeds: [],
 								components: [
 									new ActionRowBuilder().addComponents(
@@ -100,7 +100,7 @@ client.on(Events.InteractionCreate, async interaction => {
 								],
 								files: [image]
 						  })
-						: replyOrfollowUp(interaction, {
+						: await interaction.editReply({
 								embeds: [],
 								components: [
 									new ActionRowBuilder().addComponents(
@@ -136,7 +136,7 @@ client.on(Events.InteractionCreate, async interaction => {
 								files: [image]
 						  });
 				} catch (error) {
-					replyOrfollowUp(interaction, {
+					await interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig()
@@ -156,7 +156,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			drawQueue.push(drawTask);
 
 			if (drawQueue.length != 1)
-				replyOrfollowUp(interaction, {
+				await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
@@ -315,7 +315,7 @@ client.on(Events.InteractionCreate, async interaction => {
 							.join("\n")
 					: "";
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#213555")
@@ -374,7 +374,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				]
 			});
 		} catch (e) {
-			return replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")
@@ -465,7 +465,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				.addOptions(optionsChunk);
 		});
 
-		replyOrfollowUp(interaction, {
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -590,7 +590,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/guide/Nwflower/character_overview/${id}.png`
 			);
 		} catch (e) {
-			return replyOrfollowUp(interaction, {
+			return interaction.followUp({
 				embeds: [
 					new EmbedBuilder()
 						.setTitle(
@@ -607,7 +607,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			});
 		}
 
-		replyOrfollowUp(interaction, {
+		await interaction.editReply({
 			files: [
 				new AttachmentBuilder(
 					`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/guide/Nwflower/character_overview/${id}.png`

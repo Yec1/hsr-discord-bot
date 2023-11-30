@@ -43,7 +43,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				: await db.get(`${userId}.uid`)
 		});
 
-		replyOrfollowUp(interaction, {
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -69,7 +69,7 @@ async function handleDrawRequest(uid, userId, res, floor, interaction) {
 				name: `${floor.name}.png`
 			});
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				files: [image],
 				embeds: [],
 				components: [
@@ -101,7 +101,7 @@ async function handleDrawRequest(uid, userId, res, floor, interaction) {
 				]
 			});
 		} catch (error) {
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -119,7 +119,7 @@ async function handleDrawRequest(uid, userId, res, floor, interaction) {
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length != 1)
-		replyOrfollowUp(interaction, {
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()

@@ -182,14 +182,16 @@ export default {
 							? LanguageEnum.TRADIIONAL_CHINESE
 							: LanguageEnum.ENGLISH
 						: interaction.locale == "zh-TW"
-						? LanguageEnum.TRADIIONAL_CHINESE
-						: LanguageEnum.ENGLISH,
+						  ? LanguageEnum.TRADIIONAL_CHINESE
+						  : LanguageEnum.ENGLISH,
 					uid:
 						(await db.has(`${user.id}.account`)) &&
 						(await db.get(`${user.id}.account`))[0].uid
 							? (await db.get(`${user.id}.account`))[0].uid
 							: await db.get(`${user.id}.uid`)
 				});
+
+				await interaction.deferReply();
 
 				const res = await hsr.record.note();
 
@@ -205,7 +207,7 @@ export default {
 					}
 				}
 
-				replyOrfollowUp(interaction, {
+				await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig(staminaColor(res.current_stamina))
@@ -313,7 +315,7 @@ export default {
 				userdb?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
 				userdb?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
 
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
@@ -344,7 +346,7 @@ export default {
 					auto == "off"
 				) {
 					await db.delete(`autoNotify.${interaction.user.id}`);
-					return replyOrfollowUp(interaction, {
+					return await interaction.reply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig("#E76161")
@@ -375,7 +377,7 @@ export default {
 						: (desc += `${tr("cookie_failedDesc")}\n`);
 					user?.[0]?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
 
-					return replyOrfollowUp(interaction, {
+					return await interaction.reply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig()
@@ -393,7 +395,7 @@ export default {
 					expedition: expedition ? expedition : false
 				});
 
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#A2CDB0")
@@ -428,7 +430,7 @@ export default {
 				user?.cookie ? "" : (desc += `\n${tr("cookie_failedDesc")}`);
 				user?.uid ? "" : (desc += `\n${tr("uid_failedDesc")}`);
 
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()

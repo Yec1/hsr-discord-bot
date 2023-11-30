@@ -87,7 +87,7 @@ async function warpLog(input, interaction) {
 		const warps = [];
 
 		for (const [gachaType, id] of Object.entries(gachaTypes)) {
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()

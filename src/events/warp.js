@@ -26,7 +26,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		if (interaction.customId == "warp_query") {
 			const url = interaction.fields.getTextInputValue("warpUrl");
 
-			replyOrfollowUp(interaction, {
+			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -40,7 +40,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			const warpResults = await warpLog(url, interaction);
 
 			if (!warpResults)
-				return replyOrfollowUp(interaction, {
+				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -165,12 +165,12 @@ client.on(Events.InteractionCreate, async interaction => {
 							files: [image]
 						});
 					} catch (error) {
-						replyOrfollowUp(interaction, {
+						await interaction.editReply({
 							embeds: [
 								new EmbedBuilder()
 									.setConfig()
 									.setTitle(
-										`製圖失敗，請稍後再試！\n${tr(
+										`${tr("draw_fail")}\n${tr(
 											"err_code"
 										)}${error}`
 									)
@@ -185,7 +185,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				drawQueue.push(drawTask);
 
 				if (drawQueue.length != 1)
-					replyOrfollowUp(interaction, {
+					await interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig()
@@ -201,7 +201,7 @@ client.on(Events.InteractionCreate, async interaction => {
 					});
 			}
 
-			const res = replyOrfollowUp(interaction, {
+			const res = await interaction.editReply({
 				embeds: [],
 				components: [
 					new ActionRowBuilder().addComponents(

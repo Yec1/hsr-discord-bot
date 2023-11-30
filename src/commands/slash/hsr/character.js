@@ -40,25 +40,25 @@ export default {
 		const uid = interaction.options.getInteger("uid")
 			? interaction.options.getInteger("uid")
 			: (await db.has(
-					`${interaction.options.getUser("user")?.id}.account`
-			  ))
-			? (
-					await db.get(
 						`${interaction.options.getUser("user")?.id}.account`
-					)
-			  )[0].uid
-			: (await db.has(`${interaction.options.getUser("user")?.id}.uid`))
-			? await db.get(`${interaction.options.getUser("user")?.id}.uid`)
-			: (await db.has(`${interaction.user.id}.account`))
-			? (await db.get(`${interaction.user.id}.account`))[0].uid
-			: (await db.has(`${interaction.user.id}.uid`))
-			? await db.get(`${interaction.user.id}.uid`)
-			: null;
+			    ))
+			  ? (
+						await db.get(
+							`${interaction.options.getUser("user")?.id}.account`
+						)
+			    )[0].uid
+			  : (await db.has(`${interaction.options.getUser("user")?.id}.uid`))
+			    ? await db.get(`${interaction.options.getUser("user")?.id}.uid`)
+			    : (await db.has(`${interaction.user.id}.account`))
+			      ? (await db.get(`${interaction.user.id}.account`))[0].uid
+			      : (await db.has(`${interaction.user.id}.uid`))
+			        ? await db.get(`${interaction.user.id}.uid`)
+			        : null;
 
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
 		if (uid == null && user == interaction.user)
-			return replyOrfollowUp(interaction, {
+			return await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -68,7 +68,9 @@ export default {
 				ephemeral: true
 			});
 
-		replyOrfollowUp(interaction, {
+		await interaction.deferReply();
+
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -91,8 +93,8 @@ export default {
 						? LanguageEnum.TRADIIONAL_CHINESE
 						: LanguageEnum.ENGLISH
 					: interaction.locale == "zh-TW"
-					? LanguageEnum.TRADIIONAL_CHINESE
-					: LanguageEnum.ENGLISH,
+					  ? LanguageEnum.TRADIIONAL_CHINESE
+					  : LanguageEnum.ENGLISH,
 				uid:
 					(await db.has(`${user.id}.account`)) &&
 					(await db.get(`${user.id}.account`))[0].uid
@@ -144,14 +146,14 @@ export default {
 				}
 			);
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [],
 				components: selectMenus.map(selectMenu => {
 					return new ActionRowBuilder().addComponents(selectMenu);
 				})
 			});
 		} catch (e) {
-			return replyOrfollowUp(interaction, {
+			return await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")

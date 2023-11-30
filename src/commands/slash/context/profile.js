@@ -39,7 +39,7 @@ export default {
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
 		if (uid == null)
-			return replyOrfollowUp(interaction, {
+			return await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")
@@ -51,7 +51,9 @@ export default {
 				ephemeral: true
 			});
 
-		replyOrfollowUp(interaction, {
+		await interaction.deferReply();
+
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -65,7 +67,7 @@ export default {
 		const playerData = await player(uid, interaction);
 
 		if (playerData.detail)
-			return replyOrfollowUp(interaction, {
+			return await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")
@@ -90,7 +92,7 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 	const drawTask = async () => {
 		try {
 			const characters =
-				(await loadCharacters(playerData.player.uid)) ||
+				// (await loadCharacters(playerData.player.uid)) ||
 				playerData.characters;
 
 			const imageBuffer = await mainPage(playerData, interaction);
@@ -98,88 +100,8 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 				name: `${playerData.player.uid}.png`
 			});
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [],
-				// embeds: [
-				//   new EmbedBuilder()
-				//     .setConfig("#F6F1F1")
-				//     .setAuthor({
-				//       name: playerData.player.uid,
-				//       iconURL: image_Header + "/" + playerData.player.avatar.icon,
-				//     })
-				//     .setTitle(playerData.player.nickname)
-				//     .setDescription(
-				//       `\`\`\`md\n ${
-				//         playerData.player.signature == ""
-				//           ? tr("profile_nonSign")
-				//           : playerData.player.signature
-				//       } \n\`\`\``
-				//     )
-				//     .addFields(
-				//       {
-				//         name: `${emoji.level} ${tr("profile_tLevel")} ${
-				//           playerData.player.level
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.world} ${tr("profile_qLevel")} ${
-				//           playerData.player.world_level
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.friends} ${tr("profile_friends")} ${
-				//           playerData.player.friend_count
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.avatar} ${tr("profile_characters")} ${
-				//           playerData.player.space_info.avatar_count
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.lightcone} ${tr("profile_lightcone")} ${
-				//           playerData.player.space_info.light_cone_count
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.book} ${tr("profile_achievement")} ${
-				//           playerData.player.space_info.achievement_count
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.activity} ${tr("profile_forgottenHall")}`,
-				//         value: "\u200b",
-				//         inline: false,
-				//       },
-				//       {
-				//         name: `${emoji.AbyssIcon01} ${tr("profile_memory")} ${
-				//           playerData.player.space_info.challenge_data.maze_group_index
-				//         }/15`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.AbyssIcon02} ${tr("profile_memoryOfChaos")} ${
-				//           playerData.player.space_info.challenge_data.maze_group_id
-				//         }/10`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       }
-				//     )
-				//     .setThumbnail(image_Header + "/" + playerData.characters[0].icon),
-				// ],
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -203,7 +125,7 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 				files: [image]
 			});
 		} catch (error) {
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -221,7 +143,7 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length != 1)
-		replyOrfollowUp(interaction, {
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()

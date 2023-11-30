@@ -17,9 +17,3 @@ Object.defineProperties(EmbedBuilder.prototype, {
 		}
 	}
 });
-
-global.replyOrfollowUp = async function (interaction, ...args) {
-	if (interaction.replied) return await interaction.editReply(...args);
-	if (interaction.deferred) return await interaction.followUp(...args);
-	return await interaction.reply(...args);
-};

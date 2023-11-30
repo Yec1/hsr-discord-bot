@@ -87,7 +87,7 @@ export default {
 
 		if (cmd == "viewSet" || cmd == "editSet" || cmd == "delSet") {
 			if (!(await db.has(`${userId}.account`)))
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -105,8 +105,7 @@ export default {
 		const accounts = await db.get(`${interaction.user.id}.account`);
 
 		if (cmd == "how") {
-			replyOrfollowUp(interaction, {
-				content: "java+script: document.write(document.cookie)",
+			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -118,9 +117,14 @@ export default {
 				],
 				ephemeral: true
 			});
+
+			await interaction.followUp({
+				content: "java+script: document.write(document.cookie)",
+				ephemeral: true
+			});
 		} else if (cmd == "setCookie") {
 			if (!(await db.has(`${interaction.user.id}.account`)))
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -132,7 +136,7 @@ export default {
 					ephemeral: true
 				});
 
-			return replyOrfollowUp(interaction, {
+			return await interaction.reply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -174,7 +178,7 @@ export default {
 		} else if (cmd == "viewSet") {
 			const accounts = await db.get(`${userId}.account`);
 
-			replyOrfollowUp(interaction, {
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setAuthor({
@@ -201,7 +205,7 @@ export default {
 				]
 			});
 		} else if (cmd == "editSet") {
-			return replyOrfollowUp(interaction, {
+			return await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -223,7 +227,7 @@ export default {
 				ephemeral: true
 			});
 		} else if (cmd == "delSet") {
-			return replyOrfollowUp(interaction, {
+			return await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()

@@ -29,7 +29,7 @@ export default {
 	async execute(client, interaction, args, tr, db) {
 		const userCD = await FeedbackCD.getUser(interaction.user.id);
 		if (userCD)
-			return replyOrfollowUp(interaction, {
+			return await interaction.reply({
 				embeds: [
 					new EmbedBuilder().setConfig("#E76161").setTitle(
 						tr("wait", {

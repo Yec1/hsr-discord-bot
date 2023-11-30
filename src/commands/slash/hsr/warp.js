@@ -253,7 +253,7 @@ export default {
 		if (cmd == "simulator") {
 			const userCD = await warpSimCD.getUser(interaction.user.id);
 			if (userCD)
-				return replyOrfollowUp(interaction, {
+				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder().setConfig("#E76161").setTitle(
 							tr("wait", {
@@ -439,7 +439,7 @@ export default {
 					// )
 					collector.stop();
 					// else
-					// 	return replyOrfollowUp(interaction, {
+					// 	return interaction.followUp({
 					// 		embeds: [
 					// 			new EmbedBuilder()
 					// 				.setConfig("#E76161")
@@ -466,7 +466,7 @@ export default {
 			});
 
 			collector.on("end", async () => {
-				replyOrfollowUp(interaction, {
+				await interaction.editReply({
 					embeds: [],
 					// embeds: [
 					//   new EmbedBuilder().setConfig()
@@ -569,7 +569,7 @@ export default {
 		if (cmd == "log") {
 			const type = interaction.options.getString("options");
 			if (type == "how")
-				replyOrfollowUp(interaction, {
+				await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()

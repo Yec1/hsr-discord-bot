@@ -22,7 +22,7 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr) {
-		replyOrfollowUp(interaction, {
+		await interaction.reply({
 			components: [
 				new ActionRowBuilder().addComponents(
 					new StringSelectMenuBuilder()
