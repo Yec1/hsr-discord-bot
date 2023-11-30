@@ -36,7 +36,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		const [uid, i, userId] = interaction.values[0].split("-");
 		const playerData = await player(uid, interaction);
 
-		await interaction.reply({
+		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
