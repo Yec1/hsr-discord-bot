@@ -33,8 +33,8 @@ export default {
 		const uid = (await db.has(`${interaction.targetUser.id}.account`))
 			? (await db.get(`${interaction.targetUser.id}.account`))[0].uid
 			: (await db.has(`${interaction.targetUser.id}.uid`))
-			? await db.get(`${interaction.targetUser.id}.uid`)
-			: null;
+			  ? await db.get(`${interaction.targetUser.id}.uid`)
+			  : null;
 
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
@@ -80,8 +80,8 @@ export default {
 				]
 			});
 
-		await saveCharacters(playerData);
-		await saveLeaderboard(playerData);
+		saveCharacters(playerData);
+		saveLeaderboard(playerData);
 		const characters = await loadCharacters(
 			interaction.user.id,
 			playerData.player.uid

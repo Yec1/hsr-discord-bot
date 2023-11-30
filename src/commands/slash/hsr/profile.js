@@ -122,9 +122,9 @@ export default {
 				]
 			});
 
-		await saveCharacters(playerData);
-		await saveLeaderboard(playerData);
-		await handleDrawRequest(user, playerData, interaction, tr, emoji);
+		saveCharacters(playerData);
+		saveLeaderboard(playerData);
+		handleDrawRequest(user, playerData, interaction, tr, emoji);
 	}
 };
 

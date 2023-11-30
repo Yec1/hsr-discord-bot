@@ -29,8 +29,8 @@ async function saveCharacters(playerData) {
 		characterMap.set(character.id, character);
 
 	const updatedCharacters = Array.from(characterMap.values());
-	if (updatedCharacters.length > 24)
-		updatedCharacters.splice(0, updatedCharacters.length - 24);
+	if (updatedCharacters.length > 7)
+		updatedCharacters.splice(0, updatedCharacters.length - 7);
 
 	await db.set(
 		`profile.${playerData.player.uid}.characters`,
@@ -667,8 +667,8 @@ async function charPage(characters, playerData, num, interaction) {
 				? 1685
 				: 1720
 			: interaction.locale == "zh-TW"
-			? 1685
-			: 1720,
+			  ? 1685
+			  : 1720,
 		830
 	);
 
