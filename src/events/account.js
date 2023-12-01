@@ -39,7 +39,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			});
 
 		if (interaction.customId == "uid_edit") {
-			await interaction.update({ fetchReply: true });
+			await interaction.update({ fetchReply: true }).catch(() => {});
 			const i = interaction.values[0];
 
 			return await interaction.editReply({
@@ -104,7 +104,7 @@ client.on(Events.InteractionCreate, async interaction => {
 						)
 				);
 		} else if (interaction.customId == "uid_del") {
-			await interaction.update({ fetchReply: true });
+			await interaction.update({ fetchReply: true }).catch(() => {});
 
 			const i = interaction.values[0];
 

@@ -24,7 +24,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	);
 
 	if (interaction.customId === "forgottenHall_Floor") {
-		await interaction.update({ fetchReply: true });
+		await interaction.update({ fetchReply: true }).catch(() => {});
 		const [userId, i] = interaction.values[0].split("-");
 
 		const hsr = new HonkaiStarRail({

@@ -31,7 +31,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	);
 
 	if (interaction.customId === "profile_characters") {
-		await interaction.update({ fetchReply: true });
+		await interaction.update({ fetchReply: true }).catch(() => {});
 
 		const [uid, i, userId] = interaction.values[0].split("-");
 		const playerData = await player(uid, interaction);
@@ -265,7 +265,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			]
 		});
 	} else if (interaction.customId.startsWith("characters")) {
-		await interaction.update({ fetchReply: true });
+		await interaction.update({ fetchReply: true }).catch(() => {});
 		const [id, i] = interaction.values[0].split("-");
 
 		try {
@@ -394,7 +394,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			});
 		}
 	} else if (interaction.customId.startsWith("leaderboard")) {
-		await interaction.update({ fetchReply: true });
+		await interaction.update({ fetchReply: true }).catch(() => {});
 		const id = interaction.values[0];
 		const leaderboardData = (await db.get(`LeaderBoard.${id}`)) ?? [];
 		const firstPlace = leaderboardData.score[0];
@@ -519,7 +519,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			})
 		});
 	} else if (interaction.customId.startsWith("guide")) {
-		await interaction.update({ fetchReply: true });
+		await interaction.update({ fetchReply: true }).catch(() => {});
 		const id = interaction.values[0];
 
 		const locale = (await db?.has(`${interaction.user.id}.locale`))
