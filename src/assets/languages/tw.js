@@ -155,6 +155,7 @@ const langs = {
 	news_selpost: "🐣 請選擇一篇文章",
 	draw_fail: "製圖失敗，請稍後再試！",
 	draw_wait: "您的製圖請求正在排隊，剩餘 <z> 位使用者",
+	draw_NoData: "資料抓取失敗",
 
 	year: "年",
 	month: "月",

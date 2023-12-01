@@ -473,234 +473,255 @@ async function createImage(warpResults) {
 }
 
 async function warpLogImage(interaction, datas, title) {
-	const tr = i18nMixin(
-		(await db?.has(`${interaction.user.id}.locale`))
-			? await db?.get(`${interaction.user.id}.locale`)
-			: toI18nLang(interaction.locale) || "en"
-	);
+	try {
+		const tr = i18nMixin(
+			(await db?.has(`${interaction.user.id}.locale`))
+				? await db?.get(`${interaction.user.id}.locale`)
+				: toI18nLang(interaction.locale) || "en"
+		);
 
-	const canvas = createCanvas(1370, 900);
-	const ctx = canvas.getContext("2d");
+		const canvas = createCanvas(1370, 900);
+		const ctx = canvas.getContext("2d");
 
-	const bg = await loadImageAsync("./src/assets/warpbg.jpg");
-	ctx.drawImage(bg, 0, 0, 1920, 1080);
+		const bg = await loadImageAsync("./src/assets/warpbg.jpg");
+		ctx.drawImage(bg, 0, 0, 1920, 1080);
 
-	// Draw Icon
-	const drawIcon = await loadImageAsync(
-		image_Header + "icon/sign/DrawcardIcon.png"
-	);
-	ctx.drawImage(drawIcon, 50, 22.5, 64, 64);
+		// Draw Icon
+		const drawIcon = await loadImageAsync(
+			image_Header + "icon/sign/DrawcardIcon.png"
+		);
+		ctx.drawImage(drawIcon, 50, 22.5, 64, 64);
 
-	// Draw Text
-	ctx.font =
-		"48px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#F1C376";
-	ctx.textAlign = "left";
-	ctx.fillText(`${title} ${tr("warplog_title")}`, 130, 70);
+		// Draw Text
+		ctx.font =
+			"48px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#F1C376";
+		ctx.textAlign = "left";
+		ctx.fillText(`${title} ${tr("warplog_title")}`, 130, 70);
 
-	// // Player Name
-	// ctx.font =
-	//   "64px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-	// ctx.fillStyle = "#FFFFFF";
-	// ctx.textAlign = "left";
-	// ctx.fillText("玩家名稱", 55, 160);
+		// // Player Name
+		// ctx.font =
+		//   "64px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		// ctx.fillStyle = "#FFFFFF";
+		// ctx.textAlign = "left";
+		// ctx.fillText("玩家名稱", 55, 160);
 
-	// Texts
-	// Count
-	ctx.font =
-		"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#FFFFFF";
-	ctx.textAlign = "left";
-	ctx.fillText(`${tr("warplog_count")}`, 55, 250);
+		// Texts
+		// Count
+		ctx.font =
+			"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#FFFFFF";
+		ctx.textAlign = "left";
+		ctx.fillText(`${tr("warplog_count")}`, 55, 250);
 
-	ctx.font =
-		"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#80B3FF";
-	ctx.textAlign = "right";
-	ctx.fillText(`${datas.total}`, 400, 252.5);
+		ctx.font =
+			"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#80B3FF";
+		ctx.textAlign = "right";
+		ctx.fillText(`${datas.total}`, 400, 252.5);
 
-	ctx.drawImage(
-		await loadImageAsync(image_Header + "icon/item/102.png"),
-		410,
-		225,
-		36,
-		36
-	);
+		ctx.drawImage(
+			await loadImageAsync(image_Header + "icon/item/102.png"),
+			410,
+			225,
+			36,
+			36
+		);
 
-	// Count Cost
-	ctx.font =
-		"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#FFFFFF";
-	ctx.textAlign = "left";
-	ctx.fillText(`${tr("warplog_cost")}`, 55, 300);
+		// Count Cost
+		ctx.font =
+			"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#FFFFFF";
+		ctx.textAlign = "left";
+		ctx.fillText(`${tr("warplog_cost")}`, 55, 300);
 
-	ctx.font =
-		"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#80B3FF";
-	ctx.textAlign = "right";
-	ctx.fillText(`${datas.total * 160}`, 400, 302.5);
+		ctx.font =
+			"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#80B3FF";
+		ctx.textAlign = "right";
+		ctx.fillText(`${datas.total * 160}`, 400, 302.5);
 
-	ctx.drawImage(
-		await loadImageAsync(image_Header + "icon/item/900001.png"),
-		410,
-		275,
-		36,
-		36
-	);
+		ctx.drawImage(
+			await loadImageAsync(image_Header + "icon/item/900001.png"),
+			410,
+			275,
+			36,
+			36
+		);
 
-	// 5 Star Count
-	ctx.font =
-		"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#FFFFFF";
-	ctx.textAlign = "left";
-	ctx.fillText(`${tr("warplog_5count")}`, 55, 350);
+		// 5 Star Count
+		ctx.font =
+			"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#FFFFFF";
+		ctx.textAlign = "left";
+		ctx.fillText(`${tr("warplog_5count")}`, 55, 350);
 
-	ctx.font =
-		"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#80B3FF";
-	ctx.textAlign = "right";
-	ctx.fillText(`${datas?.data.length}`, 400, 352.5);
+		ctx.font =
+			"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#80B3FF";
+		ctx.textAlign = "right";
+		ctx.fillText(`${datas?.data.length}`, 400, 352.5);
 
-	// 5 Star Average
-	ctx.font =
-		"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#FFFFFF";
-	ctx.textAlign = "left";
-	ctx.fillText(`${tr("warplog_5countaverage")}`, 55, 400);
+		// 5 Star Average
+		ctx.font =
+			"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#FFFFFF";
+		ctx.textAlign = "left";
+		ctx.fillText(`${tr("warplog_5countaverage")}`, 55, 400);
 
-	ctx.font =
-		"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#80B3FF";
-	ctx.textAlign = "right";
-	ctx.fillText(`${datas.average}`, 400, 402.5);
+		ctx.font =
+			"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#80B3FF";
+		ctx.textAlign = "right";
+		ctx.fillText(`${datas.average}`, 400, 402.5);
 
-	// Draw History Icon
-	const star = await loadImageAsync(image_Header + "icon/deco/StarBig.png");
-	ctx.drawImage(star, 530, 103, 60, 60);
+		// Draw History Icon
+		const star = await loadImageAsync(
+			image_Header + "icon/deco/StarBig.png"
+		);
+		ctx.drawImage(star, 530, 103, 60, 60);
 
-	// Draw History Text
-	ctx.font =
-		"38px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-	ctx.fillStyle = "#FFFFFF";
-	ctx.textAlign = "left";
-	ctx.fillText(`${tr("warplog_react")}`, 600, 145);
+		// Draw History Text
+		ctx.font =
+			"38px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		ctx.fillStyle = "#FFFFFF";
+		ctx.textAlign = "left";
+		ctx.fillText(`${tr("warplog_react")}`, 600, 145);
 
-	// Draw History
-	datas.data.slice(0, 23);
-	datas.data.unshift({
-		count: datas.pity
-	});
+		// Draw History
+		datas.data.slice(0, 23);
+		datas.data.unshift({
+			count: datas.pity
+		});
 
-	for (let y = 0; y < Math.ceil(datas?.data.length / 5); y++) {
-		for (let x = 0; x < 5; x++) {
-			if (y * 5 + x < datas.data.length) {
-				const res = datas.data[y * 5 + x];
-				const progress = res.count;
-				const centerX = 600 + x * 150;
-				const centerY = 250 + y * 130;
-				const radius = 55;
-				const lineWidth = 8;
-				const startAngle = -Math.PI / 2;
-				const endAngle = startAngle + (progress / 100) * (2 * Math.PI);
+		for (let y = 0; y < Math.ceil(datas?.data.length / 5); y++) {
+			for (let x = 0; x < 5; x++) {
+				if (y * 5 + x < datas.data.length) {
+					const res = datas.data[y * 5 + x];
+					const progress = res.count;
+					const centerX = 600 + x * 150;
+					const centerY = 250 + y * 130;
+					const radius = 55;
+					const lineWidth = 8;
+					const startAngle = -Math.PI / 2;
+					const endAngle =
+						startAngle + (progress / 100) * (2 * Math.PI);
 
-				// Progress BG
-				ctx.beginPath();
-				ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-				ctx.lineWidth = lineWidth;
-				ctx.strokeStyle = "#000000";
-				ctx.stroke();
+					// Progress BG
+					ctx.beginPath();
+					ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+					ctx.lineWidth = lineWidth;
+					ctx.strokeStyle = "#000000";
+					ctx.stroke();
 
-				// Progress
-				const progressColor = [
-					{ threshold: 50, color: "#9DF1DF" },
-					{ threshold: 70, color: "#FFBB5C" },
-					{ threshold: 100, color: "#FF6969" }
-				];
-				let color = "#000000";
+					// Progress
+					const progressColor = [
+						{ threshold: 50, color: "#9DF1DF" },
+						{ threshold: 70, color: "#FFBB5C" },
+						{ threshold: 100, color: "#FF6969" }
+					];
+					let color = "#000000";
 
-				for (const { threshold, color: colorValue } of progressColor)
-					if (progress <= threshold) {
-						color = colorValue;
-						break;
-					}
+					for (const {
+						threshold,
+						color: colorValue
+					} of progressColor)
+						if (progress <= threshold) {
+							color = colorValue;
+							break;
+						}
 
-				ctx.beginPath();
-				ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-				ctx.lineWidth = lineWidth;
-				ctx.strokeStyle = color;
-				ctx.lineCap = "round";
-				ctx.stroke();
+					ctx.beginPath();
+					ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+					ctx.lineWidth = lineWidth;
+					ctx.strokeStyle = color;
+					ctx.lineCap = "round";
+					ctx.stroke();
 
-				// Character
-				const id = res.id;
-				const type = res.type;
-				ctx.globalCompositeOperation = "source-over";
-				const image = await loadImageAsync(
-					image_Header +
-						(x + y == 0
-							? "icon/element/None.png"
-							: `icon/${
-									type == "light_cone"
-										? "light_cone"
-										: "avatar"
-							  }/${id}.png`)
-				);
-				const imageWidth = 2 * (radius - lineWidth);
-				const imageHeight = 2 * (radius - lineWidth);
-				const imageX = centerX - imageWidth / 2;
-				const imageY = centerY - imageHeight / 2;
+					// Character
+					const id = res.id;
+					const type = res.type;
+					ctx.globalCompositeOperation = "source-over";
+					const image = await loadImageAsync(
+						image_Header +
+							(x + y == 0
+								? "icon/element/None.png"
+								: `icon/${
+										type == "light_cone"
+											? "light_cone"
+											: "avatar"
+								  }/${id}.png`)
+					);
+					const imageWidth = 2 * (radius - lineWidth);
+					const imageHeight = 2 * (radius - lineWidth);
+					const imageX = centerX - imageWidth / 2;
+					const imageY = centerY - imageHeight / 2;
 
-				ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
+					ctx.drawImage(
+						image,
+						imageX,
+						imageY,
+						imageWidth,
+						imageHeight
+					);
 
-				// Count
-				const rectWidth = 60;
-				const rectHeight = 30;
-				const rectX = 610 + x * 150;
-				const rectY = 270 + y * 130;
-				const cornerRadius = 17.5;
+					// Count
+					const rectWidth = 60;
+					const rectHeight = 30;
+					const rectX = 610 + x * 150;
+					const rectY = 270 + y * 130;
+					const cornerRadius = 17.5;
 
-				ctx.fillStyle = "#FFFFFF";
-				ctx.beginPath();
-				ctx.moveTo(rectX + cornerRadius, rectY);
-				ctx.lineTo(rectX + rectWidth - cornerRadius, rectY);
-				ctx.quadraticCurveTo(
-					rectX + rectWidth,
-					rectY,
-					rectX + rectWidth,
-					rectY + cornerRadius
-				);
-				ctx.lineTo(
-					rectX + rectWidth,
-					rectY + rectHeight - cornerRadius
-				);
-				ctx.quadraticCurveTo(
-					rectX + rectWidth,
-					rectY + rectHeight,
-					rectX + rectWidth - cornerRadius,
-					rectY + rectHeight
-				);
-				ctx.lineTo(rectX + cornerRadius, rectY + rectHeight);
-				ctx.quadraticCurveTo(
-					rectX,
-					rectY + rectHeight,
-					rectX,
-					rectY + rectHeight - cornerRadius
-				);
-				ctx.lineTo(rectX, rectY + cornerRadius);
-				ctx.quadraticCurveTo(rectX, rectY, rectX + cornerRadius, rectY);
-				ctx.fill();
+					ctx.fillStyle = "#FFFFFF";
+					ctx.beginPath();
+					ctx.moveTo(rectX + cornerRadius, rectY);
+					ctx.lineTo(rectX + rectWidth - cornerRadius, rectY);
+					ctx.quadraticCurveTo(
+						rectX + rectWidth,
+						rectY,
+						rectX + rectWidth,
+						rectY + cornerRadius
+					);
+					ctx.lineTo(
+						rectX + rectWidth,
+						rectY + rectHeight - cornerRadius
+					);
+					ctx.quadraticCurveTo(
+						rectX + rectWidth,
+						rectY + rectHeight,
+						rectX + rectWidth - cornerRadius,
+						rectY + rectHeight
+					);
+					ctx.lineTo(rectX + cornerRadius, rectY + rectHeight);
+					ctx.quadraticCurveTo(
+						rectX,
+						rectY + rectHeight,
+						rectX,
+						rectY + rectHeight - cornerRadius
+					);
+					ctx.lineTo(rectX, rectY + cornerRadius);
+					ctx.quadraticCurveTo(
+						rectX,
+						rectY,
+						rectX + cornerRadius,
+						rectY
+					);
+					ctx.fill();
 
-				// Count Text
-				ctx.font =
-					"bold 20px 'URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
-				ctx.fillStyle = "#000000";
-				ctx.textAlign = "center";
-				ctx.fillText(`${progress}`, rectX + 30, rectY + 22.5);
+					// Count Text
+					ctx.font =
+						"bold 20px 'URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.fillStyle = "#000000";
+					ctx.textAlign = "center";
+					ctx.fillText(`${progress}`, rectX + 30, rectY + 22.5);
+				}
 			}
 		}
-	}
 
-	return canvas.toBuffer("image/png");
+		return canvas.toBuffer("image/png");
+	} catch (e) {
+		return null;
+	}
 }
 
 export { warpLog, warp, createImage, warpLogImage };

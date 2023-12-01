@@ -1,24 +1,24 @@
 [
   {
     "vers": [
+      "1.0.0",
       "1.0.1",
-      "1.0.2",
+      "1.1.0",
       "1.1.1",
-      "1.1.2",
+      "1.2.0",
       "1.2.1",
-      "1.2.2",
+      "1.3.0",
       "1.3.1",
-      "1.3.2",
+      "1.4.0",
       "1.4.1",
-      "1.4.2",
+      "1.5.0",
       "1.5.1",
-      "1.5.2",
+      "1.6.0",
       "1.6.1",
-      "1.6.2",
+      "1.7.0",
       "1.7.1",
-      "1.7.2",
-      "1.8.1",
-      "1.8.2"
+      "1.8.0",
+      "1.8.1"
     ],
     "type": "beginner",
     "title": {
@@ -84,7 +84,7 @@
     ]
   },
   {
-    "vers": ["1.0.1"],
+    "vers": ["1.0.0"],
     "colour-type": 1,
     "type": "char",
     "title": {
@@ -149,7 +149,7 @@
     ]
   },
   {
-    "vers": ["1.0.1"],
+    "vers": ["1.0.0"],
     "type": "weap",
     "colour-type": 1,
     "title": {
@@ -219,25 +219,25 @@
   },
   {
     "vers": [
+      "1.0.0",
       "1.0.1",
-      "1.0.2",
+      "1.1.0",
       "1.1.1",
-      "1.1.2",
+      "1.2.0",
       "1.2.1",
-      "1.2.2",
+      "1.3.0",
       "1.3.1",
-      "1.3.2",
+      "1.4.0",
       "1.4.1",
-      "1.4.2",
-      "1.4.2",
+      "1.4.1",
+      "1.5.0",
       "1.5.1",
-      "1.5.2",
+      "1.6.0",
       "1.6.1",
-      "1.6.2",
+      "1.7.0",
       "1.7.1",
-      "1.7.2",
-      "1.8.1",
-      "1.8.2"
+      "1.8.0",
+      "1.8.1"
     ],
     "type": "standard",
     "title": {
@@ -312,7 +312,7 @@
     ]
   },
   {
-    "vers": ["1.0.2"],
+    "vers": ["1.0.1"],
     "type": "char",
     "colour-type": 2,
     "title": {
@@ -377,7 +377,7 @@
     ]
   },
   {
-    "vers": ["1.0.2"],
+    "vers": ["1.0.1"],
     "type": "weap",
     "colour-type": 2,
     "title": {
@@ -446,7 +446,7 @@
     ]
   },
   {
-    "vers": ["1.1.1"],
+    "vers": ["1.1.0"],
     "type": "char",
     "colour-type": 1,
     "title": {
@@ -511,7 +511,7 @@
     ]
   },
   {
-    "vers": ["1.1.1"],
+    "vers": ["1.1.0"],
     "type": "weap",
     "colour-type": 1,
     "title": {
@@ -580,7 +580,7 @@
     ]
   },
   {
-    "vers": ["1.1.2"],
+    "vers": ["1.1.1"],
     "type": "char",
     "colour-type": 2,
     "title": {
@@ -646,7 +646,7 @@
     ]
   },
   {
-    "vers": ["1.1.2"],
+    "vers": ["1.1.1"],
     "type": "weap",
     "colour-type": 2,
     "title": {
@@ -715,7 +715,7 @@
     ]
   },
   {
-    "vers": ["1.2.1"],
+    "vers": ["1.2.0"],
     "type": "char",
     "colour-type": 2,
     "title": {
@@ -781,7 +781,7 @@
     ]
   },
   {
-    "vers": ["1.2.1"],
+    "vers": ["1.2.0"],
     "type": "weap",
     "colour-type": 2,
     "title": {
@@ -846,7 +846,7 @@
     ]
   },
   {
-    "vers": ["1.2.2"],
+    "vers": ["1.2.1"],
     "type": "char",
     "colour-type": 3,
     "title": {
@@ -913,7 +913,7 @@
     ]
   },
   {
-    "vers": ["1.2.2"],
+    "vers": ["1.2.1"],
     "type": "weap",
     "colour-type": 3,
     "title": {
@@ -983,7 +983,7 @@
     ]
   },
   {
-    "vers": ["1.3.1"],
+    "vers": ["1.3.0"],
     "type": "char",
     "colour-type": 2,
     "title": {
@@ -1050,7 +1050,7 @@
     ]
   },
   {
-    "vers": ["1.3.1"],
+    "vers": ["1.3.0"],
     "type": "weap",
     "colour-type": 2,
     "title": {
@@ -1119,7 +1119,7 @@
     ]
   },
   {
-    "vers": ["1.3.2"],
+    "vers": ["1.3.1"],
     "type": "char",
     "colour-type": 3,
     "title": {
@@ -1187,7 +1187,7 @@
     ]
   },
   {
-    "vers": ["1.3.2"],
+    "vers": ["1.3.1"],
     "type": "weap",
     "colour-type": 3,
     "title": {
@@ -1258,7 +1258,7 @@
     ]
   },
   {
-    "vers": ["1.4.1"],
+    "vers": ["1.4.0"],
     "type": "char",
     "colour-type": 1,
     "title": {
@@ -1326,7 +1326,7 @@
     ]
   },
   {
-    "vers": ["1.4.1"],
+    "vers": ["1.4.0"],
     "type": "weap",
     "colour-type": 1,
     "title": {
@@ -1397,7 +1397,7 @@
     ]
   },
   {
-    "vers": ["1.4.2"],
+    "vers": ["1.4.1"],
     "type": "char",
     "colour-type": 4,
     "title": {
@@ -1466,7 +1466,7 @@
     ]
   },
   {
-    "vers": ["1.4.2"],
+    "vers": ["1.4.1"],
     "type": "weap",
     "colour-type": 4,
     "title": {
@@ -1537,9 +1537,9 @@
     ]
   },
   {
-    "vers": ["1.4.2"],
+    "vers": ["1.4.1"],
     "type": "rerun-char",
-    "rerun-of": "1.0.1",
+    "rerun-of": "1.0.0",
     "colour-type": 1,
     "title": {
       "en": "Butterfly on Swordtip",
@@ -1607,9 +1607,9 @@
     ]
   },
   {
-    "vers": ["1.4.2"],
+    "vers": ["1.4.1"],
     "type": "rerun-weap",
-    "rerun-of": "1.0.1",
+    "rerun-of": "1.0.0",
     "colour-type": 1,
     "title": {
       "en": "Bygone Reminiscence",
@@ -1680,7 +1680,7 @@
     ]
   },
   {
-    "vers": ["1.5.1"],
+    "vers": ["1.5.0"],
     "type": "char",
     "colour-type": 2,
     "title": {
@@ -1749,7 +1749,7 @@
     ]
   },
   {
-    "vers": ["1.5.1"],
+    "vers": ["1.5.0"],
     "type": "weap",
     "colour-type": 2,
     "title": {
@@ -1821,7 +1821,7 @@
     ]
   },
   {
-    "vers": ["1.5.2"],
+    "vers": ["1.5.1"],
     "type": "char",
     "colour-type": 4,
     "title": {
@@ -1891,7 +1891,7 @@
     ]
   },
   {
-    "vers": ["1.5.2"],
+    "vers": ["1.5.1"],
     "type": "weap",
     "colour-type": 4,
     "title": {
@@ -1963,9 +1963,9 @@
     ]
   },
   {
-    "vers": ["1.5.2"],
+    "vers": ["1.5.1"],
     "type": "rerun-char",
-    "rerun-of": "1.1.1",
+    "rerun-of": "1.1.0",
     "colour-type": 1,
     "title": {
       "en": "Contract Zero",
@@ -2034,9 +2034,9 @@
     ]
   },
   {
-    "vers": ["1.5.2"],
+    "vers": ["1.5.1"],
     "type": "rerun-weap",
-    "rerun-of": "1.1.1",
+    "rerun-of": "1.1.0",
     "colour-type": 1,
     "title": {
       "en": "Bygone Reminiscence",
@@ -2111,7 +2111,7 @@
     ]
   },
   {
-    "vers": ["1.6.1"],
+    "vers": ["1.6.0"],
     "type": "char",
     "colour-type": 4,
     "title": {
@@ -2184,7 +2184,7 @@
     ]
   },
   {
-    "vers": ["1.6.1"],
+    "vers": ["1.6.0"],
     "type": "weap",
     "colour-type": 4,
     "title": {
@@ -2255,7 +2255,7 @@
     ]
   },
   {
-    "vers": ["1.6.2"],
+    "vers": ["1.6.1"],
     "type": "char",
     "title": {
       "en": "L",
@@ -2327,7 +2327,7 @@
     ]
   },
   {
-    "vers": ["1.6.2"],
+    "vers": ["1.6.1"],
     "type": "weap",
     "title": {
       "en": "Brilliant Fixation",
@@ -2397,9 +2397,9 @@
     ]
   },
   {
-    "vers": ["1.6.2"],
+    "vers": ["1.6.1"],
     "type": "rerun-char",
-    "rerun-of": "1.1.1",
+    "rerun-of": "1.1.0",
     "title": {},
     "rateUpFive": [],
     "rateUpFour": [],
@@ -2457,9 +2457,9 @@
     ]
   },
   {
-    "vers": ["1.6.2"],
+    "vers": ["1.6.1"],
     "type": "rerun-weap",
-    "rerun-of": "1.0.1",
+    "rerun-of": "1.0.0",
     "title": {
       "en": "Bygone Reminiscence",
       "zh": "溯回忆象",

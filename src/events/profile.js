@@ -67,6 +67,8 @@ client.on(Events.InteractionCreate, async interaction => {
 									i,
 									interaction
 							  );
+					if (imageBuffer == null) throw new Error(tr("draw_NoData"));
+
 					const image = new AttachmentBuilder(imageBuffer, {
 						name: `${playerData.player.uid}.png`
 					});

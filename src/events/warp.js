@@ -60,6 +60,9 @@ client.on(Events.InteractionCreate, async interaction => {
 							datas,
 							title
 						);
+						if (imageBuffer == null)
+							throw new Error(tr("draw_NoData"));
+
 						const image = new AttachmentBuilder(imageBuffer, {
 							name: `${title}.png`
 						});

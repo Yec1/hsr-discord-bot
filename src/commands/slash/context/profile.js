@@ -96,6 +96,8 @@ async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
 				playerData.characters;
 
 			const imageBuffer = await mainPage(playerData, interaction);
+			if (imageBuffer == null) throw new Error(tr("draw_NoData"));
+
 			const image = new AttachmentBuilder(imageBuffer, {
 				name: `${playerData.player.uid}.png`
 			});

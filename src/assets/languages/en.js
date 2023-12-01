@@ -161,6 +161,9 @@ const langs = {
 	news_info: "Infomation",
 	news_seltype: "Please select a news category",
 	news_selpost: "🐣 Please select a post",
+	draw_fail: "Drawing failed, please try again later!",
+	draw_wait: "Your drawing request is being queued, <z> users remain",
+	draw_NoData: "Failed to capture data",
 
 	year: "/",
 	month: "/",

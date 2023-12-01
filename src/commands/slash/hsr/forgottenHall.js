@@ -128,6 +128,8 @@ async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
 	const drawTask = async () => {
 		try {
 			const imageBuffer = await indexImage(uid, res, floor, interaction);
+			if (imageBuffer == null) throw new Error(tr("draw_NoData"));
+
 			const image = new AttachmentBuilder(imageBuffer, {
 				name: `${floor.name}.png`
 			});
