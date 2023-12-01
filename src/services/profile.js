@@ -557,7 +557,7 @@ async function charPage(characters, playerData, num, interaction) {
 			ctx.drawImage(mainAff, x + 100, y + 15, 40, 40);
 
 			ctx.font = "bold 18px 'YaHei', URW DIN Arabic, Arial, sans-serif";
-			ctx.fillStyle = "#FFFFFF"; // #EAB308
+			ctx.fillStyle = "#EAB308"; // #FFFFFF
 			ctx.textAlign = "left";
 
 			function containsChinese(text) {
