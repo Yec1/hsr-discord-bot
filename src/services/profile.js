@@ -482,7 +482,7 @@ async function charPage(characters, playerData, num, interaction) {
 
 		// Relics
 		const relics = await getRelicsScore(character);
-		let width = 315,
+		let width = 335,
 			height = 220,
 			radius = 10,
 			padding = 20;
@@ -490,7 +490,7 @@ async function charPage(characters, playerData, num, interaction) {
 		for (let i = 0; i < relics.length; i++) {
 			let row = Math.floor(i / 2);
 			let column = i % 2;
-			let x = 1200 + column * (width + padding) + padding,
+			let x = 1180 + column * (width + padding) + padding,
 				y = 50 + row * (height + padding) + padding;
 
 			ctx.beginPath();
@@ -557,7 +557,7 @@ async function charPage(characters, playerData, num, interaction) {
 			ctx.drawImage(mainAff, x + 100, y + 15, 40, 40);
 
 			ctx.font = "bold 18px 'YaHei', URW DIN Arabic, Arial, sans-serif";
-			ctx.fillStyle = "#EAB308";
+			ctx.fillStyle = "#FFFFFF"; // #EAB308
 			ctx.textAlign = "left";
 
 			function containsChinese(text) {
@@ -631,18 +631,19 @@ async function charPage(characters, playerData, num, interaction) {
 
 			ctx.textAlign = "right";
 			ctx.font = "bold 20px 'URW DIN Arabic', Arial, sans-serif";
-			ctx.fillText(`${relics[i].main_affix.display}`, x + 295, y + 43);
+			ctx.fillText(`${relics[i].main_affix.display}`, x + 320, y + 43);
 
 			let affixYStart = hasLineBreak ? 75 : 53;
 			const maxWidth = 100;
 			const initialFontSize = 18;
 
 			for (let j = 0; j < relics[i].sub_affix.length; j++) {
-				const subAff = await loadImageAsync(
-					image_Header + relics[i].sub_affix[j].icon
+				const subAff = relics[i].sub_affix[j];
+				const subAffImage = await loadImageAsync(
+					image_Header + subAff.icon
 				);
 				ctx.drawImage(
-					subAff,
+					subAffImage,
 					x + 103,
 					y + affixYStart + j * 32,
 					32,
@@ -651,10 +652,18 @@ async function charPage(characters, playerData, num, interaction) {
 
 				let fontSize = initialFontSize;
 				ctx.font = `bold ${fontSize}px 'YaHei', URW DIN Arabic, Arial, sans-serif`;
-				ctx.fillStyle = "#fff";
+
+				const weight = subAff.weight;
+				const color =
+					weight >= 0.75
+						? "#F3B664"
+						: weight > 0
+						  ? "#FFFFFF"
+						  : "#B6BBC4";
+				ctx.fillStyle = color;
 				ctx.textAlign = "left";
 
-				const text = relics[i].sub_affix[j].name;
+				const text = subAff.name;
 				let textWidth = ctx.measureText(text).width;
 
 				while (textWidth > maxWidth && fontSize > 16) {
@@ -668,9 +677,16 @@ async function charPage(characters, playerData, num, interaction) {
 				ctx.textAlign = "right";
 				ctx.font = `bold 20px 'URW DIN Arabic', Arial, sans-serif`;
 				ctx.fillText(
-					`${relics[i].sub_affix[j].display}`,
-					x + 295,
-					y + affixYStart + 23 + j * 32
+					`${subAff.display}`,
+					x + 320,
+					y + affixYStart + 25 + j * 32
+				);
+
+				ctx.textAlign = "left";
+				ctx.fillText(
+					">".repeat(subAff.count - 1 || 0),
+					x + 225,
+					y + affixYStart + 25 + j * 32
 				);
 			}
 		}
@@ -700,6 +716,7 @@ async function charPage(characters, playerData, num, interaction) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
+		console.log(e);
 		return null;
 	}
 }

@@ -46,6 +46,7 @@ function calculateSubScore(relic, weights) {
 			const count = Number(sub.count) || 0;
 			const step = Number(sub.step) || 0;
 			const subWeight = weights.weight[sub.type] || 0;
+			sub.weight = subWeight;
 			return subScore + (count + step * 0.1) * subWeight;
 		}, 0) / (weights.max || 1)
 	);
