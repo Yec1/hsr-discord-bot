@@ -214,22 +214,23 @@ async function notifySend(notify, id, uid, cookie) {
 		user?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
 		user?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
 
-		channel?.send({
-			embeds: [
-				new EmbedBuilder()
-					.setConfig("#E76161")
-					.setThumbnail(
-						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-					)
-					.setTitle(`${tr("autoNote_title")} - ${uid}`)
-					.setDescription(
-						`<@${id}> ${tr("notify_failed")}\n\n${desc}\n${tr(
-							"err_code"
-						)}${e}`
-					)
-			],
-			ephemeral: true
-		});
+		channel
+			?.send({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig("#E76161")
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+						.setTitle(`${tr("autoNote_title")} - ${uid}`)
+						.setDescription(
+							`<@${id}> ${tr("notify_failed")}\n\n${desc}\n${tr(
+								"err_code"
+							)}${e}`
+						)
+				]
+			})
+			.catch(() => {});
 	}
 }
 

@@ -151,22 +151,24 @@ async function dailySend(daily, id, uid, cookie) {
 		}
 	} catch (e) {
 		fail++;
-		channel?.send({
-			content: tag,
-			embeds: [
-				new EmbedBuilder()
-					.setConfig("#E76161")
-					.setThumbnail(
-						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-					)
-					.setTitle(`${tr("auto")}${tr("daily_failed")} - ${uid}`)
-					.setDescription(
-						`<@${id}> ${tr("cookie_failedDesc")}\n\n${tr(
-							"err_code"
-						)}${e}`
-					)
-			]
-		});
+		channel
+			?.send({
+				content: tag,
+				embeds: [
+					new EmbedBuilder()
+						.setConfig("#E76161")
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+						.setTitle(`${tr("auto")}${tr("daily_failed")} - ${uid}`)
+						.setDescription(
+							`<@${id}> ${tr("cookie_failedDesc")}\n\n${tr(
+								"err_code"
+							)}${e}`
+						)
+				]
+			})
+			.catch(() => {});
 	}
 
 	await delay(500);
