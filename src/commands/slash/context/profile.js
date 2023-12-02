@@ -71,8 +71,6 @@ export default {
 async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 	const drawTask = async () => {
 		try {
-			// saveCharacters(playerData);
-			saveLeaderboard(playerData);
 			const playerData = await player(uid, interaction);
 
 			if (playerData.detail)
@@ -90,6 +88,9 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 							)
 					]
 				});
+
+			// saveCharacters(playerData);
+			saveLeaderboard(playerData);
 
 			const characters =
 				// (await loadCharacters(playerData.player.uid)) ||
@@ -132,7 +133,9 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 					new EmbedBuilder()
 						.setConfig()
 						.setTitle(
-							`${tr("draw_fail")}\n${tr("err_code")}${error}`
+							`${tr("draw_fail")}\n${tr("err_code")}${
+								error.message
+							}`
 						)
 						.setThumbnail(
 							"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
