@@ -315,7 +315,7 @@ export default {
 				userdb?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
 				userdb?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
 
-				return await interaction.reply({
+				return await interaction.followUp({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()

@@ -64,33 +64,33 @@ export default {
 			]
 		});
 
-		const playerData = await player(uid, interaction);
-
-		if (playerData.detail)
-			return await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setConfig("#E76161")
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-						.setTitle(
-							tr("profile_failed", {
-								z: `\`${uid}\``
-							})
-						)
-				]
-			});
-
-		// saveCharacters(playerData);
-		saveLeaderboard(playerData);
-		handleDrawRequest(user, playerData, interaction, tr, emoji);
+		handleDrawRequest(user, uid, interaction, tr, emoji);
 	}
 };
 
-async function handleDrawRequest(user, playerData, interaction, tr, emoji) {
+async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 	const drawTask = async () => {
 		try {
+			// saveCharacters(playerData);
+			saveLeaderboard(playerData);
+			const playerData = await player(uid, interaction);
+
+			if (playerData.detail)
+				return await interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setConfig("#E76161")
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+							.setTitle(
+								tr("profile_failed", {
+									z: `\`${uid}\``
+								})
+							)
+					]
+				});
+
 			const characters =
 				// (await loadCharacters(playerData.player.uid)) ||
 				playerData.characters;

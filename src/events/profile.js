@@ -34,7 +34,6 @@ client.on(Events.InteractionCreate, async interaction => {
 		await interaction.update({ fetchReply: true }).catch(() => {});
 
 		const [uid, i, userId] = interaction.values[0].split("-");
-		const playerData = await player(uid, interaction);
 
 		await interaction.editReply({
 			embeds: [
@@ -49,11 +48,12 @@ client.on(Events.InteractionCreate, async interaction => {
 			ephemeral: true
 		});
 
-		await handleDrawRequest(i, userId, playerData, interaction);
+		await handleDrawRequest(i, uid, userId, interaction);
 
-		async function handleDrawRequest(i, userId, playerData, interaction) {
+		async function handleDrawRequest(i, uid, userId, interaction) {
 			const drawTask = async () => {
 				try {
+					const playerData = await player(uid, interaction);
 					const characters =
 						// (await loadCharacters(playerData.player.uid)) ||
 						playerData.characters;
