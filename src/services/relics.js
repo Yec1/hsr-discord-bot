@@ -37,6 +37,7 @@ function calculateMainAffixScore(relic, weights, index) {
 	const weight = weights.main[index.toString()][mainAffix.type] || 0;
 	const level = Number(relic.level) || 0;
 	const score = ((level + 1) / 16) * weight;
+	mainAffix.weight = weight;
 	return score;
 }
 

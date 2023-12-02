@@ -551,13 +551,19 @@ async function charPage(characters, playerData, num, interaction) {
 				y + 190
 			);
 
-			const mainAff = await loadImageAsync(
+			const mainAff = relics[i].main_affix.weight;
+			const mainAffImage = await loadImageAsync(
 				image_Header + relics[i].main_affix.icon
 			);
-			ctx.drawImage(mainAff, x + 100, y + 15, 40, 40);
+			ctx.drawImage(mainAffImage, x + 100, y + 15, 40, 40);
 
 			ctx.font = "bold 18px 'YaHei', URW DIN Arabic, Arial, sans-serif";
-			ctx.fillStyle = "#EAB308"; // #FFFFFF
+			ctx.fillStyle =
+				mainAff >= 0.75
+					? "#F3B664"
+					: mainAff > 0
+					  ? "#FFFFFF"
+					  : "#B6BBC4"; //"#EAB308"; // #FFFFFF
 			ctx.textAlign = "left";
 
 			function containsChinese(text) {
@@ -682,7 +688,7 @@ async function charPage(characters, playerData, num, interaction) {
 					y + affixYStart + 25 + j * 32
 				);
 
-				ctx.textAlign = "left";
+				ctx.textAlign = "center";
 				ctx.fillText(
 					">".repeat(subAff.count - 1 || 0),
 					x + 225,
