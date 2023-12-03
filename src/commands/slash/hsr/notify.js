@@ -210,7 +210,6 @@ export default {
 				await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
-							.setConfig()
 							.setConfig(staminaColor(res.current_stamina))
 							.setThumbnail(
 								user.displayAvatarURL({
@@ -320,7 +319,6 @@ export default {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
-
 							.setTitle(`${tr("notify_failed")}`)
 							.setDescription(
 								`<@${user.id}>\n\n${desc}\n${tr(
@@ -351,7 +349,6 @@ export default {
 					return await interaction.reply({
 						embeds: [
 							new EmbedBuilder()
-								.setConfig()
 								.setConfig("#E76161")
 								.setTitle(tr("autoNote_off"))
 								.setThumbnail(
@@ -384,7 +381,6 @@ export default {
 						embeds: [
 							new EmbedBuilder()
 								.setConfig()
-
 								.setTitle(`${tr("notify_failed")}`)
 								.setDescription(`${desc}`)
 						],
@@ -402,7 +398,6 @@ export default {
 				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
-							.setConfig()
 							.setConfig("#A2CDB0")
 							.setTitle(tr("autoNote_on"))
 							.setDescription(
@@ -439,7 +434,6 @@ export default {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
-
 							.setTitle(`${tr("notify_failed")}`)
 							.setDescription(`${desc}\n${tr("err_code")}${e}`)
 					],

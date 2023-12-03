@@ -63,7 +63,6 @@ async function handleNewsPostInteraction(interaction, tr, values) {
 	await interaction.message.edit({
 		embeds: [
 			new EmbedBuilder()
-				.setConfig()
 				.setConfig(
 					null,
 					`${date.getUTCFullYear()} ${tr("year")} ${

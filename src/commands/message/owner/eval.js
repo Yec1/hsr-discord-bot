@@ -31,7 +31,6 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
-
 						.setTitle(status)
 						.setDescription(
 							"**`INPUT:`**\n" +

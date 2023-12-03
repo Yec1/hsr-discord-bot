@@ -28,7 +28,6 @@ export default {
 		await interaction.reply({
 			embeds: [
 				new EmbedBuilder()
-					.setConfig()
 					.setConfig("F6F1F1")
 					.setThumbnail(
 						"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"

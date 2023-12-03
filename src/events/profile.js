@@ -39,7 +39,6 @@ client.on(Events.InteractionCreate, async interaction => {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
-
 					.setTitle(tr("profile_imageLoading"))
 					.setThumbnail(
 						"https://media.discordapp.net/attachments/1057244827688910850/1126170338850504704/a_08824a3a9df7a4c9acfc3c7777be4034.gif"
@@ -143,7 +142,6 @@ client.on(Events.InteractionCreate, async interaction => {
 						embeds: [
 							new EmbedBuilder()
 								.setConfig()
-
 								.setTitle(
 									`${tr("draw_fail")}\n${tr("err_code")}${
 										error.message
@@ -164,7 +162,6 @@ client.on(Events.InteractionCreate, async interaction => {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
-
 							.setTitle(
 								`${tr("draw_wait", {
 									z: drawQueue.length - 1
@@ -324,7 +321,6 @@ client.on(Events.InteractionCreate, async interaction => {
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
-						.setConfig()
 						.setConfig("#213555")
 						.setTitle(
 							`${character.name} ${emoji[character.element]}`
@@ -384,7 +380,6 @@ client.on(Events.InteractionCreate, async interaction => {
 			replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
-						.setConfig()
 						.setConfig("#E76161")
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -476,7 +471,6 @@ client.on(Events.InteractionCreate, async interaction => {
 		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
-					.setConfig()
 					.setConfig(null, `${tr("leaderboard_footer")}`)
 					.setAuthor({
 						iconURL: `${image_Header}/${leaderboardData.score[0].avatar}`,
@@ -601,7 +595,6 @@ client.on(Events.InteractionCreate, async interaction => {
 			return interaction.followUp({
 				embeds: [
 					new EmbedBuilder()
-						.setConfig()
 						.setTitle(
 							`${tr("guide_noImage", {
 								z: localeJson[id].name

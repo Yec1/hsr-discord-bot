@@ -84,7 +84,6 @@ export default {
 			return await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
-						.setConfig()
 						.setTitle(tr("uid_non"))
 						.setConfig("#E76161")
 						.setThumbnail(
@@ -101,7 +100,6 @@ export default {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
-
 					.setTitle(tr("profile_Searching"))
 					.setThumbnail(
 						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
@@ -122,7 +120,6 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
-							.setConfig()
 							.setConfig("#E76161")
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -153,7 +150,6 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 				embeds: [],
 				// embeds: [
 				//   new EmbedBuilder()
-				//     .setConfig()
 				//     .setConfig("#F6F1F1")
 				//     .setAuthor({
 				//       name: playerData.player.uid,
@@ -259,7 +255,6 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
-
 						.setTitle(
 							`${tr("draw_fail")}\n${tr("err_code")}${
 								error.message
@@ -280,7 +275,6 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
-
 					.setTitle(
 						`${tr("draw_wait", {
 							z: drawQueue.length - 1
