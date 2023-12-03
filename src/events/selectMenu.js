@@ -63,6 +63,13 @@ async function handleNewsPostInteraction(interaction, tr, values) {
 	await interaction.message.edit({
 		embeds: [
 			new EmbedBuilder()
+				.setConfig()
+				.setConfig(
+					null,
+					`${date.getUTCFullYear()} ${tr("year")} ${
+						date.getUTCMonth() + 1
+					} ${tr("month")} ${date.getUTCDate()} ${tr("day")}`
+				)
 				.setAuthor({
 					iconURL: data.user.avatar_url ?? "",
 					name: data.user.nickname ?? ""
@@ -75,11 +82,6 @@ async function handleNewsPostInteraction(interaction, tr, values) {
 						: data.post.content.slice(0, 1997).concat("...") ??
 								tr("none")
 				)
-				.setFooter({
-					text: `${date.getUTCFullYear()} ${tr("year")} ${
-						date.getUTCMonth() + 1
-					} ${tr("month")} ${date.getUTCDate()} ${tr("day")}`
-				})
 				.setImage(data.image_list[0]?.url ?? data.cover_list[0]?.url)
 		]
 	});

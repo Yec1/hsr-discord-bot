@@ -221,6 +221,7 @@ export default {
 				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setConfig("#E76161")
 							.setTitle(tr("autoDaily_off"))
 							.setThumbnail(
@@ -241,6 +242,7 @@ export default {
 					return await interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
+								.setConfig()
 								.setConfig("#E76161")
 								.setThumbnail(
 									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -259,6 +261,7 @@ export default {
 				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setConfig("#A2CDB0")
 							.setTitle(tr("autoDaily_on"))
 							.setDescription(
@@ -314,6 +317,7 @@ export default {
 				return await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setConfig("#E76161")
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -328,6 +332,7 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
+
 						.setTitle(tr("daily_sign"))
 						.setThumbnail(todaySign?.icon)
 						.setDescription(
@@ -371,6 +376,7 @@ export default {
 			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
+						.setConfig()
 						.setConfig("#E76161")
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"

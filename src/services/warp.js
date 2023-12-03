@@ -91,6 +91,7 @@ async function warpLog(input, interaction) {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
+
 						.setTitle(
 							tr("warp_loading", {
 								a: type[gachaType]

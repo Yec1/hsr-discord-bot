@@ -70,6 +70,7 @@ export default {
 		await interaction.reply({
 			embeds: [
 				new EmbedBuilder()
+					.setConfig()
 					.setConfig("#FFD1DA")
 					.setTitle(
 						newTr("newLocale", {

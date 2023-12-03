@@ -12,6 +12,7 @@ client.on(Events.GuildDelete, async guild => {
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()
+				.setConfig()
 				.setConfig("#E74C3C")
 				.setThumbnail(guild.iconURL())
 				.setTitle("已離開伺服器")

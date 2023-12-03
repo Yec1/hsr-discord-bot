@@ -26,6 +26,7 @@ export default {
 		message.reply({
 			embeds: [
 				new EmbedBuilder()
+					.setConfig()
 					.setTitle(user.username)
 					.setThumbnail(user.displayAvatarURL())
 					.addField("自動簽到", `${daily ? daily?.time : "未開啟"}`)
@@ -44,7 +45,6 @@ export default {
 							inline: true
 						}))
 					)
-					.setConfig()
 			]
 		});
 	}

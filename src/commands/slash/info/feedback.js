@@ -31,11 +31,14 @@ export default {
 		if (userCD)
 			return await interaction.reply({
 				embeds: [
-					new EmbedBuilder().setConfig("#E76161").setTitle(
-						tr("wait", {
-							time: (userCD.msLeft / 1000).toFixed(2)
-						})
-					)
+					new EmbedBuilder()
+						.setConfig()
+						.setConfig("#E76161")
+						.setTitle(
+							tr("wait", {
+								time: (userCD.msLeft / 1000).toFixed(2)
+							})
+						)
 				],
 				ephemeral: true
 			});

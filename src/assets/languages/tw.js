@@ -157,6 +157,10 @@ const langs = {
 	draw_wait: "您的製圖請求正在排隊，剩餘 <z> 位使用者",
 	draw_NoData: "資料抓取失敗",
 
+	donate_Title:
+		"<:love:1068758168877936740> 想要贊助我們嗎？您可以使用以下方式贊助我們！",
+	donate_Desc:
+		"\n▫️ [藍新 - 支持超商付款](https://core.newebpay.com/EPG/yeci/5jBaaE)\n\n▫️ [Buy Me A Coffee](https://www.buymeacoffee.com/yeci)",
 	year: "年",
 	month: "月",
 	day: "日",

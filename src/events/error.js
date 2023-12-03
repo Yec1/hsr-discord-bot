@@ -7,7 +7,12 @@ const webhook = new WebhookClient({
 client.on("error", error => {
 	console.log(error);
 	webhook.send({
-		embeds: [new EmbedBuilder().setTimestamp().setDescription(`${error}`)]
+		embeds: [
+			new EmbedBuilder()
+				.setConfig()
+				.setTimestamp()
+				.setDescription(`${error}`)
+		]
 	});
 });
 
@@ -18,7 +23,12 @@ client.on("warn", error => {
 process.on("unhandledRejection", error => {
 	console.log("Unhandled promise rejection:", error);
 	webhook.send({
-		embeds: [new EmbedBuilder().setTimestamp().setDescription(`${error}`)]
+		embeds: [
+			new EmbedBuilder()
+				.setConfig()
+				.setTimestamp()
+				.setDescription(`${error}`)
+		]
 	});
 });
 

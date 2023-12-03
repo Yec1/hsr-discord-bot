@@ -688,10 +688,11 @@ async function charPage(characters, playerData, num, interaction) {
 					y + affixYStart + 25 + j * 32
 				);
 
+				ctx.font = `bold 16px 'URW DIN Arabic', Arial, sans-serif`;
 				ctx.textAlign = "center";
 				ctx.fillText(
 					">".repeat(subAff.count - 1 || 0),
-					x + 225,
+					x + 237,
 					y + affixYStart + 25 + j * 32
 				);
 			}

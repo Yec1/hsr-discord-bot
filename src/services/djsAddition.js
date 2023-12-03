@@ -12,8 +12,12 @@ Object.defineProperties(EmbedBuilder.prototype, {
 		enumerable: false
 	},
 	setConfig: {
-		value: function (color) {
-			return this.setColor(color || "#272829");
+		value: function (color, footer) {
+			return this.setColor(
+				color && color != null ? color : "#272829"
+			).setFooter({
+				text: footer || "想要支持我們嗎？您可以使用 /donate！"
+			});
 		}
 	}
 });

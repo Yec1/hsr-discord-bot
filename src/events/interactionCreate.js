@@ -32,6 +32,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			await FBwebhook.send({
 				embeds: [
 					new EmbedBuilder()
+						.setConfig()
 						.setConfig("#FFFFFF")
 						.setAuthor({
 							name: `${interaction.user.username}`,
@@ -52,6 +53,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
+						.setConfig()
 						.setConfig("#FF9B9B")
 						.setTitle(i18n("feedback_Sus"))
 						.setThumbnail(
@@ -109,13 +111,15 @@ client.on(Events.InteractionCreate, async interaction => {
 			webhook.send({
 				embeds: [
 					new EmbedBuilder()
-						.setTimestamp()
-						.setFooter({
-							text: `花費 ${(
+						.setConfig()
+						.setConfig(
+							null,
+							`花費 ${(
 								(Date.now() - interaction.createdTimestamp) /
 								1000
 							).toFixed(2)} 秒`
-						})
+						)
+						.setTimestamp()
 						.setAuthor({
 							iconURL: interaction.user.displayAvatarURL({
 								size: 4096,

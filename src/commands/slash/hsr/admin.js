@@ -157,6 +157,7 @@ export default {
 			return await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
+						.setConfig()
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
@@ -180,6 +181,7 @@ export default {
 				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 							)
@@ -193,6 +195,7 @@ export default {
 				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 							)
@@ -216,6 +219,7 @@ export default {
 				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 							)
@@ -233,6 +237,7 @@ export default {
 			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
+						.setConfig()
 						.setThumbnail(
 							"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
 						)
@@ -260,6 +265,7 @@ export default {
 				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 							)
@@ -332,6 +338,7 @@ export default {
 				await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setThumbnail(
 								"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
 							)
@@ -349,6 +356,7 @@ export default {
 				return await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 							)

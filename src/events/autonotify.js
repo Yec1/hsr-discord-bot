@@ -104,6 +104,7 @@ async function notifySend(notify, id, uid, cookie) {
 					content: tag,
 					embeds: [
 						new EmbedBuilder()
+							.setConfig()
 							.setConfig(staminaColor(res.current_stamina))
 							.setTitle(title)
 							.setDescription(`<@${id}>`)
@@ -218,6 +219,7 @@ async function notifySend(notify, id, uid, cookie) {
 			?.send({
 				embeds: [
 					new EmbedBuilder()
+						.setConfig()
 						.setConfig("#E76161")
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -243,6 +245,7 @@ function UpdateStatistics(total, start_time, sus, fail) {
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()
+				.setConfig()
 				.setConfig("#C4D7B2")
 				.setTitle("自動通知")
 				.setTimestamp()

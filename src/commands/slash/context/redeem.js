@@ -34,6 +34,7 @@ export default {
 			return await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
+						.setConfig()
 						.setConfig("#E76161")
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -46,6 +47,7 @@ export default {
 		await interaction.reply({
 			embeds: [
 				new EmbedBuilder()
+					.setConfig()
 					.setTitle(`${emoji.s900001} ${tr("redeem_sus")}`)
 					.setDescription(
 						`${codes
@@ -57,7 +59,6 @@ export default {
 							)
 							.join("\n")}`
 					)
-					.setConfig()
 			],
 			ephemeral: true
 		});

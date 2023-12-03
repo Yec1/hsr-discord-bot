@@ -255,11 +255,14 @@ export default {
 			if (userCD)
 				return await interaction.reply({
 					embeds: [
-						new EmbedBuilder().setConfig("#E76161").setTitle(
-							tr("wait", {
-								time: (userCD.msLeft / 1000).toFixed(2)
-							})
-						)
+						new EmbedBuilder()
+							.setConfig()
+							.setConfig("#E76161")
+							.setTitle(
+								tr("wait", {
+									time: (userCD.msLeft / 1000).toFixed(2)
+								})
+							)
 					],
 					ephemeral: true
 				});
@@ -354,7 +357,7 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
-						.setFooter({ text: tr("warp_SimFooter") })
+						.setConfig(null, tr("warp_SimFooter"))
 						.setImage(video)
 				],
 				components: [
@@ -442,6 +445,7 @@ export default {
 					// 	return interaction.followUp({
 					// 		embeds: [
 					// 			new EmbedBuilder()
+					//				.setConfig()
 					// 				.setConfig("#E76161")
 					// 				.setThumbnail(
 					// 					"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -469,7 +473,8 @@ export default {
 				await interaction.editReply({
 					embeds: [],
 					// embeds: [
-					//   new EmbedBuilder().setConfig()
+					//   new EmbedBuilder()
+					//	   .setConfig()
 					//     .setAuthor({
 					//       name: interaction.user.username,
 					//       iconURL: interaction.user.displayAvatarURL({
@@ -573,6 +578,7 @@ export default {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
+
 							.setImage(
 								"https://media.discordapp.net/attachments/1057244827688910850/1120365039803707412/warp.gif"
 							)

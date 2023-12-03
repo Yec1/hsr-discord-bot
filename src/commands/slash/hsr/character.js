@@ -62,6 +62,7 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
+
 						.setTitle(tr("uid_non"))
 						.setDescription(tr("uid_failedDesc"))
 				],
@@ -74,6 +75,7 @@ export default {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
+
 					.setTitle(tr("profile_Searching"))
 					.setThumbnail(
 						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
@@ -156,6 +158,7 @@ export default {
 			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
+						.setConfig()
 						.setConfig("#E76161")
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"

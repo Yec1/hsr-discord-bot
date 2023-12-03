@@ -106,6 +106,7 @@ async function dailySend(daily, id, uid, cookie) {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
+
 							.setTitle(`${tr("auto")}${tr("daily_sign")}`)
 							.setThumbnail(todaySign?.icon)
 							.setDescription(
@@ -156,6 +157,7 @@ async function dailySend(daily, id, uid, cookie) {
 				content: tag,
 				embeds: [
 					new EmbedBuilder()
+						.setConfig()
 						.setConfig("#E76161")
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -183,6 +185,7 @@ function UpdateStatistics(total, start_time, sus, fail, signed, nowTime) {
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()
+				.setConfig()
 				.setConfig("#F2BE22")
 				.setTitle(`${nowTime} 點自動簽到`)
 				.setTimestamp()

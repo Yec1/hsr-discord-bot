@@ -165,6 +165,9 @@ const langs = {
 	draw_wait: "Your drawing request is being queued, <z> users remain",
 	draw_NoData: "Failed to capture data",
 
+	donate_Title:
+		"<:love:1068758168877936740> Want to sponsor us? You can use the following methods to sponsor us!",
+	donate_Desc: "\n▫️ [Buy Me A Coffee](https://www.buymeacoffee.com/yeci)",
 	year: "/",
 	month: "/",
 	day: "/",

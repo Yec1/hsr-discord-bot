@@ -21,6 +21,5 @@ client.on(Events.MessageCreate, async message => {
 		client.commands.message.get(cmd.toLowerCase()) ||
 		client.commands.message.find(c => c.alias?.includes(cmd.toLowerCase()));
 
-	if (!command) return;
-	await command.execute(client, message, args, emoji);
+	if (command) await command.execute(client, message, args, emoji);
 });

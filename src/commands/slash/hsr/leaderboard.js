@@ -31,6 +31,7 @@ export default {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
+
 					.setTitle(tr("profile_Searching"))
 					.setThumbnail(
 						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
