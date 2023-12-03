@@ -53,6 +53,8 @@ export default async function dailyCheck() {
 				);
 		}
 	}
+
+	await db.set("autoDaily", daily);
 	UpdateStatistics(total, start_time, sus, fail, signed, nowTime);
 }
 
@@ -100,6 +102,9 @@ async function dailySend(daily, id, uid, cookie) {
 			signed++;
 		} else {
 			sus++;
+
+			if (daily[id]?.invaild) await db.delete(`autoDaily.${id}.invaild`);
+
 			channel
 				?.send({
 					content: tag,
@@ -150,6 +155,10 @@ async function dailySend(daily, id, uid, cookie) {
 		}
 	} catch (e) {
 		fail++;
+
+		if ((daily[id]?.invaild ?? 0) + 1 > 48)
+			await db.delete(`autoDaily.${id}`);
+
 		channel
 			?.send({
 				content: tag,

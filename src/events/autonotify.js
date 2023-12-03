@@ -46,6 +46,8 @@ export default async function notifyCheck() {
 			);
 		}
 	}
+
+	await db.set("autoNotify", notify);
 	UpdateStatistics(total, start_time, sus, fail);
 }
 
@@ -99,6 +101,10 @@ async function notifySend(notify, id, uid, cookie) {
 			(userdb.expedition == "true" && expeditionNotify == true)
 		) {
 			sus++;
+
+			if (notify[id]?.invaild)
+				await db.delete(`autoNotify.${id}.invaild`);
+
 			channel
 				?.send({
 					content: tag,
@@ -206,13 +212,20 @@ async function notifySend(notify, id, uid, cookie) {
 		}
 	} catch (e) {
 		fail++;
-		let desc = "";
-		let user = "";
-		if (await db?.has(`${id}.account`))
-			user = (await db?.get(`${id}.account`))[0];
-		else user = await db?.get(`${id}`);
-		user?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
-		user?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
+
+		if ((notify[id]?.invaild ?? 0) + 1 > 48)
+			await db.delete(`autoNotify.${id}`);
+
+		const userdb = (await db?.has(`${id}.account`))
+			? (await db?.get(`${id}.account`))[0]
+			: await db?.get(`${id}`);
+
+		const desc = [
+			userdb?.cookie ? "" : tr("cookie_failedDesc"),
+			userdb?.uid ? "" : tr("uid_failedDesc")
+		]
+			.filter(Boolean)
+			.join("\n");
 
 		channel
 			?.send({
