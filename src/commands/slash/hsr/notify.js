@@ -430,7 +430,7 @@ export default {
 				user?.cookie ? "" : (desc += `\n${tr("cookie_failedDesc")}`);
 				user?.uid ? "" : (desc += `\n${tr("uid_failedDesc")}`);
 
-				return await interaction.reply({
+				replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()

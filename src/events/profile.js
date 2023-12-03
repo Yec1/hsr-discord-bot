@@ -376,7 +376,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				]
 			});
 		} catch (e) {
-			await interaction.editReply({
+			replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")

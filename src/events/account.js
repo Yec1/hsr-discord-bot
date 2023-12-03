@@ -210,7 +210,7 @@ client.on(Events.InteractionCreate, async interaction => {
 					ephemeral: true
 				});
 			} catch (e) {
-				return await interaction.reply({
+				replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")

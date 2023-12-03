@@ -153,7 +153,7 @@ export default {
 				})
 			});
 		} catch (e) {
-			return await interaction.editReply({
+			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#E76161")

@@ -109,7 +109,7 @@ export default {
 			userdb?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
 			userdb?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
 
-			await interaction.reply({
+			replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -171,7 +171,9 @@ async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
 					new EmbedBuilder()
 						.setConfig()
 						.setTitle(
-							`${tr("draw_fail")}\n${tr("err_code")}${error}`
+							`${tr("draw_fail")}\n${tr("err_code")}${
+								error.message
+							}`
 						)
 						.setThumbnail(
 							"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"

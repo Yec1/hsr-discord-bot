@@ -722,7 +722,6 @@ async function charPage(characters, playerData, num, interaction) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
-		console.log(e);
 		return null;
 	}
 }

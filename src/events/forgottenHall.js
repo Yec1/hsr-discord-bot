@@ -108,7 +108,9 @@ async function handleDrawRequest(uid, userId, res, floor, interaction) {
 					new EmbedBuilder()
 						.setConfig()
 						.setTitle(
-							`${tr("draw_fail")}\n${tr("err_code")}${error}`
+							`${tr("draw_fail")}\n${tr("err_code")}${
+								error.message
+							}`
 						)
 						.setThumbnail(
 							"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
