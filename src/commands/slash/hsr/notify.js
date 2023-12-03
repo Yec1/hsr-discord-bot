@@ -307,21 +307,24 @@ export default {
 					]
 				});
 			} catch (e) {
-				let desc = "";
-				const userdb = (await db?.has(`${user}.account`))
-					? (await db?.get(`${user}.account`))[0]
-					: await db?.get(`${user}`);
+				const userdb = (await db?.has(`${user.id}.account`))
+					? (await db?.get(`${user.id}.account`))[0]
+					: await db?.get(`${user.id}`);
 
-				userdb?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
-				userdb?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
+				const desc = [
+					userdb?.cookie ? "" : tr("cookie_failedDesc"),
+					userdb?.uid ? "" : tr("uid_failedDesc")
+				]
+					.filter(Boolean)
+					.join("\n");
 
-				return await interaction.followUp({
+				replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
-							.setTitle(`${tr("notify_failed")}`)
+							.setTitle(tr("notify_failed"))
 							.setDescription(
-								`<@${user.id}>\n\n${desc}\n${tr(
+								`<@${user.id}>\n\n${desc}\n\n${tr(
 									"err_code"
 								)}${e}`
 							)
@@ -359,34 +362,12 @@ export default {
 					});
 				}
 
-				if (
-					!(
-						(await db.has(`${interaction.user.id}.account`)) &&
-						(await db.get(`${interaction.user.id}.account`))[0]
-							.cookie &&
-						(await db.get(`${interaction.user.id}.account`))[0].uid
-					)
-				) {
-					let desc = "";
-					const user = await db?.get(
-						`${interaction.user.id}.account`
-					);
+				const userAccount = await db.get(
+					`${interaction.user.id}.account`
+				);
 
-					user?.[0]?.cookie
-						? ""
-						: (desc += `${tr("cookie_failedDesc")}\n`);
-					user?.[0]?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
-
-					return await interaction.reply({
-						embeds: [
-							new EmbedBuilder()
-								.setConfig()
-								.setTitle(`${tr("notify_failed")}`)
-								.setDescription(`${desc}`)
-						],
-						ephemeral: true
-					});
-				}
+				if (!(userAccount?.[0].cookie && userAccount?.[0].uid))
+					throw new Error();
 
 				await db.set(`autoNotify.${interaction.user.id}`, {
 					channelId: interaction.channel.id,
@@ -422,20 +403,25 @@ export default {
 					ephemeral: true
 				});
 			} catch (e) {
-				let desc = "";
-				let user = "";
-				if (await db?.has(`${interaction.user.id}.account`))
-					user = (await db?.get(`${interaction.user.id}.account`))[0];
-				else user = await db?.get(`${interaction.user.id}`);
-				user?.cookie ? "" : (desc += `\n${tr("cookie_failedDesc")}`);
-				user?.uid ? "" : (desc += `\n${tr("uid_failedDesc")}`);
+				const userdb = (await db?.has(`${interaction.user.id}.account`))
+					? (await db?.get(`${interaction.user.id}.account`))[0]
+					: await db?.get(`${interaction.user.id}`);
+
+				const desc = [
+					userdb?.cookie ? "" : tr("cookie_failedDesc"),
+					userdb?.uid ? "" : tr("uid_failedDesc")
+				]
+					.filter(Boolean)
+					.join("\n");
 
 				replyOrfollowUp(interaction, {
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
-							.setTitle(`${tr("notify_failed")}`)
-							.setDescription(`${desc}\n${tr("err_code")}${e}`)
+							.setTitle(tr("notify_failed"))
+							.setDescription(
+								`<@${interaction.user.id}>\n\n${desc}`
+							)
 					],
 					ephemeral: true
 				});

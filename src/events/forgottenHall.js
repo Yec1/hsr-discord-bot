@@ -57,11 +57,11 @@ client.on(Events.InteractionCreate, async interaction => {
 		const res = await hsr.record.forgottenHall();
 		const floor = res.all_floor_detail[i];
 
-		await handleDrawRequest(hsr.uid, userId, res, floor, interaction);
+		await handleDrawRequest(hsr.uid, userId, res, floor, interaction, tr);
 	}
 });
 
-async function handleDrawRequest(uid, userId, res, floor, interaction) {
+async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
 	const drawTask = async () => {
 		try {
 			const imageBuffer = await indexImage(uid, res, floor, interaction);

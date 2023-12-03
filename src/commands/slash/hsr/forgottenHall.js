@@ -102,20 +102,24 @@ export default {
 				tr
 			);
 		} catch (e) {
-			let desc = "";
-			const userdb = (await db?.has(`${user}.account`))
-				? (await db?.get(`${user}.account`))[0]
-				: await db?.get(`${user}`);
-			userdb?.cookie ? "" : (desc += `${tr("cookie_failedDesc")}\n`);
-			userdb?.uid ? "" : (desc += `${tr("uid_failedDesc")}\n`);
+			const userdb = (await db?.has(`${user.id}.account`))
+				? (await db?.get(`${user.id}.account`))[0]
+				: await db?.get(`${user.id}`);
+
+			const desc = [
+				userdb?.cookie ? "" : tr("cookie_failedDesc"),
+				userdb?.uid ? "" : tr("uid_failedDesc")
+			]
+				.filter(Boolean)
+				.join("\n");
 
 			replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
-						.setTitle(`${tr("notify_failed")}`)
+						.setTitle(tr("notify_failed"))
 						.setDescription(
-							`<@${user.id}>\n\n${desc}\n${tr("err_code")}${e}`
+							`<@${user.id}>\n\n${desc}\n\n${tr("err_code")}${e}`
 						)
 				],
 				ephemeral: true
