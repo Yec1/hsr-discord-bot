@@ -156,7 +156,7 @@ async function dailySend(daily, id, uid, cookie) {
 	} catch (e) {
 		fail++;
 
-		if ((daily[id]?.invaild ?? 0) + 1 > 48)
+		if ((daily[id]?.invaild ?? 0) + 1 > 47)
 			await db.delete(`autoDaily.${id}`);
 
 		channel
@@ -164,7 +164,12 @@ async function dailySend(daily, id, uid, cookie) {
 				content: tag,
 				embeds: [
 					new EmbedBuilder()
-						.setColor("#E76161")
+						.setConfig(
+							"#E76161",
+							`${tr("auto_Fail", {
+								z: daily[id]?.invaild
+							})}`
+						)
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)

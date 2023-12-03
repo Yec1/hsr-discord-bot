@@ -78,6 +78,8 @@ const langs = {
 	autoNote_title: "Auto Notify",
 	autoNote_expedition: "Notify when expedition is available: <z>",
 	autoNote_stamina: "Notify when stamina exceeds <z>",
+	auto_Fail:
+		"It has failed <z> times, and the schedule will be deleted if it exceeds 48 times",
 	redeem_failed: "No redeem code found",
 	redeem_sus: "Click the link below to claim the redeem code",
 	uid_sus: "UID has been set to",

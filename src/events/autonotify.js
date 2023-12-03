@@ -213,7 +213,7 @@ async function notifySend(notify, id, uid, cookie) {
 	} catch (e) {
 		fail++;
 
-		if ((notify[id]?.invaild ?? 0) + 1 > 48)
+		if ((notify[id]?.invaild ?? 0) + 1 > 47)
 			await db.delete(`autoNotify.${id}`);
 
 		const userdb = (await db?.has(`${id}.account`))
@@ -231,7 +231,12 @@ async function notifySend(notify, id, uid, cookie) {
 			?.send({
 				embeds: [
 					new EmbedBuilder()
-						.setColor("#E76161")
+						.setConfig(
+							"#E76161",
+							`${tr("auto_Fail", {
+								z: notify[id]?.invaild
+							})}`
+						)
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
