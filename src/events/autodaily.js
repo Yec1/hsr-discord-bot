@@ -156,7 +156,7 @@ async function dailySend(daily, id, uid, cookie) {
 	} catch (e) {
 		fail++;
 
-		if ((daily[id]?.invaild ?? 0) + 1 > 47)
+		if ((daily[id]?.invaild ?? 0) + 1 > 6)
 			await db.delete(`autoDaily.${id}`);
 
 		channel
@@ -167,7 +167,8 @@ async function dailySend(daily, id, uid, cookie) {
 						.setConfig(
 							"#E76161",
 							`${tr("auto_Fail", {
-								z: daily[id]?.invaild
+								z: daily[id]?.invaild,
+								max: 7
 							})}`
 						)
 						.setThumbnail(

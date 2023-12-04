@@ -74,7 +74,7 @@ const langs = {
 	autoNote_title: "自動通知",
 	autoNote_expedition: "可領取委託時通知：<z>",
 	autoNote_stamina: "體力超過 <z> 時通知",
-	auto_Fail: "已失敗 <z> 次，超過 48 次會刪除排程",
+	auto_Fail: "已失敗 <z> 次，超過 <max> 次會刪除排程",
 	redeem_failed: "未搜尋到兌換碼",
 	redeem_sus: "點擊下方連結領取兌換碼",
 	uid_sus: "UID 已設置為",

@@ -61,7 +61,7 @@ async function notifySend(notify, id, uid, cookie) {
 	const channelId = notify[id].channelId;
 	const tag = notify[id].tag == "true" ? `<@${id}>` : "";
 	const userdb = await db?.get(`autoNotify.${id}`);
-	const userMaxStamina = userdb.stamina ? userdb.stamina : 170;
+	const userMaxStamina = userdb?.stamina ? userdb.stamina : 170;
 	let channel;
 	try {
 		channel = await client.channels.fetch(channelId);
@@ -234,7 +234,8 @@ async function notifySend(notify, id, uid, cookie) {
 						.setConfig(
 							"#E76161",
 							`${tr("auto_Fail", {
-								z: notify[id]?.invaild
+								z: notify[id]?.invaild,
+								max: 48
 							})}`
 						)
 						.setThumbnail(
