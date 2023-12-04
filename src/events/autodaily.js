@@ -155,9 +155,9 @@ async function dailySend(daily, id, uid, cookie) {
 		}
 	} catch (e) {
 		fail++;
+		daily[id]?.invaild ? daily[id].invaild++ : (daily[id].invaild = 1);
 
-		if ((daily[id]?.invaild ?? 0) + 1 > 6)
-			await db.delete(`autoDaily.${id}`);
+		if (daily[id]?.invaild > 6) await db.delete(`autoDaily.${id}`);
 
 		channel
 			?.send({

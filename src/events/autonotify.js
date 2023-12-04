@@ -212,9 +212,9 @@ async function notifySend(notify, id, uid, cookie) {
 		}
 	} catch (e) {
 		fail++;
+		notify[id]?.invaild ? notify[id].invaild++ : (notify[id].invaild = 1);
 
-		if ((notify[id]?.invaild ?? 0) + 1 > 47)
-			await db.delete(`autoNotify.${id}`);
+		if (notify[id]?.invaild > 47) await db.delete(`autoNotify.${id}`);
 
 		const userdb = (await db?.has(`${id}.account`))
 			? (await db?.get(`${id}.account`))[0]
