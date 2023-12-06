@@ -35,24 +35,25 @@ export default async function dailyCheck() {
 	for (const id of autoDaily) {
 		const time = daily[id]?.time ? daily[id].time : "13";
 
-		if (parseInt(time) === nowTime) {
-			const accounts = (await db?.has(`${id}.account`))
-				? await db?.get(`${id}.account`)
-				: [
-						{
-							uid: await db?.get(`${id}.uid`),
-							cookie: await db?.get(`${id}.cookie`)
-						}
-				  ];
-
-			await Promise.all(
-				accounts.map(async account => {
+		if (parseInt(time) == nowTime) {
+			if (
+				(await db?.has(`${id}.account`)) &&
+				(await db?.get(`${id}.account`))[0].uid &&
+				(await db?.get(`${id}.account`))[0].cookie
+			) {
+				const accounts = await db?.get(`${id}.account`);
+				for (const account of accounts)
 					await dailySend(daily, id, account.uid, account.cookie);
-				})
-			);
+			} else
+				await dailySend(
+					daily,
+					id,
+					await db?.get(`${id}.uid`),
+					await db?.get(`${id}.cookie`)
+				);
 		}
 	}
-
+	
 	await db.set("autoDaily", daily);
 	await Promise.all(remove.map(id => db.delete(`autoDaily.${id}`)));
 	await Promise.all(

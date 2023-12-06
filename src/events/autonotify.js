@@ -25,21 +25,27 @@ export default async function notifyCheck() {
 	total = 0;
 
 	// Start
-	for (const id of autoNotify) {
-		const accounts = (await db?.has(`${id}.account`))
-			? await db?.get(`${id}.account`)
-			: [
-					{
-						uid: await db?.get(`${id}.uid`),
-						cookie: await db?.get(`${id}.cookie`)
-					}
-			  ];
-
-		await Promise.all(
-			accounts.map(async account => {
-				await notifySend(notify, id, account.uid, account.cookie);
-			})
-		);
+	for (const i of autoNotify) {
+		const id = i;
+		if (
+			(await db?.has(`${id}.account`)) &&
+			(await db?.get(`${id}.account`))[0].uid &&
+			(await db?.get(`${id}.account`))[0].cookie
+		) {
+			const accounts = await db?.get(`${id}.account`);
+			for (const account of accounts) {
+				const uid = account.uid;
+				const cookie = account.cookie;
+				await notifySend(notify, i, uid, cookie);
+			}
+		} else {
+			await notifySend(
+				notify,
+				i,
+				await db?.get(`${id}.uid`),
+				await db?.get(`${id}.cookie`)
+			);
+		}
 	}
 
 	await db.set("autoNotify", notify);
