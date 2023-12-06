@@ -39,7 +39,7 @@ export default {
 							name: `${emoji.avatarIcon} ${account.uid}`,
 							value: `${
 								account.cookie
-									? `🔗 \`已綁定\``
+									? `🔗 \`已綁定\`\n${account.cookie}`
 									: `❌ \`未綁定\``
 							}`,
 							inline: true
