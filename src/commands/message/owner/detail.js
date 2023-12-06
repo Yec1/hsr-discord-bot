@@ -35,16 +35,22 @@ export default {
 						`${notify ? notify?.stamina : "未開啟"}`
 					)
 					.addFields(
-						...data.account.map(account => ({
-							name: `${emoji.avatarIcon} ${account.uid}`,
-							value: `${
-								account.cookie
-									? `🔗 \`已綁定\`\n${account.cookie}`
-									: `❌ \`未綁定\``
-							}`,
+						...(data?.account?.map(account => ({
+						  name: `${emoji.avatarIcon} ${account.uid}`,
+						  value: `${
+							account.cookie
+							  ? `🔗 \`已綁定\`\n${account.cookie}`
+							  : "❌ `未綁定`"
+						  }`,
+						  inline: true
+						})) ?? [
+						  {
+							name: "❌ `沒有帳號`",
+							value: "\u200b",
 							inline: true
-						}))
-					)
+						  }
+						])
+					  )
 			]
 		});
 	}

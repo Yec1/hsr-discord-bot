@@ -6,12 +6,11 @@ import { i18nMixin } from "../services/i18n.js";
 import moment from "moment-timezone";
 import emoji from "../assets/emoji.js";
 import { staminaColor } from "../services/request.js";
+
 const webhook = new WebhookClient({ url: client.config.LOGWEBHOOK });
 const db = new QuickDB();
 
-let sus = 0;
-let fail = 0;
-let total = 0;
+let sus, fail, total, remove, removeInvaild;
 
 export default async function notifyCheck() {
 	const notify = await db.get("autoNotify");
@@ -19,35 +18,36 @@ export default async function notifyCheck() {
 
 	// Log
 	const start_time = Date.now();
+	remove = [];
+	removeInvaild = [];
 	sus = 0;
 	fail = 0;
 	total = 0;
 
 	// Start
-	for (const i of autoNotify) {
-		const id = i;
-		if (
-			(await db?.has(`${id}.account`)) &&
-			(await db?.get(`${id}.account`))[0].uid &&
-			(await db?.get(`${id}.account`))[0].cookie
-		) {
-			const accounts = await db?.get(`${id}.account`);
-			for (const account of accounts) {
-				const uid = account.uid;
-				const cookie = account.cookie;
-				await notifySend(notify, i, uid, cookie);
-			}
-		} else {
-			await notifySend(
-				notify,
-				i,
-				await db?.get(`${id}.uid`),
-				await db?.get(`${id}.cookie`)
-			);
-		}
+	for (const id of autoNotify) {
+		const accounts = (await db?.has(`${id}.account`))
+			? await db?.get(`${id}.account`)
+			: [
+					{
+						uid: await db?.get(`${id}.uid`),
+						cookie: await db?.get(`${id}.cookie`)
+					}
+			  ];
+
+		await Promise.all(
+			accounts.map(async account => {
+				await notifySend(notify, id, account.uid, account.cookie);
+			})
+		);
 	}
 
 	await db.set("autoNotify", notify);
+	await Promise.all(remove.map(id => db.delete(`autoNotify.${id}`)));
+	await Promise.all(
+		removeInvaild.map(id => db.delete(`autoNotify.${id}.invaild`))
+	);
+
 	UpdateStatistics(total, start_time, sus, fail);
 }
 
@@ -59,10 +59,11 @@ async function notifySend(notify, id, uid, cookie) {
 	const tr = i18nMixin(locale);
 
 	const channelId = notify[id].channelId;
-	const tag = notify[id].tag == "true" ? `<@${id}>` : "";
+	const tag = notify[id].tag === "true" ? `<@${id}>` : "";
 	const userdb = await db?.get(`autoNotify.${id}`);
 	const userMaxStamina = userdb?.stamina ? userdb.stamina : 170;
 	let channel;
+
 	try {
 		channel = await client.channels.fetch(channelId);
 	} catch (e) {}
@@ -71,7 +72,7 @@ async function notifySend(notify, id, uid, cookie) {
 		const hsr = new HonkaiStarRail({
 			cookie: cookie,
 			lang: (await db?.has(`${id}.locale`))
-				? (await db?.get(`${id}.locale`)) == "en"
+				? (await db?.get(`${id}.locale`)) === "en"
 					? LanguageEnum.ENGLISH
 					: LanguageEnum.TRADIIONAL_CHINESE
 				: LanguageEnum.TRADIIONAL_CHINESE,
@@ -87,7 +88,7 @@ async function notifySend(notify, id, uid, cookie) {
 		let isTitleAdded = false;
 		let expeditionNotify = false;
 
-		if (userdb.expedition == "true")
+		if (userdb.expedition === "true")
 			for (let expedition of res.expeditions) {
 				if (expedition.remaining_time === 0 && !isTitleAdded) {
 					title += `${tr("notify_expeditionMax")}`;
@@ -98,12 +99,11 @@ async function notifySend(notify, id, uid, cookie) {
 
 		if (
 			res.current_stamina >= userMaxStamina ||
-			(userdb.expedition == "true" && expeditionNotify == true)
+			(userdb.expedition === "true" && expeditionNotify === true)
 		) {
 			sus++;
 
-			if (notify[id]?.invaild)
-				await db.delete(`autoNotify.${id}.invaild`);
+			if (notify[id]?.invaild) removeInvaild.push(id);
 
 			channel
 				?.send({
@@ -182,7 +182,7 @@ async function notifySend(notify, id, uid, cookie) {
 										res.total_expedition_num
 									}`,
 									value:
-										res.expeditions.length != 0
+										res.expeditions.length !== 0
 											? res.expeditions
 													.map(expedition => {
 														return `• **${
@@ -214,7 +214,7 @@ async function notifySend(notify, id, uid, cookie) {
 		fail++;
 		notify[id]?.invaild ? notify[id].invaild++ : (notify[id].invaild = 1);
 
-		if (notify[id]?.invaild > 47) await db.delete(`autoNotify.${id}`);
+		if (notify[id]?.invaild > 47) remove.push(id);
 
 		const userdb = (await db?.has(`${id}.account`))
 			? (await db?.get(`${id}.account`))[0]

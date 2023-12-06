@@ -3,6 +3,7 @@ import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { EmbedBuilder, WebhookClient } from "discord.js";
 import { QuickDB } from "quick.db";
 import { i18nMixin } from "../services/i18n.js";
+
 const webhook = new WebhookClient({ url: client.config.LOGWEBHOOK });
 const db = new QuickDB();
 
@@ -10,10 +11,7 @@ function delay(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-let total = 0;
-let signed = 0;
-let fail = 0;
-let sus = 0;
+let sus, fail, signed, total, remove, removeInvaild;
 
 export default async function dailyCheck() {
 	const daily = await db.get("autoDaily");
@@ -26,6 +24,8 @@ export default async function dailyCheck() {
 		hour12: false
 	});
 	const start_time = Date.now();
+	remove = [];
+	removeInvaild = [];
 	total = 0;
 	signed = 0;
 	fail = 0;
@@ -35,26 +35,30 @@ export default async function dailyCheck() {
 	for (const id of autoDaily) {
 		const time = daily[id]?.time ? daily[id].time : "13";
 
-		if (parseInt(time) == nowTime) {
-			if (
-				(await db?.has(`${id}.account`)) &&
-				(await db?.get(`${id}.account`))[0].uid &&
-				(await db?.get(`${id}.account`))[0].cookie
-			) {
-				const accounts = await db?.get(`${id}.account`);
-				for (const account of accounts)
+		if (parseInt(time) === nowTime) {
+			const accounts = (await db?.has(`${id}.account`))
+				? await db?.get(`${id}.account`)
+				: [
+						{
+							uid: await db?.get(`${id}.uid`),
+							cookie: await db?.get(`${id}.cookie`)
+						}
+				  ];
+
+			await Promise.all(
+				accounts.map(async account => {
 					await dailySend(daily, id, account.uid, account.cookie);
-			} else
-				await dailySend(
-					daily,
-					id,
-					await db?.get(`${id}.uid`),
-					await db?.get(`${id}.cookie`)
-				);
+				})
+			);
 		}
 	}
 
 	await db.set("autoDaily", daily);
+	await Promise.all(remove.map(id => db.delete(`autoDaily.${id}`)));
+	await Promise.all(
+		removeInvaild.map(id => db.delete(`autoDaily.${id}.invaild`))
+	);
+
 	UpdateStatistics(total, start_time, sus, fail, signed, nowTime);
 }
 
@@ -65,8 +69,9 @@ async function dailySend(daily, id, uid, cookie) {
 		: "tw";
 	const tr = i18nMixin(locale);
 	const channelId = daily[id].channelId;
-	const tag = daily[id].tag == "true" ? `<@${id}>` : "";
+	const tag = daily[id].tag === "true" ? `<@${id}>` : "";
 	let channel;
+
 	try {
 		channel = await client.channels.fetch(channelId);
 	} catch (e) {}
@@ -75,7 +80,7 @@ async function dailySend(daily, id, uid, cookie) {
 		const hsr = new HonkaiStarRail({
 			cookie: cookie,
 			lang: (await db?.has(`${id}.locale`))
-				? (await db?.get(`${id}.locale`)) == "en"
+				? (await db?.get(`${id}.locale`)) === "en"
 					? LanguageEnum.ENGLISH
 					: LanguageEnum.TRADIIONAL_CHINESE
 				: LanguageEnum.TRADIIONAL_CHINESE
@@ -84,28 +89,29 @@ async function dailySend(daily, id, uid, cookie) {
 		const info = await hsr.daily.info();
 		const reward = await hsr.daily.reward();
 		const rewards = await hsr.daily.rewards();
+
 		const todaySign =
 			rewards.awards[
-				info.month_last_day != true
+				info.month_last_day !== true || info.total_sign_day == 0
 					? info.total_sign_day
 					: info.total_sign_day - 1
 			];
 		const tmrSign =
 			rewards.awards[
-				info.month_last_day != true
+				info.month_last_day !== true || info.total_sign_day == 0
 					? info.total_sign_day + 1
 					: info.total_sign_day
 			];
 		const res = await hsr.daily.claim();
 
-		if (res.code == -5003 || res.info.is_sign == true) {
+		if (res.code === -5003 || res.info.is_sign === true) {
 			signed++;
 		} else {
 			sus++;
 
-			if (daily[id]?.invaild) await db.delete(`autoDaily.${id}.invaild`);
+			if (daily[id]?.invaild) removeInvaild.push(id);
 
-			channel
+			await channel
 				?.send({
 					content: tag,
 					embeds: [
@@ -116,7 +122,7 @@ async function dailySend(daily, id, uid, cookie) {
 								`<@${id}> ${tr("daily_desc", {
 									a: `\`${todaySign?.name}x${todaySign?.cnt}\``
 								})}${
-									info.month_last_day != true
+									info.month_last_day !== true
 										? `\n\n${tr("daily_desc2", {
 												b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
 										  })}`
@@ -134,7 +140,7 @@ async function dailySend(daily, id, uid, cookie) {
 								{
 									name: tr("daily_signedDay", {
 										z:
-											info.month_last_day != true
+											info.month_last_day !== true
 												? info.total_sign_day + 1
 												: info.total_sign_day
 									}),
@@ -157,9 +163,9 @@ async function dailySend(daily, id, uid, cookie) {
 		fail++;
 		daily[id]?.invaild ? daily[id].invaild++ : (daily[id].invaild = 1);
 
-		if (daily[id]?.invaild > 6) await db.delete(`autoDaily.${id}`);
+		if (daily[id]?.invaild > 47) remove.push(id);
 
-		channel
+		await channel
 			?.send({
 				content: tag,
 				embeds: [
