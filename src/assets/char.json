@@ -1,5 +1,35 @@
 [
   {
+    "name": "Topaz and Numby",
+    "path": "The Hunt",
+    "element": "Fire",
+    "rarity": 5
+  },
+  {
+    "name": "Guinaifen",
+    "path": "The Hunt",
+    "element": "Fire",
+    "rarity": 4
+  },
+  {
+    "name": "Dr. Ratio",
+    "path": "The Hunt",
+    "element": "Imaginary",
+    "rarity": 5
+  },
+  {
+    "name": "Ruan Mei",
+    "path": "Harmony",
+    "element": "Ice",
+    "rarity": 5
+  },
+  {
+    "name": "Xueyi",
+    "path": "Destruction",
+    "element": "Quantum",
+    "rarity": 4
+  },
+  {
     "name": "Huohuo",
     "path": "Abundance",
     "element": "Wind",
@@ -16,18 +46,6 @@
     "path": "Erudition",
     "element": "Physical",
     "rarity": 5
-  },
-  {
-    "name": "Topaz & Numby",
-    "path": "The Hunt",
-    "element": "Fire",
-    "rarity": 5
-  },
-  {
-    "name": "Guinaifen",
-    "path": "The Hunt",
-    "element": "Fire",
-    "rarity": 4
   },
   {
     "name": "Fu Xuan",
