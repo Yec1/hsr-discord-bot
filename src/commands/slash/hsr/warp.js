@@ -132,6 +132,20 @@ export default {
 									"zh-TW": "1.5.1 - 銀枝"
 								},
 								value: "1.5.1"
+							},
+							{
+								name: "1.6.0 - Ruan Mei",
+								name_localizations: {
+									"zh-TW": "1.6.0 - 阮梅"
+								},
+								value: "1.6.0"
+							},
+							{
+								name: "1.6.1 - Dr. Ratio",
+								name_localizations: {
+									"zh-TW": "1.6.1 - 真理醫生"
+								},
+								value: "1.6.1"
 							}
 						)
 				)
