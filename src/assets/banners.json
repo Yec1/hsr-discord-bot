@@ -2129,7 +2129,7 @@
       "pt": "Ruin Me"
     },
     "rateUpFive": ["ruan-mei"],
-    "rateUpFour": [],
+    "rateUpFour": ["sushang","qingque","sampo"],
     "poolFiveChar": [
       "himeko",
       "gepard",
@@ -2145,9 +2145,6 @@
       "asta",
       "guinaifen",
       "luka",
-      "sushang",
-      "qingque",
-      "sampo",
       "tingyun",
       "hook",
       "pela",
@@ -2273,7 +2270,7 @@
       "pt": ""
     },
     "rateUpFive": ["dr-ratio"],
-    "rateUpFour": [],
+    "rateUpFour": ["natasha","dan-heng","herta"],
     "poolFiveChar": [
       "himeko",
       "gepard",
@@ -2298,10 +2295,7 @@
       "yukong",
       "march-7th",
       "serval",
-      "arlan",
-      "natasha",
-      "dan-heng",
-      "herta"
+      "arlan"
     ],
     "poolFourWeap": [
       "perfect-timing",
