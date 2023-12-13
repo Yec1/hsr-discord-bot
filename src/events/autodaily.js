@@ -53,7 +53,7 @@ export default async function dailyCheck() {
 				);
 		}
 	}
-	
+
 	await db.set("autoDaily", daily);
 	await Promise.all(remove.map(id => db.delete(`autoDaily.${id}`)));
 	await Promise.all(
@@ -164,7 +164,7 @@ async function dailySend(daily, id, uid, cookie) {
 		fail++;
 		daily[id]?.invaild ? daily[id].invaild++ : (daily[id].invaild = 1);
 
-		if (daily[id]?.invaild > 47) remove.push(id);
+		if (daily[id]?.invaild > 6) remove.push(id);
 
 		await channel
 			?.send({
