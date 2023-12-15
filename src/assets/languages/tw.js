@@ -38,7 +38,7 @@ const langs = {
 	cookie_paste: "複製的 Cookie 放這",
 	cookie_sus: "Cookie 已綁定至 <z>！",
 	cookie_desc:
-		"使用 **Chrome** 開啟 [Hoyolab](https://www.hoyolab.com/)，若已登入請登出帳號\n** **\n然後在 **養成計算機** 登入帳號，登入後在網址位置輸入下方給予的程式碼然後把java旁邊的+刪掉\n** **\n複製顯示的 Cookie 後再次使用 </account:1160207139151818852>",
+		"1. 使用 **Chrome** 開啟 [Hoyolab](https://www.hoyolab.com/)\n2. 在登入帳號後按下 **F12** 或者 **Ctrl + Shift + I** 打開開發者工具\n3. 切換至 **Application** 選擇左邊的 **Cookie**\n4. 複製 **ltuid_v2** 和 **ltoken_v2** 的值到欄位中",
 	uid_non: "尚未設置 UID，設置後即可快速搜尋自己",
 	uid_UserNonSet: "此使用者尚未設置 UID",
 	uid_failedDesc: "設置 UID </account:1160207139151818852>",

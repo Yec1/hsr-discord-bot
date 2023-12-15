@@ -41,7 +41,7 @@ const langs = {
 	cookie_paste: "Paste the copied Cookie here",
 	cookie_sus: "Cookie linked to <z>!",
 	cookie_desc:
-		"Please open [Hoyolab](https://www.hoyolab.com/) using Chrome. If you are already logged in, please log out of your account.\n** **\nNext, log in to your account in the **Leveling Calculator** section. After logging in, paste the provided code into the URL bar and remove the + next to java.\n** **\nCopy the displayed cookie and use it again with the following format: </account:1160207139151818852>.",
+		"1. Use **Chrome** to open [Hoyolab](https://www.hoyolab.com/)\n2. After logging in to your account, press **F12** or **Ctrl + Shift + I** to open Developer Tools\n3. Switch to **Application** and select **Cookie** on the left\n4. Copy the values ​​​​of **ltuid_v2** and **ltoken_v2** into the fields",
 	uid_non: "UID not set yet, set it to quickly search for yourself.",
 	uid_UserNonSet: "This user has not set UID",
 	uid_failedDesc: "Set UID </account:1160207139151818852>",

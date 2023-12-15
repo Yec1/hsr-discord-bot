@@ -111,15 +111,10 @@ export default {
 						.setConfig()
 						.setTitle(tr("cookie_how"))
 						.setImage(
-							"https://cdn.discordapp.com/attachments/1149960935654559835/1165963812369866752/Cookie_2.gif"
+							"https://media.discordapp.net/attachments/1149960935654559835/1185194443322687528/cookieT.png"
 						)
 						.setDescription(tr("cookie_desc"))
 				],
-				ephemeral: true
-			});
-
-			await interaction.followUp({
-				content: "java+script: document.write(document.cookie)",
 				ephemeral: true
 			});
 		} else if (cmd == "setCookie") {

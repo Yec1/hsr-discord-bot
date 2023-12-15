@@ -30,7 +30,7 @@
 		"discord.js": "^14.14.1",
 		"dotenv": "^16.3.1",
 		"express": "^4.18.2",
-		"hoyoapi": "^1.2.0",
+		"hoyoapi": "yeci226/hoyoapi",
 		"moment-timezone": "^0.5.43",
 		"ms": "^2.1.3",
 		"node-fetch-commonjs": "^3.3.2",

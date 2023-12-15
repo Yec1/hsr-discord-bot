@@ -75,13 +75,23 @@ client.on(Events.InteractionCreate, async interaction => {
 						.addComponents(
 							new ActionRowBuilder().addComponents(
 								new TextInputBuilder()
-									.setCustomId("cookie")
-									.setLabel(tr("cookie_paste"))
-									.setPlaceholder("Cookie")
-									.setStyle(TextInputStyle.Paragraph)
+									.setCustomId("ltoken")
+									.setLabel("ltoken_v2")
+									.setPlaceholder("把你的 ltoken_v2 放這")
+									.setStyle(TextInputStyle.Short)
 									.setRequired(true)
-									.setMinLength(50)
-									.setMaxLength(2000)
+									.setMinLength(10)
+									.setMaxLength(1000)
+							),
+							new ActionRowBuilder().addComponents(
+								new TextInputBuilder()
+									.setCustomId("ltuid")
+									.setLabel("ltuid_v2")
+									.setPlaceholder("把你的 ltuid_v2 放這")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(true)
+									.setMinLength(1)
+									.setMaxLength(30)
 							)
 						)
 				);
@@ -141,13 +151,23 @@ client.on(Events.InteractionCreate, async interaction => {
 					.addComponents(
 						new ActionRowBuilder().addComponents(
 							new TextInputBuilder()
-								.setCustomId("cookie")
-								.setLabel(tr("cookie_paste"))
-								.setPlaceholder("Cookie")
-								.setStyle(TextInputStyle.Paragraph)
+								.setCustomId("ltoken")
+								.setLabel("ltoken_v2")
+								.setPlaceholder("把你的 ltoken_v2 放這")
+								.setStyle(TextInputStyle.Short)
 								.setRequired(true)
-								.setMinLength(50)
-								.setMaxLength(2000)
+								.setMinLength(10)
+								.setMaxLength(1000)
+						),
+						new ActionRowBuilder().addComponents(
+							new TextInputBuilder()
+								.setCustomId("ltuid")
+								.setLabel("ltuid_v2")
+								.setPlaceholder("把你的 ltuid_v2 放這")
+								.setStyle(TextInputStyle.Short)
+								.setRequired(true)
+								.setMinLength(1)
+								.setMaxLength(30)
 						)
 					)
 			);
@@ -157,7 +177,9 @@ client.on(Events.InteractionCreate, async interaction => {
 	if (interaction.isModalSubmit()) {
 		if (interaction.customId.startsWith("cookie_set")) {
 			const i = interaction.customId.split("-")[1];
-			const cookie = interaction.fields.getTextInputValue("cookie");
+			const ltoken = interaction.fields.getTextInputValue("ltoken");
+			const ltuid = interaction.fields.getTextInputValue("ltuid");
+			const cookie = `ltoken_v2=${ltoken}; ltuid_v2=${ltuid}`;
 
 			const trimed_cookie = await trimCookie(cookie);
 
