@@ -42,8 +42,10 @@ const langs = {
 	cookie_sus: "Cookie linked to <z>!",
 	cookie_ltoken: "Put your ltoken_v2 here",
 	cookie_ltuid: "Put your ltuid_v2 here",
+	cookie_new:
+		"We have updated the original Cookie to v2! If you see this paragraph, please use </account:1160207139151818852> to reset the Cookie",
 	cookie_desc:
-		"1. Use **Chrome** to open [Hoyolab](https://www.hoyolab.com/)\n2. After logging in to your account, press **F12** or **Ctrl + Shift + I** to open Developer Tools\n3. Switch to **Application** and select **Cookie** on the left\n4. Copy the values ​​​​of **ltuid_v2** and **ltoken_v2** into the fields",
+		"1. Use **Chrome** to open [Hoyolab](https://www.hoyolab.com/)\n2. After logging in to your account, press **F12** or **Ctrl + Shift + I** to open Developer Tools\n3. Switch to **Application** and select **Cookie** on the left\n4. Copy the values ​​​​of **ltuid_v2** and **ltoken_v2** into the fields, If you can’t get it, please use `traceless`",
 	uid_non: "UID not set yet, set it to quickly search for yourself.",
 	uid_UserNonSet: "This user has not set UID",
 	uid_failedDesc: "Set UID </account:1160207139151818852>",

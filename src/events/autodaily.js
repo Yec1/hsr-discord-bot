@@ -182,11 +182,7 @@ async function dailySend(daily, id, uid, cookie) {
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 						.setTitle(`${tr("auto")}${tr("daily_failed")} - ${uid}`)
-						.setDescription(
-							`<@${id}> ${tr("cookie_failedDesc")}\n\n${tr(
-								"err_code"
-							)}${e}`
-						)
+						.setDescription(`<@${id}> ${tr("cookie_new")}`)
 				]
 			})
 			.catch(() => {});
