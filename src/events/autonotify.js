@@ -235,6 +235,7 @@ async function notifySend(notify, id, uid, cookie) {
 
 		channel
 			?.send({
+				content: tag,
 				embeds: [
 					new EmbedBuilder()
 						.setConfig(

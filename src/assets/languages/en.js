@@ -40,6 +40,8 @@ const langs = {
 	cookie_set: "Set Cookie",
 	cookie_paste: "Paste the copied Cookie here",
 	cookie_sus: "Cookie linked to <z>!",
+	cookie_ltoken: "Put your ltoken_v2 here",
+	cookie_ltuid: "Put your ltuid_v2 here",
 	cookie_desc:
 		"1. Use **Chrome** to open [Hoyolab](https://www.hoyolab.com/)\n2. After logging in to your account, press **F12** or **Ctrl + Shift + I** to open Developer Tools\n3. Switch to **Application** and select **Cookie** on the left\n4. Copy the values ​​​​of **ltuid_v2** and **ltoken_v2** into the fields",
 	uid_non: "UID not set yet, set it to quickly search for yourself.",
