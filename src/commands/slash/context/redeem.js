@@ -58,8 +58,7 @@ export default {
 							)
 							.join("\n")}`
 					)
-			],
-			ephemeral: true
+			]
 		});
 	}
 };
