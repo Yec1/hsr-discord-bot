@@ -1697,10 +1697,10 @@
         "weight": {
             "HPDelta": 1,
             "AttackDelta": 0,
-            "DefenceDelta": 0,
+            "DefenceDelta": 0.3,
             "HPAddedRatio": 1,
             "AttackAddedRatio": 0,
-            "DefenceAddedRatio": 0,
+            "DefenceAddedRatio": 0.5,
             "SpeedDelta": 1,
             "CriticalChanceBase": 0,
             "CriticalDamageBase": 0,
