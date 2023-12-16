@@ -36,7 +36,7 @@ const langs = {
 	leaderboard_score: "**<z>** points",
 	cookie_failed: "Please ensure that the correct Cookie is set",
 	cookie_failedDesc: "Set Cookie </account:1160207139151818852>",
-	cookie_how: "How to get Cookie?",
+	cookie_how: "🔥 How to get Cookie?",
 	cookie_set: "Set Cookie",
 	cookie_paste: "Paste the copied Cookie here",
 	cookie_sus: "Cookie linked to <z>!",
@@ -45,7 +45,7 @@ const langs = {
 	cookie_new:
 		"We have updated the original Cookie to v2! If you see this paragraph, please use </account:1160207139151818852> to reset the Cookie",
 	cookie_desc:
-		"1. Use **Chrome** to open [Hoyolab](https://www.hoyolab.com/)\n2. After logging in to your account, press **F12** or **Ctrl + Shift + I** to open Developer Tools\n3. Switch to **Application** and select **Cookie** on the left\n4. Copy the values ​​​​of **ltuid_v2** and **ltoken_v2** into the fields, If you can’t get it, please use `traceless`",
+		"Please use **Chrome** to open [Hoyolab](https://www.hoyolab.com/)\nThen you can try the following two methods!\n** **\n**▫️ The first one **\n1. Log in to the `Cultivate Computer` account, then enter the code given below in the URL location and delete the + next to java\n2. Copy all the cookies and fill them in the first field\n * * **\n**▫️ The second type**\n1. After logging in to the account, press `F12` or `Ctrl + Shift + I` to open the developer tools\n2. Switch to `Application` and select the ` on the left Cookie `\n3. Copy `ltoken_v2` and `ltuid_v2` and fill them in the second and third fields respectively. If you cannot get them, please use `traceless`",
 	uid_non: "UID not set yet, set it to quickly search for yourself.",
 	uid_UserNonSet: "This user has not set UID",
 	uid_failedDesc: "Set UID </account:1160207139151818852>",

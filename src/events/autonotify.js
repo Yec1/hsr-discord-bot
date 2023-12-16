@@ -136,7 +136,7 @@ async function notifySend(notify, id, uid, cookie) {
 											: `<t:${
 													moment(new Date()).unix() +
 													res.stamina_recover_time
-											  }:R>`
+												}:R>`
 									}`,
 									value: "\u200b",
 									inline: false
@@ -198,13 +198,13 @@ async function notifySend(notify, id, uid, cookie) {
 															0
 																? `\`${tr(
 																		"notify_claim"
-																  )}\``
+																	)}\``
 																: `<t:${
 																		moment(
 																			new Date()
 																		).unix() +
 																		expedition.remaining_time
-																  }:R>`
+																	}:R>`
 														}`;
 													})
 													.join("\n")
@@ -249,7 +249,11 @@ async function notifySend(notify, id, uid, cookie) {
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 						.setTitle(`${tr("autoNote_title")} - ${uid}`)
-						.setDescription(`<@${id}> ${tr("cookie_new")}`)
+						.setDescription(
+							`<@${id}> ${tr("notify_failed")}\n\n${desc}\n${tr(
+								"err_code"
+							)}**${e.message}**`
+						)
 				]
 			})
 			.catch(() => {});

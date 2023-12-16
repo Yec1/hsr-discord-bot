@@ -75,11 +75,21 @@ client.on(Events.InteractionCreate, async interaction => {
 						.addComponents(
 							new ActionRowBuilder().addComponents(
 								new TextInputBuilder()
+									.setCustomId("cookie")
+									.setLabel(tr("cookie_paste"))
+									.setPlaceholder("Cookie")
+									.setStyle(TextInputStyle.Paragraph)
+									.setRequired(false)
+									.setMinLength(50)
+									.setMaxLength(2000)
+							),
+							new ActionRowBuilder().addComponents(
+								new TextInputBuilder()
 									.setCustomId("ltoken")
 									.setLabel("ltoken_v2")
 									.setPlaceholder(tr("cookie_ltoken"))
 									.setStyle(TextInputStyle.Short)
-									.setRequired(true)
+									.setRequired(false)
 									.setMinLength(10)
 									.setMaxLength(1000)
 							),
@@ -89,7 +99,7 @@ client.on(Events.InteractionCreate, async interaction => {
 									.setLabel("ltuid_v2")
 									.setPlaceholder(tr("cookie_ltuid"))
 									.setStyle(TextInputStyle.Short)
-									.setRequired(true)
+									.setRequired(false)
 									.setMinLength(1)
 									.setMaxLength(30)
 							)
@@ -151,11 +161,21 @@ client.on(Events.InteractionCreate, async interaction => {
 					.addComponents(
 						new ActionRowBuilder().addComponents(
 							new TextInputBuilder()
+								.setCustomId("cookie")
+								.setLabel(tr("cookie_paste"))
+								.setPlaceholder("Cookie")
+								.setStyle(TextInputStyle.Paragraph)
+								.setRequired(false)
+								.setMinLength(50)
+								.setMaxLength(2000)
+						),
+						new ActionRowBuilder().addComponents(
+							new TextInputBuilder()
 								.setCustomId("ltoken")
 								.setLabel("ltoken_v2")
 								.setPlaceholder(tr("cookie_ltoken"))
 								.setStyle(TextInputStyle.Short)
-								.setRequired(true)
+								.setRequired(false)
 								.setMinLength(10)
 								.setMaxLength(1000)
 						),
@@ -165,7 +185,7 @@ client.on(Events.InteractionCreate, async interaction => {
 								.setLabel("ltuid_v2")
 								.setPlaceholder(tr("cookie_ltuid"))
 								.setStyle(TextInputStyle.Short)
-								.setRequired(true)
+								.setRequired(false)
 								.setMinLength(1)
 								.setMaxLength(30)
 						)
@@ -179,7 +199,9 @@ client.on(Events.InteractionCreate, async interaction => {
 			const i = interaction.customId.split("-")[1];
 			const ltoken = interaction.fields.getTextInputValue("ltoken");
 			const ltuid = interaction.fields.getTextInputValue("ltuid");
-			const cookie = `ltoken_v2=${ltoken}; ltuid_v2=${ltuid}`;
+			const cookie =
+				interaction.fields.getTextInputValue("cookie") ||
+				`ltoken_v2=${ltoken}; ltuid_v2=${ltuid}`;
 
 			const trimed_cookie = await trimCookie(cookie);
 
@@ -201,12 +223,12 @@ client.on(Events.InteractionCreate, async interaction => {
 					cookie: cookie,
 					lang: (await db?.has(`${interaction.user.id}.locale`))
 						? (await db?.get(`${interaction.user.id}.locale`)) ==
-						  "tw"
+							"tw"
 							? LanguageEnum.TRADIIONAL_CHINESE
 							: LanguageEnum.ENGLISH
 						: interaction.locale == "zh-TW"
-						  ? LanguageEnum.TRADIIONAL_CHINESE
-						  : LanguageEnum.ENGLISH
+							? LanguageEnum.TRADIIONAL_CHINESE
+							: LanguageEnum.ENGLISH
 				});
 
 				await hsr.daily.info();

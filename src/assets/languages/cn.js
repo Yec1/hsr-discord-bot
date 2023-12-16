@@ -33,7 +33,7 @@ const langs = {
 	leaderboard_score: "**<z>** 分",
 	cookie_failed: "请确定已设置正确的 Cookie",
 	cookie_failedDesc: "设置 Cookie </account:1160207139151818852>",
-	cookie_how: "如何取得 Cookie ?",
+	cookie_how: "🔥 如何取得 Cookie ?",
 	cookie_set: "设置 Cookie",
 	cookie_paste: "复制的 Cookie 放这",
 	cookie_sus: "Cookie 已绑定至 <z>！",
@@ -42,7 +42,7 @@ const langs = {
 	cookie_new:
 		"我们将原先的 Cookie 更新至 v2 了！，如果您看到这段话，请使用 </account:1160207139151818852> 重新设置 Cookie",
 	cookie_desc:
-		"1. 使用**Chrome** 开启[Hoyolab](https://www.hoyolab.com/)\n2. 在登入帐号后按下**F12** 或者**Ctrl + Shift + I** 打开开发者工具\n3. 切换至**Application** 选择左边的**Cookie**\n4. 复制**ltuid_v2** 和**ltoken_v2** 的值到栏位中，若拿不到請使用 `無痕`",
+		"请先使用**Chrome** 开启[Hoyolab](https://www.hoyolab.com/)\n然后您可以尝试以下两种方法！\n** **\n**▫️ 第一种**\n1. 在`养成计算机` 登入帐号，之后在网址位置输入下方给予的程式码然后把java旁边的+删掉\n2. 复制全部的Cookie 后填到第一格栏位中\n* * **\n**▫️ 第二种**\n1. 在登入帐号后按下`F12` 或者`Ctrl + Shift + I` 打开开发者工具\n2. 切换至`Application` 选择左边的`Cookie `\n3. 复制`ltoken_v2` 和`ltuid_v2` 的分别填到第二和第三格栏位中，若拿不到请使用`无痕`",
 	uid_non: "尚未设置 UID，设置后即可快速搜寻自己",
 	uid_UserNonSet: "此使用者尚未设置 UID",
 	uid_failedDesc: "设置 UID </account:1160207139151818852>",

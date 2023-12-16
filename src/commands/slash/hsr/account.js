@@ -117,6 +117,11 @@ export default {
 				],
 				ephemeral: true
 			});
+
+			await interaction.followUp({
+				content: "java+script: document.write(document.cookie)",
+				ephemeral: true
+			});
 		} else if (cmd == "setCookie") {
 			if (!(await db.has(`${interaction.user.id}.account`)))
 				return await interaction.reply({

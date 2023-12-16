@@ -126,7 +126,7 @@ async function dailySend(daily, id, uid, cookie) {
 									info.month_last_day !== true
 										? `\n\n${tr("daily_desc2", {
 												b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-										  })}`
+											})}`
 										: ""
 								}`
 							)
@@ -182,7 +182,11 @@ async function dailySend(daily, id, uid, cookie) {
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 						.setTitle(`${tr("auto")}${tr("daily_failed")} - ${uid}`)
-						.setDescription(`<@${id}> ${tr("cookie_new")}`)
+						.setDescription(
+							`<@${id}> ${tr("cookie_failedDesc")}\n\n${tr(
+								"err_code"
+							)}**${e.message}**`
+						)
 				]
 			})
 			.catch(() => {});
