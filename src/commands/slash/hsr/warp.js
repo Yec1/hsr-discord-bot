@@ -215,6 +215,47 @@ export default {
 		)
 		.addSubcommand(subcommand =>
 			subcommand
+				.setName("simulator-setting")
+				.setDescription("Set settings for simulated transitions")
+				.setNameLocalizations({
+					"zh-TW": "模擬設定"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "設定模擬躍遷的設定"
+				})
+				.addStringOption(option =>
+					option
+						.setName("guarantee-setting")
+						.setDescription(
+							"Set next five-star is a small guarantee or a big guarantee"
+						)
+						.setNameLocalizations({
+							"zh-TW": "保底設定"
+						})
+						.setDescriptionLocalizations({
+							"zh-TW": "設定下一個五星是小保底還是大保底"
+						})
+						.setRequired(false)
+						.addChoices(
+							{
+								name: "Small Guarantee",
+								name_localizations: {
+									"zh-TW": "小保底"
+								},
+								value: "false"
+							},
+							{
+								name: "Big Guarantee",
+								name_localizations: {
+									"zh-TW": "大保底"
+								},
+								value: "true"
+							}
+						)
+				)
+		)
+		.addSubcommand(subcommand =>
+			subcommand
 				.setName("log")
 				.setDescription(
 					"Currently only supports the PC side, if you find other ways you can use it"
@@ -264,6 +305,120 @@ export default {
 	async execute(client, interaction, args, tr, db, emoji) {
 		const cmd = interaction.options.getSubcommand();
 
+		if (cmd == "simulator-setting") {
+			const guarantee =
+				interaction.options.getString("guarantee-setting");
+			let simdb = await db.get(`${interaction.user.id}.sim`);
+
+			if (!guarantee) {
+				return await interaction.showModal(
+					new ModalBuilder()
+						.setCustomId("simulator-set")
+						.setTitle(tr("warp_simSetTitle"))
+						.addComponents(
+							new ActionRowBuilder().addComponents(
+								new TextInputBuilder()
+									.setCustomId("simset_pityFive")
+									.setLabel(tr("current"))
+									.setValue(`${simdb?.pityFive}` || "0")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(false)
+									.setMinLength(1)
+									.setMaxLength(3)
+							),
+							new ActionRowBuilder().addComponents(
+								new TextInputBuilder()
+									.setCustomId("simset_soft")
+									.setLabel(tr("soft"))
+									.setValue(`${simdb?.soft}` || "75")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(false)
+									.setMinLength(1)
+									.setMaxLength(3)
+							),
+							new ActionRowBuilder().addComponents(
+								new TextInputBuilder()
+									.setCustomId("simset_max")
+									.setLabel(tr("max"))
+									.setValue(`${simdb?.max}` || "90")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(false)
+									.setMinLength(1)
+									.setMaxLength(3)
+							),
+							new ActionRowBuilder().addComponents(
+								new TextInputBuilder()
+									.setCustomId("simset_chance")
+									.setLabel(tr("chance"))
+									.setValue(`${simdb?.chance}` || "0.006")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(false)
+									.setMinLength(1)
+									.setMaxLength(5)
+							),
+							new ActionRowBuilder().addComponents(
+								new TextInputBuilder()
+									.setCustomId("simset_rateup")
+									.setLabel(tr("rateup"))
+									.setValue(`${simdb?.rateup}` || "0.5")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(false)
+									.setMinLength(1)
+									.setMaxLength(5)
+							)
+						)
+				);
+			}
+
+			await db.set(`${interaction.user.id}.sim.guaranteeFive`, guarantee);
+			simdb = await db.get(`${interaction.user.id}.sim`);
+
+			await interaction.reply({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
+						.setTitle(tr("warp_simSetSus"))
+						.setThumbnail(interaction.user.displayAvatarURL())
+						.addFields(
+							{
+								name: tr("current"),
+								value: `${simdb?.pityFive}` || "0",
+								inline: true
+							},
+							{
+								name: tr("soft"),
+								value: `${simdb?.soft}` || "75",
+								inline: true
+							},
+							{
+								name: tr("max"),
+								value: `${simdb?.max}` || "90",
+								inline: true
+							},
+							{
+								name: tr("chance"),
+								value: `${simdb?.chance * 100}%` || "0.6%",
+								inline: true
+							},
+							{
+								name: tr("rateup"),
+								value: `${simdb?.rateup * 100}%` || "50%",
+								inline: true
+							},
+							{
+								name: tr("guarantee"),
+								value:
+									simdb?.guaranteeFive == "true"
+										? tr("true")
+										: tr("false"),
+								inline: true
+							}
+						)
+				],
+				ephemeral: true
+			});
+		}
+
 		if (cmd == "simulator") {
 			const userCD = await warpSimCD.getUser(interaction.user.id);
 			if (userCD)
@@ -286,14 +441,19 @@ export default {
 			let video = "";
 			time = time == "one" ? 1 : 10;
 
-			if (!(await db.has(`${interaction.user.id}.simulator.${type}`)))
-				await db.set(`${interaction.user.id}.simulator.${type}`, {
-					total: 0,
+			if (await db.has(`${interaction.user.id}.simulator`))
+				await db.delete(`${interaction.user.id}.simulator`);
+
+			if (!(await db.has(`${interaction.user.id}.sim.${type}`)))
+				await db.set(`${interaction.user.id}.sim`, {
+					soft: 75,
+					max: 90,
+					chance: 0.006,
+					rateup: 0.5,
 					pityFive: 0,
 					pityFour: 0,
-					guaranteeFive: false,
-					guaranteeFour: false,
-					OwnFive: 0
+					guaranteeFive: "false",
+					guaranteeFour: "false"
 				});
 
 			const prevTotal =
@@ -390,47 +550,45 @@ export default {
 			//   })
 			//   .join("\n");
 
-			const data = await db.get(
-				`${interaction.user.id}.simulator.${type}`
-			);
-			const average = data.OwnFive
-				? parseFloat((data.total / data.OwnFive).toFixed(2))
-				: 0;
-			const sentenceMap = {
-				0: {
-					reply: tr("warp_0"),
-					btnType: ButtonStyle.Success
-				},
-				30: {
-					reply: tr("warp_30"),
-					btnType: ButtonStyle.Success
-				},
-				50: {
-					reply: tr("warp_50"),
-					btnType: ButtonStyle.Primary
-				},
-				60: {
-					reply: tr("warp_60"),
-					btnType: ButtonStyle.Secondary
-				},
-				80: {
-					reply: tr("warp_80"),
-					btnType: ButtonStyle.Danger
-				}
-			};
+			const data = await db.get(`${interaction.user.id}.sim`);
+			// const average = data.OwnFive
+			// 	? parseFloat((data.total / data.OwnFive).toFixed(2))
+			// 	: 0;
+			// const sentenceMap = {
+			// 	0: {
+			// 		reply: tr("warp_0"),
+			// 		btnType: ButtonStyle.Success
+			// 	},
+			// 	30: {
+			// 		reply: tr("warp_30"),
+			// 		btnType: ButtonStyle.Success
+			// 	},
+			// 	50: {
+			// 		reply: tr("warp_50"),
+			// 		btnType: ButtonStyle.Primary
+			// 	},
+			// 	60: {
+			// 		reply: tr("warp_60"),
+			// 		btnType: ButtonStyle.Secondary
+			// 	},
+			// 	80: {
+			// 		reply: tr("warp_80"),
+			// 		btnType: ButtonStyle.Danger
+			// 	}
+			// };
 
-			let sentence = "\u200b";
-			let btnType = ButtonStyle.Secondary;
-			const keys = Object.keys(sentenceMap)
-				.map(Number)
-				.sort((a, b) => b - a);
-			for (const key of keys) {
-				if (average > key) {
-					sentence = sentenceMap[key].reply;
-					btnType = sentenceMap[key].btnType;
-					break;
-				}
-			}
+			// let sentence = "\u200b";
+			// let btnType = ButtonStyle.Secondary;
+			// const keys = Object.keys(sentenceMap)
+			// 	.map(Number)
+			// 	.sort((a, b) => b - a);
+			// for (const key of keys) {
+			// 	if (average > key) {
+			// 		sentence = sentenceMap[key].reply;
+			// 		btnType = sentenceMap[key].btnType;
+			// 		break;
+			// 	}
+			// }
 
 			const filter = i =>
 				i.customId === "warp_skip" && i.user.id === interaction.user.id;
@@ -538,16 +696,16 @@ export default {
 								.setCustomId("sim_version")
 								.setLabel(`${version}`)
 								.setStyle(ButtonStyle.Success),
-							new ButtonBuilder()
-								.setDisabled(true)
-								.setCustomId("sim_total")
-								.setEmoji(emoji.s900001)
-								.setLabel(
-									`${data.total * 160} • ${tr("total")} ${
-										data.total
-									} ${tr("warp")}`
-								)
-								.setStyle(ButtonStyle.Secondary),
+							// new ButtonBuilder()
+							// 	.setDisabled(true)
+							// 	.setCustomId("sim_total")
+							// 	.setEmoji(emoji.s900001)
+							// 	.setLabel(
+							// 		`${data.total * 160} • ${tr("total")} ${
+							// 			data.total
+							// 		} ${tr("warp")}`
+							// 	)
+							// 	.setStyle(ButtonStyle.Secondary),
 							new ButtonBuilder()
 								.setDisabled(true)
 								.setCustomId("sim_pityFive")
@@ -556,23 +714,23 @@ export default {
 										z: data.pityFive
 									})
 								)
-								.setStyle(ButtonStyle.Secondary),
-							new ButtonBuilder()
-								.setDisabled(true)
-								.setCustomId("sim_average")
-								.setLabel(
-									average == 0
-										? tr("warp_nonAverage")
-										: tr("warp_average", {
-												z: average
-										  })
-								)
-								.setStyle(ButtonStyle.Secondary),
-							new ButtonBuilder()
-								.setDisabled(true)
-								.setCustomId("sim_sentence")
-								.setLabel(sentence)
-								.setStyle(btnType)
+								.setStyle(ButtonStyle.Secondary)
+							// 	new ButtonBuilder()
+							// 		.setDisabled(true)
+							// 		.setCustomId("sim_average")
+							// 		.setLabel(
+							// 			average == 0
+							// 				? tr("warp_nonAverage")
+							// 				: tr("warp_average", {
+							// 						z: average
+							// 				  })
+							// 		)
+							// 		.setStyle(ButtonStyle.Secondary),
+							// 	new ButtonBuilder()
+							// 		.setDisabled(true)
+							// 		.setCustomId("sim_sentence")
+							// 		.setLabel(sentence)
+							// 		.setStyle(btnType)
 						)
 					],
 					files: [image]

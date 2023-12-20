@@ -23,6 +23,125 @@ client.on(Events.InteractionCreate, async interaction => {
 				? await db?.get(`${interaction.user.id}.locale`)
 				: toI18nLang(interaction.locale) || "en"
 		);
+		if (interaction.customId == "simulator-set") {
+			const current =
+				interaction.fields.getTextInputValue("simset_pityFive");
+			const soft = interaction.fields.getTextInputValue("simset_soft");
+			const max = interaction.fields.getTextInputValue("simset_max");
+			const chance =
+				interaction.fields.getTextInputValue("simset_chance");
+			const rateup =
+				interaction.fields.getTextInputValue("simset_rateup");
+
+			const inputMappings = {
+				current: tr("current"),
+				soft: tr("soft"),
+				max: tr("max"),
+				chance: tr("chance"),
+				rateup: tr("rateup")
+			};
+
+			const invalidInputs = Object.keys(inputMappings)
+				.filter(field => isNaN(eval(field)))
+				.map(field => inputMappings[field]);
+
+			if (invalidInputs.length > 0)
+				return await interaction.reply({
+					embeds: [
+						new EmbedBuilder()
+							.setConfig("#E76161")
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+							.setTitle(
+								tr("warp_simSetError", {
+									z: invalidInputs.join(", ")
+								})
+							)
+					],
+					ephemeral: true
+				});
+
+			if (chance < 0 || chance > 1)
+				return await interaction.reply({
+					embeds: [
+						new EmbedBuilder()
+							.setConfig("#E76161")
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+							.setTitle(tr("warp_simSetChanceError"))
+					],
+					ephemeral: true
+				});
+
+			if (rateup < 0 || rateup > 1)
+				return await interaction.reply({
+					embeds: [
+						new EmbedBuilder()
+							.setConfig("#E76161")
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+							.setTitle(tr("warp_simSetRateUpError"))
+					],
+					ephemeral: true
+				});
+
+			await db.set(`${interaction.user.id}.sim.pityFive`, current);
+			await db.set(`${interaction.user.id}.sim.soft`, soft);
+			await db.set(`${interaction.user.id}.sim.max`, max);
+			await db.set(`${interaction.user.id}.sim.chance`, chance);
+			await db.set(`${interaction.user.id}.sim.rateup`, rateup);
+
+			const simdb = await db.get(`${interaction.user.id}.sim`);
+
+			await interaction.reply({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
+						.setTitle(tr("warp_simSetSus"))
+						.setThumbnail(interaction.user.displayAvatarURL())
+						.addFields(
+							{
+								name: tr("current"),
+								value: `${simdb?.pityFive}` || "0",
+								inline: true
+							},
+							{
+								name: tr("soft"),
+								value: `${simdb?.soft}` || "75",
+								inline: true
+							},
+							{
+								name: tr("max"),
+								value: `${simdb?.max}` || "90",
+								inline: true
+							},
+							{
+								name: tr("chance"),
+								value: `${simdb?.chance * 100}%` || "0.6%",
+								inline: true
+							},
+							{
+								name: tr("rateup"),
+								value: `${simdb?.rateup * 100}%` || "50%",
+								inline: true
+							},
+							{
+								name: tr("guarantee"),
+								value:
+									simdb?.guaranteeFive == "true"
+										? tr("true")
+										: tr("false"),
+								inline: true
+							}
+						)
+				],
+				ephemeral: true
+			});
+		}
+
 		if (interaction.customId == "warp_query") {
 			const url = interaction.fields.getTextInputValue("warpUrl");
 

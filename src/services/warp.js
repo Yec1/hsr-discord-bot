@@ -208,27 +208,29 @@ const chanceFour = (currentPity, baseRate) => {
 };
 
 async function warp(vers, type, interaction) {
-	const typeDB = `${interaction.user.id}.simulator.${type}`;
-	const banner = await db.get(`${typeDB}`);
+	const userdb = `${interaction.user.id}.sim`;
+	const banner = await db.get(`${userdb}`);
 	const warpChance = Math.random();
-	const rateUpChance = type === "char" ? 0.5 : 0.75;
+	const rateUpChance = type === "char" ? banner.rateup : banner.rateup + 0.25;
 	const rateUp = Math.random() < rateUpChance ? true : false;
 	const char = Math.random() < 0.5;
 	let warpItem;
-	if (warpChance < chanceFive(banner.pityFive, 90, 75, 0.006)) {
-		await db.set(`${typeDB}.OwnFive`, parseInt(banner.OwnFive) + 1);
-		await db.set(`${typeDB}.pityFive`, "0");
-		await db.set(`${typeDB}.pityFour`, parseInt(banner.pityFour) + 1);
+	if (
+		warpChance <
+		chanceFive(banner.pityFive, banner.max, banner.soft, banner.chance)
+	) {
+		await db.set(`${userdb}.pityFive`, "0");
+		await db.set(`${userdb}.pityFour`, parseInt(banner.pityFour) + 1);
 		if (type !== "standard") {
 			if (rateUp || banner.guaranteeFive == "true") {
-				await db.set(`${typeDB}.guaranteeFive`, "false");
+				await db.set(`${userdb}.guaranteeFive`, "false");
 				warpItem = randItem(getRateUpFive(vers, type));
 			} else {
 				warpItem =
 					type === "weap"
 						? randItem(getPoolFiveWeap(vers, type))
 						: randItem(getPoolFiveChar(vers, type));
-				await db.set(`${typeDB}.guaranteeFive`, "true");
+				await db.set(`${userdb}.guaranteeFive`, "true");
 			}
 		} else {
 			if (type === "standard") {
@@ -237,14 +239,14 @@ async function warp(vers, type, interaction) {
 			} else warpItem = randItem(getPoolFiveChar(vers, type));
 		}
 	} else if (warpChance < chanceFour(banner.pityFour, 0.051)) {
-		await db.set(`${typeDB}.pityFive`, parseInt(banner.pityFive) + 1);
-		await db.set(`${typeDB}.pityFour`, "0");
+		await db.set(`${userdb}.pityFive`, parseInt(banner.pityFive) + 1);
+		await db.set(`${userdb}.pityFour`, "0");
 		if (type !== "standard") {
 			if (rateUp || banner.guaranteeFour == "true") {
-				await db.set(`${typeDB}.guaranteeFour`, "false");
+				await db.set(`${userdb}.guaranteeFour`, "false");
 				warpItem = randItem(getRateUpFour(vers, type));
 			} else {
-				await db.set(`${typeDB}.guaranteeFour`, "true");
+				await db.set(`${userdb}.guaranteeFour`, "true");
 				if (char) warpItem = randItem(getPoolFourChar(vers, type));
 				else warpItem = randItem(getPoolFourWeap(vers, type));
 			}
@@ -253,8 +255,8 @@ async function warp(vers, type, interaction) {
 			else warpItem = randItem(getPoolFourWeap(vers, type));
 		}
 	} else {
-		await db.set(`${typeDB}.pityFive`, parseInt(banner.pityFive) + 1);
-		await db.set(`${typeDB}.pityFour`, parseInt(banner.pityFour) + 1);
+		await db.set(`${userdb}.pityFive`, parseInt(banner.pityFive) + 1);
+		await db.set(`${userdb}.pityFour`, parseInt(banner.pityFour) + 1);
 		warpItem = randItem(baseWeapons);
 	}
 

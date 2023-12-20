@@ -101,6 +101,11 @@ const langs = {
 	warp_average: "平均 <z> 抽一個五星",
 	warp_nonAverage: "還未抽出過五星",
 	warp_how: "如何獲取躍遷紀錄",
+	warp_simSetError: "請輸入有效的數字：<z>",
+	warp_simSetChanceError: "五星機率必須介於 0 至 1 之間",
+	warp_simSetRateUpError: "UP機率必須介於 0 至 1 之間",
+	warp_simSetSus: "已變更模擬躍遷設定",
+	warp_simSetTitle: "模擬躍遷設定",
 	warplog_title: "抽卡分析",
 	warplog_count: "躍遷總數",
 	warplog_cost: "已花費星瓊",
@@ -162,6 +167,12 @@ const langs = {
 	draw_wait: "您的製圖請求正在排隊，剩餘 <z> 位使用者",
 	draw_NoData: "資料抓取失敗",
 
+	guarantee: "下次必定UP",
+	current: "當前抽數",
+	soft: "加機率保底",
+	max: "保底機率",
+	chance: "五星機率",
+	rate: "UP機率",
 	donate_Title:
 		"<:love:1068758168877936740> 想要贊助我們嗎？您可以使用以下方式贊助我們！",
 	donate_Desc:
