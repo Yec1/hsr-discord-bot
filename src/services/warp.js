@@ -178,7 +178,7 @@ async function warpLog(input, interaction) {
 							data.reduce((acc, i) => acc + i.count, 0) /
 							data.length
 						).toFixed(2)
-				  )
+					)
 				: 0;
 			list[warpType].total = total;
 		}
@@ -652,7 +652,7 @@ async function warpLogImage(interaction, datas, title) {
 										type == "light_cone"
 											? "light_cone"
 											: "avatar"
-								  }/${id}.png`)
+									}/${id}.png`)
 					);
 					const imageWidth = 2 * (radius - lineWidth);
 					const imageHeight = 2 * (radius - lineWidth);

@@ -449,7 +449,7 @@ export default {
 			if (await db.has(`${interaction.user.id}.simulator`))
 				await db.delete(`${interaction.user.id}.simulator`);
 
-			if (!(await db.has(`${interaction.user.id}.sim.${type}`)))
+			if (!(await db.has(`${interaction.user.id}.sim`)))
 				await db.set(`${interaction.user.id}.sim`, {
 					soft: 75,
 					max: 90,
