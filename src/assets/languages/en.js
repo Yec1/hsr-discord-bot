@@ -181,7 +181,7 @@ const langs = {
 	soft: "Soft Pity",
 	max: "Max Pity",
 	chance: "Five-star Probability",
-	rate: "Rate-up Probability",
+	rateup: "Rate-up Probability",
 	donate_Title:
 		"<:love:1068758168877936740> Want to sponsor us? You can use the following methods to sponsor us!",
 	donate_Desc: "\n▫️ [Buy Me A Coffee](https://www.buymeacoffee.com/yeci)",

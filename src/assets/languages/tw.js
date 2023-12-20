@@ -172,7 +172,7 @@ const langs = {
 	soft: "加機率保底",
 	max: "保底機率",
 	chance: "五星機率",
-	rate: "UP機率",
+	rateup: "UP機率",
 	donate_Title:
 		"<:love:1068758168877936740> 想要贊助我們嗎？您可以使用以下方式贊助我們！",
 	donate_Desc:
