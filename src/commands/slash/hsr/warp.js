@@ -461,14 +461,6 @@ export default {
 					guaranteeFour: "false"
 				});
 
-			const prevTotal =
-				(await db.get(`${interaction.user.id}.sim.pityFive`)) || 0;
-
-			await db.set(
-				`${interaction.user.id}.sim.pityFive`,
-				parseInt(prevTotal) + parseInt(time)
-			);
-
 			let warpResults = [];
 			for (let i = 0; i < time; i++) {
 				const res = await warp(version, type, interaction);
