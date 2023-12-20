@@ -105,27 +105,27 @@ client.on(Events.InteractionCreate, async interaction => {
 						.addFields(
 							{
 								name: tr("current"),
-								value: `${simdb?.pityFive}` || "0",
+								value: `${simdb?.pityFive || "0"}`,
 								inline: true
 							},
 							{
 								name: tr("soft"),
-								value: `${simdb?.soft}` || "75",
+								value: `${simdb?.soft || "75"}`,
 								inline: true
 							},
 							{
 								name: tr("max"),
-								value: `${simdb?.max}` || "90",
+								value: `${simdb?.max || "90"}`,
 								inline: true
 							},
 							{
 								name: tr("chance"),
-								value: `${simdb?.chance * 100}%` || "0.6%",
+								value: `${simdb?.chance * 100 || "0.6"}%`,
 								inline: true
 							},
 							{
 								name: tr("rateup"),
-								value: `${simdb?.rateup * 100}%` || "50%",
+								value: `${simdb?.rateup * 100 || "50"}%`,
 								inline: true
 							},
 							{

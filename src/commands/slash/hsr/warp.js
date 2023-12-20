@@ -320,7 +320,7 @@ export default {
 								new TextInputBuilder()
 									.setCustomId("simset_pityFive")
 									.setLabel(tr("current"))
-									.setValue(`${simdb?.pityFive}` || "0")
+									.setValue(`${simdb?.pityFive || "0"}`)
 									.setStyle(TextInputStyle.Short)
 									.setRequired(false)
 									.setMinLength(1)
@@ -330,7 +330,7 @@ export default {
 								new TextInputBuilder()
 									.setCustomId("simset_soft")
 									.setLabel(tr("soft"))
-									.setValue(`${simdb?.soft}` || "75")
+									.setValue(`${simdb?.soft || "75"}`)
 									.setStyle(TextInputStyle.Short)
 									.setRequired(false)
 									.setMinLength(1)
@@ -340,7 +340,7 @@ export default {
 								new TextInputBuilder()
 									.setCustomId("simset_max")
 									.setLabel(tr("max"))
-									.setValue(`${simdb?.max}` || "90")
+									.setValue(`${simdb?.max || "90"}`)
 									.setStyle(TextInputStyle.Short)
 									.setRequired(false)
 									.setMinLength(1)
@@ -350,7 +350,7 @@ export default {
 								new TextInputBuilder()
 									.setCustomId("simset_chance")
 									.setLabel(tr("chance"))
-									.setValue(`${simdb?.chance}` || "0.006")
+									.setValue(`${simdb?.chance || "0.006"}`)
 									.setStyle(TextInputStyle.Short)
 									.setRequired(false)
 									.setMinLength(1)
@@ -360,7 +360,7 @@ export default {
 								new TextInputBuilder()
 									.setCustomId("simset_rateup")
 									.setLabel(tr("rateup"))
-									.setValue(`${simdb?.rateup}` || "0.5")
+									.setValue(`${simdb?.rateup || "0.5"}`)
 									.setStyle(TextInputStyle.Short)
 									.setRequired(false)
 									.setMinLength(1)
@@ -382,27 +382,27 @@ export default {
 						.addFields(
 							{
 								name: tr("current"),
-								value: `${simdb?.pityFive}` || "0",
+								value: `${simdb?.pityFive || "0"}`,
 								inline: true
 							},
 							{
 								name: tr("soft"),
-								value: `${simdb?.soft}` || "75",
+								value: `${simdb?.soft || "75"}`,
 								inline: true
 							},
 							{
 								name: tr("max"),
-								value: `${simdb?.max}` || "90",
+								value: `${simdb?.max || "90"}`,
 								inline: true
 							},
 							{
 								name: tr("chance"),
-								value: `${simdb?.chance * 100}%` || "0.6%",
+								value: `${simdb?.chance * 100 || "0.6"}%`,
 								inline: true
 							},
 							{
 								name: tr("rateup"),
-								value: `${simdb?.rateup * 100}%` || "50%",
+								value: `${simdb?.rateup * 100 || "50"}%`,
 								inline: true
 							},
 							{
@@ -457,12 +457,10 @@ export default {
 				});
 
 			const prevTotal =
-				(await db.get(
-					`${interaction.user.id}.simulator.${type}.total`
-				)) || 0;
+				(await db.get(`${interaction.user.id}.sim.pityFive`)) || 0;
 
 			await db.set(
-				`${interaction.user.id}.simulator.${type}.total`,
+				`${interaction.user.id}.sim.pityFive`,
 				parseInt(prevTotal) + parseInt(time)
 			);
 
