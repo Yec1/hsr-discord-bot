@@ -178,7 +178,7 @@ async function warpLog(input, interaction) {
 							data.reduce((acc, i) => acc + i.count, 0) /
 							data.length
 						).toFixed(2)
-					)
+				  )
 				: 0;
 			list[warpType].total = total;
 		}
@@ -263,7 +263,7 @@ async function warp(vers, type, interaction) {
 	return warpItem;
 }
 
-async function createImage(warpResults) {
+async function createImage(id, warpResults) {
 	const canvas = createCanvas(1920, 1080);
 	const ctx = canvas.getContext("2d");
 	const background = await loadImageAsync(
@@ -272,6 +272,7 @@ async function createImage(warpResults) {
 	ctx.drawImage(background, 0, 0, 1920, 1080);
 
 	if (warpResults.length == 10) {
+		const data = await db.get(`${id}.sim`);
 		const ring = await loadImageAsync(
 			"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/rings.webp"
 		);
@@ -292,10 +293,14 @@ async function createImage(warpResults) {
 			{ x: 1220, y: 840 },
 			{ x: 1740, y: 750 }
 		];
+
 		const degrees = -9;
 		const radians = (Math.PI / 180) * degrees;
 		let Num = 0;
+		const dataBank = (data && data.dataBank) || {};
+
 		for (const item of warpResults) {
+			const id = item.id;
 			Num++;
 			const image = await loadImageAsync(
 				`https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/warp-results/${item.name}.webp`
@@ -313,8 +318,136 @@ async function createImage(warpResults) {
 			}
 
 			ctx.drawImage(image, -image.width / 2, -image.height / 2);
+
+			if (item.element)
+				if (!(id in dataBank)) {
+					const newicon = await loadImageAsync(
+						`https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/main/public/assets/new.webp`
+					);
+					ctx.drawImage(
+						newicon,
+						-image.width / 2 + 380,
+						-image.height / 2 + 20
+					);
+					dataBank[id] = item.element ? dataBank[id] + 1 || 0 : 0;
+				} else {
+					dataBank[id] = item.element ? dataBank[id] + 1 || 0 : 0;
+					const width = 80;
+					const height = 80;
+
+					let xOffset = -image.width / 2 + 20;
+					let yOffset = -image.height / 2 + 155;
+
+					const starlightbg = await loadImage(
+						"https://act.hoyolab.com/app/community-game-records-sea/images/character_r_5.99d42eb7.png"
+					);
+					ctx.drawImage(starlightbg, xOffset, yOffset, width, height);
+
+					const cornerRadius = 20;
+					ctx.lineWidth = 5;
+					ctx.strokeStyle = "white";
+					ctx.beginPath();
+					ctx.moveTo(xOffset, yOffset);
+					ctx.lineTo(xOffset, height + yOffset);
+					ctx.lineTo(width + xOffset, height + yOffset);
+					ctx.lineTo(width + xOffset, cornerRadius + yOffset);
+					ctx.arcTo(
+						width + xOffset,
+						yOffset,
+						xOffset,
+						yOffset,
+						cornerRadius
+					);
+					ctx.closePath();
+					ctx.stroke();
+
+					const starlight = await loadImage(
+						"./src/assets/undying-starlight.png"
+					);
+					ctx.drawImage(starlight, xOffset + 8, yOffset + 8, 64, 64);
+
+					ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+					ctx.fillRect(xOffset + 4, yOffset + 58, 73, 20);
+
+					ctx.font = "20px 'URW DIN Arabic', Arial, sans-serif' ";
+					ctx.fillStyle = "white";
+					ctx.textAlign = "center";
+					ctx.fillText(
+						`x${
+							item.rarity == 4
+								? dataBank[id] < 7
+									? "8"
+									: "20"
+								: dataBank[id] < 7
+								  ? "20"
+								  : "100"
+						}`,
+						xOffset + 40,
+						yOffset + 75
+					);
+
+					if (dataBank[id] < 7) {
+						xOffset = -image.width / 2 + 120;
+
+						const eidolonbg = await loadImage(
+							item.rarity == 4
+								? "https://act.hoyolab.com/app/community-game-records-sea/images/character_r_4.24f329b7.png"
+								: "https://act.hoyolab.com/app/community-game-records-sea/images/character_r_5.99d42eb7.png"
+						);
+						ctx.drawImage(
+							eidolonbg,
+							xOffset,
+							yOffset,
+							width,
+							height
+						);
+
+						const cornerRadius = 20;
+						ctx.lineWidth = 5;
+						ctx.strokeStyle = "white";
+						ctx.beginPath();
+						ctx.moveTo(xOffset, yOffset);
+						ctx.lineTo(xOffset, height + yOffset);
+						ctx.lineTo(width + xOffset, height + yOffset);
+						ctx.lineTo(width + xOffset, cornerRadius + yOffset);
+						ctx.arcTo(
+							width + xOffset,
+							yOffset,
+							xOffset,
+							yOffset,
+							cornerRadius
+						);
+						ctx.closePath();
+						ctx.stroke();
+
+						const eidolon = await loadImage(
+							item.rarity == 4
+								? "./src/assets/eidolon-4star.png"
+								: "./src/assets/eidolon-5star.png"
+						);
+						ctx.drawImage(
+							eidolon,
+							xOffset + 8,
+							yOffset + 8,
+							64,
+							64
+						);
+
+						ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+						ctx.fillRect(xOffset + 4, yOffset + 58, 73, 20);
+
+						ctx.font = "20px 'URW DIN Arabic', Arial, sans-serif' ";
+						ctx.fillStyle = "white";
+						ctx.textAlign = "center";
+						ctx.fillText("x1", xOffset + 40, yOffset + 75);
+					}
+				}
+
+			dataBank[id] = Math.min(dataBank[id], 6);
 			ctx.restore();
 		}
+
+		await db.set(`${id}.sim.dataBank`, dataBank);
 	}
 
 	if (warpResults.length === 1) {
@@ -652,7 +785,7 @@ async function warpLogImage(interaction, datas, title) {
 										type == "light_cone"
 											? "light_cone"
 											: "avatar"
-									}/${id}.png`)
+								  }/${id}.png`)
 					);
 					const imageWidth = 2 * (radius - lineWidth);
 					const imageHeight = 2 * (radius - lineWidth);

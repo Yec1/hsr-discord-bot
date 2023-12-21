@@ -169,8 +169,8 @@ const langs = {
 
 	guarantee: "下次必定UP",
 	current: "當前抽數",
-	soft: "加機率保底",
-	max: "保底機率",
+	soft: "加機率抽數",
+	max: "保底抽數",
 	chance: "五星機率",
 	rateup: "UP機率",
 	donate_Title:

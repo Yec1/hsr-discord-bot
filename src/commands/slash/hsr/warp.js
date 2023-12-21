@@ -15,7 +15,7 @@ import { getRarity, getPath, getElement } from "../../../services/parseJSON.js";
 import { warp, createImage } from "../../../services/warp.js";
 import ms from "ms";
 import { CommandCooldown } from "discord-command-cooldown";
-const warpSimCD = new CommandCooldown("warpSimCD", ms("20s"));
+const warpSimCD = new CommandCooldown("warpSimCD", ms("10s"));
 
 export default {
 	data: new SlashCommandBuilder()
@@ -465,6 +465,7 @@ export default {
 			for (let i = 0; i < time; i++) {
 				const res = await warp(version, type, interaction);
 				warpResults.push({
+					id: res.toLowerCase().replace(/[- .]/g, ""),
 					name: res,
 					rarity: getRarity(res),
 					path: getPath(res),
@@ -472,7 +473,10 @@ export default {
 				});
 			}
 
-			const imageBuffer = await createImage(warpResults);
+			const imageBuffer = await createImage(
+				interaction.user.id,
+				warpResults
+			);
 			const image = new AttachmentBuilder(imageBuffer, {
 				name: "result.png"
 			});
@@ -546,6 +550,7 @@ export default {
 			//   .join("\n");
 
 			const data = await db.get(`${interaction.user.id}.sim`);
+
 			// const average = data.OwnFive
 			// 	? parseFloat((data.total / data.OwnFive).toFixed(2))
 			// 	: 0;
@@ -597,7 +602,7 @@ export default {
 			collector.on("collect", async interaction => {
 				if (!interaction.isButton()) return;
 				if (interaction.customId == "warp_skip") {
-					await interaction.deferUpdate();
+					await interaction.deferUpdate().catch(() => {});
 					// if (
 					// 	(await db.has(`${interaction.user.id}.vote`)) &&
 					// 	new Date().getUTCDate() ==

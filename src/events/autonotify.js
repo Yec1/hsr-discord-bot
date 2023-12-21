@@ -136,7 +136,7 @@ async function notifySend(notify, id, uid, cookie) {
 											: `<t:${
 													moment(new Date()).unix() +
 													res.stamina_recover_time
-												}:R>`
+											  }:R>`
 									}`,
 									value: "\u200b",
 									inline: false
@@ -198,13 +198,13 @@ async function notifySend(notify, id, uid, cookie) {
 															0
 																? `\`${tr(
 																		"notify_claim"
-																	)}\``
+																  )}\``
 																: `<t:${
 																		moment(
 																			new Date()
 																		).unix() +
 																		expedition.remaining_time
-																	}:R>`
+																  }:R>`
 														}`;
 													})
 													.join("\n")
