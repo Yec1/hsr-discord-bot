@@ -228,7 +228,7 @@ async function mainPage(playerData, interaction) {
 		ctx.font = "bold 24px 'URW DIN Arabic' , Arial, sans-serif' ";
 		ctx.textAlign = "right";
 		ctx.fillText(
-			`${playerData.player.space_info.memory_data.chaos_level}/21`,
+			`${playerData.player.space_info.memory_data.level}/21`,
 			1200,
 			980
 		);
@@ -239,7 +239,7 @@ async function mainPage(playerData, interaction) {
 		ctx.font = "bold 24px 'URW DIN Arabic' , Arial, sans-serif' ";
 		ctx.textAlign = "right";
 		ctx.fillText(
-			`${playerData.player.space_info.memory_data.level}/10`,
+			`${playerData.player.space_info.memory_data.chaos_level}/10`,
 			1200,
 			1020
 		);
@@ -562,8 +562,8 @@ async function charPage(characters, playerData, num, interaction) {
 				mainAff >= 0.75
 					? "#F3B664"
 					: mainAff > 0
-					  ? "#FFFFFF"
-					  : "#B6BBC4"; //"#EAB308"; // #FFFFFF
+						? "#FFFFFF"
+						: "#B6BBC4"; //"#EAB308"; // #FFFFFF
 			ctx.textAlign = "left";
 
 			function containsChinese(text) {
@@ -664,8 +664,8 @@ async function charPage(characters, playerData, num, interaction) {
 					weight >= 0.75
 						? "#F3B664"
 						: weight > 0
-						  ? "#FFFFFF"
-						  : "#B6BBC4";
+							? "#FFFFFF"
+							: "#B6BBC4";
 				ctx.fillStyle = color;
 				ctx.textAlign = "left";
 
@@ -716,8 +716,8 @@ async function charPage(characters, playerData, num, interaction) {
 					? 1685
 					: 1720
 				: interaction.locale == "zh-TW"
-				  ? 1685
-				  : 1720,
+					? 1685
+					: 1720,
 			830
 		);
 
