@@ -14,7 +14,6 @@ import {
 	saveLeaderboard
 } from "../../../services/profile.js";
 import Queue from "queue";
-import { error } from "console";
 
 const drawQueue = new Queue({ autostart: true });
 
@@ -64,19 +63,24 @@ export default {
 			? interaction.options.getInteger("uid")
 			: (await db.has(
 						`${interaction.options.getUser("user")?.id}.account`
-			    ))
-			  ? (
+				  ))
+				? (
 						await db.get(
 							`${interaction.options.getUser("user")?.id}.account`
 						)
-			    )[0].uid
-			  : (await db.has(`${interaction.options.getUser("user")?.id}.uid`))
-			    ? await db.get(`${interaction.options.getUser("user")?.id}.uid`)
-			    : (await db.has(`${interaction.user.id}.account`))
-			      ? (await db.get(`${interaction.user.id}.account`))[0].uid
-			      : (await db.has(`${interaction.user.id}.uid`))
-			        ? await db.get(`${interaction.user.id}.uid`)
-			        : null;
+					)[0].uid
+				: (await db.has(
+							`${interaction.options.getUser("user")?.id}.uid`
+					  ))
+					? await db.get(
+							`${interaction.options.getUser("user")?.id}.uid`
+						)
+					: (await db.has(`${interaction.user.id}.account`))
+						? (await db.get(`${interaction.user.id}.account`))[0]
+								.uid
+						: (await db.has(`${interaction.user.id}.uid`))
+							? await db.get(`${interaction.user.id}.uid`)
+							: null;
 
 		const user = interaction.options.getUser("user") ?? interaction.user;
 

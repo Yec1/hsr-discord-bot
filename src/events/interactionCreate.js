@@ -1,6 +1,7 @@
 import { client } from "../index.js";
 import { ApplicationCommandOptionType } from "discord.js";
 import { i18nMixin, toI18nLang } from "../services/i18n.js";
+import { calXP } from "../services/utils.js";
 import {
 	Events,
 	EmbedBuilder,
@@ -105,6 +106,8 @@ client.on(Events.InteractionCreate, async interaction => {
 
 		try {
 			command.execute(client, interaction, args, i18n, db, emoji);
+
+			calXP(interaction.user.id).catch(() => {});
 
 			webhook.send({
 				embeds: [

@@ -2,6 +2,8 @@ import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import { getRelicsScore } from "./relics.js";
 import { join } from "path";
 import { i18nMixin, toI18nLang } from "./i18n.js";
+import { getRandomColor, roundRect } from "./utils.js";
+import { readdirSync } from "fs";
 import { QuickDB } from "quick.db";
 const db = new QuickDB();
 
@@ -108,7 +110,7 @@ async function mainPage(playerData, interaction) {
 		const ctx = canvas.getContext("2d");
 
 		// BG
-		const bg = await loadImageAsync("./src/assets/bg.jpg");
+		const bg = await loadImageAsync("./src/assets/image/bg.jpg");
 		ctx.drawImage(bg, 0, 0, 1920, 1080);
 
 		// Avatar
@@ -261,7 +263,7 @@ async function charPage(characters, playerData, num, interaction) {
 		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
 		// BG
-		const bg = await loadImageAsync("./src/assets/bg.jpg");
+		const bg = await loadImageAsync("./src/assets/image/bg.jpg");
 		ctx.drawImage(bg, 0, 0, 1920, 1080);
 
 		// Name
@@ -727,4 +729,158 @@ async function charPage(characters, playerData, num, interaction) {
 	}
 }
 
-export { saveCharacters, loadCharacters, saveLeaderboard, mainPage, charPage };
+async function cardImage(user, interaction) {
+	try {
+		const tr = i18nMixin(
+			(await db?.has(`${interaction.user.id}.locale`))
+				? await db?.get(`${interaction.user.id}.locale`)
+				: toI18nLang(interaction.locale) || "en"
+		);
+		const canvas = createCanvas(1920, 1080);
+		const ctx = canvas.getContext("2d");
+
+		const userdb = await db.get(`${user.id}`);
+
+		// BackGround
+		const bg =
+			userdb?.premium && userdb?.bg
+				? userdb.bg
+				: `./src/assets/image/cards/${Math.floor(
+						Math.random() *
+							readdirSync("./src/assets/image/cards/").length
+					)}.png`;
+
+		const bgImage = await loadImageAsync(bg);
+
+		const scaleWidth = canvas.width / bgImage.width;
+		const scaleHeight = canvas.height / bgImage.height;
+		const scale = Math.max(scaleWidth, scaleHeight);
+		const offsetX = (canvas.width - bgImage.width * scale) / 2;
+		const offsetY = (canvas.height - bgImage.height * scale) / 2;
+
+		ctx.drawImage(
+			bgImage,
+			offsetX,
+			offsetY,
+			bgImage.width * scale,
+			bgImage.height * scale
+		);
+
+		// User Profile - Avatar
+		const userAvatar = await loadImageAsync(user.displayAvatarURL());
+
+		ctx.save();
+		const centerX = 140;
+		const centerY = 120;
+		const radius = 80;
+
+		ctx.beginPath();
+		ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+		ctx.clip();
+		ctx.drawImage(
+			userAvatar,
+			centerX - radius,
+			centerY - radius,
+			radius * 2,
+			radius * 2
+		);
+		ctx.restore();
+
+		// User Profile - Name
+		ctx.textAlign = "left";
+		ctx.fillStyle = "white";
+		ctx.font = `bold 58px 'YaHei', URW DIN Arabic, Arial, sans-serif`;
+		const text = user.displayName ?? user.username;
+		const textX = 250;
+		const textY = 120;
+		ctx.fillText(text.slice(0, 25), textX, textY);
+
+		// User Profile - Premium
+		if (userdb?.premium) {
+			const textWidth = ctx.measureText(text).width;
+			const premiumImage = await loadImageAsync(
+				"./src/assets/image/star.png"
+			);
+			ctx.drawImage(
+				premiumImage,
+				textX + textWidth + 20,
+				textY - 50,
+				64,
+				64
+			);
+		}
+
+		// User Profile - XP
+		const upgradeFactor = 1.5;
+		const xpValue = userdb?.xp ?? 0;
+		const currentLevel = userdb?.level ?? 0;
+		const maxXpValue =
+			userdb?.reqXp ??
+			Math.floor(Math.pow(upgradeFactor, currentLevel) * 100);
+		const barWidth = 300;
+		const barHeight = 50;
+		const xpBarWidth = Math.max(
+			0,
+			Math.min(barWidth, (xpValue / Math.max(1, maxXpValue)) * barWidth)
+		);
+		const xpRadius = Math.min(10, xpBarWidth / 2);
+
+		ctx.fillStyle = "#ddd";
+		roundRect(
+			ctx,
+			textX - 20,
+			textY + barHeight / 2,
+			barWidth,
+			barHeight,
+			xpRadius
+		);
+		ctx.fill();
+
+		if (xpValue > 0 && xpBarWidth > 0) {
+			ctx.fillStyle = getRandomColor();
+			roundRect(
+				ctx,
+				textX - 20,
+				textY + barHeight / 2,
+				xpBarWidth,
+				barHeight,
+				xpRadius
+			);
+			ctx.fill();
+		}
+
+		const textXPosition = textX;
+		let finalTextXPosition = textX;
+		const textWidth = ctx.measureText(`Lv. ${currentLevel}`).width;
+		const fillRightBoundary = textX + xpBarWidth;
+
+		if (fillRightBoundary > textXPosition + textWidth) {
+			const maxTextX = fillRightBoundary - textWidth;
+			const centerXPosition =
+				textXPosition +
+				(fillRightBoundary - textXPosition - textWidth) / 2;
+			finalTextXPosition = Math.min(centerXPosition, maxTextX);
+		}
+
+		ctx.fillStyle = "#000";
+		ctx.font = 'bold 32px "URW DIN Arabic", Arial, sans-serif';
+		ctx.fillText(
+			`Lv. ${currentLevel}`,
+			finalTextXPosition,
+			textY + barHeight / 2 + 36
+		);
+
+		return canvas.toBuffer("image/png");
+	} catch (e) {
+		return null;
+	}
+}
+
+export {
+	saveCharacters,
+	loadCharacters,
+	saveLeaderboard,
+	mainPage,
+	charPage,
+	cardImage
+};

@@ -126,7 +126,7 @@ async function dailySend(daily, id, uid, cookie) {
 									info.month_last_day !== true
 										? `\n\n${tr("daily_desc2", {
 												b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-										  })}`
+											})}`
 										: ""
 								}`
 							)
