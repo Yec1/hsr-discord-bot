@@ -22,6 +22,7 @@ function roundRect(ctx, x, y, width, height, radius) {
 
 async function calXP(id) {
 	const userdb = await db.get(`${id}`);
+
 	const upgradeFactor = 1.5;
 	let {
 		xp: currentXp = 0,
@@ -32,6 +33,7 @@ async function calXP(id) {
 	} = userdb || {};
 
 	currentXp += Math.floor(Math.random() * 5) + 1;
+	if (userdb?.premium == true) currentXp *= 2;
 
 	if (currentXp >= nextLevelReqXp) {
 		currentXp = 0;

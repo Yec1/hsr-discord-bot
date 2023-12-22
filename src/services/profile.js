@@ -743,7 +743,7 @@ async function cardImage(user, interaction) {
 
 		// BackGround
 		const bg =
-			userdb?.premium && userdb?.bg
+			userdb?.premium == true && userdb?.bg
 				? userdb.bg
 				: `./src/assets/image/cards/${Math.floor(
 						Math.random() *
@@ -796,7 +796,7 @@ async function cardImage(user, interaction) {
 		ctx.fillText(text.slice(0, 25), textX, textY);
 
 		// User Profile - Premium
-		if (userdb?.premium) {
+		if (userdb?.premium == true) {
 			const textWidth = ctx.measureText(text).width;
 			const premiumImage = await loadImageAsync(
 				"./src/assets/image/star.png"

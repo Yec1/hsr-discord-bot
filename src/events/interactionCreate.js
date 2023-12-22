@@ -104,6 +104,12 @@ client.on(Events.InteractionCreate, async interaction => {
 			} else if (option.value) args.push(option.value);
 		}
 
+		if (
+			interaction.member.roles.cache.has("1012968415964704768") &&
+			!(await db.has(`${interaction.user.id}.premium`))
+		)
+			await db.set(`${interaction.user.id}.premium`, true);
+
 		try {
 			command.execute(client, interaction, args, i18n, db, emoji);
 
