@@ -828,7 +828,7 @@ async function cardImage(user, interaction) {
 		ctx.fillStyle = "#ddd";
 		roundRect(
 			ctx,
-			textX - 20,
+			textX,
 			textY + barHeight / 2,
 			barWidth,
 			barHeight,
@@ -840,7 +840,7 @@ async function cardImage(user, interaction) {
 			ctx.fillStyle = getRandomColor();
 			roundRect(
 				ctx,
-				textX - 20,
+				textX,
 				textY + barHeight / 2,
 				xpBarWidth,
 				barHeight,

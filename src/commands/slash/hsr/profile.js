@@ -133,6 +133,9 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 									z: `\`${uid}\``
 								})
 							)
+							.setDescription(
+								`${tr("err_code")}${playerData.detail}`
+							)
 					]
 				});
 
