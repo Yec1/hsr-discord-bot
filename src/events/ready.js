@@ -23,13 +23,13 @@ async function updatePresence() {
 
 client.on(Events.ClientReady, async () => {
 	console.log(`[CLIENT] ${client.user.tag} 已經上線！`);
-	// dailyCheck();
-	// notifyCheck();
+	dailyCheck();
+	notifyCheck();
 
-	// schedule.scheduleJob("0 * * * *", function () {
-	// 	notifyCheck();
-	// 	dailyCheck();
-	// });
+	schedule.scheduleJob("0 * * * *", function () {
+		notifyCheck();
+		dailyCheck();
+	});
 
 	setInterval(updatePresence, 10000);
 });
