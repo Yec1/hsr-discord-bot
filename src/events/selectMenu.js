@@ -79,7 +79,7 @@ async function handleNewsPostInteraction(interaction, tr, values) {
 					data.post.content.length < 2000
 						? data.post.content
 						: data.post.content.slice(0, 1997).concat("...") ??
-								tr("none")
+								`\`${tr("none")}\``
 				)
 				.setImage(data.image_list[0]?.url ?? data.cover_list[0]?.url)
 		]

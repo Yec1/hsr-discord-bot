@@ -3,6 +3,7 @@ import { getRelicsScore } from "./relics.js";
 import { join } from "path";
 import { i18nMixin, toI18nLang } from "./i18n.js";
 import { getRandomColor, roundRect } from "./utils.js";
+import { player } from "./request.js";
 import { readdirSync } from "fs";
 import { QuickDB } from "quick.db";
 const db = new QuickDB();
@@ -18,6 +19,10 @@ GlobalFonts.registerFromPath(
 
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
+
+function containsChinese(text) {
+	return /[\u4e00-\u9fa5]/.test(text);
+}
 
 async function saveCharacters(playerData) {
 	const existingCharacters =
@@ -120,7 +125,6 @@ async function mainPage(playerData, interaction) {
 		ctx.drawImage(avatar, 896, 70, 128, 128);
 
 		// Name
-		ctx.font = "bold 44px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
 		ctx.fillText(playerData.player.nickname, 960, 260);
@@ -568,10 +572,6 @@ async function charPage(characters, playerData, num, interaction) {
 						: "#B6BBC4"; //"#EAB308"; // #FFFFFF
 			ctx.textAlign = "left";
 
-			function containsChinese(text) {
-				return /[\u4e00-\u9fa5]/.test(text);
-			}
-
 			let lineHeight = 24;
 			let text = `${relics[i].main_affix.name}`;
 
@@ -849,10 +849,10 @@ async function cardImage(user, interaction) {
 			ctx.fill();
 		}
 
-		const textXPosition = textX;
-		let finalTextXPosition = textX;
+		const textXPosition = textX + 20;
+		let finalTextXPosition = textX + 20;
 		const textWidth = ctx.measureText(`Lv. ${currentLevel}`).width;
-		const fillRightBoundary = textX + xpBarWidth;
+		const fillRightBoundary = textX + 20 + xpBarWidth;
 
 		if (fillRightBoundary > textXPosition + textWidth) {
 			const maxTextX = fillRightBoundary - textWidth;
@@ -870,8 +870,289 @@ async function cardImage(user, interaction) {
 			textY + barHeight / 2 + 36
 		);
 
+		// Custom Image
+		if (userdb?.image) {
+			const customImageW = 500;
+			const customImageH = 700;
+			const customImage = await loadImageAsync(userdb.image);
+
+			const maxWidth = 500;
+			const maxHeight = 700;
+
+			let scale = 1;
+
+			if (
+				customImage.width > maxWidth ||
+				customImage.height > maxHeight
+			) {
+				const scaleWidth = maxWidth / customImage.width;
+				const scaleHeight = maxHeight / customImage.height;
+				scale = Math.min(scaleWidth, scaleHeight);
+			}
+
+			if (
+				customImage.width < maxWidth &&
+				customImage.height < maxHeight
+			) {
+				const scaleWidth = maxWidth / customImage.width;
+				const scaleHeight = maxHeight / customImage.height;
+				scale = Math.max(scaleWidth, scaleHeight);
+			}
+
+			const scaledWidth = customImage.width * scale;
+			const scaledHeight = customImage.height * scale;
+
+			const drawX = 80 + (customImageW - scaledWidth) / 2;
+			const drawY = 270 + (customImageH - scaledHeight) / 2;
+
+			const cornerRadius = 10;
+
+			ctx.save();
+			ctx.beginPath();
+			ctx.moveTo(drawX + cornerRadius, drawY);
+			ctx.arcTo(
+				drawX + scaledWidth,
+				drawY,
+				drawX + scaledWidth,
+				drawY + scaledHeight,
+				cornerRadius
+			);
+			ctx.arcTo(
+				drawX + scaledWidth,
+				drawY + scaledHeight,
+				drawX,
+				drawY + scaledHeight,
+				cornerRadius
+			);
+			ctx.arcTo(drawX, drawY + scaledHeight, drawX, drawY, cornerRadius);
+			ctx.arcTo(drawX, drawY, drawX + scaledWidth, drawY, cornerRadius);
+			ctx.closePath();
+			ctx.clip();
+
+			ctx.drawImage(customImage, drawX, drawY, scaledWidth, scaledHeight);
+			ctx.restore();
+		}
+
+		// User Profile - Linked Account
+		// Background
+		const accounts = userdb?.account;
+		let width = 1200,
+			height = 300,
+			accountRadius = 10,
+			padding = 20;
+
+		for (let i = 0; i < accounts?.length; i++) {
+			if (accounts[i]?.uid) {
+				const playerData = await player(accounts[i].uid, interaction);
+				if (!playerData.detail) {
+					let row = i % 3;
+					let x = -600 + width + padding + padding,
+						y = 60 + row * (height + padding) + padding;
+
+					ctx.beginPath();
+					ctx.moveTo(x + accountRadius, y);
+					ctx.lineTo(x + width - accountRadius, y);
+					ctx.arc(
+						x + width - accountRadius,
+						y + accountRadius,
+						accountRadius,
+						1.5 * Math.PI,
+						2 * Math.PI
+					);
+					ctx.lineTo(x + width, y + height - accountRadius);
+					ctx.arc(
+						x + width - accountRadius,
+						y + height - accountRadius,
+						accountRadius,
+						0,
+						0.5 * Math.PI
+					);
+					ctx.lineTo(x + accountRadius, y + height);
+					ctx.arc(
+						x + accountRadius,
+						y + height - accountRadius,
+						accountRadius,
+						0.5 * Math.PI,
+						Math.PI
+					);
+					ctx.lineTo(x, y + accountRadius);
+					ctx.arc(
+						x + accountRadius,
+						y + accountRadius,
+						accountRadius,
+						Math.PI,
+						1.5 * Math.PI
+					);
+					ctx.closePath();
+
+					ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+					ctx.fill();
+
+					ctx.lineWidth = 5;
+					ctx.strokeStyle = "gray";
+					ctx.beginPath();
+					ctx.moveTo(x + accountRadius, y);
+					ctx.lineTo(x + width - accountRadius, y);
+					ctx.arc(
+						x + width - accountRadius,
+						y + accountRadius,
+						accountRadius,
+						1.5 * Math.PI,
+						2 * Math.PI
+					);
+					ctx.lineTo(x + width, y + height - accountRadius);
+					ctx.arc(
+						x + width - accountRadius,
+						y + height - accountRadius,
+						accountRadius,
+						0,
+						0.5 * Math.PI
+					);
+					ctx.lineTo(x + accountRadius, y + height);
+					ctx.arc(
+						x + accountRadius,
+						y + height - accountRadius,
+						accountRadius,
+						0.5 * Math.PI,
+						Math.PI
+					);
+					ctx.lineTo(x, y + accountRadius);
+					ctx.arc(
+						x + accountRadius,
+						y + accountRadius,
+						accountRadius,
+						Math.PI,
+						1.5 * Math.PI
+					);
+					ctx.closePath();
+					ctx.stroke();
+
+					// Linked Player - Avatar
+					const playerEntry = {
+						uid: playerData.player.uid,
+						nickname: playerData.player.nickname,
+						avatar: playerData.player.avatar.icon,
+						characters: playerData.characters
+					};
+					const avatar = await loadImageAsync(
+						image_Header + playerEntry.avatar
+					);
+					ctx.drawImage(avatar, x + 15, y + 15, 95, 95);
+
+					// Linked Player - Name
+					const maxWidth = 150;
+					let fontSize = 24;
+					ctx.textAlign = "center";
+					ctx.fillStyle = "#FFF";
+
+					const tempCanvas = createCanvas(1920, 1080);
+					const tempCtx = tempCanvas.getContext("2d");
+					tempCtx.font = `bold ${fontSize}px 'YaHei', URW DIN Arabic, Arial, sans-serif' `;
+					let textWidth = tempCtx.measureText(
+						playerEntry.nickname
+					).width;
+
+					while (textWidth > maxWidth && fontSize > 14) {
+						fontSize -= 1;
+						tempCtx.font = `bold ${fontSize}px 'YaHei', URW DIN Arabic, Arial, sans-serif' `;
+						textWidth = tempCtx.measureText(
+							playerEntry.nickname
+						).width;
+					}
+
+					ctx.font = `bold ${fontSize}px 'YaHei', URW DIN Arabic, Arial, sans-serif' `;
+					ctx.fillText(`${playerEntry.nickname}`, x + 187.5, y + 60);
+
+					// Linked Player - UID
+					ctx.fillStyle = "#D0D4CA";
+					ctx.font =
+						"bold 20px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.fillText(`${playerEntry.uid}`, x + 187.5, y + 95);
+
+					// Linked Player - Record
+					// Records
+					ctx.fillStyle = "#FFF";
+					ctx.font =
+						"24px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.textAlign = "left";
+					ctx.fillText(tr("profile_characters"), x + 20, y + 150);
+					ctx.font =
+						"bold 24px 'URW DIN Arabic' , Arial, sans-serif' ";
+					ctx.textAlign = "right";
+					ctx.fillText(
+						`${playerData.player.space_info.avatar_count}`,
+						x + 270,
+						y + 150
+					);
+
+					ctx.font =
+						"24px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.textAlign = "left";
+					ctx.fillText(tr("profile_achievement"), x + 20, y + 200);
+					ctx.font =
+						"bold 24px 'URW DIN Arabic' , Arial, sans-serif' ";
+					ctx.textAlign = "right";
+					ctx.fillText(
+						`${playerData.player.space_info.achievement_count}`,
+						x + 270,
+						y + 200
+					);
+
+					ctx.font =
+						"bold 22px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.textAlign = "center";
+					const memory = playerData.player.space_info.memory_data;
+					ctx.fillText(
+						`${
+							memory.chaos_level > 0
+								? `${tr("card_chaosMemory", {
+										z: memory.chaos_level
+									})}`
+								: `${tr("card_Memory", {
+										z: memory.level
+									})}`
+						}`,
+						x + 145,
+						y + 250
+					);
+
+					// Linked Player - Characters
+					const characterWidth = 900 / playerEntry.characters.length;
+					for (let j = 0; j < playerEntry.characters.length; j++) {
+						x = 950 + j * characterWidth;
+						y = 100 + i * 310;
+
+						const charimage = await loadImageAsync(
+							image_Header + playerEntry.characters[j].preview
+						);
+						ctx.drawImage(charimage, x, y, 187, 256);
+
+						ctx.font =
+							"bold 28px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+						ctx.fillStyle = j == 0 ? "#FFD89C" : "white";
+						ctx.textAlign = "center";
+						ctx.fillText(
+							`${playerEntry.characters[j].name}`,
+							x + 93,
+							y + 226
+						);
+						ctx.font =
+							"20px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+						ctx.fillText(
+							`${tr("level2", {
+								z: playerEntry.characters[j].level
+							})}`,
+							x + 93,
+							y + 256
+						);
+					}
+				}
+			}
+		}
+
 		return canvas.toBuffer("image/png");
 	} catch (e) {
+		console.log(e);
 		return null;
 	}
 }

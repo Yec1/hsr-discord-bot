@@ -2,7 +2,11 @@ import {
 	CommandInteraction,
 	SlashCommandBuilder,
 	EmbedBuilder,
-	AttachmentBuilder
+	AttachmentBuilder,
+	ActionRowBuilder,
+	ModalBuilder,
+	TextInputBuilder,
+	TextInputStyle
 } from "discord.js";
 import Queue from "queue";
 import { cardImage } from "../../../services/profile.js";
@@ -19,17 +23,33 @@ export default {
 		.setDescriptionLocalizations({
 			"zh-TW": "展示自己！"
 		})
-		.addUserOption(option =>
-			option
-				.setName("user")
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName("view")
 				.setDescription("...")
 				.setNameLocalizations({
-					"zh-TW": "使用者"
+					"zh-TW": "查看"
 				})
-				.setDescriptionLocalizations({
-					"zh-TW": "..."
+				.addUserOption(option =>
+					option
+						.setName("user")
+						.setDescription("...")
+						.setNameLocalizations({
+							"zh-TW": "使用者"
+						})
+						.setDescriptionLocalizations({
+							"zh-TW": "..."
+						})
+						.setRequired(false)
+				)
+		)
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName("setting")
+				.setDescription("...")
+				.setNameLocalizations({
+					"zh-TW": "設置"
 				})
-				.setRequired(false)
 		),
 	/**
 	 *
@@ -38,10 +58,55 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr, db, emoji) {
-		await interaction.deferReply();
-		const user = interaction.options.getUser("user") ?? interaction.user;
+		const cmd = interaction.options.getSubcommand();
+		if (cmd == "view") {
+			await interaction.deferReply();
+			await interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
+						.setTitle(tr("profile_imageLoading"))
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+						)
+				]
+			});
 
-		handleDrawRequest(user, interaction, tr);
+			const user =
+				interaction.options.getUser("user") ?? interaction.user;
+
+			handleDrawRequest(user, interaction, tr);
+		} else if (cmd == "setting") {
+			const userdb = await db.get(`${interaction.user.id}`);
+
+			await interaction.showModal(
+				new ModalBuilder()
+					.setCustomId("card_set")
+					.setTitle("設定卡片")
+					.addComponents(
+						new ActionRowBuilder().addComponents(
+							new TextInputBuilder()
+								.setCustomId("bg")
+								.setLabel("設置背景圖片 (需要 Premium)")
+								.setPlaceholder(".jpg .png .webp...")
+								.setValue(`${userdb?.bg ? userdb.bg : ""}`)
+								.setStyle(TextInputStyle.Short)
+								.setRequired(false)
+						),
+						new ActionRowBuilder().addComponents(
+							new TextInputBuilder()
+								.setCustomId("image")
+								.setLabel("設置左側圖片")
+								.setPlaceholder(".jpg .png .webp...")
+								.setValue(
+									`${userdb?.image ? userdb.image : ""}`
+								)
+								.setStyle(TextInputStyle.Short)
+								.setRequired(false)
+						)
+					)
+			);
+		}
 	}
 };
 

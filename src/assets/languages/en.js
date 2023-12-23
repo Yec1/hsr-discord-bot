@@ -38,10 +38,10 @@ const langs = {
 	cookie_failedDesc: "Set Cookie </account:1160207139151818852>",
 	cookie_how: "🔥 How to get Cookie?",
 	cookie_set: "Set Cookie",
-	cookie_paste: "Paste the copied Cookie here",
+	cookie_paste: "First method • Put the copied cookie here",
 	cookie_sus: "Cookie linked to <z>!",
-	cookie_ltoken: "Put your ltoken_v2 here",
-	cookie_ltuid: "Put your ltuid_v2 here",
+	cookie_ltoken: "Second method • ltoken_v2 put here",
+	cookie_ltuid: "Second method • ltuid_v2 put here",
 	cookie_new:
 		"We have updated the original Cookie to v2! If you see this paragraph, please use </account:1160207139151818852> to reset the Cookie",
 	cookie_desc:
@@ -175,6 +175,13 @@ const langs = {
 	draw_fail: "Drawing failed, please try again later!",
 	draw_wait: "Your drawing request is being queued, <z> users remain",
 	draw_NoData: "Failed to capture data",
+	card_chaosMemory: "Cleared Chaos Memory Floor <z>",
+	card_Memory: "Cleared Memory Floor <z>",
+	card_setBG: "Background set successfully",
+	card_setImage: "Left-side image set successfully",
+	card_setDesc:
+		"If the image appears below, it means it can be displayed normally",
+	card_delete: "Deleted the set image",
 
 	guarantee: "Guaranteed UP Next",
 	current: "Current Pity",

@@ -86,8 +86,8 @@ client.on(Events.InteractionCreate, async interaction => {
 							new ActionRowBuilder().addComponents(
 								new TextInputBuilder()
 									.setCustomId("ltoken")
-									.setLabel("ltoken_v2")
-									.setPlaceholder(tr("cookie_ltoken"))
+									.setLabel(tr("cookie_ltoken"))
+									.setPlaceholder("v2_...")
 									.setStyle(TextInputStyle.Short)
 									.setRequired(false)
 									.setMinLength(10)
@@ -96,8 +96,8 @@ client.on(Events.InteractionCreate, async interaction => {
 							new ActionRowBuilder().addComponents(
 								new TextInputBuilder()
 									.setCustomId("ltuid")
-									.setLabel("ltuid_v2")
-									.setPlaceholder(tr("cookie_ltuid"))
+									.setLabel(tr("cookie_ltuid"))
+									.setPlaceholder("30...")
 									.setStyle(TextInputStyle.Short)
 									.setRequired(false)
 									.setMinLength(1)
@@ -172,8 +172,8 @@ client.on(Events.InteractionCreate, async interaction => {
 						new ActionRowBuilder().addComponents(
 							new TextInputBuilder()
 								.setCustomId("ltoken")
-								.setLabel("ltoken_v2")
-								.setPlaceholder(tr("cookie_ltoken"))
+								.setLabel(tr("cookie_ltoken"))
+								.setPlaceholder("v2_...")
 								.setStyle(TextInputStyle.Short)
 								.setRequired(false)
 								.setMinLength(10)
@@ -182,8 +182,8 @@ client.on(Events.InteractionCreate, async interaction => {
 						new ActionRowBuilder().addComponents(
 							new TextInputBuilder()
 								.setCustomId("ltuid")
-								.setLabel("ltuid_v2")
-								.setPlaceholder(tr("cookie_ltuid"))
+								.setLabel(tr("cookie_ltuid"))
+								.setPlaceholder("30...")
 								.setStyle(TextInputStyle.Short)
 								.setRequired(false)
 								.setMinLength(1)
@@ -266,6 +266,75 @@ client.on(Events.InteractionCreate, async interaction => {
 					],
 					ephemeral: true
 				});
+			}
+		} else if (interaction.customId == "card_set") {
+			await interaction.deferUpdate().catch(() => {});
+			const userdb = await db.get(`${interaction.user.id}`);
+			const bg = interaction.fields.getTextInputValue("bg");
+			const image = interaction.fields.getTextInputValue("image");
+
+			if (userdb?.premium && bg) {
+				try {
+					await interaction.followUp({
+						embeds: [
+							new EmbedBuilder()
+								.setTitle(tr("card_setBG"))
+								.setDescription(`${tr("card_setDesc")}`)
+								.setThumbnail(
+									"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+								)
+								.setImage(bg)
+						],
+						ephemeral: true
+					});
+
+					await db.set(`${interaction.user.id}.bg`, bg);
+				} catch (e) {}
+			} else if (userdb?.premium && bg == "" && userdb?.bg) {
+				await interaction.followUp({
+					embeds: [
+						new EmbedBuilder()
+							.setTitle(tr("card_delete"))
+							.setThumbnail(
+								"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+							)
+					],
+					ephemeral: true
+				});
+
+				await db.delete(`${interaction.user.id}.bg`);
+			}
+
+			if (image) {
+				try {
+					await interaction.followUp({
+						embeds: [
+							new EmbedBuilder()
+								.setTitle(tr("card_setImage"))
+								.setDescription(`${tr("card_setDesc")}`)
+								.setThumbnail(
+									"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+								)
+								.setImage(image)
+						],
+						ephemeral: true
+					});
+
+					await db.set(`${interaction.user.id}.image`, image);
+				} catch (e) {}
+			} else if (image == "" && userdb?.image) {
+				await interaction.followUp({
+					embeds: [
+						new EmbedBuilder()
+							.setTitle(tr("card_delete"))
+							.setThumbnail(
+								"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+							)
+					],
+					ephemeral: true
+				});
+
+				await db.delete(`${interaction.user.id}.image`);
 			}
 		} else if (interaction.customId.startsWith("uidEdit")) {
 			await interaction.deferReply({ ephemeral: true });

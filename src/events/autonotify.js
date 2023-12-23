@@ -33,10 +33,12 @@ export default async function notifyCheck() {
 			(await db?.get(`${id}.account`))[0].cookie
 		) {
 			const accounts = await db?.get(`${id}.account`);
+			let n = 0;
 			for (const account of accounts) {
 				const uid = account.uid;
 				const cookie = account.cookie;
-				await notifySend(notify, i, uid, cookie);
+				await notifySend(notify, i, uid, cookie, n != 0 ? true : false);
+				n++;
 			}
 		} else {
 			await notifySend(
@@ -57,7 +59,7 @@ export default async function notifyCheck() {
 	UpdateStatistics(total, start_time, sus, fail);
 }
 
-async function notifySend(notify, id, uid, cookie) {
+async function notifySend(notify, id, uid, cookie, mutiAcc) {
 	total++;
 	const locale = (await db?.has(`${id}.locale`))
 		? await db?.get(`${id}.locale`)
@@ -136,7 +138,7 @@ async function notifySend(notify, id, uid, cookie) {
 											: `<t:${
 													moment(new Date()).unix() +
 													res.stamina_recover_time
-											  }:R>`
+												}:R>`
 									}`,
 									value: "\u200b",
 									inline: false
@@ -198,13 +200,13 @@ async function notifySend(notify, id, uid, cookie) {
 															0
 																? `\`${tr(
 																		"notify_claim"
-																  )}\``
+																	)}\``
 																: `<t:${
 																		moment(
 																			new Date()
 																		).unix() +
 																		expedition.remaining_time
-																  }:R>`
+																	}:R>`
 														}`;
 													})
 													.join("\n")
@@ -217,46 +219,52 @@ async function notifySend(notify, id, uid, cookie) {
 				.catch(() => {});
 		}
 	} catch (e) {
-		fail++;
-		notify[id]?.invaild ? notify[id].invaild++ : (notify[id].invaild = 1);
+		if (mutiAcc == true && cookie) {
+			fail++;
+			notify[id]?.invaild
+				? notify[id].invaild++
+				: (notify[id].invaild = 1);
 
-		if (notify[id]?.invaild > 47) remove.push(id);
+			if (notify[id]?.invaild > 47) remove.push(id);
 
-		const userdb = (await db?.has(`${id}.account`))
-			? (await db?.get(`${id}.account`))[0]
-			: await db?.get(`${id}`);
+			const userdb = (await db?.has(`${id}.account`))
+				? (await db?.get(`${id}.account`))[0]
+				: await db?.get(`${id}`);
 
-		const desc = [
-			userdb?.cookie ? "" : tr("cookie_failedDesc"),
-			userdb?.uid ? "" : tr("uid_failedDesc")
-		]
-			.filter(Boolean)
-			.join("\n");
+			const desc = [
+				userdb?.cookie ? "" : tr("cookie_failedDesc"),
+				userdb?.uid ? "" : tr("uid_failedDesc")
+			]
+				.filter(Boolean)
+				.join("\n");
 
-		channel
-			?.send({
-				content: tag,
-				embeds: [
-					new EmbedBuilder()
-						.setConfig(
-							"#E76161",
-							`${tr("auto_Fail", {
-								z: notify[id]?.invaild,
-								max: 48
-							})}`
-						)
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-						.setTitle(`${tr("autoNote_title")} - ${uid}`)
-						.setDescription(
-							`<@${id}> ${tr("notify_failed")}\n\n${desc}\n${tr(
-								"err_code"
-							)}**${e.message}**`
-						)
-				]
-			})
-			.catch(() => {});
+			channel
+				?.send({
+					content: tag,
+					embeds: [
+						new EmbedBuilder()
+							.setConfig(
+								"#E76161",
+								`${tr("auto_Fail", {
+									z: notify[id]?.invaild,
+									max: 48
+								})}`
+							)
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+							.setTitle(`${tr("autoNote_title")} - ${uid}`)
+							.setDescription(
+								`<@${id}> ${tr(
+									"notify_failed"
+								)}\n\n${desc}\n${tr("err_code")}**${
+									e.message
+								}**`
+							)
+					]
+				})
+				.catch(() => {});
+		}
 	}
 }
 

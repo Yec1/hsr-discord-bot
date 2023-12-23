@@ -195,7 +195,7 @@ client.on(Events.InteractionCreate, async interaction => {
 						//           return `${starEmoji} ${name} \`${count}\` ${tr("warp")}`;
 						//         })
 						//         .join("\n")
-						//     : tr("none");
+						//     : `\`${tr("none")}\``
 
 						// if (description.length > 2048)
 						//   description = description.slice(0, 2045) + "...";

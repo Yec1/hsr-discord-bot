@@ -7,10 +7,6 @@ import { i18nMixin } from "../services/i18n.js";
 const webhook = new WebhookClient({ url: client.config.LOGWEBHOOK });
 const db = new QuickDB();
 
-function delay(ms) {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 let sus, fail, signed, total, remove, removeInvaild;
 
 export default async function dailyCheck() {
@@ -42,8 +38,16 @@ export default async function dailyCheck() {
 				(await db?.get(`${id}.account`))[0].cookie
 			) {
 				const accounts = await db?.get(`${id}.account`);
+				let n = 0;
 				for (const account of accounts)
-					await dailySend(daily, id, account.uid, account.cookie);
+					await dailySend(
+						daily,
+						id,
+						account.uid,
+						account.cookie,
+						n != 0 ? true : false
+					);
+				n++;
 			} else
 				await dailySend(
 					daily,
@@ -63,7 +67,7 @@ export default async function dailyCheck() {
 	UpdateStatistics(total, start_time, sus, fail, signed, nowTime);
 }
 
-async function dailySend(daily, id, uid, cookie) {
+async function dailySend(daily, id, uid, cookie, mutiAcc) {
 	total++;
 	const locale = (await db?.has(`${id}.locale`))
 		? await db?.get(`${id}.locale`)
@@ -161,38 +165,40 @@ async function dailySend(daily, id, uid, cookie) {
 				.catch(() => {});
 		}
 	} catch (e) {
-		fail++;
-		daily[id]?.invaild ? daily[id].invaild++ : (daily[id].invaild = 1);
+		if (mutiAcc == true && cookie) {
+			fail++;
+			daily[id]?.invaild ? daily[id].invaild++ : (daily[id].invaild = 1);
 
-		if (daily[id]?.invaild > 6) remove.push(id);
+			if (daily[id]?.invaild > 6) remove.push(id);
 
-		await channel
-			?.send({
-				content: tag,
-				embeds: [
-					new EmbedBuilder()
-						.setConfig(
-							"#E76161",
-							`${tr("auto_Fail", {
-								z: daily[id]?.invaild,
-								max: 7
-							})}`
-						)
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-						.setTitle(`${tr("auto")}${tr("daily_failed")} - ${uid}`)
-						.setDescription(
-							`<@${id}> ${tr("cookie_failedDesc")}\n\n${tr(
-								"err_code"
-							)}**${e.message}**`
-						)
-				]
-			})
-			.catch(() => {});
+			await channel
+				?.send({
+					content: tag,
+					embeds: [
+						new EmbedBuilder()
+							.setConfig(
+								"#E76161",
+								`${tr("auto_Fail", {
+									z: daily[id]?.invaild,
+									max: 7
+								})}`
+							)
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+							.setTitle(
+								`${tr("auto")}${tr("daily_failed")} - ${uid}`
+							)
+							.setDescription(
+								`<@${id}> ${tr("cookie_failedDesc")}\n\n${tr(
+									"err_code"
+								)}**${e.message}**`
+							)
+					]
+				})
+				.catch(() => {});
+		}
 	}
-
-	await delay(500);
 }
 
 function UpdateStatistics(total, start_time, sus, fail, signed, nowTime) {
