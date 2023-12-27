@@ -12,19 +12,21 @@ const color = {
 };
 
 async function player(uid, interaction) {
-	return await fetch(
-		`https://api.mihomo.me/sr_info_parsed/${uid}${
-			(await db?.has(`${interaction?.user.id}.locale`))
-				? (await db?.get(`${interaction.user.id}.locale`)) == "tw"
-					? "?lang=cht"
-					: "?lang=en"
-				: interaction
-				? interaction.locale == "zh-TW"
-					? "?lang=cht"
-					: "?lang=en"
-				: "?lang=cht"
-		}`
-	).then(response => response.json());
+	return await axios
+		.get(
+			`https://api.mihomo.me/sr_info_parsed/${uid}${
+				(await db?.has(`${interaction?.user.id}.locale`))
+					? (await db?.get(`${interaction.user.id}.locale`)) == "tw"
+						? "?lang=cht"
+						: "?lang=en"
+					: interaction
+						? interaction.locale == "zh-TW"
+							? "?lang=cht"
+							: "?lang=en"
+						: "?lang=cht"
+			}`
+		)
+		.then(response => response.data);
 }
 
 async function getNews(lang, type) {

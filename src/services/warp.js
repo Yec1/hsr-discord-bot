@@ -41,10 +41,12 @@ async function fetchWarpData(query, gachaType, id, endId) {
 	query.set("gacha_type", id);
 	query.set("end_id", endId);
 
-	return fetch(
-		"https://api-os-takumi.mihoyo.com/common/gacha_record/api/getGachaLog?" +
-			query
-	).then(response => response.json());
+	return axios
+		.get(
+			"https://api-os-takumi.mihoyo.com/common/gacha_record/api/getGachaLog?" +
+				query
+		)
+		.then(response => response.data);
 }
 
 async function warpLog(input, interaction) {
