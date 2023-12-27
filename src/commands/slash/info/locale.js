@@ -60,6 +60,7 @@ export default {
 		const locale = interaction.options.getString("locale");
 
 		await db.set(`${interaction.user.id}.locale`, locale);
+		await db.set(`${interaction.user.id}.locale`, locale);
 
 		const newTr = i18nMixin(
 			(await db?.has(`${interaction.user.id}.locale`))
