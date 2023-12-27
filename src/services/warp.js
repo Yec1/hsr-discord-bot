@@ -114,11 +114,11 @@ async function warpLog(input, interaction) {
 				const warpData = await fetchWarpData(query, id, last_id);
 
 				if (warpData && warpData.data) {
-					const list = warpData.data.list;
+					const listLength = warpData.data.list.length - 1;
 
-					if (list.length === 0) break;
+					if (listLength < 0) break;
 
-					for (const warp of list) {
+					for (const warp of warpData.data.list) {
 						if (warp.id == lastId) break;
 						tempWarps.push({
 							id: warp.item_id,
@@ -131,7 +131,7 @@ async function warpLog(input, interaction) {
 						});
 					}
 
-					last_id = list[list.length - 1].id;
+					last_id = warpData.data.list[listLength].id;
 					await sleep(500);
 				} else break;
 			}
@@ -154,7 +154,7 @@ async function warpLog(input, interaction) {
 			let total = 0;
 			let count = 0;
 
-			for (const index of warpData) {
+			for (const index of warpData.reverse()) {
 				total++;
 				if (index.rank === "5") {
 					list[warpType].data.push({
@@ -170,6 +170,7 @@ async function warpLog(input, interaction) {
 			}
 
 			const { data } = list[warpType];
+			data.reverse();
 			list[warpType].pity = count;
 			list[warpType].average = data.length
 				? parseFloat(
