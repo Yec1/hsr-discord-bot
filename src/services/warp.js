@@ -2,6 +2,7 @@ import { EmbedBuilder } from "discord.js";
 import { i18nMixin, toI18nLang } from "./i18n.js";
 import { baseWeapons } from "./Constants.js";
 import { join } from "path";
+import axios from "axios";
 import {
 	getRateUpFive,
 	getRateUpFour,
@@ -37,7 +38,7 @@ async function loadImageAsync(url) {
 	}
 }
 
-async function fetchWarpData(query, gachaType, id, endId) {
+async function fetchWarpData(query, id, endId) {
 	query.set("gacha_type", id);
 	query.set("end_id", endId);
 
@@ -76,19 +77,21 @@ async function warpLog(input, interaction) {
 
 	const queryParams = new URLSearchParams(input);
 	const authkey = queryParams.get("authkey");
-	const region = queryParams.get("region");
+	let region = queryParams.get("region");
 	const lastId = queryParams.get("end_id");
-
 	const gachaTypes = { character: 11, light_cone: 12, regular: 1 };
 
-	if (authkey && region && gachaTypes && lastId) {
+	if (authkey) {
 		const query = takumiQuery;
 		query.set("authkey", authkey);
-		query.set("region", region);
 
 		const warps = [];
 
 		for (const [gachaType, id] of Object.entries(gachaTypes)) {
+			const res = await fetchWarpData(query, id, 0);
+			if (!region) region = res.region;
+			query.set("region", region);
+
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -108,19 +111,14 @@ async function warpLog(input, interaction) {
 			const tempWarps = [];
 
 			while (true) {
-				const warpData = await fetchWarpData(
-					query,
-					gachaType,
-					id,
-					last_id
-				);
+				const warpData = await fetchWarpData(query, id, last_id);
 
 				if (warpData && warpData.data) {
-					const listLength = warpData.data.list.length - 1;
+					const list = warpData.data.list;
 
-					if (listLength < 0) break;
+					if (list.length === 0) break;
 
-					for (const warp of warpData.data.list) {
+					for (const warp of list) {
 						if (warp.id == lastId) break;
 						tempWarps.push({
 							id: warp.item_id,
@@ -133,7 +131,7 @@ async function warpLog(input, interaction) {
 						});
 					}
 
-					last_id = warpData.data.list[listLength].id;
+					last_id = list[list.length - 1].id;
 					await sleep(500);
 				} else break;
 			}
@@ -156,7 +154,7 @@ async function warpLog(input, interaction) {
 			let total = 0;
 			let count = 0;
 
-			for (const index of warpData.reverse()) {
+			for (const index of warpData) {
 				total++;
 				if (index.rank === "5") {
 					list[warpType].data.push({
@@ -172,7 +170,6 @@ async function warpLog(input, interaction) {
 			}
 
 			const { data } = list[warpType];
-			data.reverse();
 			list[warpType].pity = count;
 			list[warpType].average = data.length
 				? parseFloat(
