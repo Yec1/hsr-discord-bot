@@ -255,7 +255,6 @@ async function mainPage(playerData, interaction) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
-		console.log(e);
 		return null;
 	}
 }
