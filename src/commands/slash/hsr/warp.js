@@ -50,102 +50,116 @@ export default {
 						.setRequired(true)
 						.addChoices(
 							{
-								name: "1.0.0 - Seele",
+								name: "1.0.1 - Seele",
 								name_localizations: {
-									"zh-TW": "1.0.0 - 希兒"
-								},
-								value: "1.0.0"
-							},
-							{
-								name: "1.0.1 - Jing-Yuan",
-								name_localizations: {
-									"zh-TW": "1.0.1 - 景元"
+									"zh-TW": "1.0.1 - 希兒"
 								},
 								value: "1.0.1"
 							},
 							{
-								name: "1.1.0 - Silver-Wolf",
+								name: "1.0.2 - Jing-Yuan",
 								name_localizations: {
-									"zh-TW": "1.1.0 - 銀狼"
+									"zh-TW": "1.0.2 - 景元"
 								},
-								value: "1.1.0"
+								value: "1.0.2"
 							},
 							{
-								name: "1.1.1 - LuoCha",
+								name: "1.1.1 - Silver-Wolf",
 								name_localizations: {
-									"zh-TW": "1.1.1 - 羅剎"
+									"zh-TW": "1.1.1 - 銀狼"
 								},
 								value: "1.1.1"
 							},
 							{
-								name: "1.2.0 - Blade",
+								name: "1.1.2 - LuoCha",
 								name_localizations: {
-									"zh-TW": "1.2.0 - 刃"
+									"zh-TW": "1.1.2 - 羅剎"
 								},
-								value: "1.2.0"
+								value: "1.1.2"
 							},
 							{
-								name: "1.2.1 - Kafka",
+								name: "1.2.1 - Blade",
 								name_localizations: {
-									"zh-TW": "1.2.1 - 卡芙卡"
+									"zh-TW": "1.2.1 - 刃"
 								},
 								value: "1.2.1"
 							},
 							{
-								name: "1.3.0 - Imbibitor Lunae",
+								name: "1.2.2 - Kafka",
 								name_localizations: {
-									"zh-TW": "1.3.0 - 丹恆・飲月"
+									"zh-TW": "1.2.2 - 卡芙卡"
 								},
-								value: "1.3.0"
+								value: "1.2.2"
 							},
 							{
-								name: "1.3.1 - Fu Xuan",
+								name: "1.3.1 - Imbibitor Lunae",
 								name_localizations: {
-									"zh-TW": "1.3.1 - 符玄"
+									"zh-TW": "1.3.1 - 丹恆・飲月"
 								},
 								value: "1.3.1"
 							},
 							{
-								name: "1.4.0 - Jing Liu",
+								name: "1.3.2 - Fu Xuan",
 								name_localizations: {
-									"zh-TW": "1.4.0 - 鏡流"
+									"zh-TW": "1.3.2 - 符玄"
 								},
-								value: "1.4.0"
+								value: "1.3.2"
 							},
 							{
-								name: "1.4.1 - Topaz & Numdy",
+								name: "1.4.1 - Jing Liu",
 								name_localizations: {
-									"zh-TW": "1.4.1 - 托帕&賬賬"
+									"zh-TW": "1.4.1 - 鏡流"
 								},
 								value: "1.4.1"
 							},
 							{
-								name: "1.5.0 - HuoHuo",
+								name: "1.4.2 - Topaz & Numdy",
 								name_localizations: {
-									"zh-TW": "1.5.0 - 霍霍"
+									"zh-TW": "1.4.2 - 托帕&賬賬"
 								},
-								value: "1.5.0"
+								value: "1.4.2"
 							},
 							{
-								name: "1.5.1 - Argenti",
+								name: "1.5.1 - HuoHuo",
 								name_localizations: {
-									"zh-TW": "1.5.1 - 銀枝"
+									"zh-TW": "1.5.1 - 霍霍"
 								},
 								value: "1.5.1"
 							},
 							{
-								name: "1.6.0 - Ruan Mei",
+								name: "1.5.2 - Argenti",
 								name_localizations: {
-									"zh-TW": "1.6.0 - 阮梅"
+									"zh-TW": "1.5.2 - 銀枝"
 								},
-								value: "1.6.0"
+								value: "1.5.2"
 							},
 							{
-								name: "1.6.1 - Dr. Ratio",
+								name: "1.6.1 - Ruan Mei",
 								name_localizations: {
-									"zh-TW": "1.6.1 - 真理醫生"
+									"zh-TW": "1.6.1 - 阮梅"
 								},
 								value: "1.6.1"
+							},
+							{
+								name: "1.6.2 - Dr. Ratio",
+								name_localizations: {
+									"zh-TW": "1.6.2 - 真理醫生"
+								},
+								value: "1.6.2"
+							},
+							{
+								name: "2.0.1 - Black Swan",
+								name_localizations: {
+									"zh-TW": "2.0.1 - 黑天鵝"
+								},
+								value: "2.0.1"
+							},
+							{
+								name: "2.0.2 - Sparkle",
+								name_localizations: {
+									"zh-TW": "2.0.2 - 花火"
+								},
+								value: "2.0.2"
 							}
 						)
 				)
@@ -593,7 +607,7 @@ export default {
 			const filter = i =>
 				i.customId === "warp_skip" && i.user.id === interaction.user.id;
 
-			const collector = await resMessage.createMessageComponentCollector({
+			const collector = resMessage.createMessageComponentCollector({
 				filter,
 				time: videoTime,
 				componentType: ComponentType.Button
