@@ -125,6 +125,7 @@ async function mainPage(playerData, interaction) {
 		ctx.drawImage(avatar, 896, 70, 128, 128);
 
 		// Name
+		ctx.font = "bold 40px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
 		ctx.fillText(playerData.player.nickname, 960, 260);
@@ -234,7 +235,7 @@ async function mainPage(playerData, interaction) {
 		ctx.font = "bold 24px 'URW DIN Arabic' , Arial, sans-serif' ";
 		ctx.textAlign = "right";
 		ctx.fillText(
-			`${playerData.player.space_info.memory_data.level}/21`,
+			`${playerData.player.space_info.memory_data?.level ?? "0"}/21`,
 			1200,
 			980
 		);
@@ -245,13 +246,16 @@ async function mainPage(playerData, interaction) {
 		ctx.font = "bold 24px 'URW DIN Arabic' , Arial, sans-serif' ";
 		ctx.textAlign = "right";
 		ctx.fillText(
-			`${playerData.player.space_info.memory_data.chaos_level}/10`,
+			`${
+				playerData.player.space_info.memory_data?.chaos_level ?? "0"
+			}/12`,
 			1200,
 			1020
 		);
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
+		console.log(e);
 		return null;
 	}
 }
@@ -1106,10 +1110,10 @@ async function cardImage(user, interaction) {
 						`${
 							memory.chaos_level > 0
 								? `${tr("card_chaosMemory", {
-										z: memory.chaos_level
+										z: memory?.chaos_level ?? "0"
 									})}`
 								: `${tr("card_Memory", {
-										z: memory.level
+										z: memory?.level ?? "0"
 									})}`
 						}`,
 						x + 145,
