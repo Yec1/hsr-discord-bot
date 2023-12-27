@@ -765,7 +765,7 @@ export default {
 							.setTitle(tr("warp_how"))
 							.setDescription(
 								tr("warp_howDesc", {
-									z: `\`\`\`powershell\nStart-Process powershell -Verb runAs -ArgumentList '-NoExit -Command "Invoke-Expression  (New-Object Net.WebClient).DownloadString(\\"https://raw.githubusercontent.com/yeci226/HSR/main/getwarps.ps1\\")"'\n\`\`\``
+									z: `\`\`\`powershell\n[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; Invoke-Expression (New-Object Net.WebClient).DownloadString("https://gist.githubusercontent.com/Star-Rail-Station/2512df54c4f35d399cc9abbde665e8f0/raw/get_warp_link_os.ps1")\n\`\`\``
 								})
 							)
 					],
