@@ -15,8 +15,8 @@ import emoji from "../assets/emoji.js";
 import { QuickDB } from "quick.db";
 import { Logger } from "../services/logger.js";
 const db = new QuickDB();
-const FBwebhook = new WebhookClient({ url: client.config.FBWEBHOOK });
-const webhook = new WebhookClient({ url: client.config.CMDWEBHOOK });
+const FBwebhook = new WebhookClient({ url: process.env.FBWEBHOOK });
+const webhook = new WebhookClient({ url: process.env.CMDWEBHOOK });
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (interaction.channel.type == ChannelType.DM) return;

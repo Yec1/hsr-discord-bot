@@ -3,7 +3,7 @@ import { WebhookClient, EmbedBuilder } from "discord.js";
 import { Logger } from "../services/logger.js";
 
 const webhook = new WebhookClient({
-	url: client.config.ERRWEBHOOK
+	url: process.env.ERRWEBHOOK
 });
 
 client.on("error", error => {

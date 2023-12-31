@@ -13,7 +13,6 @@ yarn-error.log
 .VSCodeCounter/
 
 # env
-config.json
 .env
 .env.*
 env.development
