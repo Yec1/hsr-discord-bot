@@ -121,7 +121,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 			calXP(interaction.user.id).catch(() => {});
 
-			new Logger("指令").info(
+			new Logger("指令").command(
 				`${interaction.user.displayName}(${interaction.user.id}) 執行 ${command.data.name} - ${time}`
 			);
 			webhook.send({

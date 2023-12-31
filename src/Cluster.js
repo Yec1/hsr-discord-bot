@@ -10,10 +10,7 @@ const manager = new ClusterManager(`${process.cwd()}/src/index.js`, {
 	totalClusters: 5,
 	shardsPerClusters: 5,
 	mode: "worker",
-	token:
-		process.env.NODE_ENV === "dev"
-			? process.env.TESTOKEN
-			: process.env.TOKEN,
+	token: process.env.TOKEN,
 	restarts: {
 		max: 5,
 		interval: 1000 * 60 * 60 * 2

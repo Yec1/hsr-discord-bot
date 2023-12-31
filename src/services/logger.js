@@ -12,6 +12,14 @@ class Logger {
 		);
 	}
 
+	command(message) {
+		console.log(
+			`${chalk.gray(new Date().toLocaleString())} ${chalk.hex("#F3CCF3")(
+				`[${this.origin}]`
+			)} ${message}`
+		);
+	}
+
 	success(message) {
 		console.log(
 			`${chalk.gray(new Date().toLocaleString())} ${chalk.green(

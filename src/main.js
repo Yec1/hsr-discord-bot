@@ -15,6 +15,4 @@ client.commands = {
 client.loader = new Loader(client);
 await client.loader.load();
 
-client.login(
-	process.env.NODE_ENV === "dev" ? process.env.TESTOKEN : process.env.TOKEN
-);
+client.login(process.env.TOKEN);
