@@ -15,7 +15,7 @@
 		"type": "git",
 		"url": "git+https://github.com/yeci226/HSRre.git"
 	},
-	"license": "MIT",
+	"license": "GPL-3.0",
 	"type": "module",
 	"keywords": [
 		"discord bot",
