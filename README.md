@@ -55,6 +55,11 @@ cd HSRre
 
 # Install dependencies.
 npm install / yarn install
+
+# Build Package
+cd node_modules/hoyoapi
+npm install / yarn install
+npm run build / yarn build
 ```
 
 ## Usage
