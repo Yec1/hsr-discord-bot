@@ -5,7 +5,7 @@ import { QuickDB } from "quick.db";
 import { i18nMixin } from "../services/i18n.js";
 import { Logger } from "../services/logger.js";
 
-const webhook = new WebhookClient({ url: client.config.LOGWEBHOOK });
+const webhook = new WebhookClient({ url: process.env.LOGWEBHOOK });
 const db = new QuickDB();
 
 let sus, fail, signed, total, remove, removeInvaild;

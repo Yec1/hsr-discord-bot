@@ -1,7 +1,7 @@
 import { client } from "../index.js";
 import { Events, WebhookClient, EmbedBuilder, ActivityType } from "discord.js";
 import moment from "moment";
-const webhook = new WebhookClient({ url: client.config.JLWEBHOOK });
+const webhook = new WebhookClient({ url: process.env.JLWEBHOOK });
 
 client.on(Events.GuildDelete, async guild => {
 	const results = await client.cluster.broadcastEval(
