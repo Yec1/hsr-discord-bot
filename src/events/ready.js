@@ -6,15 +6,10 @@ import dailyCheck from "./autodaily.js";
 import { Logger } from "../services/logger.js";
 
 async function updatePresence() {
-	const results = await client.cluster.broadcastEval(
-		c => c.guilds.cache.size
-	);
-	const totalGuilds = results.reduce((prev, val) => prev + val, 0);
-
 	client.user.setPresence({
 		activities: [
 			{
-				name: `${totalGuilds} 個伺服器`,
+				name: `${client.guilds.cache.size} 個伺服器`,
 				type: ActivityType.Watching
 			}
 		],
