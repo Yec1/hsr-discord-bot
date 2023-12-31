@@ -48,7 +48,7 @@ You are free to make changes to this project, just include the original bot and 
 
 ```bash
 # Clone this repo.
-git clone https://github.com/Yec1/HSRre.git
+git clone https://github.com/Yec1/hsr-discord-bot
 
 # Enter the repository.
 cd HSRre
