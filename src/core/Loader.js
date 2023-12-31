@@ -1,6 +1,7 @@
 import _glob from "glob";
 import { promisify } from "util";
 import { ApplicationCommandType } from "discord.js";
+import { Logger } from "../services/logger.js";
 
 const glob = promisify(_glob);
 export class Loader {
@@ -39,8 +40,8 @@ export class Loader {
 			if ("data" in file && "execute" in file) {
 				this.client.commands.slash.set(file.data.name, file);
 			} else {
-				console.log(
-					`The command at ${dir} is missing a required "data" or "execute" property.`
+				new Logger("系統").error(
+					`${dir} 處的指令缺少必要的「資料」或「執行」屬性`
 				);
 			}
 			this.client.commands.slash.set(file.name, file);
@@ -54,9 +55,11 @@ export class Loader {
 				delete file.description;
 			slashArr.push(file.data);
 		}
-		console.log(
-			`Loaded ${events.length} events, ${slashArr.length} slashs, ${msgArr.length} message commands`
+
+		new Logger("系統").success(
+			`已載入 ${events.length} 事件、${slashArr.length} 斜線指令、${msgArr.length} 訊息指令`
 		);
+
 		this.client.on("ready", async () => {
 			await this.client.application.commands.set(slashArr);
 		});

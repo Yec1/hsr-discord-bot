@@ -3,6 +3,7 @@ import { Events, ActivityType } from "discord.js";
 import schedule from "node-schedule";
 import notifyCheck from "./autonotify.js";
 import dailyCheck from "./autodaily.js";
+import { Logger } from "../services/logger.js";
 
 async function updatePresence() {
 	const results = await client.cluster.broadcastEval(
@@ -22,7 +23,7 @@ async function updatePresence() {
 }
 
 client.on(Events.ClientReady, async () => {
-	console.log(`[CLIENT] ${client.user.tag} 已經上線！`);
+	new Logger("系統").success(`${client.user.tag} 已經上線！`);
 	dailyCheck();
 	notifyCheck();
 

@@ -3,6 +3,7 @@ import fs from "fs";
 Object.assign(process.env, dotenv.parse(fs.readFileSync("./.env")));
 
 import { ClusterManager, HeartbeatManager } from "discord-hybrid-sharding";
+import { Logger } from "./services/logger.js";
 
 const manager = new ClusterManager(`${process.cwd()}/src/index.js`, {
 	totalShards: "auto",
@@ -28,15 +29,15 @@ manager.extend(
 
 manager.on("clusterCreate", cluster => {
 	cluster.on("ready", () => {
-		console.log(`[SHARD] Launched Cluster ${cluster.id}`);
+		new Logger("分片").info(`已啟動 Cluster #${cluster.id}`);
 	});
 
 	cluster.on("reconnecting", () => {
-		console.log(`[SHARD] Reconnecting Cluster ${cluster.id} to discord WS`);
+		new Logger("分片").info(`重新連接集群 #${cluster.id} 至 Discord WS`);
 	});
 
 	cluster.on("death", () => {
-		console.log(`[SHARD] Reclustering Cluster ${cluster.id}`);
+		new Logger("分片").info(`重新聚類集群 ${cluster.id}`);
 		manager.recluster?.start();
 	});
 });

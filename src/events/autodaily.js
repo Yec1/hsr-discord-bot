@@ -3,6 +3,7 @@ import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { EmbedBuilder, WebhookClient } from "discord.js";
 import { QuickDB } from "quick.db";
 import { i18nMixin } from "../services/i18n.js";
+import { Logger } from "../services/logger.js";
 
 const webhook = new WebhookClient({ url: client.config.LOGWEBHOOK });
 const db = new QuickDB();
@@ -28,6 +29,7 @@ export default async function dailyCheck() {
 	sus = 0;
 
 	// Start
+	new Logger("自動執行").success(`已開始 ${nowTime} 點自動簽到`);
 	for (const id of autoDaily) {
 		const time = daily[id]?.time ? daily[id].time : "13";
 
@@ -207,6 +209,9 @@ function UpdateStatistics(total, start_time, sus, fail, signed, nowTime) {
 		((end_time - start_time) / (total > 0 ? total : 1) / 1000).toFixed(3)
 	);
 
+	new Logger("自動執行").success(
+		`已結束 ${nowTime} 點自動簽到，簽到 ${sus}/${total} 人`
+	);
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()

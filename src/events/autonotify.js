@@ -6,6 +6,7 @@ import { i18nMixin } from "../services/i18n.js";
 import moment from "moment-timezone";
 import emoji from "../assets/emoji.js";
 import { staminaColor } from "../services/request.js";
+import { Logger } from "../services/logger.js";
 
 const webhook = new WebhookClient({ url: client.config.LOGWEBHOOK });
 const db = new QuickDB();
@@ -17,6 +18,11 @@ export default async function notifyCheck() {
 	const autoNotify = Object.keys(notify);
 
 	// Log
+	const nowTime = new Date().toLocaleString("en-US", {
+		timeZone: "Asia/Taipei",
+		hour: "numeric",
+		hour12: false
+	});
 	const start_time = Date.now();
 	remove = [];
 	removeInvaild = [];
@@ -25,6 +31,7 @@ export default async function notifyCheck() {
 	total = 0;
 
 	// Start
+	new Logger("自動執行").info(`已開始 ${nowTime} 點自動通知`);
 	for (const i of autoNotify) {
 		const id = i;
 		if (
@@ -56,7 +63,7 @@ export default async function notifyCheck() {
 		removeInvaild.map(id => db.delete(`autoNotify.${id}.invaild`))
 	);
 
-	UpdateStatistics(total, start_time, sus, fail);
+	UpdateStatistics(total, start_time, sus, fail, nowTime);
 }
 
 async function notifySend(notify, id, uid, cookie, mutiAcc) {
@@ -268,12 +275,15 @@ async function notifySend(notify, id, uid, cookie, mutiAcc) {
 	}
 }
 
-function UpdateStatistics(total, start_time, sus, fail) {
+function UpdateStatistics(total, start_time, sus, fail, nowTime) {
 	const end_time = Date.now();
 	const average_time = parseFloat(
 		((end_time - start_time) / (total > 0 ? total : 1) / 1000).toFixed(3)
 	);
 
+	new Logger("自動執行").info(
+		`已結束 ${nowTime} 點自動通知，通知 ${sus}/${total} 人`
+	);
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()

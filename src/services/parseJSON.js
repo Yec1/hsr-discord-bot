@@ -1,4 +1,5 @@
 // const axios = require("axios");
+// import { Logger } from "./logger.js";
 
 const cleanText = text => {
 	return text
@@ -43,7 +44,7 @@ const weaponJSON = localWeaponJSON.reduce((acc, item) => {
 //     return acc;
 //   }, {});
 // } catch (error) {
-// console.log("網路請求錯誤：", error);
+// new Logger("網路請求").info(`錯誤訊息：${error}`);
 // charJSON = require(`./assets/char.json`);
 // weaponJSON = require(`./assets/weapons.json`);
 // bannerJSON = require(`./assets/banners.json`);

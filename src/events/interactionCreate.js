@@ -13,6 +13,7 @@ import {
 } from "discord.js";
 import emoji from "../assets/emoji.js";
 import { QuickDB } from "quick.db";
+import { Logger } from "../services/logger.js";
 const db = new QuickDB();
 const FBwebhook = new WebhookClient({ url: client.config.FBWEBHOOK });
 const webhook = new WebhookClient({ url: client.config.CMDWEBHOOK });
@@ -113,18 +114,20 @@ client.on(Events.InteractionCreate, async interaction => {
 		try {
 			command.execute(client, interaction, args, i18n, db, emoji);
 
+			const time = `花費 ${(
+				(Date.now() - interaction.createdTimestamp) /
+				1000
+			).toFixed(2)} 秒`;
+
 			calXP(interaction.user.id).catch(() => {});
 
+			new Logger("指令").info(
+				`${interaction.user.displayName}(${interaction.user.id}) 執行 ${command.data.name} - ${time}`
+			);
 			webhook.send({
 				embeds: [
 					new EmbedBuilder()
-						.setConfig(
-							null,
-							`花費 ${(
-								(Date.now() - interaction.createdTimestamp) /
-								1000
-							).toFixed(2)} 秒`
-						)
+						.setConfig(null, time)
 						.setTimestamp()
 						.setAuthor({
 							iconURL: interaction.user.displayAvatarURL({
@@ -154,7 +157,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				]
 			});
 		} catch (e) {
-			console.log(e);
+			new Logger("指令").error(`錯誤訊息：${error}`);
 			await interaction.reply({
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true
@@ -166,7 +169,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		try {
 			command.execute(client, interaction);
 		} catch (e) {
-			console.log(e);
+			new Logger("指令").error(`錯誤訊息：${error}`);
 			await interaction.reply({
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true
