@@ -12,9 +12,9 @@ import {
 	ButtonStyle
 } from "discord.js";
 import emoji from "../assets/emoji.js";
-import { QuickDB } from "quick.db";
 import { Logger } from "../services/logger.js";
-const db = new QuickDB();
+
+const db = client.db;
 const FBwebhook = new WebhookClient({ url: process.env.FBWEBHOOK });
 const webhook = new WebhookClient({ url: process.env.CMDWEBHOOK });
 

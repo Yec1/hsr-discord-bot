@@ -1,8 +1,8 @@
 import { join } from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import { i18nMixin, toI18nLang } from "./i18n.js";
-import { QuickDB } from "quick.db";
-const db = new QuickDB();
+import { client } from "../index.js";
+const db = client.db;
 
 GlobalFonts.registerFromPath(
 	join(".", "src", ".", "assets", "URW-DIN-Arabic-Medium.ttf"),

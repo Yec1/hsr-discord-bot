@@ -12,8 +12,7 @@ import { i18nMixin, toI18nLang } from "../services/i18n.js";
 import { trimCookie } from "../services/cookie.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { player } from "../services/request.js";
-import { QuickDB } from "quick.db";
-const db = new QuickDB();
+const db = client.db;
 
 client.on(Events.InteractionCreate, async interaction => {
 	const tr = i18nMixin(

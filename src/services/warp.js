@@ -3,6 +3,7 @@ import { i18nMixin, toI18nLang } from "./i18n.js";
 import { baseWeapons } from "./Constants.js";
 import { join } from "path";
 import axios from "axios";
+import { client } from "../index.js";
 import {
 	getRateUpFive,
 	getRateUpFour,
@@ -13,8 +14,7 @@ import {
 } from "./parseJSON.js";
 import trans from "../assets/translations.json" assert { type: "json" };
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
-import { QuickDB } from "quick.db";
-const db = new QuickDB();
+const db = client.db;
 
 GlobalFonts.registerFromPath(
 	join(".", "src", ".", "assets", "URW-DIN-Arabic-Medium.ttf"),

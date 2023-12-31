@@ -1,12 +1,11 @@
 import { client } from "../index.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { EmbedBuilder, WebhookClient } from "discord.js";
-import { QuickDB } from "quick.db";
 import { i18nMixin } from "../services/i18n.js";
 import { Logger } from "../services/logger.js";
 
 const webhook = new WebhookClient({ url: process.env.LOGWEBHOOK });
-const db = new QuickDB();
+const db = client.db;
 
 let sus, fail, signed, total, remove, removeInvaild;
 

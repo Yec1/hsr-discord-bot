@@ -11,11 +11,10 @@ import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { i18nMixin, toI18nLang } from "../services/i18n.js";
 import { player, getNews } from "../services/request.js";
 import { charPage, mainPage, loadCharacters } from "../services/profile.js";
-import { QuickDB } from "quick.db";
 import axios from "axios";
 import Queue from "queue";
 
-const db = new QuickDB();
+const db = client.db;
 const drawQueue = new Queue({ autostart: true });
 
 const image_Header =

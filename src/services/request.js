@@ -1,6 +1,6 @@
 import axios from "axios";
-import { QuickDB } from "quick.db";
-const db = new QuickDB();
+import { client } from "../index.js";
+const db = client.db;
 
 const color = {
 	0: "#AAC8A7",

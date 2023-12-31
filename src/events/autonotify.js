@@ -1,7 +1,6 @@
 import { client } from "../index.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { EmbedBuilder, WebhookClient } from "discord.js";
-import { QuickDB } from "quick.db";
 import { i18nMixin } from "../services/i18n.js";
 import moment from "moment-timezone";
 import emoji from "../assets/emoji.js";
@@ -9,7 +8,7 @@ import { staminaColor } from "../services/request.js";
 import { Logger } from "../services/logger.js";
 
 const webhook = new WebhookClient({ url: process.env.LOGWEBHOOK });
-const db = new QuickDB();
+const db = client.db;
 
 let sus, fail, total, remove, removeInvaild;
 

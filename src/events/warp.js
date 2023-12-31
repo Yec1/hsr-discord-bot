@@ -10,10 +10,9 @@ import {
 } from "discord.js";
 import { warpLog, warpLogImage } from "../services/warp.js";
 import { i18nMixin, toI18nLang } from "../services/i18n.js";
-import { QuickDB } from "quick.db";
 import Queue from "queue";
 
-const db = new QuickDB();
+const db = client.db;
 const drawQueue = new Queue({ autostart: true });
 
 client.on(Events.InteractionCreate, async interaction => {

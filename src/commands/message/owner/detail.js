@@ -1,6 +1,4 @@
 import { Client, Message, EmbedBuilder } from "discord.js";
-import { QuickDB } from "quick.db";
-const db = new QuickDB();
 
 export default {
 	name: "detail",
@@ -11,6 +9,7 @@ export default {
 	 * @param {String[]} args
 	 */
 	execute: async (client, message, args, emoji) => {
+		const db = client.db;
 		const id = args[0];
 		const data = await db.get(`${id}`);
 

@@ -5,8 +5,8 @@ import { i18nMixin, toI18nLang } from "./i18n.js";
 import { getRandomColor, roundRect } from "./utils.js";
 import { player } from "./request.js";
 import { readdirSync } from "fs";
-import { QuickDB } from "quick.db";
-const db = new QuickDB();
+import { client } from "../index.js";
+const db = client.db;
 
 GlobalFonts.registerFromPath(
 	join(".", "src", ".", "assets", "URW-DIN-Arabic-Medium.ttf"),

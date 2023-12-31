@@ -1,5 +1,5 @@
-import { QuickDB } from "quick.db";
-const db = new QuickDB();
+import { client } from "../index.js";
+const db = client.db;
 
 function getRandomColor() {
 	const letters = "0123456789ABCDEF";

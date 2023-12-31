@@ -1,8 +1,5 @@
 import { Client, Message, EmbedBuilder } from "discord.js";
-import { QuickDB } from "quick.db";
 import { inspect } from "util";
-
-const db = new QuickDB();
 
 export default {
 	name: "eval",
@@ -13,6 +10,7 @@ export default {
 	 * @param {String[]} args
 	 */
 	execute: async (client, message, args, emoji) => {
+		const db = client.db;
 		const code = args.join(" ").trim();
 		if (!code.startsWith("```js") || !code.endsWith("```")) {
 			return message.reply({
