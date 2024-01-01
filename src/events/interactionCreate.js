@@ -105,14 +105,14 @@ client.on(Events.InteractionCreate, async interaction => {
 			} else if (option.value) args.push(option.value);
 		}
 
-		if (
-			interaction.member.roles.cache.has("1012968415964704768") &&
-			!(await db.has(`${interaction.user.id}.premium`))
-		)
-			await db.set(`${interaction.user.id}.premium`, true);
-
 		try {
 			command.execute(client, interaction, args, i18n, db, emoji);
+
+			if (
+				interaction.member.roles.cache.has("1012968415964704768") &&
+				!(await db.has(`${interaction.user.id}.premium`))
+			)
+				await db.set(`${interaction.user.id}.premium`, true);
 
 			const time = `花費 ${(
 				(Date.now() - interaction.createdTimestamp) /
@@ -157,7 +157,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				]
 			});
 		} catch (e) {
-			new Logger("指令").error(`錯誤訊息：${error}`);
+			new Logger("指令").error(`錯誤訊息：${e.message}`);
 			await interaction.reply({
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true
@@ -169,7 +169,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		try {
 			command.execute(client, interaction);
 		} catch (e) {
-			new Logger("指令").error(`錯誤訊息：${error}`);
+			new Logger("指令").error(`錯誤訊息：${e.message}`);
 			await interaction.reply({
 				content: "哦喲，好像出了一點小問題，請重試",
 				ephemeral: true

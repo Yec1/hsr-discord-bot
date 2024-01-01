@@ -98,9 +98,7 @@ export default {
 				ephemeral: true
 			});
 
-		await interaction.deferReply();
-
-		await interaction.editReply({
+		await replyOrfollowUp(interaction, {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
