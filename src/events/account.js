@@ -138,7 +138,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				await db.set(`${interaction.user.id}.account`, accounts);
 			}
 
-			return await interaction.editReply({
+			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#F6F1F1")
@@ -196,8 +196,8 @@ client.on(Events.InteractionCreate, async interaction => {
 	if (interaction.isModalSubmit()) {
 		if (interaction.customId.startsWith("cookie_set")) {
 			const i = interaction.customId.split("-")[1];
-			const ltoken = interaction.fields.getTextInputValue("ltoken");
-			const ltuid = interaction.fields.getTextInputValue("ltuid");
+			const ltoken = interaction.fields.getTextInputValue("ltoken") || "";
+			const ltuid = interaction.fields.getTextInputValue("ltuid") || "";
 			const cookie =
 				interaction.fields.getTextInputValue("cookie") ||
 				`ltoken_v2=${ltoken}; ltuid_v2=${ltuid}`;

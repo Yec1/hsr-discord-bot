@@ -99,7 +99,7 @@ export default {
 					ephemeral: true
 				});
 
-			await interaction.deferReply({ ephemeral: true });
+			await interaction.deferReply({ ephemeral: true }).catch(() => {});
 		}
 
 		const accounts = await db.get(`${interaction.user.id}.account`);

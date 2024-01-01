@@ -34,7 +34,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 		const [uid, i, userId] = interaction.values[0].split("-");
 
-		await interaction.editReply({
+		await replyOrfollowUp(interaction, {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -43,8 +43,7 @@ client.on(Events.InteractionCreate, async interaction => {
 						"https://media.discordapp.net/attachments/1057244827688910850/1126170338850504704/a_08824a3a9df7a4c9acfc3c7777be4034.gif"
 					)
 			],
-			components: [],
-			ephemeral: true
+			components: []
 		});
 
 		await handleDrawRequest(i, uid, userId, interaction);
