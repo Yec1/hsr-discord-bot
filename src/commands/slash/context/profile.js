@@ -134,7 +134,7 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 						.setConfig()
 						.setTitle(
 							`${tr("draw_fail")}\n${tr("err_code")}${
-								error.message
+								error?.response?.data?.detail ?? error.message
 							}`
 						)
 						.setThumbnail(

@@ -14,7 +14,6 @@ import {
 	saveLeaderboard
 } from "../../../services/profile.js";
 import Queue from "queue";
-
 const drawQueue = new Queue({ autostart: true });
 
 export default {
@@ -63,24 +62,19 @@ export default {
 			? interaction.options.getInteger("uid")
 			: (await db.has(
 						`${interaction.options.getUser("user")?.id}.account`
-				  ))
-				? (
+			    ))
+			  ? (
 						await db.get(
 							`${interaction.options.getUser("user")?.id}.account`
 						)
-					)[0].uid
-				: (await db.has(
-							`${interaction.options.getUser("user")?.id}.uid`
-					  ))
-					? await db.get(
-							`${interaction.options.getUser("user")?.id}.uid`
-						)
-					: (await db.has(`${interaction.user.id}.account`))
-						? (await db.get(`${interaction.user.id}.account`))[0]
-								.uid
-						: (await db.has(`${interaction.user.id}.uid`))
-							? await db.get(`${interaction.user.id}.uid`)
-							: null;
+			    )[0].uid
+			  : (await db.has(`${interaction.options.getUser("user")?.id}.uid`))
+			    ? await db.get(`${interaction.options.getUser("user")?.id}.uid`)
+			    : (await db.has(`${interaction.user.id}.account`))
+			      ? (await db.get(`${interaction.user.id}.account`))[0].uid
+			      : (await db.has(`${interaction.user.id}.uid`))
+			        ? await db.get(`${interaction.user.id}.uid`)
+			        : null;
 
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
@@ -262,11 +256,12 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 						.setConfig()
 						.setTitle(
 							`${tr("draw_fail")}\n${tr("err_code")}${
-								error.message
+								error?.response?.data?.detail ?? error.message
 							}`
 						)
+
 						.setThumbnail(
-							"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 				]
 			});

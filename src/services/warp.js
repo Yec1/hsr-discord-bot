@@ -178,7 +178,7 @@ async function warpLog(input, interaction) {
 							data.reduce((acc, i) => acc + i.count, 0) /
 							data.length
 						).toFixed(2)
-					)
+				  )
 				: 0;
 			list[warpType].total = total;
 		}
@@ -362,7 +362,7 @@ async function createImage(id, warpResults) {
 					ctx.stroke();
 
 					const starlight = await loadImage(
-						"./src/assets/image/undying-starlight.png"
+						"./src/assets/image/warp/undying-starlight.png"
 					);
 					ctx.drawImage(starlight, xOffset + 8, yOffset + 8, 64, 64);
 
@@ -379,8 +379,8 @@ async function createImage(id, warpResults) {
 									? "8"
 									: "20"
 								: dataBank[id] < 7
-									? "20"
-									: "100"
+								  ? "20"
+								  : "100"
 						}`,
 						xOffset + 40,
 						yOffset + 75
@@ -422,8 +422,8 @@ async function createImage(id, warpResults) {
 
 						const eidolon = await loadImage(
 							item.rarity == 4
-								? "./src/assets/image/eidolon-4star.png"
-								: "./src/assets/image/eidolon-5star.png"
+								? "./src/assets/image/warp/eidolon-4star.png"
+								: "./src/assets/image/warp/eidolon-5star.png"
 						);
 						ctx.drawImage(
 							eidolon,
@@ -618,7 +618,7 @@ async function warpLogImage(interaction, datas, title) {
 		const canvas = createCanvas(1370, 900);
 		const ctx = canvas.getContext("2d");
 
-		const bg = await loadImageAsync("./src/assets/image/warpbg.jpg");
+		const bg = await loadImageAsync("./src/assets/image/warp/warpbg.jpg");
 		ctx.drawImage(bg, 0, 0, 1920, 1080);
 
 		// Draw Icon
@@ -785,7 +785,7 @@ async function warpLogImage(interaction, datas, title) {
 										type == "light_cone"
 											? "light_cone"
 											: "avatar"
-									}/${id}.png`)
+								  }/${id}.png`)
 					);
 					const imageWidth = 2 * (radius - lineWidth);
 					const imageHeight = 2 * (radius - lineWidth);

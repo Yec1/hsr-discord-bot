@@ -115,7 +115,7 @@ async function mainPage(playerData, interaction) {
 		const ctx = canvas.getContext("2d");
 
 		// BG
-		const bg = await loadImageAsync("./src/assets/image/bg.jpg");
+		const bg = await loadImageAsync("./src/assets/image/warp/bg.jpg");
 		ctx.drawImage(bg, 0, 0, 1920, 1080);
 
 		// Avatar
@@ -270,7 +270,7 @@ async function charPage(characters, playerData, num, interaction) {
 		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
 		// BG
-		const bg = await loadImageAsync("./src/assets/image/bg.jpg");
+		const bg = await loadImageAsync("./src/assets/image/warp/bg.jpg");
 		ctx.drawImage(bg, 0, 0, 1920, 1080);
 
 		// Name
@@ -571,8 +571,8 @@ async function charPage(characters, playerData, num, interaction) {
 				mainAff >= 0.75
 					? "#F3B664"
 					: mainAff > 0
-						? "#FFFFFF"
-						: "#B6BBC4"; //"#EAB308"; // #FFFFFF
+					  ? "#FFFFFF"
+					  : "#B6BBC4"; //"#EAB308"; // #FFFFFF
 			ctx.textAlign = "left";
 
 			let lineHeight = 24;
@@ -669,8 +669,8 @@ async function charPage(characters, playerData, num, interaction) {
 					weight >= 0.75
 						? "#F3B664"
 						: weight > 0
-							? "#FFFFFF"
-							: "#B6BBC4";
+						  ? "#FFFFFF"
+						  : "#B6BBC4";
 				ctx.fillStyle = color;
 				ctx.textAlign = "left";
 
@@ -721,8 +721,8 @@ async function charPage(characters, playerData, num, interaction) {
 					? 1685
 					: 1720
 				: interaction.locale == "zh-TW"
-					? 1685
-					: 1720,
+				  ? 1685
+				  : 1720,
 			830
 		);
 
@@ -751,7 +751,7 @@ async function cardImage(user, interaction) {
 				: `./src/assets/image/cards/${Math.floor(
 						Math.random() *
 							readdirSync("./src/assets/image/cards/").length
-					)}.png`;
+				  )}.png`;
 
 		const bgImage = await loadImageAsync(bg);
 
@@ -1110,10 +1110,10 @@ async function cardImage(user, interaction) {
 							memory.chaos_level > 0
 								? `${tr("card_chaosMemory", {
 										z: memory?.chaos_level ?? "0"
-									})}`
+								  })}`
 								: `${tr("card_Memory", {
 										z: memory?.level ?? "0"
-									})}`
+								  })}`
 						}`,
 						x + 145,
 						y + 250

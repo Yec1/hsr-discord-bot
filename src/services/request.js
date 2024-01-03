@@ -20,10 +20,10 @@ async function player(uid, interaction) {
 						? "?lang=cht"
 						: "?lang=en"
 					: interaction
-						? interaction.locale == "zh-TW"
+					  ? interaction.locale == "zh-TW"
 							? "?lang=cht"
 							: "?lang=en"
-						: "?lang=cht"
+					  : "?lang=cht"
 			}`
 		)
 		.then(response => response.data);

@@ -64,7 +64,7 @@ client.on(Events.InteractionCreate, async interaction => {
 									playerData,
 									i,
 									interaction
-								);
+							  );
 					if (imageBuffer == null) throw new Error(tr("draw_NoData"));
 
 					const image = new AttachmentBuilder(imageBuffer, {
@@ -99,7 +99,7 @@ client.on(Events.InteractionCreate, async interaction => {
 									)
 								],
 								files: [image]
-							})
+						  })
 						: await interaction.editReply({
 								embeds: [],
 								components: [
@@ -134,7 +134,7 @@ client.on(Events.InteractionCreate, async interaction => {
 									)
 								],
 								files: [image]
-							});
+						  });
 				} catch (error) {
 					await interaction.editReply({
 						embeds: [
@@ -142,6 +142,7 @@ client.on(Events.InteractionCreate, async interaction => {
 								.setConfig()
 								.setTitle(
 									`${tr("draw_fail")}\n${tr("err_code")}${
+										error?.response?.data?.detail ??
 										error.message
 									}`
 								)
@@ -277,8 +278,8 @@ client.on(Events.InteractionCreate, async interaction => {
 						? LanguageEnum.TRADIIONAL_CHINESE
 						: LanguageEnum.ENGLISH
 					: interaction.locale == "zh-TW"
-						? LanguageEnum.TRADIIONAL_CHINESE
-						: LanguageEnum.ENGLISH,
+					  ? LanguageEnum.TRADIIONAL_CHINESE
+					  : LanguageEnum.ENGLISH,
 				uid: (await db.get(`${id}.account`))[0].uid
 					? (await db.get(`${id}.account`))[0].uid
 					: await db.get(`${id}.uid`)
@@ -352,11 +353,11 @@ client.on(Events.InteractionCreate, async interaction => {
 								value: character.equip
 									? `${emoji.dot}${character.equip.name}\n${
 											emoji.line1
-										}${tr("lightconeLevel", {
+									  }${tr("lightconeLevel", {
 											z: `\`${character.equip.rank}\``
-										})}\n${emoji.line2}${tr("level")} \`${
+									  })}\n${emoji.line2}${tr("level")} \`${
 											character.equip.level
-										}\``
+									  }\``
 									: `\`${tr("none")}\``,
 								inline: false
 							},
@@ -366,8 +367,8 @@ client.on(Events.InteractionCreate, async interaction => {
 									relicsValue && ornamentsValue
 										? `${relicsValue}\n${ornamentsValue}`
 										: relicsValue ||
-											ornamentsValue ||
-											`\`${tr("none")}\``
+										  ornamentsValue ||
+										  `\`${tr("none")}\``
 								}`,
 								inline: false
 							}
