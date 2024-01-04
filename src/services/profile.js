@@ -16,9 +16,18 @@ GlobalFonts.registerFromPath(
 	join(".", "src", ".", "assets", "YaHei.ttf"),
 	"YaHei"
 );
+GlobalFonts.registerFromPath(
+	join(".", "src", ".", "assets", "Cinzel.ttf"),
+	"Cinzel"
+);
 
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
+
+function convertToRoman(num) {
+	const romanNumerals = ["I", "II", "III", "IV", "V"];
+	return romanNumerals[num - 1];
+}
 
 function containsChinese(text) {
 	return /[\u4e00-\u9fa5]/.test(text);
@@ -571,8 +580,8 @@ async function charPage(characters, playerData, num, interaction) {
 				mainAff >= 0.75
 					? "#F3B664"
 					: mainAff > 0
-					  ? "#FFFFFF"
-					  : "#B6BBC4"; //"#EAB308"; // #FFFFFF
+						? "#FFFFFF"
+						: "#B6BBC4"; //"#EAB308"; // #FFFFFF
 			ctx.textAlign = "left";
 
 			let lineHeight = 24;
@@ -669,8 +678,8 @@ async function charPage(characters, playerData, num, interaction) {
 					weight >= 0.75
 						? "#F3B664"
 						: weight > 0
-						  ? "#FFFFFF"
-						  : "#B6BBC4";
+							? "#FFFFFF"
+							: "#B6BBC4";
 				ctx.fillStyle = color;
 				ctx.textAlign = "left";
 
@@ -721,8 +730,8 @@ async function charPage(characters, playerData, num, interaction) {
 					? 1685
 					: 1720
 				: interaction.locale == "zh-TW"
-				  ? 1685
-				  : 1720,
+					? 1685
+					: 1720,
 			830
 		);
 
@@ -751,7 +760,7 @@ async function cardImage(user, interaction) {
 				: `./src/assets/image/cards/${Math.floor(
 						Math.random() *
 							readdirSync("./src/assets/image/cards/").length
-				  )}.png`;
+					)}.png`;
 
 		const bgImage = await loadImageAsync(bg);
 
@@ -1110,10 +1119,10 @@ async function cardImage(user, interaction) {
 							memory.chaos_level > 0
 								? `${tr("card_chaosMemory", {
 										z: memory?.chaos_level ?? "0"
-								  })}`
+									})}`
 								: `${tr("card_Memory", {
 										z: memory?.level ?? "0"
-								  })}`
+									})}`
 						}`,
 						x + 145,
 						y + 250
@@ -1159,11 +1168,226 @@ async function cardImage(user, interaction) {
 	}
 }
 
+async function characterListImage(characters, playerData, tr) {
+	try {
+		const canvas = createCanvas(1080, 350 + characters.length * 100);
+		const ctx = canvas.getContext("2d");
+
+		// BackGround
+		const bgImage = await loadImageAsync("./src/assets/image/warp/bg.jpg");
+
+		const scaleWidth = canvas.width / bgImage.width;
+		const scaleHeight = canvas.height / bgImage.height;
+		const scale = Math.max(scaleWidth, scaleHeight);
+		const offsetX = (canvas.width - bgImage.width * scale) / 2;
+		const offsetY = (canvas.height - bgImage.height * scale) / 2;
+
+		ctx.drawImage(
+			bgImage,
+			offsetX,
+			offsetY,
+			bgImage.width * scale,
+			bgImage.height * scale
+		);
+
+		// Player Profile
+		if (!playerData.detail) {
+			// Avatar
+			const playerAvatar = await loadImageAsync(
+				image_Header + playerData.player.avatar.icon
+			);
+			ctx.drawImage(playerAvatar, 480, 30, 128, 128);
+
+			// Name
+			ctx.textAlign = "center";
+			ctx.fillStyle = "white";
+			ctx.font = `bold 36px 'YaHei', URW DIN Arabic, Arial, sans-serif`;
+			ctx.fillText(playerData.player.nickname, 540, 205);
+
+			// UID
+			ctx.fillStyle = "lightgray";
+			ctx.font = "26px 'URW DIN Arabic', Arial, sans-serif' ";
+			ctx.fillText(playerData.player.uid, 540, 245);
+		}
+
+		let width = 1000,
+			height = 60,
+			characterRadius = 20,
+			padding = 20;
+
+		// Title
+		let x = 40,
+			y = 270;
+
+		ctx.beginPath();
+		ctx.moveTo(x + characterRadius, y);
+		ctx.lineTo(x + width - characterRadius, y);
+		ctx.arc(
+			x + width - characterRadius,
+			y + characterRadius,
+			characterRadius,
+			1.5 * Math.PI,
+			2 * Math.PI
+		);
+		ctx.lineTo(x + width, y + height);
+		ctx.lineTo(x, y + height);
+		ctx.lineTo(x, y + characterRadius);
+		ctx.arc(
+			x + characterRadius,
+			y + characterRadius,
+			characterRadius,
+			Math.PI,
+			1.5 * Math.PI
+		);
+		ctx.closePath();
+
+		ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+		ctx.fill();
+
+		ctx.textAlign = "left";
+		ctx.fillStyle = "white";
+		ctx.font = `bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif`;
+		ctx.fillText(tr("character"), 70 + x, 310);
+		ctx.fillText(tr("level"), 250 + x, 310);
+		ctx.fillText(tr("eidolon2"), 350 + x, 310);
+		ctx.fillText(tr("relics"), 580 + x, 310);
+		ctx.fillText(tr("lightcone"), 810 + x, 310);
+		ctx.fillText(tr("lightconeLevel2"), 910 + x, 310);
+
+		// Characters
+		height = 80;
+		characterRadius = 10;
+		for (let i = 0; i < characters.length; i++) {
+			const character = characters[i];
+			// BackGround
+			let x = 40,
+				y = 320 + i * (height + padding) + padding;
+
+			ctx.beginPath();
+			ctx.moveTo(x + characterRadius, y);
+			ctx.lineTo(x + width - characterRadius, y);
+			ctx.arc(
+				x + width - characterRadius,
+				y + characterRadius,
+				characterRadius,
+				1.5 * Math.PI,
+				2 * Math.PI
+			);
+			ctx.lineTo(x + width, y + height - characterRadius);
+			ctx.arc(
+				x + width - characterRadius,
+				y + height - characterRadius,
+				characterRadius,
+				0,
+				0.5 * Math.PI
+			);
+			ctx.lineTo(x + characterRadius, y + height);
+			ctx.arc(
+				x + characterRadius,
+				y + height - characterRadius,
+				characterRadius,
+				0.5 * Math.PI,
+				Math.PI
+			);
+			ctx.lineTo(x, y + characterRadius);
+			ctx.arc(
+				x + characterRadius,
+				y + characterRadius,
+				characterRadius,
+				Math.PI,
+				1.5 * Math.PI
+			);
+			ctx.closePath();
+
+			ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+			ctx.fill();
+
+			// Character
+			// Avatar
+			const characterAvatar = await loadImageAsync(character.icon);
+			const radius = 32;
+
+			ctx.save();
+			ctx.beginPath();
+			ctx.arc(45 + x, 40 + y, radius, 0, 2 * Math.PI);
+			ctx.clip();
+			ctx.drawImage(
+				characterAvatar,
+				45 + x - radius,
+				40 + y - radius,
+				radius * 2,
+				radius * 2
+			);
+			ctx.restore();
+
+			// Element
+			const elementImage = await loadImageAsync(
+				`./src/assets/image/element/${character.element}.png`
+			);
+			ctx.drawImage(elementImage, 80 + x, 20 + y, 40, 40);
+
+			// Name
+			ctx.textAlign = "left";
+			ctx.fillStyle = "white";
+			ctx.font = `bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif`;
+			ctx.fillText(character.name, 125 + x, 50 + y);
+
+			// Level
+			ctx.font = "bold 26px 'URW DIN Arabic', Arial, sans-serif' ";
+			ctx.fillText(`${character.level}`, 260 + x, 50 + y);
+
+			// Eidolon
+			ctx.fillText(`${character.rank}`, 365 + x, 50 + y);
+
+			// Relic
+			async function drawItems(items, x, y, offsetX, ctx) {
+				for (let i = 0; i < items.length; i++) {
+					const item = items[i];
+					const itemImage = await loadImageAsync(item.icon);
+					ctx.drawImage(
+						itemImage,
+						offsetX + x + i * 57,
+						15 + y,
+						55,
+						55
+					);
+				}
+			}
+
+			await drawItems(character.relics, x, y, 430, ctx);
+			await drawItems(character.ornaments, x, y, 658, ctx);
+
+			// Light Cone
+			const lightcone = character.equip;
+			if (lightcone) {
+				const lightconeImage = await loadImageAsync(lightcone.icon);
+				ctx.drawImage(lightconeImage, 795 + x, 5 + y, 72, 72);
+
+				// Eidolon
+				ctx.font =
+					"bold 26px 'Cinzel', URW DIN Arabic, Arial, sans-serif' ";
+				ctx.textAlign = "center";
+				const lightconeRank = lightcone.rank;
+				ctx.fillText(
+					`${convertToRoman(lightconeRank)}`,
+					935 + x,
+					50 + y
+				);
+			}
+		}
+
+		return canvas.toBuffer("image/png");
+	} catch (e) {
+		return null;
+	}
+}
+
 export {
 	saveCharacters,
 	loadCharacters,
 	saveLeaderboard,
 	mainPage,
 	charPage,
-	cardImage
+	cardImage,
+	characterListImage
 };

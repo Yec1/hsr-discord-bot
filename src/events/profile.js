@@ -64,7 +64,7 @@ client.on(Events.InteractionCreate, async interaction => {
 									playerData,
 									i,
 									interaction
-							  );
+								);
 					if (imageBuffer == null) throw new Error(tr("draw_NoData"));
 
 					const image = new AttachmentBuilder(imageBuffer, {
@@ -99,7 +99,7 @@ client.on(Events.InteractionCreate, async interaction => {
 									)
 								],
 								files: [image]
-						  })
+							})
 						: await interaction.editReply({
 								embeds: [],
 								components: [
@@ -134,7 +134,7 @@ client.on(Events.InteractionCreate, async interaction => {
 									)
 								],
 								files: [image]
-						  });
+							});
 				} catch (error) {
 					await interaction.editReply({
 						embeds: [
@@ -264,135 +264,6 @@ client.on(Events.InteractionCreate, async interaction => {
 					.setImage(data.image_list[0].url ?? "")
 			]
 		});
-	} else if (interaction.customId.startsWith("characters")) {
-		await interaction.update({ fetchReply: true }).catch(() => {});
-		const [id, i] = interaction.values[0].split("-");
-
-		try {
-			const hsr = new HonkaiStarRail({
-				cookie: (await db.get(`${id}.account`))[0].cookie
-					? (await db.get(`${id}.account`))[0].cookie
-					: await db.get(`${id}.cookie`),
-				lang: (await db?.has(`${interaction.user.id}.locale`))
-					? (await db?.get(`${interaction.user.id}.locale`)) == "tw"
-						? LanguageEnum.TRADIIONAL_CHINESE
-						: LanguageEnum.ENGLISH
-					: interaction.locale == "zh-TW"
-					  ? LanguageEnum.TRADIIONAL_CHINESE
-					  : LanguageEnum.ENGLISH,
-				uid: (await db.get(`${id}.account`))[0].uid
-					? (await db.get(`${id}.account`))[0].uid
-					: await db.get(`${id}.uid`)
-			});
-
-			const playerData = await player(
-				(await db.get(`${id}.account`))[0].uid
-					? (await db.get(`${id}.account`))[0].uid
-					: await db.get(`${id}.uid`),
-				interaction
-			);
-			const characters = await hsr.record.characters();
-			const character = characters[i];
-			const relicsValue =
-				character.relics.length > 0
-					? character.relics
-							.map(
-								relic =>
-									`\`${relic.rarity}\`${emoji.yellowStar} ${
-										relic.name
-									} • ${tr("level")} ${relic.level}`
-							)
-							.join("\n")
-					: "";
-
-			const ornamentsValue =
-				character.ornaments.length > 0
-					? character.ornaments
-							.map(
-								relic =>
-									`\`${relic.rarity}\`${emoji.yellowStar} ${
-										relic.name
-									} • ${tr("level")} ${relic.level}`
-							)
-							.join("\n")
-					: "";
-
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setConfig("#213555")
-						.setTitle(
-							`${character.name} ${emoji[character.element]}`
-						)
-						.setThumbnail(character.icon || "")
-						.setAuthor({
-							name:
-								playerData.player.nickname +
-								" - " +
-								playerData.player.uid,
-							iconURL:
-								image_Header +
-								"/" +
-								playerData.player.avatar.icon
-						})
-						.addFields(
-							{
-								name: `${tr("level")} ${character.level}`,
-								value: "\u200b",
-								inline: true
-							},
-							{
-								name: tr("eidolon", {
-									z: character.rank
-								}),
-								value: "\u200b",
-								inline: true
-							},
-							{
-								name: `${tr("lightcone")}`,
-								value: character.equip
-									? `${emoji.dot}${character.equip.name}\n${
-											emoji.line1
-									  }${tr("lightconeLevel", {
-											z: `\`${character.equip.rank}\``
-									  })}\n${emoji.line2}${tr("level")} \`${
-											character.equip.level
-									  }\``
-									: `\`${tr("none")}\``,
-								inline: false
-							},
-							{
-								name: tr("relics"),
-								value: `${
-									relicsValue && ornamentsValue
-										? `${relicsValue}\n${ornamentsValue}`
-										: relicsValue ||
-										  ornamentsValue ||
-										  `\`${tr("none")}\``
-								}`,
-								inline: false
-							}
-						)
-				]
-			});
-		} catch (e) {
-			replyOrfollowUp(interaction, {
-				embeds: [
-					new EmbedBuilder()
-						.setConfig("#E76161")
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-						.setTitle(`${tr("cookie_failed")}`)
-						.setDescription(
-							`${tr("cookie_failedDesc")}\n\n${tr(
-								"err_code"
-							)}${e}`
-						)
-				],
-				ephemeral: true
-			});
-		}
 	} else if (interaction.customId.startsWith("leaderboard")) {
 		await interaction.update({ fetchReply: true }).catch(() => {});
 		const id = interaction.values[0];

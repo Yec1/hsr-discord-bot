@@ -2,10 +2,13 @@ import {
 	CommandInteraction,
 	SlashCommandBuilder,
 	EmbedBuilder,
-	ActionRowBuilder,
-	StringSelectMenuBuilder
+	AttachmentBuilder
 } from "discord.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
+import { characterListImage } from "../../../services/profile.js";
+import { player } from "../../../services/request.js";
+import Queue from "queue";
+const drawQueue = new Queue({ autostart: true });
 
 export default {
 	data: new SlashCommandBuilder()
@@ -37,40 +40,9 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr, db, emoji) {
-		const uid = interaction.options.getInteger("uid")
-			? interaction.options.getInteger("uid")
-			: (await db.has(
-						`${interaction.options.getUser("user")?.id}.account`
-			    ))
-			  ? (
-						await db.get(
-							`${interaction.options.getUser("user")?.id}.account`
-						)
-			    )[0].uid
-			  : (await db.has(`${interaction.options.getUser("user")?.id}.uid`))
-			    ? await db.get(`${interaction.options.getUser("user")?.id}.uid`)
-			    : (await db.has(`${interaction.user.id}.account`))
-			      ? (await db.get(`${interaction.user.id}.account`))[0].uid
-			      : (await db.has(`${interaction.user.id}.uid`))
-			        ? await db.get(`${interaction.user.id}.uid`)
-			        : null;
-
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
-		if (uid == null && user == interaction.user)
-			return await interaction.reply({
-				embeds: [
-					new EmbedBuilder()
-						.setConfig()
-						.setTitle(tr("uid_non"))
-						.setDescription(tr("uid_failedDesc"))
-				],
-				ephemeral: true
-			});
-
-		await interaction.deferReply();
-
-		await interaction.editReply({
+		await replyOrfollowUp(interaction, {
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -93,8 +65,8 @@ export default {
 						? LanguageEnum.TRADIIONAL_CHINESE
 						: LanguageEnum.ENGLISH
 					: interaction.locale == "zh-TW"
-					  ? LanguageEnum.TRADIIONAL_CHINESE
-					  : LanguageEnum.ENGLISH,
+						? LanguageEnum.TRADIIONAL_CHINESE
+						: LanguageEnum.ENGLISH,
 				uid:
 					(await db.has(`${user.id}.account`)) &&
 					(await db.get(`${user.id}.account`))[0].uid
@@ -104,54 +76,7 @@ export default {
 
 			const characters = await hsr.record.characters();
 
-			const allCharacterOptions = characters.map((character, i) => {
-				return {
-					emoji: emoji[character.element],
-					label: `${character.name} • ${tr("level2", {
-						z: `${character.level} `
-					})}`,
-					value: `${user.id}-${i}`
-				};
-			});
-
-			const chunkSize = 25;
-			const characterOptionChunks = [];
-			for (let i = 0; i < allCharacterOptions.length; i += chunkSize) {
-				const chunk = allCharacterOptions.slice(i, i + chunkSize);
-				characterOptionChunks.push(chunk);
-			}
-
-			const selectMenus = characterOptionChunks.map(
-				(optionsChunk, index) => {
-					const startIndex = index * chunkSize + 1;
-					const endIndex = Math.min(
-						startIndex + chunkSize - 1,
-						allCharacterOptions.length
-					);
-
-					return new StringSelectMenuBuilder()
-						.setPlaceholder(
-							`${tr("profile_character")} ${tr(
-								"character_placeholder",
-								{
-									s: startIndex,
-									e: endIndex
-								}
-							)}`
-						)
-						.setCustomId(`characters-${index}`)
-						.setMinValues(1)
-						.setMaxValues(1)
-						.addOptions(optionsChunk);
-				}
-			);
-
-			await interaction.editReply({
-				embeds: [],
-				components: selectMenus.map(selectMenu => {
-					return new ActionRowBuilder().addComponents(selectMenu);
-				})
-			});
+			handleDrawRequest(hsr.uid, characters, interaction, tr);
 		} catch (e) {
 			return replyOrfollowUp(interaction, {
 				embeds: [
@@ -171,3 +96,61 @@ export default {
 		}
 	}
 };
+
+async function handleDrawRequest(uid, characters, interaction, tr) {
+	const drawTask = async () => {
+		try {
+			const playerData = await player(uid, interaction);
+
+			const imageBuffer = await characterListImage(
+				characters,
+				playerData,
+				tr
+			);
+			if (imageBuffer == null) throw new Error(tr("draw_NoData"));
+
+			const image = new AttachmentBuilder(imageBuffer, {
+				name: `${playerData.player.uid}.png`
+			});
+
+			await interaction.editReply({
+				embeds: [],
+				files: [image]
+			});
+		} catch (error) {
+			await interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig()
+						.setTitle(
+							`${tr("draw_fail")}\n${tr("err_code")}${
+								error?.response?.data?.detail ?? error.message
+							}`
+						)
+
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+				]
+			});
+		}
+	};
+
+	drawQueue.push(drawTask);
+
+	if (drawQueue.length != 1)
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setConfig()
+					.setTitle(
+						`${tr("draw_wait", {
+							z: drawQueue.length - 1
+						})}`
+					)
+					.setThumbnail(
+						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+					)
+			]
+		});
+}
