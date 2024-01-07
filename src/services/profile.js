@@ -1116,13 +1116,15 @@ async function cardImage(user, interaction) {
 					const memory = playerData.player.space_info.memory_data;
 					ctx.fillText(
 						`${
-							memory.chaos_level > 0
-								? `${tr("card_chaosMemory", {
-										z: memory?.chaos_level ?? "0"
-									})}`
-								: `${tr("card_Memory", {
-										z: memory?.level ?? "0"
-									})}`
+							memory?.level || memory?.chaos_level
+								? memory.chaos_level > 0
+									? `${tr("card_chaosMemory", {
+											z: memory?.chaos_level ?? "0"
+										})}`
+									: `${tr("card_Memory", {
+											z: memory?.level ?? "0"
+										})}`
+								: ""
 						}`,
 						x + 145,
 						y + 250
@@ -1164,6 +1166,7 @@ async function cardImage(user, interaction) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
+		console.log(e);
 		return null;
 	}
 }
