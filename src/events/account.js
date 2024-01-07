@@ -219,7 +219,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 			try {
 				const hsr = new HonkaiStarRail({
-					cookie: trimed_cookie,
+					cookie: cookie,
 					lang: (await db?.has(`${interaction.user.id}.locale`))
 						? (await db?.get(`${interaction.user.id}.locale`)) ==
 							"tw"
@@ -234,7 +234,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				const account =
 					(await db.get(`${interaction.user.id}.account`)) ?? "";
 
-				account[i].cookie = trimed_cookie;
+				account[i].cookie = cookie;
 				await db.set(`${interaction.user.id}.account`, account);
 
 				return await interaction.reply({
