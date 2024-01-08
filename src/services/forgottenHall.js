@@ -12,22 +12,19 @@ GlobalFonts.registerFromPath(
 	join(".", "src", ".", "assets", "Hanyi.ttf"),
 	"Hanyi"
 );
+GlobalFonts.registerFromPath(
+	join(".", "src", ".", "assets", "PingFang-SC-Regular.ttf"),
+	"PingFang"
+);
 
-const imageURL =
-	"https://act.hoyolab.com/app/community-game-records-sea/images/";
-
-async function indexImage(uid, res, floor, interaction) {
+async function indexImage(uid, res, mode, floor, tr) {
 	try {
-		const tr = i18nMixin(
-			(await db?.has(`${interaction.user.id}.locale`))
-				? await db?.get(`${interaction.user.id}.locale`)
-				: toI18nLang(interaction.locale) || "en"
-		);
-
 		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
 		const background = await loadImage(
-			imageURL + "abyss_review_bg@pc.faecaa6c.png"
+			`./src/assets/image/forgottenhall/${
+				mode == 2 ? "storybg.png" : "normalbg.png"
+			}`
 		);
 		ctx.drawImage(background, 0, 0, 1920, 1080);
 
@@ -39,7 +36,8 @@ async function indexImage(uid, res, floor, interaction) {
 		ctx.fillText(`${tr("forgottenHall_title")}`, canvas.width / 2, 125);
 
 		// Box1
-		const backgroundColor = "rgba(58,8,18,.4)";
+		const backgroundColor =
+			mode == 2 ? "rgb(14, 21, 39,.4)" : "rgba(58,8,18,.4)";
 		const borderColor = "hsla(0,0%,100%,.4)";
 		const borderWidth = 1;
 
@@ -64,17 +62,19 @@ async function indexImage(uid, res, floor, interaction) {
 		ctx.lineTo(lineX, lineY + lineHeight);
 		ctx.stroke();
 
-		const star = await loadImage(imageURL + "star.ae36cf68.png");
+		const star = await loadImage(
+			"./src/assets/image/forgottenhall/star.png"
+		);
 		ctx.drawImage(star, 150, 220, 54, 54);
 
 		// Box1 StarNum
 		ctx.font = "38px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
-		ctx.fillText(`X ${res.star_num}`, 250, 263);
+		ctx.fillText(`X ${res.star_num}`, 253, 263);
 
 		// Box1 Floor
-		ctx.font = "31px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+		ctx.font = "bold 31px 'PingFang', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "left";
 		ctx.fillText(
@@ -98,13 +98,16 @@ async function indexImage(uid, res, floor, interaction) {
 		// Box2
 		const borderRadius = 120;
 		const bg2Width = 1735;
-		const bg2Height = 496;
+		const bg2Height = mode == 2 ? 546 : 496;
 		const background2 = await loadImage(
-			imageURL + "abyss_floor_bg@pc.eb063907.png"
+			`./src/assets/image/forgottenhall/${
+				mode == 2 ? "storybg2.png" : "normalbg2.png"
+			}`
 		);
 
 		const box2X = canvas.width / 2 - bg2Width / 2;
-		const box2Y = canvas.height / 2 - bg2Height / 2 + 100;
+		const box2Y =
+			canvas.height / 2 - bg2Height / 2 + (mode == 2 ? 125 : 100);
 
 		ctx.beginPath();
 		ctx.moveTo(box2X, box2Y);
@@ -135,7 +138,7 @@ async function indexImage(uid, res, floor, interaction) {
 		ctx.stroke();
 
 		// Box2 name
-		ctx.font = "42px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+		ctx.font = "bold 42px 'PingFang', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "left";
 		ctx.fillText(`${floor.name.replace(/<\/?[^>]+(>|$)/g, "")}`, 200, 460);
@@ -144,336 +147,290 @@ async function indexImage(uid, res, floor, interaction) {
 		ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "hsla(0,0%,100%,.7)";
 		ctx.textAlign = "left";
-		ctx.fillText(
-			`${tr("forgottenHall_useRound")}:  ${floor.round_num}`,
-			200,
-			515
-		);
+
+		if (mode == 2) {
+			const forgottenHallUseRoundText = `${tr(
+				"forgottenHall_useRound"
+			)}:`;
+			const forgottenHallUseRoundX = 200;
+			const forgottenHallUseRoundY = 515;
+
+			ctx.fillText(
+				forgottenHallUseRoundText,
+				forgottenHallUseRoundX,
+				forgottenHallUseRoundY
+			);
+
+			ctx.fillStyle = "rgb(249, 200, 126)";
+			ctx.fillText(
+				`${floor.round_num}`,
+				forgottenHallUseRoundX +
+					ctx.measureText(forgottenHallUseRoundText).width +
+					30,
+				forgottenHallUseRoundY + 1.5
+			);
+
+			ctx.fillStyle = "hsla(0,0%,100%,.7)";
+			ctx.fillText(
+				`${tr("totalScore")}`,
+				forgottenHallUseRoundX +
+					ctx.measureText(forgottenHallUseRoundText).width +
+					ctx.measureText(`${floor.round_num}`).width +
+					60,
+				forgottenHallUseRoundY
+			);
+
+			ctx.fillStyle = "rgb(249, 200, 126)";
+			ctx.fillText(
+				`${
+					parseInt(floor.node_1.score) + parseInt(floor.node_2.score)
+				}`,
+				forgottenHallUseRoundX +
+					ctx.measureText(forgottenHallUseRoundText).width +
+					ctx.measureText(`${floor.round_num}`).width +
+					ctx.measureText(`${tr("totalScore")}`).width +
+					90,
+				forgottenHallUseRoundY + 1.5
+			);
+		} else {
+			ctx.fillText(
+				`${tr("forgottenHall_useRound")}:  ${floor.round_num}`,
+				200,
+				515
+			);
+		}
 
 		// Box2 star_num
 		for (let i = 0; i < floor.star_num; i++)
 			ctx.drawImage(star, 1650 - (i * 68 - 3), 435, 68, 68);
 
-		// Box2 node_1 name
-		ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "white";
-		ctx.textAlign = "left";
-		ctx.fillText(
-			`${tr("forgottenHall_teamSetup", {
-				z: "1"
-			})}`,
-			200,
-			600
-		);
+		// Box2 node_avatars
+		for (let i = 1; i <= 2; i++) {
+			const x = i == 1 ? 200 : 1025;
+			const y = 600;
+			const node = floor[`node_${i}`];
 
-		// Box2 node_1 challenge_time
-		const time = floor.node_1.challenge_time;
-		ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "hsla(0,0%,100%,.7)";
-		ctx.textAlign = "left";
-		ctx.fillText(
-			`${time.year}/${time.month}/${time.day} ${time.hour}:${time.minute}`,
-			200 +
-				ctx.measureText(`${tr("forgottenHall_teamSetup", { z: "1" })}`)
-					.width +
-				25,
-			600
-		);
-
-		// Box2 node_1 avatars
-		for (let i = 0; i < floor.node_1.avatars.length; i++) {
-			const character = floor.node_1.avatars[i];
-			const x = 200 + i * (750 / floor.node_1.avatars.length);
-			const y = 650;
-			const width = 148;
-			const height = 180;
-
-			// Avatar Rarirt BG
-			const bg = await loadImage(
-				character.rarity == 4
-					? imageURL + "character_r_4.24f329b7.png"
-					: imageURL + "character_r_5.99d42eb7.png"
-			);
-			ctx.drawImage(bg, x, y, width, height);
-
-			// Avatar
-			const avatar = await loadImage(character.icon);
-			ctx.drawImage(avatar, x, y, width, height);
-
-			// Avatar Level BG
-			ctx.fillStyle = "black";
-			ctx.fillRect(x, y + height - 3 - 31, width, 31);
-
-			// Avatar Level
-			ctx.font = "30px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+			// Box2 node_name
+			ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 			ctx.fillStyle = "white";
-			ctx.textAlign = "center";
+			ctx.textAlign = "left";
 			ctx.fillText(
-				`${tr("level2", {
-					z: `${character.level}`
+				`${tr("forgottenHall_teamSetup", {
+					z: i.toString()
 				})}`,
-				x + 74,
-				y + height - 7
+				x,
+				y
 			);
 
-			// Avatar Element BG
-			ctx.beginPath();
-			ctx.arc(x + 30, y + 25, 15, 0, 2 * Math.PI);
-			ctx.fillStyle = "rgba(0,0,0,.4)";
-			ctx.fill();
-
-			// Avatar Element
-			let element = imageURL;
-			switch (character.element) {
-				case "quantum":
-					element += "quantum.b713b931.png";
-					break;
-				case "wind":
-					element += "wind.c5b8b8e4.png";
-					break;
-				case "lightning":
-					element += "lightning.1abc9e9c.png";
-					break;
-				case "fire":
-					element += "fire.6c8ad63b.png";
-					break;
-				case "physical":
-					element += "physical.84146aac.png";
-					break;
-				case "ice":
-					element += "ice.7569a93b.png";
-					break;
-				case "imaginary":
-					element += "imaginary.268f4a72.png";
-					break;
-			}
-			const elementImage = await loadImage(element);
-			ctx.drawImage(elementImage, x + 16, y + 11, 27, 27);
-
-			// Rank
-			if (floor.node_1.avatars[i].rank != 0) {
-				const color = "rgba(0, 0, 0, 0.5)";
-				const borderRadiusTopLeft = 0;
-				const borderRadiusTopRight = 37;
-				const borderRadiusBottomLeft = 20;
-				const borderRadiusBottomRight = 0;
-				const Rwidth = 40;
-				const Rheight = 50;
-
-				ctx.fillStyle = color;
-				ctx.beginPath();
-				ctx.moveTo(x + 110 + borderRadiusTopLeft, y);
-				ctx.lineTo(x + 110 + Rwidth - borderRadiusTopRight, y);
-				ctx.quadraticCurveTo(
-					x + 110 + Rwidth,
-					y,
-					x + 110 + Rwidth,
-					y + borderRadiusTopRight
-				);
-				ctx.lineTo(
-					x + 110 + Rwidth,
-					y + Rheight - borderRadiusBottomRight
-				);
-				ctx.quadraticCurveTo(
-					x + 110 + Rwidth,
-					y + Rheight,
-					x + 110 + Rwidth - borderRadiusBottomRight,
-					y + Rheight
-				);
-				ctx.lineTo(x + 110 + borderRadiusBottomLeft, y + Rheight);
-				ctx.quadraticCurveTo(
-					x + 110,
-					y + Rheight,
-					x + 110,
-					y + Rheight - borderRadiusBottomLeft
-				);
-				ctx.lineTo(x + 110, y + borderRadiusTopLeft);
-				ctx.quadraticCurveTo(
-					x + 110,
-					y,
-					x + 110 + borderRadiusTopLeft,
+			// Box2 node_challenge_time
+			if (mode == 2) {
+				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+				ctx.fillStyle = "hsla(0,0%,100%,.7)";
+				ctx.textAlign = "left";
+				ctx.fillText(
+					`${tr("score")}`,
+					x +
+						ctx.measureText(
+							`${tr("forgottenHall_teamSetup", {
+								z: i.toString()
+							})}`
+						).width +
+						25,
 					y
 				);
-				ctx.closePath();
-				ctx.fill();
 
+				ctx.fillStyle = "rgb(249, 200, 126)";
+				ctx.fillText(
+					`${node.score}`,
+					x +
+						ctx.measureText(
+							`${tr("forgottenHall_teamSetup", {
+								z: i.toString()
+							})}`
+						).width +
+						ctx.measureText(`${tr("score")}`).width +
+						40,
+					y + 1.5
+				);
+			} else {
+				const time = node.challenge_time;
 				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+				ctx.fillStyle = "hsla(0,0%,100%,.7)";
+				ctx.textAlign = "left";
+				ctx.fillText(
+					`${time.year}/${time.month}/${time.day} ${time.hour}:${time.minute}`,
+					x +
+						ctx.measureText(
+							`${tr("forgottenHall_teamSetup", {
+								z: i.toString()
+							})}`
+						).width +
+						25,
+					y
+				);
+			}
+
+			// Box2 node_avatars
+			for (let i = 0; i < node.avatars.length; i++) {
+				const character = node.avatars[i];
+				const avatarX = x + i * (750 / node.avatars.length);
+				const avatarY = 630;
+				const avatarWidth = 148;
+				const avatarHeight = 180;
+
+				// Avatar Rarity BG
+				const bg = await loadImage(
+					`./src/assets/image/forgottenhall/${
+						character.rarity == 4
+							? "character4star.png"
+							: "character5star.png"
+					}`
+				);
+				ctx.drawImage(bg, avatarX, avatarY, avatarWidth, avatarHeight);
+
+				// Avatar
+				const avatar = await loadImage(character.icon);
+				ctx.drawImage(
+					avatar,
+					avatarX,
+					avatarY,
+					avatarWidth,
+					avatarHeight
+				);
+
+				// Avatar Level BG
+				ctx.fillStyle = "hsla(0,0%,0%,.9)";
+				ctx.fillRect(
+					avatarX,
+					avatarY + avatarHeight - 3 - 31,
+					avatarWidth,
+					31
+				);
+
+				// Avatar Level
+				ctx.font = "30px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 				ctx.fillStyle = "white";
 				ctx.textAlign = "center";
 				ctx.fillText(
-					`${floor.node_1.avatars[i].rank}`,
-					x + 130,
-					y + 35
+					`${tr("level2", {
+						z: `${character.level}`
+					})}`,
+					avatarX + 74,
+					avatarY + avatarHeight - 7
 				);
-			}
-		}
 
-		// Box2 node_2 name
-		ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "white";
-		ctx.textAlign = "left";
-		ctx.fillText(
-			`${tr("forgottenHall_teamSetup", {
-				z: "2"
-			})}`,
-			1025,
-			600
-		);
-
-		// Box2 node_2 challenge_time
-		const time2 = floor.node_2.challenge_time;
-		ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "hsla(0,0%,100%,.7)";
-		ctx.textAlign = "left";
-		ctx.fillText(
-			`${time2.year}/${time2.month}/${time2.day} ${time2.hour}:${time2.minute}`,
-			1025 +
-				ctx.measureText(`${tr("forgottenHall_teamSetup", { z: "2" })}`)
-					.width +
-				25,
-			600
-		);
-
-		// Box2 node_2 avatars
-		for (let i = 0; i < floor.node_2.avatars.length; i++) {
-			const character = floor.node_2.avatars[i];
-			const x = 1025 + i * (750 / floor.node_2.avatars.length);
-			const y = 650;
-			const width = 148;
-			const height = 180;
-
-			// Avatar Rarirt BG
-			const bg = await loadImage(
-				character.rarity == 4
-					? imageURL + "character_r_4.24f329b7.png"
-					: imageURL + "character_r_5.99d42eb7.png"
-			);
-			ctx.drawImage(bg, x, y, width, height);
-
-			// Avatar
-			const avatar = await loadImage(character.icon);
-			ctx.drawImage(avatar, x, y, width, height);
-
-			// Avatar Level BG
-			ctx.fillStyle = "black";
-			ctx.fillRect(x, y + height - 3 - 31, width, 31);
-
-			// Avatar Level
-			ctx.font = "30px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
-			ctx.fillStyle = "white";
-			ctx.textAlign = "center";
-			ctx.fillText(
-				`${tr("level2", {
-					z: `${character.level}`
-				})}`,
-				x + 74,
-				y + height - 7
-			);
-
-			// Avatar Element BG
-			ctx.beginPath();
-			ctx.arc(x + 30, y + 25, 15, 0, 2 * Math.PI);
-			ctx.fillStyle = "rgba(0,0,0,.4)";
-			ctx.fill();
-
-			// Avatar Element
-			let element = imageURL;
-			switch (character.element) {
-				case "quantum":
-					element += "quantum.b713b931.png";
-					break;
-				case "wind":
-					element += "wind.c5b8b8e4.png";
-					break;
-				case "lightning":
-					element += "lightning.1abc9e9c.png";
-					break;
-				case "fire":
-					element += "fire.6c8ad63b.png";
-					break;
-				case "physical":
-					element += "physical.84146aac.png";
-					break;
-				case "ice":
-					element += "ice.7569a93b.png";
-					break;
-				case "imaginary":
-					element += "imaginary.268f4a72.png";
-					break;
-			}
-			const elementImage = await loadImage(element);
-			ctx.drawImage(elementImage, x + 16, y + 11, 27, 27);
-
-			// Rank
-			if (floor.node_2.avatars[i].rank != 0) {
-				const color = "rgba(0, 0, 0, 0.5)";
-				const borderRadiusTopLeft = 0;
-				const borderRadiusTopRight = 37;
-				const borderRadiusBottomLeft = 20;
-				const borderRadiusBottomRight = 0;
-				const Rwidth = 40;
-				const Rheight = 50;
-
-				ctx.fillStyle = color;
+				// Avatar Element BG
 				ctx.beginPath();
-				ctx.moveTo(x + 110 + borderRadiusTopLeft, y);
-				ctx.lineTo(x + 110 + Rwidth - borderRadiusTopRight, y);
-				ctx.quadraticCurveTo(
-					x + 110 + Rwidth,
-					y,
-					x + 110 + Rwidth,
-					y + borderRadiusTopRight
-				);
-				ctx.lineTo(
-					x + 110 + Rwidth,
-					y + Rheight - borderRadiusBottomRight
-				);
-				ctx.quadraticCurveTo(
-					x + 110 + Rwidth,
-					y + Rheight,
-					x + 110 + Rwidth - borderRadiusBottomRight,
-					y + Rheight
-				);
-				ctx.lineTo(x + 110 + borderRadiusBottomLeft, y + Rheight);
-				ctx.quadraticCurveTo(
-					x + 110,
-					y + Rheight,
-					x + 110,
-					y + Rheight - borderRadiusBottomLeft
-				);
-				ctx.lineTo(x + 110, y + borderRadiusTopLeft);
-				ctx.quadraticCurveTo(
-					x + 110,
-					y,
-					x + 110 + borderRadiusTopLeft,
-					y
-				);
-				ctx.closePath();
+				ctx.arc(avatarX + 30, avatarY + 25, 15, 0, 2 * Math.PI);
+				ctx.fillStyle = "rgba(0,0,0,.4)";
 				ctx.fill();
 
-				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
-				ctx.fillStyle = "white";
-				ctx.textAlign = "center";
-				ctx.fillText(
-					`${floor.node_2.avatars[i].rank}`,
-					x + 130,
-					y + 35
+				// Avatar Element
+				const elementImage = await loadImage(
+					`./src/assets/image/element/${character.element}.png`
 				);
+				ctx.drawImage(elementImage, avatarX + 16, avatarY + 11, 27, 27);
+
+				// Rank
+				if (character.rank != 0) {
+					const color = "rgba(0, 0, 0, 0.5)";
+					const borderRadiusTopLeft = 0;
+					const borderRadiusTopRight = 37;
+					const borderRadiusBottomLeft = 20;
+					const borderRadiusBottomRight = 0;
+					const Rwidth = 40;
+					const Rheight = 50;
+
+					ctx.fillStyle = color;
+					ctx.beginPath();
+					ctx.moveTo(avatarX + 110 + borderRadiusTopLeft, avatarY);
+					ctx.lineTo(
+						avatarX + 110 + Rwidth - borderRadiusTopRight,
+						avatarY
+					);
+					ctx.quadraticCurveTo(
+						avatarX + 110 + Rwidth,
+						avatarY,
+						avatarX + 110 + Rwidth,
+						avatarY + borderRadiusTopRight
+					);
+					ctx.lineTo(
+						avatarX + 110 + Rwidth,
+						avatarY + Rheight - borderRadiusBottomRight
+					);
+					ctx.quadraticCurveTo(
+						avatarX + 110 + Rwidth,
+						avatarY + Rheight,
+						avatarX + 110 + Rwidth - borderRadiusBottomRight,
+						avatarY + Rheight
+					);
+					ctx.lineTo(
+						avatarX + 110 + borderRadiusBottomLeft,
+						avatarY + Rheight
+					);
+					ctx.quadraticCurveTo(
+						avatarX + 110,
+						avatarY + Rheight,
+						avatarX + 110,
+						avatarY + Rheight - borderRadiusBottomLeft
+					);
+					ctx.lineTo(avatarX + 110, avatarY + borderRadiusTopLeft);
+					ctx.quadraticCurveTo(
+						avatarX + 110,
+						avatarY,
+						avatarX + 110 + borderRadiusTopLeft,
+						avatarY
+					);
+					ctx.closePath();
+					ctx.fill();
+
+					ctx.font =
+						"28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.fillStyle = "white";
+					ctx.textAlign = "center";
+					ctx.fillText(
+						`${character.rank}`,
+						avatarX + 130,
+						avatarY + 35
+					);
+				}
+			}
+
+			// Box3 Buff
+			if (mode == 2) {
+				ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+				ctx.fillRect(x, y + 240, 710, 70);
+
+				ctx.textAlign = "left";
+				ctx.fillStyle = "rgb(249, 200, 126)";
+				ctx.fillText(`${tr("cacophony")}`, x + 20, y + 285);
+
+				ctx.beginPath();
+				ctx.arc(x + 235, y + 274, 28, 0, 2 * Math.PI);
+				ctx.fillStyle = "rgba(0,0,0,.4)";
+				ctx.fill();
+
+				const buffImage = await loadImage(node.buff.icon);
+				ctx.drawImage(buffImage, x + 207.5, y + 245, 56, 56);
+
+				ctx.fillStyle = "lightgray";
+				ctx.fillText(`${node.buff.name_mi18n}`, x + 277.5, y + 285);
 			}
 		}
 
 		// Time
-		const beginTime = res.begin_time;
-		const endTime = res.end_time;
-		ctx.font = "26px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+		const beginTime = res?.begin_time ?? res.groups[0].begin_time;
+		const endTime = res?.end_time ?? res.groups[0].end_time;
+		const schedule_id = res?.schedule_id ?? res.groups[0].schedule_id;
+		ctx.font = "bold 26px 'PingFang', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "hsla(0,0%,50%,.7)";
 		ctx.textAlign = "left";
 		ctx.fillText(
-			`${tr("forgottenHall_timeFooter")}: ${beginTime.year}/${
-				beginTime.month
-			}/${beginTime.day} - ${endTime.year}/${endTime.month}/${
-				endTime.day
-			} • ${uid}`,
+			`#${schedule_id} ${tr("forgottenHall_timeFooter")}: ${
+				beginTime.year
+			}/${beginTime.month}/${beginTime.day} - ${endTime.year}/${
+				endTime.month
+			}/${endTime.day} • ${uid}`,
 			7,
 			canvas.height - 13
 		);

@@ -22,6 +22,62 @@ export default {
 		.setDescriptionLocalizations({
 			"zh-TW": "查看忘卻之庭的渾沌回憶紀錄"
 		})
+		.addStringOption(option =>
+			option
+				.setName("mode")
+				.setDescription("...")
+				.setNameLocalizations({
+					"zh-TW": "模式"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "..."
+				})
+				.setRequired(true)
+				.addChoices(
+					{
+						name: "Forgotten Hall",
+						name_localizations: {
+							"zh-TW": "忘卻之庭"
+						},
+						value: "normal"
+					},
+					{
+						name: "Pure Fiction",
+						name_localizations: {
+							"zh-TW": "虛構敘事"
+						},
+						value: "story"
+					}
+				)
+		)
+		.addStringOption(option =>
+			option
+				.setName("time")
+				.setDescription("...")
+				.setNameLocalizations({
+					"zh-TW": "時間"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "..."
+				})
+				.setRequired(false)
+				.addChoices(
+					{
+						name: "Live",
+						name_localizations: {
+							"zh-TW": "本期"
+						},
+						value: "live"
+					},
+					{
+						name: "End",
+						name_localizations: {
+							"zh-TW": "上期"
+						},
+						value: "end"
+					}
+				)
+		)
 		.addUserOption(option =>
 			option
 				.setName("user")
@@ -43,6 +99,9 @@ export default {
 	 */
 	async execute(client, interaction, args, tr, db, emoji) {
 		const user = interaction.options.getUser("user") ?? interaction.user;
+		const mode = interaction.options.getString("mode") == "story" ? 2 : 1;
+		const time = interaction.options.getString("time") == "end" ? 2 : 1;
+
 		try {
 			const hsr = new HonkaiStarRail({
 				cookie:
@@ -55,8 +114,8 @@ export default {
 						? LanguageEnum.TRADIIONAL_CHINESE
 						: LanguageEnum.ENGLISH
 					: interaction.locale == "zh-TW"
-					  ? LanguageEnum.TRADIIONAL_CHINESE
-					  : LanguageEnum.ENGLISH,
+						? LanguageEnum.TRADIIONAL_CHINESE
+						: LanguageEnum.ENGLISH,
 				uid:
 					(await db.has(`${user.id}.account`)) &&
 					(await db.get(`${user.id}.account`))[0].uid
@@ -64,7 +123,8 @@ export default {
 						: await db.get(`${user.id}.uid`)
 			});
 
-			const res = await hsr.record.forgottenHall();
+			const res = await hsr.record.forgottenHall(mode, time);
+
 			if (res.has_data == false)
 				return await interaction.reply({
 					embeds: [
@@ -96,6 +156,8 @@ export default {
 			await handleDrawRequest(
 				hsr.uid,
 				user.id,
+				mode,
+				time,
 				res,
 				floor,
 				interaction,
@@ -128,10 +190,19 @@ export default {
 	}
 };
 
-async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
+async function handleDrawRequest(
+	uid,
+	userId,
+	mode,
+	time,
+	res,
+	floor,
+	interaction,
+	tr
+) {
 	const drawTask = async () => {
 		try {
-			const imageBuffer = await indexImage(uid, res, floor, interaction);
+			const imageBuffer = await indexImage(uid, res, mode, floor, tr);
 			if (imageBuffer == null) throw new Error(tr("draw_NoData"));
 
 			const image = new AttachmentBuilder(imageBuffer, {
@@ -155,14 +226,27 @@ async function handleDrawRequest(uid, userId, res, floor, interaction, tr) {
 											/<\/?[^>]+(>|$)/g,
 											""
 										)}`,
-										description: `${tr(
-											"forgottenHall_desc",
-											{
-												s: `${floor.star_num}`,
-												r: `${floor.round_num}`
-											}
-										)}`,
-										value: `${userId}-${i}`
+										description:
+											mode == 2
+												? `${tr("forgottenHall_desc2", {
+														s: `${floor.star_num}`,
+														r: `${floor.round_num}`,
+														z: `${
+															(parseInt(
+																floor.node_1
+																	?.score
+															) || 0) +
+															(parseInt(
+																floor.node_2
+																	?.score
+															) || 0)
+														}`
+													})}`
+												: `${tr("forgottenHall_desc", {
+														s: `${floor.star_num}`,
+														r: `${floor.round_num}`
+													})}`,
+										value: `${userId}-${mode}-${time}-${i}`
 									};
 								})
 							)

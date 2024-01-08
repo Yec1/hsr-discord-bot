@@ -126,6 +126,7 @@ const langs = {
 	forgottenHall_noninfo: "No current Chaos of Memory data available",
 	forgottenHall_selectFloor: "Select Floor",
 	forgottenHall_desc: "<s> Star • <r> Round",
+	forgottenHall_desc2: "<s> Star • <r> Round • Score <z>",
 	forgottenHall_title: "Review",
 	forgottenHall_timeFooter: "Period",
 	forgottenHall_level: "Stage progress",
@@ -183,6 +184,9 @@ const langs = {
 		"If the image appears below, it means it can be displayed normally",
 	card_delete: "Deleted the set image",
 
+	cacophony: "Cacophony:",
+	score: "Score:",
+	totalScore: "Total Score:",
 	guarantee: "Guaranteed UP Next",
 	current: "Current Pity",
 	soft: "Soft Pity",

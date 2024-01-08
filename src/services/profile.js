@@ -1166,7 +1166,6 @@ async function cardImage(user, interaction) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
-		console.log(e);
 		return null;
 	}
 }
