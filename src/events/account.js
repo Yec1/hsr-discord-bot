@@ -101,6 +101,16 @@ client.on(Events.InteractionCreate, async interaction => {
 									.setRequired(false)
 									.setMinLength(1)
 									.setMaxLength(30)
+							),
+							new ActionRowBuilder().addComponents(
+								new TextInputBuilder()
+									.setCustomId("cookie_token")
+									.setLabel("CookieToken")
+									.setPlaceholder("v2_...")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(false)
+									.setMinLength(10)
+									.setMaxLength(1000)
 							)
 						)
 				);
@@ -187,6 +197,16 @@ client.on(Events.InteractionCreate, async interaction => {
 								.setRequired(false)
 								.setMinLength(1)
 								.setMaxLength(30)
+						),
+						new ActionRowBuilder().addComponents(
+							new TextInputBuilder()
+								.setCustomId("cookie_token")
+								.setLabel("CookieToken")
+								.setPlaceholder("v2_...")
+								.setStyle(TextInputStyle.Short)
+								.setRequired(false)
+								.setMinLength(10)
+								.setMaxLength(1000)
 						)
 					)
 			);
@@ -198,9 +218,13 @@ client.on(Events.InteractionCreate, async interaction => {
 			const i = interaction.customId.split("-")[1];
 			const ltoken = interaction.fields.getTextInputValue("ltoken") || "";
 			const ltuid = interaction.fields.getTextInputValue("ltuid") || "";
+			const cookie_token =
+				interaction.fields.getTextInputValue("cookie_token") || "";
 			const cookie =
 				interaction.fields.getTextInputValue("cookie") ||
-				`ltoken_v2=${ltoken}; ltuid_v2=${ltuid}`;
+				`ltoken_v2=${ltoken}; ltuid_v2=${ltuid}${
+					cookie_token ? `; cookie_token_v2=${cookie_token}` : ""
+				}`;
 
 			const trimed_cookie = await trimCookie(cookie);
 
