@@ -254,7 +254,7 @@ async function notifySend(notify, id, uid, cookie, mutiAcc) {
 							)}**${e.message}**`
 						)
 				]
-			}).catch(() => {});
+			});
 		}
 	}
 }
@@ -312,7 +312,7 @@ async function send(channelId, embed) {
 		await client.cluster.broadcastEval(
 			async (c, context) => {
 				const channel = c.channels.cache.get(context.channelId);
-				channel.send(context.embed);
+				channel.send(context.embed).catch(() => {});
 			},
 			{
 				context: { channelId: channelId, embed: embed },
