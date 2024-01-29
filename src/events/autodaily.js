@@ -117,53 +117,49 @@ async function dailySend(daily, id, uid, cookie, mutiAcc) {
 
 			if (daily[id]?.invaild) removeInvaild.push(id);
 
-			await channel
-				?.send({
-					content: tag,
-					embeds: [
-						new EmbedBuilder()
-							.setTitle(`${tr("auto")}${tr("daily_sign")}`)
-							.setThumbnail(todaySign?.icon)
-							.setDescription(
-								`<@${id}> ${tr("daily_desc", {
-									a: `\`${todaySign?.name}x${todaySign?.cnt}\``
-								})}${
-									info.month_last_day !== true
-										? `\n\n${tr("daily_desc2", {
-												b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-											})}`
-										: ""
-								}`
-							)
-							.addFields(
-								{
-									name: `${reward.month} ${tr(
-										"daily_month"
-									)}`,
-									value: "\u200b",
-									inline: true
-								},
-								{
-									name: tr("daily_signedDay", {
-										z:
-											info.month_last_day !== true
-												? info.total_sign_day + 1
-												: info.total_sign_day
-									}),
-									value: "\u200b",
-									inline: true
-								},
-								{
-									name: tr("daily_missedDay", {
-										z: info.sign_cnt_missed
-									}),
-									value: "\u200b",
-									inline: true
-								}
-							)
-					]
-				})
-				.catch(() => {});
+			send(channelId, {
+				content: tag,
+				embeds: [
+					new EmbedBuilder()
+						.setTitle(`${tr("auto")}${tr("daily_sign")}`)
+						.setThumbnail(todaySign?.icon)
+						.setDescription(
+							`<@${id}> ${tr("daily_desc", {
+								a: `\`${todaySign?.name}x${todaySign?.cnt}\``
+							})}${
+								info.month_last_day !== true
+									? `\n\n${tr("daily_desc2", {
+											b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
+										})}`
+									: ""
+							}`
+						)
+						.addFields(
+							{
+								name: `${reward.month} ${tr("daily_month")}`,
+								value: "\u200b",
+								inline: true
+							},
+							{
+								name: tr("daily_signedDay", {
+									z:
+										info.month_last_day !== true
+											? info.total_sign_day + 1
+											: info.total_sign_day
+								}),
+								value: "\u200b",
+								inline: true
+							},
+							{
+								name: tr("daily_missedDay", {
+									z: info.sign_cnt_missed
+								}),
+								value: "\u200b",
+								inline: true
+							}
+						)
+				]
+			}).catch(() => {});
 		}
 	} catch (e) {
 		if (mutiAcc == true && cookie) {
@@ -172,32 +168,28 @@ async function dailySend(daily, id, uid, cookie, mutiAcc) {
 
 			if (daily[id]?.invaild > 6) remove.push(id);
 
-			await channel
-				?.send({
-					content: tag,
-					embeds: [
-						new EmbedBuilder()
-							.setConfig(
-								"#E76161",
-								`${tr("auto_Fail", {
-									z: daily[id]?.invaild,
-									max: 7
-								})}`
-							)
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(
-								`${tr("auto")}${tr("daily_failed")} - ${uid}`
-							)
-							.setDescription(
-								`<@${id}> ${tr("cookie_failedDesc")}\n\n${tr(
-									"err_code"
-								)}**${e.message}**`
-							)
-					]
-				})
-				.catch(() => {});
+			send(channelId, {
+				content: tag,
+				embeds: [
+					new EmbedBuilder()
+						.setConfig(
+							"#E76161",
+							`${tr("auto_Fail", {
+								z: daily[id]?.invaild,
+								max: 7
+							})}`
+						)
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+						.setTitle(`${tr("auto")}${tr("daily_failed")} - ${uid}`)
+						.setDescription(
+							`<@${id}> ${tr("cookie_failedDesc")}\n\n${tr(
+								"err_code"
+							)}**${e.message}**`
+						)
+				]
+			}).catch(() => {});
 		}
 	}
 }
@@ -253,4 +245,19 @@ function UpdateStatistics(total, start_time, sus, fail, signed, nowTime) {
 				)
 		]
 	});
+}
+
+async function send(channelId, embed) {
+	try {
+		await client.cluster.broadcastEval(
+			async (c, context) => {
+				const channel = c.channels.cache.get(context.channelId);
+				channel.send(context.embed);
+			},
+			{
+				context: { channelId: channelId, embed: embed },
+				timeout: 10e3
+			}
+		);
+	} catch (e) {}
 }

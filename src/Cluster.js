@@ -42,4 +42,10 @@ manager.on("clusterCreate", cluster => {
 	});
 });
 
-manager.spawn({ timeout: -1 });
+manager.spawn().then(() => {
+	setInterval(async () => {
+		await manager.broadcastEval(
+			`this.ws.status && this.isReady() ? this.ws.reconnect() : 0`
+		);
+	}, 60000);
+});

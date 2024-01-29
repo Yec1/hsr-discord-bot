@@ -76,11 +76,6 @@ async function notifySend(notify, id, uid, cookie, mutiAcc) {
 	const tag = notify[id].tag === "true" ? `<@${id}>` : "";
 	const userdb = await db?.get(`autoNotify.${id}`);
 	const userMaxStamina = userdb?.stamina ? userdb.stamina : 170;
-	let channel;
-
-	try {
-		channel = await client.channels.fetch(channelId);
-	} catch (e) {}
 
 	try {
 		const hsr = new HonkaiStarRail({
@@ -105,7 +100,7 @@ async function notifySend(notify, id, uid, cookie, mutiAcc) {
 		if (userdb.expedition === "true")
 			for (let expedition of res.expeditions) {
 				if (expedition.remaining_time === 0 && !isTitleAdded) {
-					title += `${tr("notify_expeditionMax")}`;
+					title += ` ${tr("notify_expeditionMax")}`;
 					isTitleAdded = true;
 					expeditionNotify = true;
 				}
@@ -119,110 +114,104 @@ async function notifySend(notify, id, uid, cookie, mutiAcc) {
 
 			if (notify[id]?.invaild) removeInvaild.push(id);
 
-			channel
-				?.send({
-					content: tag,
-					embeds: [
-						new EmbedBuilder()
-							.setColor(staminaColor(res.current_stamina))
-							.setTitle(title)
-							.setDescription(`<@${id}>`)
-							.setAuthor({
-								name: `${tr("notify_title")} - ${hsr.uid}`,
-								iconURL:
-									"https://media.discordapp.net/attachments/1057244827688910850/1121043103831293992/NoviceBookIcon.png"
-							})
-							.addFields(
-								{
-									name: `${emoji.stamina} ${tr(
-										"notify_stamina"
-									)} ${res.current_stamina} / ${
-										res.max_stamina
-									} ** ** ${tr("notify_re")} ${
-										res.stamina_recover_time <= 0
-											? `\`${tr("notify_reAll")}\``
-											: `<t:${
-													moment(new Date()).unix() +
-													res.stamina_recover_time
-												}:R>`
-									}`,
-									value: "\u200b",
-									inline: false
-								},
-								{
-									name: `${emoji.reserve_stamina} ${tr(
-										"notify_staminaBack"
-									)} ${res.current_reserve_stamina} / 2400`,
-									value: "\u200b",
-									inline: false
-								},
-								{
-									name: `${emoji.daily} ${tr(
-										"notify_daily"
-									)} ${res.current_train_score} / ${
-										res.max_train_score
-									} ** ** ${tr("notify_end")} ${`<t:${moment(
-										new Date(
-											new Date().setDate(
-												new Date().getDate() + 1
-											)
-										).setHours(4, 0, 0, 0)
-									).unix()}:R>`}`,
-									value: "\u200b",
-									inline: false
-								},
-								{
-									name: `${emoji.rogue} ${tr(
-										"notify_rogue"
-									)} ${res.current_rogue_score} / ${
-										res.max_rogue_score
-									}`,
-									value: "\u200b",
-									inline: false
-								},
-								{
-									name: `${emoji.cocoon} ${tr(
-										"notify_cocoon"
-									)} ${res.weekly_cocoon_cnt} / ${
-										res.weekly_cocoon_limit
-									}`,
-									value: "\u200b",
-									inline: false
-								},
-								{
-									name: `${emoji.epedition} ${tr(
-										"notify_epedition"
-									)} ${res.accepted_epedition_num} / ${
-										res.total_expedition_num
-									}`,
-									value:
-										res.expeditions.length !== 0
-											? res.expeditions
-													.map(expedition => {
-														return `• **${
-															expedition.name
-														}**：${
-															expedition.remaining_time <=
-															0
-																? `\`${tr(
-																		"notify_claim"
-																	)}\``
-																: `<t:${
-																		moment(
-																			new Date()
-																		).unix() +
-																		expedition.remaining_time
-																	}:R>`
-														}`;
-													})
-													.join("\n")
-											: "\u200b",
-									inline: false
-								}
-							)
-					]
-				})
-				.catch(() => {});
+			send(channelId, {
+				content: tag,
+				embeds: [
+					new EmbedBuilder()
+						.setColor(staminaColor(res.current_stamina))
+						.setTitle(title)
+						.setDescription(`<@${id}>`)
+						.setAuthor({
+							name: `${tr("notify_title")} - ${hsr.uid}`,
+							iconURL:
+								"https://media.discordapp.net/attachments/1057244827688910850/1121043103831293992/NoviceBookIcon.png"
+						})
+						.addFields(
+							{
+								name: `${emoji.stamina} ${tr(
+									"notify_stamina"
+								)} ${res.current_stamina} / ${
+									res.max_stamina
+								} ** ** ${tr("notify_re")} ${
+									res.stamina_recover_time <= 0
+										? `\`${tr("notify_reAll")}\``
+										: `<t:${
+												moment(new Date()).unix() +
+												res.stamina_recover_time
+											}:R>`
+								}`,
+								value: "\u200b",
+								inline: false
+							},
+							{
+								name: `${emoji.reserve_stamina} ${tr(
+									"notify_staminaBack"
+								)} ${res.current_reserve_stamina} / 2400`,
+								value: "\u200b",
+								inline: false
+							},
+							{
+								name: `${emoji.daily} ${tr("notify_daily")} ${
+									res.current_train_score
+								} / ${res.max_train_score} ** ** ${tr(
+									"notify_end"
+								)} ${`<t:${moment(
+									new Date(
+										new Date().setDate(
+											new Date().getDate() + 1
+										)
+									).setHours(4, 0, 0, 0)
+								).unix()}:R>`}`,
+								value: "\u200b",
+								inline: false
+							},
+							{
+								name: `${emoji.rogue} ${tr("notify_rogue")} ${
+									res.current_rogue_score
+								} / ${res.max_rogue_score}`,
+								value: "\u200b",
+								inline: false
+							},
+							{
+								name: `${emoji.cocoon} ${tr("notify_cocoon")} ${
+									res.weekly_cocoon_cnt
+								} / ${res.weekly_cocoon_limit}`,
+								value: "\u200b",
+								inline: false
+							},
+							{
+								name: `${emoji.epedition} ${tr(
+									"notify_epedition"
+								)} ${res.accepted_epedition_num} / ${
+									res.total_expedition_num
+								}`,
+								value:
+									res.expeditions.length !== 0
+										? res.expeditions
+												.map(expedition => {
+													return `• **${
+														expedition.name
+													}**：${
+														expedition.remaining_time <=
+														0
+															? `\`${tr(
+																	"notify_claim"
+																)}\``
+															: `<t:${
+																	moment(
+																		new Date()
+																	).unix() +
+																	expedition.remaining_time
+																}:R>`
+													}`;
+												})
+												.join("\n")
+										: "\u200b",
+								inline: false
+							}
+						)
+				]
+			}).catch(() => {});
 		}
 	} catch (e) {
 		if (mutiAcc == true && cookie) {
@@ -244,32 +233,28 @@ async function notifySend(notify, id, uid, cookie, mutiAcc) {
 				.filter(Boolean)
 				.join("\n");
 
-			channel
-				?.send({
-					content: tag,
-					embeds: [
-						new EmbedBuilder()
-							.setConfig(
-								"#E76161",
-								`${tr("auto_Fail", {
-									z: notify[id]?.invaild,
-									max: 48
-								})}`
-							)
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(`${tr("autoNote_title")} - ${uid}`)
-							.setDescription(
-								`<@${id}> ${tr(
-									"notify_failed"
-								)}\n\n${desc}\n${tr("err_code")}**${
-									e.message
-								}**`
-							)
-					]
-				})
-				.catch(() => {});
+			send(channelId, {
+				content: tag,
+				embeds: [
+					new EmbedBuilder()
+						.setConfig(
+							"#E76161",
+							`${tr("auto_Fail", {
+								z: notify[id]?.invaild,
+								max: 48
+							})}`
+						)
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+						.setTitle(`${tr("autoNote_title")} - ${uid}`)
+						.setDescription(
+							`<@${id}> ${tr("notify_failed")}\n\n${desc}\n${tr(
+								"err_code"
+							)}**${e.message}**`
+						)
+				]
+			}).catch(() => {});
 		}
 	}
 }
@@ -320,4 +305,19 @@ function UpdateStatistics(total, start_time, sus, fail, nowTime) {
 				)
 		]
 	});
+}
+
+async function send(channelId, embed) {
+	try {
+		await client.cluster.broadcastEval(
+			async (c, context) => {
+				const channel = c.channels.cache.get(context.channelId);
+				channel.send(context.embed);
+			},
+			{
+				context: { channelId: channelId, embed: embed },
+				timeout: 10e3
+			}
+		);
+	} catch (e) {}
 }
