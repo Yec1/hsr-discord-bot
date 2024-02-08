@@ -28,8 +28,10 @@ client.on(Events.ClientReady, async () => {
 	notifyCheck();
 
 	schedule.scheduleJob("0 * * * *", function () {
-		notifyCheck();
-		dailyCheck();
+		if (client.cluster.id == 0) {
+			notifyCheck();
+			dailyCheck();
+		}
 	});
 
 	setInterval(updatePresence, 10000);
