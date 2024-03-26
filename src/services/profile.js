@@ -164,9 +164,12 @@ async function mainPage(playerData, interaction) {
 		ctx.stroke();
 
 		// Characters
-		const width = 1840 / playerData.characters.length;
+		const width =
+			(920 + (playerData.characters.length - 4) * 230) /
+			playerData.characters.length;
 		for (let i = 0; i < playerData.characters.length; i++) {
-			const x = 60 + i * width;
+			const x =
+				520 - (playerData.characters.length - 4) * 115 + i * width;
 			const y = 460 + 256;
 			const Width = 187;
 			const Height = 76;
