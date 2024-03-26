@@ -173,9 +173,57 @@ client.on(Events.InteractionCreate, async interaction => {
 			async function handleDrawRequest(interaction, datas, title) {
 				const drawTask = async () => {
 					try {
+						const lastData =
+							(await db.get(`${interaction.user.id}.warpLog`)) ??
+							{};
+
+						const mergedData = lastData.data
+							? lastData.data.slice()
+							: [];
+
+						datas.data.forEach(newItem => {
+							if (
+								!mergedData.some(
+									oldItem =>
+										oldItem.id === newItem.id &&
+										oldItem.name === newItem.name &&
+										oldItem.count === newItem.count
+								)
+							) {
+								mergedData.unshift(newItem);
+							}
+						});
+
+						let totalCount = 0;
+						let totalCountWithCount = 0;
+
+						mergedData.forEach(item => {
+							totalCount++;
+							totalCountWithCount += item.count;
+						});
+
+						const total = totalCountWithCount + datas.pity;
+						const average =
+							totalCount > 0
+								? (total / totalCount).toFixed(2)
+								: 0;
+						const pity = datas.pity;
+
+						const mergedFinalData = {
+							total,
+							average,
+							pity,
+							data: mergedData
+						};
+
+						db.set(
+							`${interaction.user.id}.warpLog`,
+							mergedFinalData
+						);
+
 						const imageBuffer = await warpLogImage(
 							interaction,
-							datas,
+							mergedFinalData,
 							title
 						);
 						if (imageBuffer == null)
@@ -286,6 +334,7 @@ client.on(Events.InteractionCreate, async interaction => {
 							files: [image]
 						});
 					} catch (error) {
+						console.log(error);
 						await interaction.editReply({
 							embeds: [
 								new EmbedBuilder()

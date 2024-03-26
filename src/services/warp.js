@@ -178,7 +178,7 @@ async function warpLog(input, interaction) {
 							data.reduce((acc, i) => acc + i.count, 0) /
 							data.length
 						).toFixed(2)
-				  )
+					)
 				: 0;
 			list[warpType].total = total;
 		}
@@ -379,8 +379,8 @@ async function createImage(id, warpResults) {
 									? "8"
 									: "20"
 								: dataBank[id] < 7
-								  ? "20"
-								  : "100"
+									? "20"
+									: "100"
 						}`,
 						xOffset + 40,
 						yOffset + 75
@@ -725,6 +725,7 @@ async function warpLogImage(interaction, datas, title) {
 
 		// Draw History
 		datas.data.slice(0, 23);
+		datas.data.reverse();
 		datas.data.unshift({
 			count: datas.pity
 		});
@@ -785,7 +786,7 @@ async function warpLogImage(interaction, datas, title) {
 										type == "light_cone"
 											? "light_cone"
 											: "avatar"
-								  }/${id}.png`)
+									}/${id}.png`)
 					);
 					const imageWidth = 2 * (radius - lineWidth);
 					const imageHeight = 2 * (radius - lineWidth);
