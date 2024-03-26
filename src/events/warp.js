@@ -170,12 +170,13 @@ client.on(Events.InteractionCreate, async interaction => {
 					]
 				});
 
-			async function handleDrawRequest(interaction, datas, title) {
+			async function handleDrawRequest(interaction, datas, title, type) {
 				const drawTask = async () => {
 					try {
 						const lastData =
-							(await db.get(`${interaction.user.id}.warpLog`)) ??
-							{};
+							(await db.get(
+								`${interaction.user.id}.warpLog.${type}`
+							)) ?? {};
 
 						const mergedData = lastData.data
 							? lastData.data.slice()
@@ -217,7 +218,7 @@ client.on(Events.InteractionCreate, async interaction => {
 						};
 
 						db.set(
-							`${interaction.user.id}.warpLog`,
+							`${interaction.user.id}.warpLog.${type}`,
 							mergedFinalData
 						);
 
@@ -417,21 +418,24 @@ client.on(Events.InteractionCreate, async interaction => {
 						handleDrawRequest(
 							interaction,
 							warpResults.character,
-							tr("warp_typeCharacter")
+							tr("warp_typeCharacter"),
+							type
 						);
 						break;
 					case "lightcone":
 						handleDrawRequest(
 							interaction,
 							warpResults.light_cone,
-							tr("warp_typeLightcone")
+							tr("warp_typeLightcone"),
+							type
 						);
 						break;
 					case "regular":
 						handleDrawRequest(
 							interaction,
 							warpResults.regular,
-							tr("warp_typeRegular")
+							tr("warp_typeRegular"),
+							type
 						);
 						break;
 				}
