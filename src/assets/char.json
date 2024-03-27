@@ -1,5 +1,23 @@
 [
   {
+    "name": "Aventurine",
+    "path": "Preservation",
+    "element": "Imaginary",
+    "rarity": 5
+  },
+  {
+    "name": "Gallagher",
+    "path": "Abundance",
+    "element": "Fire",
+    "rarity": 4
+  },
+  {
+    "name": "Acheron",
+    "path": "Nihility",
+    "element": "Lightning",
+    "rarity": 5
+  },
+  {
     "name": "Sparkle",
     "path": "Harmony",
     "element": "Quantum",

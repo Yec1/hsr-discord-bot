@@ -160,6 +160,20 @@ export default {
 									"zh-TW": "2.0.2 - 花火"
 								},
 								value: "2.0.2"
+							},
+							{
+								name: "2.1.1 - Acheron",
+								name_localizations: {
+									"zh-TW": "2.1.1 - 黃泉"
+								},
+								value: "2.1.1"
+							},
+							{
+								name: "2.1.2 - Aventurine",
+								name_localizations: {
+									"zh-TW": "2.1.2 - 砂金"
+								},
+								value: "2.1.2"
 							}
 						)
 				)

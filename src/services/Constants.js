@@ -1,3 +1,6 @@
+import parseJSON from "./parseJSON";
+export const json = new parseJSON();
+
 const baseWeapons = [
 	"amber",
 	"arrows",
@@ -31,13 +34,11 @@ const allChars = [
 	"clara",
 	"dan-heng",
 	"gepard",
-	"guinaifen",
 	"herta",
 	"himeko",
 	"hook",
 	"imbibitor-lunae",
 	"jing-yuan",
-	"jingliu",
 	"kafka",
 	"luka",
 	"luocha",
@@ -51,18 +52,48 @@ const allChars = [
 	"silver-wolf",
 	"sushang",
 	"tingyun",
-	"topaz-and-numby",
 	"welt",
 	"yanqing",
 	"yukong",
 	"fu-xuan",
 	"lynx",
+	"jingliu",
+	"topaz-and-numby",
+	"guinaifen",
 	"argenti",
 	"huohuo",
-	"hanya"
+	"hanya",
+	"ruan-mei",
+	"xueyi",
+	"dr-ratio",
+	"black-swan",
+	"misha",
+	"sparkle",
+	"aventurine",
+	"acheron",
+	"gallagher"
 ];
 
 const allWeapons = [
+	"inherently-unjust-destiny",
+	"along-the-passing-shore",
+	"concert-for-two",
+	"its-showtime",
+	"what-is-real",
+	"the-day-the-cosmos-fell",
+	"destinys-threads-forewoven",
+	"flames-afar",
+	"final-victor",
+	"dreamville-adventure",
+	"indelible-promise",
+	"earthly-escapade",
+	"reforged-remembrance",
+	"baptism-of-pure-thought",
+	"past-self-in-mirror",
+	"an-instance-before-a-gaze",
+	"night-of-fright",
+	"worrisome-blissful",
+	"i-shall-be-my-own-sword",
 	"a-secret-vow",
 	"carve-the-moon-weave-the-clouds",
 	"dance-dance-dance",
@@ -84,6 +115,7 @@ const allWeapons = [
 	"resolution-shines-as-pearls-of-sweat",
 	"return-to-darkness",
 	"river-flows-in-spring",
+	"she-already-shut-her-eyes",
 	"shared-feeling",
 	"subscribe-for-more",
 	"swordplay",
@@ -101,9 +133,7 @@ const allWeapons = [
 	"before-dawn",
 	"but-the-battle-isnt-over",
 	"cruising-in-the-stellar-sea",
-	"worrisome-blissful",
 	"echoes-of-the-coffin",
-	"i-shall-be-my-own-sword",
 	"incessant-rain",
 	"in-the-name-of-the-world",
 	"in-the-night",
@@ -136,35 +166,56 @@ const allWeapons = [
 	"mediation",
 	"defense",
 	"pioneering",
-	"mutual-demise",
-	"an-instance-forever-cherished",
-	"night-of-fright"
+	"mutual-demise"
 ];
 
 const BGM = {
-	ooc: ["timeline", "science-fiction", "space-walk"],
+	ooc: ["space-walk", "science-fiction", "timeline"],
 	osae: ["faded-sun", "embers", "streets-abuzz"],
-	ss: ["cumulus-formations", "exquisite-ingenuity", "lustrous-moonlight"]
+	ss: ["lustrous-moonlight", "cumulus-formations", "exquisite-ingenuity"]
 };
 
 const allVers = [
+	"2.1.2",
+	"2.1.1",
+	"2.0.2",
+	"2.0.1",
+	"1.6.2",
+	"1.6.1",
+	"1.5.2",
 	"1.5.1",
-	"1.5.0",
+	"1.4.2",
 	"1.4.1",
-	"1.4.0",
+	"1.3.2",
 	"1.3.1",
-	"1.3.0",
+	"1.2.2",
 	"1.2.1",
-	"1.2.0",
+	"1.1.2",
 	"1.1.1",
-	"1.1.0",
-	"1.0.1",
-	"1.0.0"
+	"1.0.2",
+	"1.0.1"
 ];
 
-const LATESTVERS = allVers[0];
+const hidden = ["2.1.2"];
+
+const LATESTVERS = allVers.filter(vers => !hidden.includes(vers))[0];
 
 const asianLang = ["zh", "ko", "ja"];
+
+const colourMap = {
+	// blue: seele, silver wolf
+	1: "#387ac6",
+	// jing yuan, luocha
+	2: "#4b7982",
+	// purple: kafka
+	3: "#80466f",
+	// red: topaz, argenti
+	4: "#a64e64",
+	// slate: blade
+	5: "#4a718e",
+	// unknown
+	6: "#6748c7"
+};
 
 export {
 	allChars,
@@ -173,5 +224,7 @@ export {
 	BGM,
 	allVers,
 	asianLang,
-	LATESTVERS
+	LATESTVERS,
+	hidden,
+	colourMap
 };
