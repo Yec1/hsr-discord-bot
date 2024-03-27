@@ -1,6 +1,3 @@
-import parseJSON from "./parseJSON";
-export const json = new parseJSON();
-
 const baseWeapons = [
 	"amber",
 	"arrows",
