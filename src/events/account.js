@@ -41,7 +41,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			await interaction.update({ fetchReply: true }).catch(() => {});
 			const i = interaction.values[0];
 
-			return await interaction.editReply({
+			await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -63,6 +63,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				],
 				ephemeral: true
 			});
+			return;
 		} else if (interaction.customId == "uid_edit2") {
 			const [option, i] = interaction.values[0].split("-");
 

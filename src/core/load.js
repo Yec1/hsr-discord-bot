@@ -82,12 +82,3 @@ export async function load(client) {
 		await client.application.commands.set(slashCommands);
 	});
 }
-
-export class Loader {
-	constructor(client) {
-		this.client = client;
-	}
-	async load() {
-		load(this.client)	
-	}
-}
