@@ -7,6 +7,7 @@ const webhook = new WebhookClient({
 });
 
 client.on("error", error => {
+	console.error(error);	
 	new Logger("系統").error(`錯誤訊息：${error.message}`);
 	webhook.send({
 		embeds: [
