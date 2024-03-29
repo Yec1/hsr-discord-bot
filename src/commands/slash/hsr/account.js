@@ -93,7 +93,6 @@ export default {
 		const userId = interaction.user.id;
 			
 		if (cmd == VIEW_ON_CONFIGURED_ACCOUNT || cmd == EDIT_CONFIGURED_ACCOUNT || cmd == DELETED_CONFIGURED_ACCOUNT) {
-			console.log("1")
 			if (!(await db.has(`${userId}.account`)))
 				return await interaction.reply({
 					embeds: [
@@ -111,9 +110,9 @@ export default {
 		}
 
 		const accounts = await db.get(`${interaction.user.id}.account`);
-
-		if (cmd == HOW_TO_SET_UP_ACCOUNT) {
-			console.log("2")
+		
+		switch (cmd) {
+		case HOW_TO_SET_UP_ACCOUNT:
 			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
@@ -131,44 +130,42 @@ export default {
 				content: "java+script: document.write(document.cookie)",
 				ephemeral: true
 			});
-		} else if (cmd == SET_COOKIE) {
-			console.log(3)
-			if (!(await db.has(`${interaction.user.id}.account`)))
-				return await interaction.reply({
-					embeds: [
-						new EmbedBuilder()
-							.setConfig("#E76161")
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(`${tr("account_setUID")}`)
-					],
-					ephemeral: true
-				});
-
-			return await interaction.reply({
-				components: [
-					new ActionRowBuilder().addComponents(
-						new StringSelectMenuBuilder()
-							.setPlaceholder(`${tr("account_cookieSelectUID")}`)
-							.setCustomId("uid_cookieSet")
-							.setMinValues(1)
-							.setMaxValues(1)
-							.addOptions(
-								accounts.map((account, i) => {
-									return {
+			return;
+		case SET_COOKIE:
+			if (await db.has(`${interaction.user.id}.account`))
+				await interaction.reply({
+					components: [
+						new ActionRowBuilder().addComponents(
+							new StringSelectMenuBuilder()
+								.setPlaceholder(`${tr("account_cookieSelectUID")}`)
+								.setCustomId("uid_cookieSet")
+								.setMinValues(1)
+								.setMaxValues(1)
+								.addOptions(
+									accounts.map((account, i) => ({
 										emoji: `${emoji.avatarIcon}`,
 										label: `${account.uid}`,
 										value: `${i}`
-									};
-								})
-							)
-					)
+									}))
+								)
+						)
+					],
+					ephemeral: true
+				});
+			await interaction.reply({
+				embeds: [
+					new EmbedBuilder()
+						.setConfig("#E76161")
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+						.setTitle(`${tr("account_setUID")}`)
 				],
 				ephemeral: true
 			});
-		} else if (cmd == SET_USER_ID) {
-			console.log(4)
+			return;
+			
+		case SET_USER_ID:
 			await interaction.showModal(
 				new ModalBuilder()
 					.setCustomId("uid_set")
@@ -186,8 +183,8 @@ export default {
 						)
 					)
 			);
-		} else if (cmd == VIEW_ON_CONFIGURED_ACCOUNT) {
-			console.log(5)
+			return;
+		case VIEW_ON_CONFIGURED_ACCOUNT:
 			const accounts = await db.get(`${userId}.account`);
 
 			await interaction.editReply({
@@ -216,7 +213,7 @@ export default {
 						)
 				]
 			});
-		} else if (cmd == EDIT_CONFIGURED_ACCOUNT) {
+		case EDIT_CONFIGURED_ACCOUNT:
 			console.log(6)
 			return await interaction.editReply({
 				components: [
@@ -239,8 +236,7 @@ export default {
 				],
 				ephemeral: true
 			});
-		} else if (cmd == DELETED_CONFIGURED_ACCOUNT) {
-			console.log(7)
+		case DELETED_CONFIGURED_ACCOUNT:
 			return await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
@@ -250,13 +246,11 @@ export default {
 							.setMinValues(1)
 							.setMaxValues(1)
 							.addOptions(
-								accounts.map((account, i) => {
-									return {
-										emoji: `${emoji.avatarIcon}`,
-										label: `${account.uid}`,
-										value: `${i}`
-									};
-								})
+								accounts.map((account, i) => ({
+									emoji: `${emoji.avatarIcon}`,
+									label: `${account.uid}`,
+									value: `${i}`
+								}))
 							)
 					)
 				],
