@@ -9,6 +9,13 @@ import {
 	StringSelectMenuBuilder
 } from "discord.js";
 
+const HOW_TO_SET_UP_ACCOUNT = "how";
+const SET_USER_ID = "set_Uid";
+const SET_COOKIE = "setCookie";
+const VIEW_ON_CONFIGURED_ACCOUNT = "viewSet";
+const EDIT_CONFIGURED_ACCOUNT = "editSet";
+const DELETED_CONFIGURED_ACCOUNT = "delSet";
+
 export default {
 	data: new SlashCommandBuilder()
 		.setName("account")
@@ -36,42 +43,42 @@ export default {
 						name_localizations: {
 							"zh-TW": "❓ 如何設定帳號"
 						},
-						value: "how"
+						value: HOW_TO_SET_UP_ACCOUNT,
 					},
 					{
 						name: "① Set UID",
 						name_localizations: {
 							"zh-TW": "① 設定 UID"
 						},
-						value: "setUid"
+						value: SET_USER_ID, 
 					},
 					{
 						name: "② Set Cookie",
 						name_localizations: {
 							"zh-TW": "② 設定 Cookie"
 						},
-						value: "setCookie"
+						value: SET_COOKIE, 
 					},
 					{
 						name: "🔸 View configured account",
 						name_localizations: {
 							"zh-TW": "🔸 檢視已設定帳號"
 						},
-						value: "viewSet"
+						value: VIEW_ON_CONFIGURED_ACCOUNT, 
 					},
 					{
 						name: "⚙️ Edit configured account",
 						name_localizations: {
 							"zh-TW": "⚙️ 編輯已設定帳號"
 						},
-						value: "editSet"
+						value: EDIT_CONFIGURED_ACCOUNT, 
 					},
 					{
 						name: "❌ Delete configured account",
 						name_localizations: {
 							"zh-TW": "❌ 刪除已設定帳號"
 						},
-						value: "delSet"
+						value: DELETED_CONFIGURED_ACCOUNT, 
 					}
 				)
 		),
@@ -81,11 +88,12 @@ export default {
 	 * @param {CommandInteraction} interaction
 	 * @param {String[]} args
 	 */
-	async execute(client, interaction, args, tr, db, emoji) {
+	async execute(_client, interaction, _args, tr, db, emoji) {
 		const cmd = interaction.options.getString("options");
 		const userId = interaction.user.id;
-
-		if (cmd == "viewSet" || cmd == "editSet" || cmd == "delSet") {
+			
+		if (cmd == VIEW_ON_CONFIGURED_ACCOUNT || cmd == EDIT_CONFIGURED_ACCOUNT || cmd == DELETED_CONFIGURED_ACCOUNT) {
+			console.log("1")
 			if (!(await db.has(`${userId}.account`)))
 				return await interaction.reply({
 					embeds: [
@@ -104,7 +112,8 @@ export default {
 
 		const accounts = await db.get(`${interaction.user.id}.account`);
 
-		if (cmd == "how") {
+		if (cmd == HOW_TO_SET_UP_ACCOUNT) {
+			console.log("2")
 			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
@@ -122,7 +131,8 @@ export default {
 				content: "java+script: document.write(document.cookie)",
 				ephemeral: true
 			});
-		} else if (cmd == "setCookie") {
+		} else if (cmd == SET_COOKIE) {
+			console.log(3)
 			if (!(await db.has(`${interaction.user.id}.account`)))
 				return await interaction.reply({
 					embeds: [
@@ -157,7 +167,8 @@ export default {
 				],
 				ephemeral: true
 			});
-		} else if (cmd == "setUid") {
+		} else if (cmd == SET_USER_ID) {
+			console.log(4)
 			await interaction.showModal(
 				new ModalBuilder()
 					.setCustomId("uid_set")
@@ -175,7 +186,8 @@ export default {
 						)
 					)
 			);
-		} else if (cmd == "viewSet") {
+		} else if (cmd == VIEW_ON_CONFIGURED_ACCOUNT) {
+			console.log(5)
 			const accounts = await db.get(`${userId}.account`);
 
 			await interaction.editReply({
@@ -204,7 +216,8 @@ export default {
 						)
 				]
 			});
-		} else if (cmd == "editSet") {
+		} else if (cmd == EDIT_CONFIGURED_ACCOUNT) {
+			console.log(6)
 			return await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
@@ -226,7 +239,8 @@ export default {
 				],
 				ephemeral: true
 			});
-		} else if (cmd == "delSet") {
+		} else if (cmd == DELETED_CONFIGURED_ACCOUNT) {
+			console.log(7)
 			return await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
