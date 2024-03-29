@@ -12,6 +12,9 @@ import { i18nMixin, toI18nLang } from "../services/i18n.js";
 import { trimCookie } from "../services/cookie.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { player } from "../services/request.js";
+
+import { AxiosError } from "axios";
+
 const db = client.db;
 
 client.on(Events.InteractionCreate, async interaction => {
@@ -416,23 +419,32 @@ client.on(Events.InteractionCreate, async interaction => {
 			await interaction.deferReply({ ephemeral: true });
 
 			const uid = interaction.fields.getTextInputValue("uid");
-			const playerData = await player(uid, interaction);
-
-			if (playerData.detail == "Invalid uid")
-				return await interaction.editReply({
-					embeds: [
-						new EmbedBuilder()
-							.setConfig("#E76161")
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(
-								tr("profile_failed", {
-									z: `\`${uid}\``
-								})
-							)
-					]
-				});
+			try {
+				const playerData = await player(uid, interaction);
+				if (playerData.detail == "Invalid uid")
+					return await interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setConfig("#E76161")
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+								)
+								.setTitle(
+									tr("profile_failed", {
+										z: `\`${uid}\``
+									})
+								)
+						]
+					});
+			} catch (e) {
+				if (e instanceof AxiosError) {
+					await interaction.followUp({
+						ephemeral: true,
+						content: `未知的UID`,
+					})
+				}
+				throw e;
+			}
 
 			if (await db.has(`${interaction.user.id}.account`)) {
 				if ((await db.get(`${interaction.user.id}.account`)).length > 3)
