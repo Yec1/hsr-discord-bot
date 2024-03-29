@@ -9,12 +9,20 @@ import {
 	StringSelectMenuBuilder
 } from "discord.js";
 
+import { 
+	USER_ID_FIELD,
+	SET_USER_ID_MODAL,
+	SET_COOKIE_SELECT_MENU,
+	EDIT_CONFIGURED_ACCOUNT_SELECT_MENU, 
+	DELETE_CONFIGURED_ACCOUNT_SELECT_MENU,
+} from "../../../services/account.js";
+
 const HOW_TO_SET_UP_ACCOUNT = "how";
 const SET_USER_ID = "set_Uid";
 const SET_COOKIE = "setCookie";
 const VIEW_ON_CONFIGURED_ACCOUNT = "viewSet";
 const EDIT_CONFIGURED_ACCOUNT = "editSet";
-const DELETED_CONFIGURED_ACCOUNT = "delSet";
+const DELETE_CONFIGURED_ACCOUNT = "delSet";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -78,7 +86,7 @@ export default {
 						name_localizations: {
 							"zh-TW": "❌ 刪除已設定帳號"
 						},
-						value: DELETED_CONFIGURED_ACCOUNT, 
+						value: DELETE_CONFIGURED_ACCOUNT, 
 					}
 				)
 		),
@@ -92,7 +100,7 @@ export default {
 		const cmd = interaction.options.getString("options");
 		const userId = interaction.user.id;
 			
-		if (cmd == VIEW_ON_CONFIGURED_ACCOUNT || cmd == EDIT_CONFIGURED_ACCOUNT || cmd == DELETED_CONFIGURED_ACCOUNT) {
+		if (cmd == VIEW_ON_CONFIGURED_ACCOUNT || cmd == EDIT_CONFIGURED_ACCOUNT || cmd == DELETE_CONFIGURED_ACCOUNT) {
 			if (!(await db.has(`${userId}.account`)))
 				return await interaction.reply({
 					embeds: [
@@ -109,7 +117,7 @@ export default {
 			await interaction.deferReply({ ephemeral: true }).catch(() => {});
 		}
 
-		const accounts = await db.get(`${interaction.user.id}.account`);
+		// const accounts = await db.get(`${interaction.user.id}.account`);
 		
 		switch (cmd) {
 		case HOW_TO_SET_UP_ACCOUNT:
@@ -138,7 +146,7 @@ export default {
 						new ActionRowBuilder().addComponents(
 							new StringSelectMenuBuilder()
 								.setPlaceholder(`${tr("account_cookieSelectUID")}`)
-								.setCustomId("uid_cookieSet")
+								.setCustomId(SET_COOKIE_SELECT_MENU)
 								.setMinValues(1)
 								.setMaxValues(1)
 								.addOptions(
@@ -168,12 +176,12 @@ export default {
 		case SET_USER_ID:
 			await interaction.showModal(
 				new ModalBuilder()
-					.setCustomId("uid_set")
+					.setCustomId(SET_USER_ID_MODAL)
 					.setTitle(tr("account_uidTitle"))
 					.addComponents(
 						new ActionRowBuilder().addComponents(
 							new TextInputBuilder()
-								.setCustomId("uid")
+								.setCustomId(USER_ID_FIELD)
 								.setLabel(tr("account_uidDesc"))
 								.setPlaceholder("e.g. 809279679")
 								.setStyle(TextInputStyle.Short)
@@ -214,13 +222,12 @@ export default {
 				]
 			});
 		case EDIT_CONFIGURED_ACCOUNT:
-			console.log(6)
 			return await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
 							.setPlaceholder(tr("account_editUIDTitle"))
-							.setCustomId("uid_edit")
+							.setCustomId(EDIT_CONFIGURED_ACCOUNT_SELECT_MENU)
 							.setMinValues(1)
 							.setMaxValues(1)
 							.addOptions(
@@ -236,13 +243,13 @@ export default {
 				],
 				ephemeral: true
 			});
-		case DELETED_CONFIGURED_ACCOUNT:
+		case DELETE_CONFIGURED_ACCOUNT:
 			return await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
 							.setPlaceholder(tr("account_delUIDTitle"))
-							.setCustomId("uid_del")
+							.setCustomId(DELETE_CONFIGURED_ACCOUNT_SELECT_MENU)
 							.setMinValues(1)
 							.setMaxValues(1)
 							.addOptions(
