@@ -117,8 +117,9 @@ export default {
 			await interaction.deferReply({ ephemeral: true }).catch(() => {});
 		}
 
-		// const accounts = await db.get(`${interaction.user.id}.account`);
-		
+	
+		const accounts = await db.get(`${userId}.account`);
+
 		switch (cmd) {
 		case HOW_TO_SET_UP_ACCOUNT:
 			await interaction.reply({
@@ -140,7 +141,8 @@ export default {
 			});
 			return;
 		case SET_COOKIE:
-			if (await db.has(`${interaction.user.id}.account`))
+			if (await db.has(`${interaction.user.id}.account`)) {
+				const accounts = await db.get(`${interaction.user.id}.account`);
 				await interaction.reply({
 					components: [
 						new ActionRowBuilder().addComponents(
@@ -160,6 +162,8 @@ export default {
 					],
 					ephemeral: true
 				});
+				return;
+			}
 			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
@@ -193,8 +197,6 @@ export default {
 			);
 			return;
 		case VIEW_ON_CONFIGURED_ACCOUNT:
-			const accounts = await db.get(`${userId}.account`);
-
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -221,8 +223,9 @@ export default {
 						)
 				]
 			});
+			return;
 		case EDIT_CONFIGURED_ACCOUNT:
-			return await interaction.editReply({
+			await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -231,7 +234,7 @@ export default {
 							.setMinValues(1)
 							.setMaxValues(1)
 							.addOptions(
-								accounts.map((account, i) => {
+								editTargetAccounts.map((account, i) => {
 									return {
 										emoji: `${emoji.avatarIcon}`,
 										label: `${account.uid}`,
@@ -243,8 +246,9 @@ export default {
 				],
 				ephemeral: true
 			});
+			return;
 		case DELETE_CONFIGURED_ACCOUNT:
-			return await interaction.editReply({
+			await interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -263,6 +267,7 @@ export default {
 				],
 				ephemeral: true
 			});
+			return;
 		}
 	}
 };
