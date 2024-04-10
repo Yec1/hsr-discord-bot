@@ -1,8 +1,4 @@
-function firstMatch(text, matchExpression) {
-	const matchResult = text.match(matchExpression);
-	return matchResult == null ? matchResult : matchResult[0];
-}
-
+	
 function validateCookie(cookie) {
 	const re = /[^; \"]{30,}/;
 	const reNum = /[0-9]{5,}/;
@@ -22,7 +18,10 @@ function validateCookie(cookie) {
 	]
 
 	const text = matchExpressions
-		.map(x => firstMatch(cookie, x))
+		.map(expression => {
+			const matchResult = cookie.match(expression);
+			return matchResult == null ? matchResult : matchResult[0];
+		})
 		.filter(x => x != null)
 		.join(" ");
 
