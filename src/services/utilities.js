@@ -1,4 +1,6 @@
-async function validateCookie(cookie) {
+
+
+function validateCookie(cookie) {
 	const re = /[^; \"]{30,}/;
 	const reNum = /[0-9]{5,}/;
 	const reTokenV2 = /[^; \"]{10,}/;

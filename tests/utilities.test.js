@@ -4,10 +4,10 @@ const SAMPLE_COOKIE = "_MHYUUID=2322f04c-9a7c-4b02-8dae-e17f414c68db; G_ENABLED_
 
 const SAMPLE_RESPONSE = "ltoken=Te9Zl50043XTb8AEufgeqnqboTYPwlFBwBPIXTkL ltuid=335281049 account_id_v2=335281049 account_mid_v2=1lyqqlvnog_hy"
 
-test("Validate the correct cookie", async () => {
-	expect(await validateCookie(SAMPLE_COOKIE)).toBe(SAMPLE_RESPONSE);
+test("Validate the correct cookie", () => {
+	expect(validateCookie(SAMPLE_COOKIE)).toBe(SAMPLE_RESPONSE);
 });
 
-test("Validate the incorrect format cookie", async () => {
-	expect(await validateCookie("")).toBe(null);
+test("Validate the incorrect format cookie", () => {
+	expect(validateCookie("")).toBe(null);
 });

@@ -230,7 +230,7 @@ client.on(Events.InteractionCreate, async interaction => {
 					cookie_token ? `; cookie_token_v2=${cookie_token}` : ""
 				}`;
 
-			const trimed_cookie = await validateCookie(cookie);
+			const trimed_cookie = validateCookie(cookie);
 			
 			console.log(trimed_cookie);
 
