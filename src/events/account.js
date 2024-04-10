@@ -8,7 +8,7 @@ import {
 	Events,
 	StringSelectMenuBuilder
 } from "discord.js";
-import { validateCookie } from "../services/utils.js";
+import { validateCookie } from "../services/utilities.js";
 import { i18nMixin, toI18nLang } from "../services/i18n.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { player } from "../services/request.js";
@@ -16,7 +16,6 @@ import { player } from "../services/request.js";
 import { AxiosError } from "axios";
 
 const db = client.db;
-
 
 client.on(Events.InteractionCreate, async interaction => {
 	const tr = i18nMixin(
@@ -232,6 +231,8 @@ client.on(Events.InteractionCreate, async interaction => {
 				}`;
 
 			const trimed_cookie = await validateCookie(cookie);
+			
+			console.log(trimed_cookie);
 
 			if (trimed_cookie == null)
 				return await interaction.reply({
