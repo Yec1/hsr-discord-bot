@@ -13,11 +13,10 @@ export default async function dailyCheck() {
 	const daily = await db.get("autoDaily");
 	const autoDaily = Object.keys(daily);
 
-	// Log
 	const nowTime = new Date().toLocaleString("en-US", {
 		timeZone: "Asia/Taipei",
 		hour: "numeric",
-		hour12: false
+		hour12: false,
 	});
 	const start_time = Date.now();
 	remove = [];
@@ -34,11 +33,11 @@ export default async function dailyCheck() {
 
 		if (parseInt(time) == nowTime) {
 			if (
-				(await db?.has(`${id}.account`)) &&
-				(await db?.get(`${id}.account`))[0].uid &&
-				(await db?.get(`${id}.account`))[0].cookie
+				(await db.has(`${id}.account`)) &&
+				(await db.get(`${id}.account`))[0].uid &&
+				(await db.get(`${id}.account`))[0].cookie
 			) {
-				const accounts = await db?.get(`${id}.account`);
+				const accounts = await db.get(`${id}.account`);
 				let n = 0;
 				for (const account of accounts)
 					await dailySend(
@@ -53,8 +52,8 @@ export default async function dailyCheck() {
 				await dailySend(
 					daily,
 					id,
-					await db?.get(`${id}.uid`),
-					await db?.get(`${id}.cookie`)
+					await db.get(`${id}.uid`),
+					await db.get(`${id}.cookie`)
 				);
 		}
 	}
