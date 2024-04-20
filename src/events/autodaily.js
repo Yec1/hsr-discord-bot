@@ -16,7 +16,7 @@ export default async function dailyCheck() {
 	const nowTime = new Date().toLocaleString("en-US", {
 		timeZone: "Asia/Taipei",
 		hour: "numeric",
-		hour12: false,
+		hour12: false
 	});
 	const start_time = Date.now();
 	remove = [];
@@ -161,7 +161,7 @@ async function dailySend(daily, id, uid, cookie, mutiAcc) {
 			}).catch(() => {});
 		}
 	} catch (e) {
-		if (mutiAcc == true && cookie) {
+		if (cookie) {
 			fail++;
 			daily[id]?.invaild ? daily[id].invaild++ : (daily[id].invaild = 1);
 
