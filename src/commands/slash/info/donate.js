@@ -30,7 +30,9 @@ export default {
 					.setTitle(`${tr("donate_Title")}`)
 					.setDescription(`${tr("donate_Desc")}`)
 					.setImage(
-						"https://media.discordapp.net/attachments/1057244827688910850/1180770724370190447/donate.png"
+						interaction.locale == "zh-TW"
+							? "https://media.discordapp.net/attachments/1179006627026833478/1204445667297198080/IMG_1054.png"
+							: "https://media.discordapp.net/attachments/1057244827688910850/1180770724370190447/donate.png"
 					)
 			],
 			ephemeral: true

@@ -186,7 +186,7 @@ const langs = {
 	donate_Title:
 		"<:love:1068758168877936740> 想要贊助我們嗎？您可以使用以下方式贊助我們！",
 	donate_Desc:
-		"\n▫️ [藍新 - 支持超商付款](https://core.newebpay.com/EPG/yeci/5jBaaE)\n\n▫️ [Buy Me A Coffee](https://www.buymeacoffee.com/yeci)",
+		"\n▫️ [魔儲 - 多種遊戲代購](https://www.mepay.com.tw/auth?rcode=yeci)\n\n▫️ [藍新 - 支持超商付款](https://core.newebpay.com/EPG/yeci/5jBaaE)\n\n▫️ [Buy Me A Coffee](https://www.buymeacoffee.com/yeci)",
 	year: "年",
 	month: "月",
 	day: "日",

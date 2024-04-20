@@ -124,6 +124,43 @@ client.on(Events.InteractionCreate, async interaction => {
 			new Logger("指令").command(
 				`${interaction.user.displayName}(${interaction.user.id}) 執行 ${command.data.name} - ${time}`
 			);
+
+			if (
+				(await db.get(`${interaction.user.id}.premium`)) != true &&
+				Math.floor(Math.random() * 100) < 10
+			) {
+				await interaction.fetchReply().catch(() => {});
+				if (Math.floor(Math.random() * 100) <= 50) {
+					interaction.followUp({
+						embeds: [
+							new EmbedBuilder()
+								.setColor("#FFA042")
+								.setDescription(
+									"## MEPay魔儲，多位知名實況主推薦，全台最大遊戲儲值平台。想要既安全又便宜課金？\n\n### 使用我的註冊連結，即可獲得折價券以及抽獎資格！\n\n## [前往 MEPay 魔儲](https://www.mepay.com.tw/auth?rcode=yeci)"
+								)
+								.setImage(
+									"https://media.discordapp.net/attachments/1179006627026833478/1204445667297198080/IMG_1054.png"
+								)
+						],
+						ephemeral: true
+					});
+				} else {
+					interaction.followUp({
+						embeds: [
+							new EmbedBuilder()
+								.setColor("#A6FFA6")
+								.setDescription(
+									"## 想要免費獲得課金機會嗎？現在加入 Discord 伺服器，即可參加抽獎活動！\n\n## [前往 Discord 伺服器](https://discord.gg/mPCEATJDve)"
+								)
+								.setImage(
+									"https://cdn.discordapp.com/attachments/1162357148890705941/1231228631032791060/imageaa_1.png"
+								)
+						],
+						ephemeral: true
+					});
+				}
+			}
+
 			webhook.send({
 				embeds: [
 					new EmbedBuilder()
