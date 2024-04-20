@@ -725,7 +725,7 @@ async function warpLogImage(interaction, datas, title) {
 
 		// Draw History
 		datas.data.slice(0, 23);
-		datas.data.reverse();
+		// datas.data.reverse();
 		datas.data.unshift({
 			count: datas.pity
 		});

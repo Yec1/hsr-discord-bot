@@ -173,58 +173,58 @@ client.on(Events.InteractionCreate, async interaction => {
 			async function handleDrawRequest(interaction, datas, title, type) {
 				const drawTask = async () => {
 					try {
-						const lastData =
-							(await db.get(
-								`${interaction.user.id}.warpLog.${type}`
-							)) ?? {};
+						// const lastData =
+						// 	(await db.get(
+						// 		`${interaction.user.id}.warpLog.${type}`
+						// 	)) ?? {};
 
-						const mergedData = lastData.data
-							? lastData.data.slice()
-							: [];
+						// const mergedData = lastData.data
+						// 	? lastData.data.slice()
+						// 	: [];
 
-						datas.data.forEach(newItem => {
-							if (
-								!mergedData.some(
-									oldItem =>
-										oldItem.id === newItem.id &&
-										oldItem.name === newItem.name &&
-										oldItem.count === newItem.count
-								)
-							) {
-								mergedData.unshift(newItem);
-							}
-						});
+						// datas.data.forEach(newItem => {
+						// 	if (
+						// 		!mergedData.some(
+						// 			oldItem =>
+						// 				oldItem.id === newItem.id &&
+						// 				oldItem.name === newItem.name &&
+						// 				oldItem.count === newItem.count
+						// 		)
+						// 	) {
+						// 		mergedData.unshift(newItem);
+						// 	}
+						// });
 
-						let totalCount = 0;
-						let totalCountWithCount = 0;
+						// let totalCount = 0;
+						// let totalCountWithCount = 0;
 
-						mergedData.forEach(item => {
-							totalCount++;
-							totalCountWithCount += item.count;
-						});
+						// mergedData.forEach(item => {
+						// 	totalCount++;
+						// 	totalCountWithCount += item.count;
+						// });
 
-						const total = totalCountWithCount + datas.pity;
-						const average =
-							totalCount > 0
-								? (total / totalCount).toFixed(2)
-								: 0;
-						const pity = datas.pity;
+						// const total = totalCountWithCount + datas.pity;
+						// const average =
+						// 	totalCount > 0
+						// 		? (total / totalCount).toFixed(2)
+						// 		: 0;
+						// const pity = datas.pity;
 
-						const mergedFinalData = {
-							total,
-							average,
-							pity,
-							data: mergedData
-						};
+						// const mergedFinalData = {
+						// 	total,
+						// 	average,
+						// 	pity,
+						// 	data: mergedData
+						// };
 
-						db.set(
-							`${interaction.user.id}.warpLog.${type}`,
-							mergedFinalData
-						);
+						// db.set(
+						// 	`${interaction.user.id}.warpLog.${type}`,
+						// 	mergedFinalData
+						// );
 
 						const imageBuffer = await warpLogImage(
 							interaction,
-							mergedFinalData,
+							datas, // mergedFinalData
 							title
 						);
 						if (imageBuffer == null)
