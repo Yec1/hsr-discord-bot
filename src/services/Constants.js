@@ -68,10 +68,15 @@ const allChars = [
 	"sparkle",
 	"aventurine",
 	"acheron",
-	"gallagher"
+	"gallagher",
+	"robin",
+	"boothill"
 ];
 
 const allWeapons = [
+	"boundless-choreo",
+	"sailing-towards-a-second-life",
+	"flowing-nightglow",
 	"inherently-unjust-destiny",
 	"along-the-passing-shore",
 	"concert-for-two",
@@ -173,6 +178,8 @@ const BGM = {
 };
 
 const allVers = [
+	"2.2.2",
+	"2.2.1",
 	"2.1.2",
 	"2.1.1",
 	"2.0.2",
@@ -193,7 +200,7 @@ const allVers = [
 	"1.0.1"
 ];
 
-const hidden = ["2.1.2"];
+const hidden = ["2.2.2"];
 
 const LATESTVERS = allVers.filter(vers => !hidden.includes(vers))[0];
 
@@ -206,12 +213,14 @@ const colourMap = {
 	2: "#4b7982",
 	// purple: kafka
 	3: "#80466f",
-	// red: topaz, argenti
+	// muted red: topaz, argenti
 	4: "#a64e64",
 	// slate: blade
 	5: "#4a718e",
 	// unknown
-	6: "#6748c7"
+	6: "#6748c7",
+	// bright red
+	7: "#bb323e"
 };
 
 export {

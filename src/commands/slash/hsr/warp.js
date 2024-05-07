@@ -174,6 +174,20 @@ export default {
 									"zh-TW": "2.1.2 - 砂金"
 								},
 								value: "2.1.2"
+							},
+							{
+								name: "2.2.1 - Robin",
+								name_localizations: {
+									"zh-TW": "2.2.1 - 知更鳥"
+								},
+								value: "2.2.1"
+							},
+							{
+								name: "2.2.2 - Boothill",
+								name_localizations: {
+									"zh-TW": "2.2.2 - 波提歐"
+								},
+								value: "2.2.2"
 							}
 						)
 				)
