@@ -231,8 +231,6 @@ client.on(Events.InteractionCreate, async interaction => {
 				}`;
 
 			const trimed_cookie = validateCookie(cookie);
-			
-			console.log(trimed_cookie);
 
 			if (trimed_cookie == null)
 				return await interaction.reply({
@@ -423,7 +421,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			const uid = interaction.fields.getTextInputValue("uid");
 			try {
 				const playerData = await player(uid, interaction);
-				if (playerData.detail == "Invalid uid")
+				if (!playerData.player.uid)
 					return await interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
@@ -442,8 +440,8 @@ client.on(Events.InteractionCreate, async interaction => {
 				if (e instanceof AxiosError) {
 					await interaction.followUp({
 						ephemeral: true,
-						content: `未知的UID`,
-					})
+						content: `未知的UID`
+					});
 				}
 				throw e;
 			}

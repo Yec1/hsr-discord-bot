@@ -174,6 +174,7 @@ const langs = {
 	card_setDesc: "若圖片有出現在下面才代表可以正常顯示",
 	card_delete: "已刪除設置的圖片",
 
+	errorMessage: "哇哇！似乎出現了一些問題>< 請查看最新公告或者聯繫開發者！",
 	cacophony: "荒腔走板:",
 	score: "積分:",
 	totalScore: "總分:",

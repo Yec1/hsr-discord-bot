@@ -254,11 +254,7 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
-						.setTitle(
-							`${tr("draw_fail")}\n${tr("err_code")}${
-								error?.response?.data?.detail ?? error.message
-							}`
-						)
+						.setTitle(`${tr("draw_fail")}\n\n${tr("errorMessage")}`)
 
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"

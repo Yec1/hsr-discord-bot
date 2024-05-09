@@ -184,6 +184,8 @@ const langs = {
 		"If the image appears below, it means it can be displayed normally",
 	card_delete: "Deleted the set image",
 
+	errorMessage:
+		"Wow! There seems to be some problems >< Please check the latest announcement or contact the developer!！",
 	cacophony: "Cacophony:",
 	score: "Score:",
 	totalScore: "Total Score:",
