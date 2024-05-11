@@ -440,7 +440,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				if (e instanceof AxiosError) {
 					await interaction.followUp({
 						ephemeral: true,
-						content: `未知的UID`
+						content: `未知的UID - \`${e}\``
 					});
 				}
 				throw e;
