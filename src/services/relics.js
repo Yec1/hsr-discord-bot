@@ -1,15 +1,15 @@
-// import axios from "axios";
+import axios from "axios";
 // import { lazy } from "discord.js";
 
 // this lazy() can be changed to getting the scores on web, etc
 // as long it is a function
-import scoreJson from "../assets/score.json" assert { type: "json" };
+// import scoreJson from "../assets/score.json" assert { type: "json" };
 
 async function getRelicsScore(character) {
-	// const responses = await axios.get(
-	//   "https://raw.githubusercontent.com/Mar-7th/StarRailScore/master/score.json"
-	// );
-	// const scoreJson = responses.data;
+	const responses = await axios.get(
+		"https://raw.githubusercontent.com/Mar-7th/StarRailScore/master/score.json"
+	);
+	const scoreJson = responses.data;
 	const charScore = scoreJson[character.id];
 
 	let totalScoreN = 0;
