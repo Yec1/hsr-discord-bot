@@ -113,7 +113,7 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 			const playerData = await player(uid, interaction);
 
 			if (playerData.detail)
-				return await interaction.editReply({
+				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -145,8 +145,18 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 				name: `${playerData.player.uid}.png`
 			});
 
-			await interaction.editReply({
-				embeds: [],
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setAuthor({
+							name: `${interaction.user.username}`,
+							iconURL: `${interaction.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							})}`
+						})
+						.setImage(`attachment://${image.name}`)
+				],
 				// embeds: [
 				//   new EmbedBuilder()
 				//     .setConfig("#F6F1F1")
@@ -250,7 +260,7 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 				files: [image]
 			});
 		} catch (error) {
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -267,7 +277,7 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length != 1)
-		await interaction.editReply({
+		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()

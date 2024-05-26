@@ -92,7 +92,7 @@ async function warpLog(input, interaction) {
 			if (!region) region = res.region;
 			query.set("region", region);
 
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()

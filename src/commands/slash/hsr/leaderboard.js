@@ -27,7 +27,7 @@ export default {
 	async execute(client, interaction, args, tr, db, emoji) {
 		await interaction.deferReply();
 
-		await interaction.editReply({
+		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -106,7 +106,7 @@ export default {
 				.addOptions(optionsChunk);
 		});
 
-		await interaction.editReply({
+		interaction.editReply({
 			embeds: [],
 			components: selectMenus.map(selectMenu => {
 				return new ActionRowBuilder().addComponents(selectMenu);

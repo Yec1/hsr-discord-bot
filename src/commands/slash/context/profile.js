@@ -33,8 +33,8 @@ export default {
 		const uid = (await db.has(`${interaction.targetUser.id}.account`))
 			? (await db.get(`${interaction.targetUser.id}.account`))[0].uid
 			: (await db.has(`${interaction.targetUser.id}.uid`))
-			  ? await db.get(`${interaction.targetUser.id}.uid`)
-			  : null;
+				? await db.get(`${interaction.targetUser.id}.uid`)
+				: null;
 
 		const user = interaction.options.getUser("user") ?? interaction.user;
 
@@ -53,7 +53,7 @@ export default {
 
 		await interaction.deferReply();
 
-		await interaction.editReply({
+		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -74,7 +74,7 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 			const playerData = await player(uid, interaction);
 
 			if (playerData.detail)
-				return await interaction.editReply({
+				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -103,8 +103,18 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 				name: `${playerData.player.uid}.png`
 			});
 
-			await interaction.editReply({
-				embeds: [],
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setAuthor({
+							name: `${interaction.user.username}`,
+							iconURL: `${interaction.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							})}`
+						})
+						.setImage(`attachment://${image.name}`)
+				],
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -128,7 +138,7 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 				files: [image]
 			});
 		} catch (error) {
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -148,7 +158,7 @@ async function handleDrawRequest(user, uid, interaction, tr, emoji) {
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length != 1)
-		await interaction.editReply({
+		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()

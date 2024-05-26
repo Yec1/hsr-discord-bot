@@ -565,7 +565,7 @@ export default {
 			video = rarityToUrl[maxRarity][ImageType].url;
 			videoTime = rarityToUrl[maxRarity][ImageType].time;
 
-			const resMessage = await interaction.editReply({
+			const resMessage = interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig(null, tr("warp_SimFooter"))
@@ -679,8 +679,12 @@ export default {
 			});
 
 			collector.on("end", async () => {
-				await interaction.editReply({
-					embeds: [],
+				interaction.editReply({
+					embeds: [
+						new EmbedBuilder().setImage(
+							`attachment://${image.name}`
+						)
+					],
 					// embeds: [
 					//   new EmbedBuilder()
 					//	   .setConfig()

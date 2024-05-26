@@ -158,7 +158,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			const warpResults = await warpLog(url, interaction);
 
 			if (!warpResults)
-				return await interaction.editReply({
+				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -264,7 +264,19 @@ client.on(Events.InteractionCreate, async interaction => {
 						// }
 
 						interaction.message.edit({
-							embeds: [],
+							embeds: [
+								new EmbedBuilder()
+									.setAuthor({
+										name: `${interaction.user.username}`,
+										iconURL: `${interaction.user.displayAvatarURL(
+											{
+												size: 4096,
+												dynamic: true
+											}
+										)}`
+									})
+									.setImage(`attachment://${image.name}`)
+							],
 							// embeds: [
 							//   new EmbedBuilder()
 							//     .setConfig()
@@ -336,7 +348,7 @@ client.on(Events.InteractionCreate, async interaction => {
 						});
 					} catch (error) {
 						console.log(error);
-						await interaction.editReply({
+						interaction.editReply({
 							embeds: [
 								new EmbedBuilder()
 									.setConfig()
@@ -356,7 +368,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				drawQueue.push(drawTask);
 
 				if (drawQueue.length != 1)
-					await interaction.editReply({
+					interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig()
@@ -372,7 +384,7 @@ client.on(Events.InteractionCreate, async interaction => {
 					});
 			}
 
-			const res = await interaction.editReply({
+			const res = interaction.editReply({
 				embeds: [],
 				components: [
 					new ActionRowBuilder().addComponents(
@@ -402,7 +414,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			collector.on("collect", async interaction => {
 				const type = interaction.values[0];
 				await interaction.deferUpdate({ fetchReply: true });
-				await interaction.message.edit({
+				interaction.message.edit({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()

@@ -37,7 +37,7 @@ async function handleNewsTypeInteraction(interaction, tr, values) {
 		return { label, description, value };
 	});
 
-	await interaction.message.edit({
+	interaction.message.edit({
 		components: [
 			new ActionRowBuilder().addComponents(
 				createStringSelectMenu(tr("news_selpost"), "news_post", options)
@@ -60,7 +60,7 @@ async function handleNewsPostInteraction(interaction, tr, values) {
 	const data = newsData.data.list[index];
 	const date = new Date(data.post.created_at * 1000);
 
-	await interaction.message.edit({
+	interaction.message.edit({
 		embeds: [
 			new EmbedBuilder()
 				.setConfig(

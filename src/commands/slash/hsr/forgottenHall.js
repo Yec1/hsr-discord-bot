@@ -140,7 +140,7 @@ export default {
 
 			await interaction.deferReply();
 
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -209,9 +209,19 @@ async function handleDrawRequest(
 				name: `${floor.name}.png`
 			});
 
-			await interaction.editReply({
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setAuthor({
+							name: `${interaction.user.username}`,
+							iconURL: `${interaction.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							})}`
+						})
+						.setImage(`attachment://${image.name}`)
+				],
 				files: [image],
-				embeds: [],
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -254,7 +264,7 @@ async function handleDrawRequest(
 				]
 			});
 		} catch (error) {
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -275,7 +285,7 @@ async function handleDrawRequest(
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length != 1)
-		await interaction.editReply({
+		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()

@@ -113,12 +113,22 @@ async function handleDrawRequest(uid, characters, interaction, tr) {
 				name: `${playerData.player.uid}.png`
 			});
 
-			await interaction.editReply({
-				embeds: [],
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setAuthor({
+							name: `${interaction.user.username}`,
+							iconURL: `${interaction.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							})}`
+						})
+						.setImage(`attachment://${image.name}`)
+				],
 				files: [image]
 			});
 		} catch (error) {
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -139,7 +149,7 @@ async function handleDrawRequest(uid, characters, interaction, tr) {
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length != 1)
-		await interaction.editReply({
+		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()

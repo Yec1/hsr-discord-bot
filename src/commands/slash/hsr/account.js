@@ -204,7 +204,7 @@ export default {
 				);
 				return;
 			case VIEW_ON_CONFIGURED_ACCOUNT:
-				await interaction.editReply({
+				interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
@@ -232,7 +232,7 @@ export default {
 				});
 				return;
 			case EDIT_CONFIGURED_ACCOUNT:
-				await interaction.editReply({
+				interaction.editReply({
 					components: [
 						new ActionRowBuilder().addComponents(
 							new StringSelectMenuBuilder()
@@ -257,7 +257,7 @@ export default {
 				});
 				return;
 			case DELETE_CONFIGURED_ACCOUNT:
-				await interaction.editReply({
+				interaction.editReply({
 					components: [
 						new ActionRowBuilder().addComponents(
 							new StringSelectMenuBuilder()

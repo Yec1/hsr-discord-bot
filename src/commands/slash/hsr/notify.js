@@ -178,12 +178,12 @@ export default {
 							: await db.get(`${user.id}.cookie`),
 					lang: (await db?.has(`${interaction.user.id}.locale`))
 						? (await db?.get(`${interaction.user.id}.locale`)) ==
-						  "tw"
+							"tw"
 							? LanguageEnum.TRADIIONAL_CHINESE
 							: LanguageEnum.ENGLISH
 						: interaction.locale == "zh-TW"
-						  ? LanguageEnum.TRADIIONAL_CHINESE
-						  : LanguageEnum.ENGLISH,
+							? LanguageEnum.TRADIIONAL_CHINESE
+							: LanguageEnum.ENGLISH,
 					uid:
 						(await db.has(`${user.id}.account`)) &&
 						(await db.get(`${user.id}.account`))[0].uid
@@ -207,7 +207,7 @@ export default {
 					}
 				}
 
-				await interaction.editReply({
+				interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig(staminaColor(res.current_stamina))
@@ -234,7 +234,7 @@ export default {
 											: `<t:${
 													moment(new Date()).unix() +
 													res.stamina_recover_time
-											  }:R>`
+												}:R>`
 									}`,
 									value: "\u200b",
 									inline: false
@@ -290,13 +290,13 @@ export default {
 															0
 																? `\`${tr(
 																		"notify_claim"
-																  )}\``
+																	)}\``
 																: `<t:${
 																		moment(
 																			new Date()
 																		).unix() +
 																		expedition.remaining_time
-																  }:R>`
+																	}:R>`
 														}`;
 													})
 													.join("\n")

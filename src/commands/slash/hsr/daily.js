@@ -218,7 +218,7 @@ export default {
 
 			if (auto == "off") {
 				await db.delete(`autoDaily.${interaction.user.id}`);
-				return await interaction.editReply({
+				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -238,7 +238,7 @@ export default {
 							.cookie
 					)
 				)
-					return await interaction.editReply({
+					return interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig("#E76161")
@@ -256,7 +256,7 @@ export default {
 					tag: tag ? tag : false
 				});
 
-				return await interaction.editReply({
+				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#A2CDB0")
@@ -289,8 +289,8 @@ export default {
 						? LanguageEnum.TRADIIONAL_CHINESE
 						: LanguageEnum.ENGLISH
 					: interaction.locale == "zh-TW"
-					  ? LanguageEnum.TRADIIONAL_CHINESE
-					  : LanguageEnum.ENGLISH
+						? LanguageEnum.TRADIIONAL_CHINESE
+						: LanguageEnum.ENGLISH
 			});
 
 			const info = await hsr.daily.info();
@@ -311,7 +311,7 @@ export default {
 			const res = await hsr.daily.claim();
 
 			if (res.code == -5003 || res.info.is_sign == true)
-				return await interaction.editReply({
+				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -324,7 +324,7 @@ export default {
 					]
 				});
 
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -337,7 +337,7 @@ export default {
 								info.month_last_day != true
 									? `\n\n${tr("daily_desc2", {
 											b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-									  })}`
+										})}`
 									: ""
 							}`
 						)

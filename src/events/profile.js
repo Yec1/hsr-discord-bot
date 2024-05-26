@@ -72,8 +72,20 @@ client.on(Events.InteractionCreate, async interaction => {
 					});
 
 					i == "main"
-						? await interaction.editReply({
-								embeds: [],
+						? interaction.editReply({
+								embeds: [
+									new EmbedBuilder()
+										.setAuthor({
+											name: `${interaction.user.username}`,
+											iconURL: `${interaction.user.displayAvatarURL(
+												{
+													size: 4096,
+													dynamic: true
+												}
+											)}`
+										})
+										.setImage(`attachment://${image.name}`)
+								],
 								components: [
 									new ActionRowBuilder().addComponents(
 										new StringSelectMenuBuilder()
@@ -100,8 +112,20 @@ client.on(Events.InteractionCreate, async interaction => {
 								],
 								files: [image]
 							})
-						: await interaction.editReply({
-								embeds: [],
+						: interaction.editReply({
+								embeds: [
+									new EmbedBuilder()
+										.setAuthor({
+											name: `${interaction.user.username}`,
+											iconURL: `${interaction.user.displayAvatarURL(
+												{
+													size: 4096,
+													dynamic: true
+												}
+											)}`
+										})
+										.setImage(`attachment://${image.name}`)
+								],
 								components: [
 									new ActionRowBuilder().addComponents(
 										new StringSelectMenuBuilder()
@@ -136,7 +160,7 @@ client.on(Events.InteractionCreate, async interaction => {
 								files: [image]
 							});
 				} catch (error) {
-					await interaction.editReply({
+					interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig()
@@ -157,7 +181,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			drawQueue.push(drawTask);
 
 			if (drawQueue.length != 1)
-				await interaction.editReply({
+				interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig()
@@ -177,7 +201,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		const type = interaction.values[0];
 		const newsData = await getNews(interaction.locale.toLowerCase(), type);
 
-		return await interaction.message.edit({
+		return interaction.message.edit({
 			components: [
 				new ActionRowBuilder().addComponents(
 					new StringSelectMenuBuilder()
@@ -240,7 +264,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		const newsData = await getNews(interaction.locale.toLowerCase(), type);
 		const data = newsData.data.list[index];
 
-		return await interaction.message.edit({
+		return interaction.message.edit({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
@@ -338,7 +362,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				.addOptions(optionsChunk);
 		});
 
-		await interaction.editReply({
+		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig(null, `${tr("leaderboard_footer")}`)
@@ -479,12 +503,16 @@ client.on(Events.InteractionCreate, async interaction => {
 			});
 		}
 
-		await interaction.editReply({
-			files: [
-				new AttachmentBuilder(
-					`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/guide/Nwflower/character_overview/${id}.png`
-				)
-			],
+		const image = new AttachmentBuilder(
+			`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/guide/Nwflower/character_overview/${id}.png`,
+			{
+				name: `${id}.png`
+			}
+		);
+
+		interaction.editReply({
+			embeds: [new EmbedBuilder().setImage(`attachment://${image.name}`)],
+			files: [image],
 			components: selectMenus.map(selectMenu => {
 				return new ActionRowBuilder().addComponents(selectMenu);
 			})

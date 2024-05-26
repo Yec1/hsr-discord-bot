@@ -44,7 +44,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			await interaction.update({ fetchReply: true }).catch(() => {});
 			const i = interaction.values[0];
 
-			await interaction.editReply({
+			interaction.editReply({
 				components: [
 					new ActionRowBuilder().addComponents(
 						new StringSelectMenuBuilder()
@@ -371,7 +371,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			const playerData = await player(uid, interaction);
 
 			if (playerData.detail == "Invalid uid")
-				return await interaction.editReply({
+				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -390,7 +390,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				(await db.get(`${interaction.user.id}.account`)) ?? "";
 
 			if (accounts.some(account => account.uid == uid))
-				return await interaction.editReply({
+				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setConfig("#E76161")
@@ -403,7 +403,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 			accounts[i].uid = uid;
 
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#F6F1F1")
@@ -422,7 +422,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			try {
 				const playerData = await player(uid, interaction);
 				if (!playerData.player.uid)
-					return await interaction.editReply({
+					return interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig("#E76161")
@@ -448,7 +448,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 			if (await db.has(`${interaction.user.id}.account`)) {
 				if ((await db.get(`${interaction.user.id}.account`)).length > 3)
-					return await interaction.editReply({
+					return interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig("#E76161")
@@ -462,7 +462,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				const accounts = await db.get(`${interaction.user.id}.account`);
 
 				if (accounts.some(account => account.uid == uid))
-					return await interaction.editReply({
+					return interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
 								.setConfig("#E76161")
@@ -474,7 +474,7 @@ client.on(Events.InteractionCreate, async interaction => {
 					});
 			}
 
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig("#F6F1F1")

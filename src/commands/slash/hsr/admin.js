@@ -329,7 +329,7 @@ export default {
 					}
 				}
 
-				await interaction.editReply({
+				interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setThumbnail(

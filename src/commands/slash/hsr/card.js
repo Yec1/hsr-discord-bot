@@ -61,7 +61,7 @@ export default {
 		const cmd = interaction.options.getSubcommand();
 		if (cmd == "view") {
 			await interaction.deferReply();
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -120,13 +120,23 @@ async function handleDrawRequest(user, interaction, tr) {
 				name: `${user.id}.png`
 			});
 
-			await interaction.editReply({
-				embeds: [],
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setAuthor({
+							name: `${interaction.user.username}`,
+							iconURL: `${interaction.user.displayAvatarURL({
+								size: 4096,
+								dynamic: true
+							})}`
+						})
+						.setImage(`attachment://${image.name}`)
+				],
 				components: [],
 				files: [image]
 			});
 		} catch (error) {
-			await interaction.editReply({
+			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig()
@@ -146,7 +156,7 @@ async function handleDrawRequest(user, interaction, tr) {
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length != 1)
-		await interaction.editReply({
+		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setConfig()
