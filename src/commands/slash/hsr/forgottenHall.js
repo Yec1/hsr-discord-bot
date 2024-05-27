@@ -15,12 +15,12 @@ const drawQueue = new Queue({ autostart: true });
 export default {
 	data: new SlashCommandBuilder()
 		.setName("forgottenhall")
-		.setDescription("View Chaos of Memory in the Forgotten Hall")
+		.setDescription("View memories in Forgotten Hall")
 		.setNameLocalizations({
 			"zh-TW": "忘卻之庭紀錄"
 		})
 		.setDescriptionLocalizations({
-			"zh-TW": "查看忘卻之庭的渾沌回憶紀錄"
+			"zh-TW": "查看忘卻之庭的回憶紀錄"
 		})
 		.addStringOption(option =>
 			option
@@ -35,9 +35,9 @@ export default {
 				.setRequired(true)
 				.addChoices(
 					{
-						name: "Forgotten Hall",
+						name: "Memory of Chaos",
 						name_localizations: {
-							"zh-TW": "忘卻之庭"
+							"zh-TW": "渾沌回憶"
 						},
 						value: "normal"
 					},

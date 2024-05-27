@@ -565,7 +565,7 @@ export default {
 			video = rarityToUrl[maxRarity][ImageType].url;
 			videoTime = rarityToUrl[maxRarity][ImageType].time;
 
-			const resMessage = interaction.editReply({
+			const message = await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setConfig(null, tr("warp_SimFooter"))
@@ -635,7 +635,7 @@ export default {
 			const filter = i =>
 				i.customId === "warp_skip" && i.user.id === interaction.user.id;
 
-			const collector = resMessage.createMessageComponentCollector({
+			const collector = message.createMessageComponentCollector({
 				filter,
 				time: videoTime,
 				componentType: ComponentType.Button

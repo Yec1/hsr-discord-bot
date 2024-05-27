@@ -1,6 +1,6 @@
 import { join } from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
-import { i18nMixin, toI18nLang } from "./i18n.js";
+import { Logger } from "../services/logger.js";
 import { client } from "../index.js";
 const db = client.db;
 
@@ -410,11 +410,13 @@ async function indexImage(uid, res, mode, floor, tr) {
 				ctx.fillStyle = "rgba(0,0,0,.4)";
 				ctx.fill();
 
-				const buffImage = await loadImage(node.buff.icon);
-				ctx.drawImage(buffImage, x + 207.5, y + 245, 56, 56);
+				if (node.buff) {
+					const buffImage = await loadImage(node.buff.icon);
+					ctx.drawImage(buffImage, x + 207.5, y + 245, 56, 56);
 
-				ctx.fillStyle = "lightgray";
-				ctx.fillText(`${node.buff.name_mi18n}`, x + 277.5, y + 285);
+					ctx.fillStyle = "lightgray";
+					ctx.fillText(`${node.buff.name_mi18n}`, x + 277.5, y + 285);
+				}
 			}
 		}
 
@@ -437,6 +439,7 @@ async function indexImage(uid, res, mode, floor, tr) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
+		new Logger("分片").error(`ForgottenHall Error: ${e}`);
 		return null;
 	}
 }

@@ -268,6 +268,7 @@ async function mainPage(playerData, interaction) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
+		new Logger("分片").error(`MainPage Error: ${e}`);
 		return null;
 	}
 }
@@ -741,6 +742,7 @@ async function charPage(characters, playerData, num, interaction) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
+		new Logger("分片").error(`CharPage Error: ${e}`);
 		return null;
 	}
 }
@@ -1170,6 +1172,7 @@ async function cardImage(user, interaction) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
+		new Logger("分片").error(`Card Error: ${e}`);
 		return null;
 	}
 }
@@ -1384,6 +1387,7 @@ async function characterListImage(characters, playerData, tr) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
+		new Logger("分片").error(`Card List: ${e}`);
 		return null;
 	}
 }
