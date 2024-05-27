@@ -201,17 +201,17 @@ client.on(Events.InteractionCreate, async interaction => {
 								.setRequired(false)
 								.setMinLength(1)
 								.setMaxLength(30)
-						),
-						new ActionRowBuilder().addComponents(
-							new TextInputBuilder()
-								.setCustomId("cookie_token")
-								.setLabel("CookieToken")
-								.setPlaceholder("v2_...")
-								.setStyle(TextInputStyle.Short)
-								.setRequired(false)
-								.setMinLength(10)
-								.setMaxLength(1000)
 						)
+						// new ActionRowBuilder().addComponents(
+						// 	new TextInputBuilder()
+						// 		.setCustomId("cookie_token")
+						// 		.setLabel("CookieToken")
+						// 		.setPlaceholder("v2_...")
+						// 		.setStyle(TextInputStyle.Short)
+						// 		.setRequired(false)
+						// 		.setMinLength(10)
+						// 		.setMaxLength(1000)
+						// )
 					)
 			);
 		}
