@@ -398,6 +398,7 @@ async function indexImage(uid, res, mode, floor, tr) {
 
 			// Box3 Buff
 			if (mode == 2) {
+				console.log(node);
 				ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
 				ctx.fillRect(x, y + 240, 710, 70);
 
