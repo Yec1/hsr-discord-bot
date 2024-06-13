@@ -231,7 +231,7 @@ client.on(Events.InteractionCreate, async interaction => {
 							throw new Error(tr("draw_NoData"));
 
 						const image = new AttachmentBuilder(imageBuffer, {
-							name: `${title}.png`
+							name: `warplog.png`
 						});
 
 						// const description =
@@ -263,19 +263,11 @@ client.on(Events.InteractionCreate, async interaction => {
 						//   else sentence = "\u200b";
 						// }
 
-						interaction.message.edit({
+						interaction.editReply({
 							embeds: [
-								new EmbedBuilder()
-									.setAuthor({
-										name: `${interaction.user.username}`,
-										iconURL: `${interaction.user.displayAvatarURL(
-											{
-												size: 4096,
-												dynamic: true
-											}
-										)}`
-									})
-									.setImage(`attachment://${image.name}`)
+								new EmbedBuilder().setImage(
+									`attachment://${image.name}`
+								)
 							],
 							// embeds: [
 							//   new EmbedBuilder()
@@ -384,7 +376,7 @@ client.on(Events.InteractionCreate, async interaction => {
 					});
 			}
 
-			const res = interaction.editReply({
+			const resMessage = await interaction.editReply({
 				embeds: [],
 				components: [
 					new ActionRowBuilder().addComponents(
@@ -406,7 +398,7 @@ client.on(Events.InteractionCreate, async interaction => {
 				]
 			});
 
-			const collector = res.createMessageComponentCollector({
+			const collector = resMessage.createMessageComponentCollector({
 				time: 30 * 60 * 1000,
 				componentType: ComponentType.StringSelect
 			});

@@ -14,6 +14,9 @@ import {
 	mainPage,
 	saveLeaderboard
 } from "../../../services/profile.js";
+import Queue from "queue";
+
+const drawQueue = new Queue({ autostart: true });
 
 export default {
 	data: new ContextMenuCommandBuilder()
