@@ -25,11 +25,11 @@ async function updatePresence() {
 client.on(Events.ClientReady, async () => {
 	new Logger("系統").success(`${client.user.tag} 已經上線！`);
 	dailyCheck();
-	notifyCheck();
+	// notifyCheck();
 
 	schedule.scheduleJob("0 * * * *", function () {
 		if (client.cluster.id == 0) {
-			notifyCheck();
+			// notifyCheck();
 			dailyCheck();
 		}
 	});
