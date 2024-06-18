@@ -188,6 +188,20 @@ export default {
 									"zh-TW": "2.2.2 - 波提歐"
 								},
 								value: "2.2.2"
+							},
+							{
+								name: "2.3.1 - Firefly",
+								name_localizations: {
+									"zh-TW": "2.3.1 - 流螢"
+								},
+								value: "2.3.1"
+							},
+							{
+								name: "2.3.2 - Jade",
+								name_localizations: {
+									"zh-TW": "2.3.2 - 翡翠"
+								},
+								value: "2.3.2"
 							}
 						)
 				)

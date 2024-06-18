@@ -70,11 +70,16 @@ const allChars = [
 	"acheron",
 	"gallagher",
 	"robin",
-	"boothill"
+	"boothill",
+	"firefly",
+	"jade"
 ];
 
 const allWeapons = [
+	"yet-hope-is-priceless",
+	"after-the-charmony-fall",
 	"boundless-choreo",
+	"whereabouts-should-dreams-rest",
 	"sailing-towards-a-second-life",
 	"flowing-nightglow",
 	"inherently-unjust-destiny",
@@ -178,6 +183,8 @@ const BGM = {
 };
 
 const allVers = [
+	"2.3.2",
+	"2.3.1",
 	"2.2.2",
 	"2.2.1",
 	"2.1.2",
@@ -200,7 +207,7 @@ const allVers = [
 	"1.0.1"
 ];
 
-const hidden = ["2.2.2"];
+const hidden = ["2.3.2"];
 
 const LATESTVERS = allVers.filter(vers => !hidden.includes(vers))[0];
 
