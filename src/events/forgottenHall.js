@@ -89,7 +89,7 @@ async function handleDrawRequest(
 			if (imageBuffer == null) throw new Error(tr("draw_NoData"));
 
 			const image = new AttachmentBuilder(imageBuffer, {
-				name: `${floor.name}.png`
+				name: `${floor.maze_id}.png`
 			});
 
 			interaction.editReply({
