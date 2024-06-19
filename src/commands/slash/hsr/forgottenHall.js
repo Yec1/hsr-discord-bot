@@ -134,7 +134,6 @@ export default {
 			});
 
 			const res = await hsr.record.forgottenHall(mode, time);
-			console.log(res);
 
 			if (res.has_data == false)
 				return await interaction.reply({

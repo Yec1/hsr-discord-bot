@@ -65,7 +65,6 @@ export default {
 			const list = await hsr.diary.list();
 			console.log(`List: ${list}`);
 		} catch (e) {
-			console.log(e);
 			return replyOrfollowUp(interaction, {
 				embeds: [
 					new EmbedBuilder()
