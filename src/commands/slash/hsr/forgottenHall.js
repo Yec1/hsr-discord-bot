@@ -47,6 +47,13 @@ export default {
 							"zh-TW": "虛構敘事"
 						},
 						value: "story"
+					},
+					{
+						name: "Stormwind Knight",
+						name_localizations: {
+							"zh-TW": "末日幻影"
+						},
+						value: "knight"
 					}
 				)
 		)
@@ -99,7 +106,10 @@ export default {
 	 */
 	async execute(client, interaction, args, tr, db, emoji) {
 		const user = interaction.options.getUser("user") ?? interaction.user;
-		const mode = interaction.options.getString("mode") == "story" ? 2 : 1;
+		const modeOption = interaction.options.getString("mode");
+		const mode =
+			modeOption === "knight" ? 3 : modeOption === "story" ? 2 : 1;
+
 		const time = interaction.options.getString("time") == "end" ? 2 : 1;
 
 		try {
@@ -124,6 +134,7 @@ export default {
 			});
 
 			const res = await hsr.record.forgottenHall(mode, time);
+			console.log(res);
 
 			if (res.has_data == false)
 				return await interaction.reply({
@@ -237,10 +248,9 @@ async function handleDrawRequest(
 											""
 										)}`,
 										description:
-											mode == 2
-												? `${tr("forgottenHall_desc2", {
+											mode == 3
+												? `${tr("forgottenHall_desc3", {
 														s: `${floor.star_num}`,
-														r: `${floor.round_num}`,
 														z: `${
 															(parseInt(
 																floor.node_1
@@ -252,10 +262,33 @@ async function handleDrawRequest(
 															) || 0)
 														}`
 													})}`
-												: `${tr("forgottenHall_desc", {
-														s: `${floor.star_num}`,
-														r: `${floor.round_num}`
-													})}`,
+												: mode == 2
+													? `${tr(
+															"forgottenHall_desc2",
+															{
+																s: `${floor.star_num}`,
+																r: `${floor.round_num}`,
+																z: `${
+																	(parseInt(
+																		floor
+																			.node_1
+																			?.score
+																	) || 0) +
+																	(parseInt(
+																		floor
+																			.node_2
+																			?.score
+																	) || 0)
+																}`
+															}
+														)}`
+													: `${tr(
+															"forgottenHall_desc",
+															{
+																s: `${floor.star_num}`,
+																r: `${floor.round_num}`
+															}
+														)}`,
 										value: `${userId}-${mode}-${time}-${i}`
 									};
 								})

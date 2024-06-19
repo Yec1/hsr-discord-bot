@@ -121,9 +121,13 @@ const langs = {
 	forgottenHall_selectFloor: "选择楼层",
 	forgottenHall_desc: "<s>星 • <r>轮",
 	forgottenHall_desc2: "<s>星 • <r>轮 • <z>分",
-	forgottenHall_title: "回顾",
+	forgottenHall_desc3: "<s>星 • <z>分",
+	forgottenHall_title: "挑战回顾",
+	FHT_1: "浑沌回忆",
+	FHT_2: "虚构叙事",
+	FHT_3: "末日幻影",
 	forgottenHall_timeFooter: "统计周期",
-	forgottenHall_level: "关卡进度",
+	forgottenHall_level: "最高关卡",
 	forgottenHall_battle: "战斗次数",
 	forgottenHall_useRound: "使用轮",
 	forgottenHall_teamSetup: "编队<z>",
@@ -176,6 +180,7 @@ const langs = {
 
 	errorMessage: "哇哇！似乎出现了一些问题>< 请查看最新公告或者联系开发者！",
 	cacophony: "荒腔走板:",
+	finality: "终焉公理",
 	score: "积分:",
 	totalScore: "总分:",
 	guarantee: "下次必定UP",
@@ -187,7 +192,7 @@ const langs = {
 	donate_Title:
 		"<:love:1068758168877936740> 想要赞助我们吗？您可以使用以下方式赞助我们！",
 	donate_Desc:
-		"\n▫️ [蓝新](https://core.newebpay.com/EPG/yeci/5jBaaE)\n\n▫️ [Buy Me A Coffee](https://www.buymeacoffee.com/yeci)",
+		"\n▫️ [魔储- 多种游戏代购](https://www.mepay.com.tw/auth?rcode=yeci)\n\n▫️ [蓝新- 支持超商付款](https:// core.newebpay.com/EPG/yeci/5jBaaE)\n\n▫️ [Buy Me A Coffee](https://www.buymeacoffee.com/yeci)",
 	year: "年",
 	month: "月",
 	day: "日",
