@@ -3,7 +3,8 @@ import {
 	SlashCommandBuilder,
 	EmbedBuilder
 } from "discord.js";
-import { i18nMixin, toI18nLang } from "../../../services/i18n.js";
+import { i18nMixin, toI18nLang } from "../../../utilities/core/i18n.js";
+import { getRandomColor } from "../../../utilities/utilities.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -60,21 +61,25 @@ export default {
 		const locale = interaction.options.getString("locale");
 
 		await db.set(`${interaction.user.id}.locale`, locale);
-		await db.set(`${interaction.user.id}.locale`, locale);
 
 		const newTr = i18nMixin(
-			(await db?.has(`${interaction.user.id}.locale`))
-				? await db?.get(`${interaction.user.id}.locale`)
+			(await db.has(`${interaction.user.id}.locale`))
+				? await db.get(`${interaction.user.id}.locale`)
 				: toI18nLang(interaction.locale) || "en"
 		);
 
-		await interaction.reply({
+		interaction.reply({
 			embeds: [
 				new EmbedBuilder()
-					.setConfig("#FFD1DA")
+					.setColor(getRandomColor())
 					.setTitle(
-						newTr("newLocale", {
-							z: locale
+						newTr("NewLocale", {
+							locale:
+								locale === "en"
+									? "English"
+									: locale === "tw"
+										? "中文(台灣)"
+										: "中文(中國)"
 						})
 					)
 					.setThumbnail(

@@ -1,15 +1,6 @@
-import {
-	CommandInteraction,
-	SlashCommandBuilder,
-	EmbedBuilder,
-	ActionRowBuilder,
-	StringSelectMenuBuilder,
-	AttachmentBuilder
-} from "discord.js";
-import { player } from "../../../services/request.js";
-import { mainPage, saveLeaderboard } from "../../../services/profile.js";
-import Queue from "queue";
-const drawQueue = new Queue({ autostart: true });
+import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import { failedReply, getUserUid } from "../../../utilities/utilities.js";
+import { handleProfileDraw } from "../../../utilities/hsr/profile.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -52,242 +43,21 @@ export default {
 	 * @param {CommandInteraction} interaction
 	 * @param {String[]} args
 	 */
-	async execute(client, interaction, args, tr, db, emoji) {
-		const uid = interaction.options.getInteger("uid")
-			? interaction.options.getInteger("uid")
-			: (await db.has(
-						`${interaction.options.getUser("user")?.id}.account`
-				  ))
-				? (
-						await db.get(
-							`${interaction.options.getUser("user")?.id}.account`
-						)
-					)[0].uid
-				: (await db.has(
-							`${interaction.options.getUser("user")?.id}.uid`
-					  ))
-					? await db.get(
-							`${interaction.options.getUser("user")?.id}.uid`
-						)
-					: (await db.has(`${interaction.user.id}.account`))
-						? (await db.get(`${interaction.user.id}.account`))[0]
-								.uid
-						: (await db.has(`${interaction.user.id}.uid`))
-							? await db.get(`${interaction.user.id}.uid`)
-							: null;
+	async execute(client, interaction, args, tr) {
+		const user = interaction.options.getUser("user") || interaction.user;
+		const uid =
+			interaction.options.getInteger("uid") ??
+			(await getUserUid(user.id));
 
-		const user = interaction.options.getUser("user") ?? interaction.user;
+		if (!uid && user.id == interaction.user.id)
+			return failedReply(
+				interaction,
+				tr("profile_UidNotSet"),
+				tr("profile_UidNotSetDesc")
+			);
 
-		if (uid == null && user == interaction.user)
-			return await interaction.reply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle(tr("uid_non"))
-						.setConfig("#E76161")
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-						.setDescription(tr("uid_failedDesc"))
-				],
-				ephemeral: true
-			});
+		await interaction.deferReply();
 
-		await replyOrfollowUp(interaction, {
-			embeds: [
-				new EmbedBuilder()
-					.setConfig()
-					.setTitle(tr("profile_Searching"))
-					.setThumbnail(
-						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
-					)
-			]
-		});
-
-		handleDrawRequest(user, uid, interaction, tr, emoji);
+		handleProfileDraw(interaction, tr, user, uid);
 	}
 };
-
-async function handleDrawRequest(user, uid, interaction, tr, emoji) {
-	const drawTask = async () => {
-		try {
-			const playerData = await player(uid, interaction);
-
-			if (playerData.detail)
-				return interaction.editReply({
-					embeds: [
-						new EmbedBuilder()
-							.setConfig("#E76161")
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(
-								tr("profile_failed", {
-									z: `\`${uid}\``
-								})
-							)
-							.setDescription(
-								`${tr("err_code")}${playerData.detail}`
-							)
-					]
-				});
-
-			// saveCharacters(playerData);
-			saveLeaderboard(playerData);
-
-			const characters =
-				// (await loadCharacters(playerData.player.uid)) ||
-				playerData.characters;
-
-			const imageBuffer = await mainPage(playerData, interaction);
-			if (imageBuffer == null) throw new Error(tr("draw_NoData"));
-
-			const image = new AttachmentBuilder(imageBuffer, {
-				name: `${playerData.player.uid}.png`
-			});
-
-			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setAuthor({
-							name: `${interaction.user.username}`,
-							iconURL: `${interaction.user.displayAvatarURL({
-								size: 4096,
-								dynamic: true
-							})}`
-						})
-						.setImage(`attachment://${image.name}`)
-				],
-				// embeds: [
-				//   new EmbedBuilder()
-				//     .setConfig("#F6F1F1")
-				//     .setAuthor({
-				//       name: playerData.player.uid,
-				//       iconURL: image_Header + "/" + playerData.player.avatar.icon,
-				//     })
-				//     .setTitle(playerData.player.nickname)
-				//     .setDescription(
-				//       `\`\`\`md\n ${
-				//         playerData.player.signature == ""
-				//           ? tr("profile_nonSign")
-				//           : playerData.player.signature
-				//       } \n\`\`\``
-				//     )
-				//     .addFields(
-				//       {
-				//         name: `${emoji.level} ${tr("profile_tLevel")} ${
-				//           playerData.player.level
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.world} ${tr("profile_qLevel")} ${
-				//           playerData.player.world_level
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.friends} ${tr("profile_friends")} ${
-				//           playerData.player.friend_count
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.avatar} ${tr("profile_characters")} ${
-				//           playerData.player.space_info.avatar_count
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.lightcone} ${tr("profile_lightcone")} ${
-				//           playerData.player.space_info.light_cone_count
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.book} ${tr("profile_achievement")} ${
-				//           playerData.player.space_info.achievement_count
-				//         }`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.activity} ${tr("profile_forgottenHall")}`,
-				//         value: "\u200b",
-				//         inline: false,
-				//       },
-				//       {
-				//         name: `${emoji.AbyssIcon01} ${tr("profile_memory")} ${
-				//           playerData.player.space_info.challenge_data.maze_group_index
-				//         }/15`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       },
-				//       {
-				//         name: `${emoji.AbyssIcon02} ${tr("profile_memoryOfChaos")} ${
-				//           playerData.player.space_info.challenge_data.maze_group_id
-				//         }/10`,
-				//         value: "\u200b",
-				//         inline: true,
-				//       }
-				//     )
-				//     .setThumbnail(image_Header + "/" + playerData.characters[0].icon),
-				// ],
-				components: [
-					new ActionRowBuilder().addComponents(
-						new StringSelectMenuBuilder()
-							.setPlaceholder(tr("profile_character"))
-							.setCustomId("profile_characters")
-							.setMinValues(1)
-							.setMaxValues(1)
-							.addOptions(
-								characters.map((character, i) => {
-									return {
-										emoji: emoji[
-											character.element.id.toLowerCase()
-										],
-										label: `${character.name}`,
-										value: `${playerData.player.uid}-${i}-${user.id}`
-									};
-								})
-							)
-					)
-				],
-				files: [image]
-			});
-		} catch (error) {
-			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setConfig()
-						.setTitle(`${tr("draw_fail")}\n\n${tr("errorMessage")}`)
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-				]
-			});
-		}
-	};
-
-	drawQueue.push(drawTask);
-
-	if (drawQueue.length != 1)
-		interaction.editReply({
-			embeds: [
-				new EmbedBuilder()
-					.setConfig()
-					.setTitle(
-						`${tr("draw_wait", {
-							z: drawQueue.length - 1
-						})}`
-					)
-					.setThumbnail(
-						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
-					)
-			]
-		});
-}

@@ -1,16 +1,18 @@
+import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import { handleForgottenHallDraw } from "../../../utilities/hsr/forgottenhall.js";
 import {
-	CommandInteraction,
-	SlashCommandBuilder,
-	EmbedBuilder,
-	AttachmentBuilder,
-	ActionRowBuilder,
-	StringSelectMenuBuilder
-} from "discord.js";
-import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
-import { indexImage } from "../../../services/forgottenHall.js";
-import Queue from "queue";
+	getUserHSRData,
+	getRandomColor
+} from "../../../utilities/utilities.js";
+import { EmbedBuilder } from "discord.js";
 
-const drawQueue = new Queue({ autostart: true });
+const modeMap = {
+	shadow: 3,
+	story: 2
+};
+const timeMap = {
+	end: 2
+};
 
 export default {
 	data: new SlashCommandBuilder()
@@ -49,11 +51,11 @@ export default {
 						value: "story"
 					},
 					{
-						name: "Stormwind Knight",
+						name: "Apocalyptic Shadow",
 						name_localizations: {
 							"zh-TW": "末日幻影"
 						},
-						value: "knight"
+						value: "shadow"
 					}
 				)
 		)
@@ -105,231 +107,27 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr, db, emoji) {
-		const user = interaction.options.getUser("user") ?? interaction.user;
-		const modeOption = interaction.options.getString("mode");
-		const mode =
-			modeOption === "knight" ? 3 : modeOption === "story" ? 2 : 1;
+		const targetUser =
+			interaction.options.getUser("user") || interaction.user;
+		const mode = modeMap[interaction.options.getString("mode")] || 1;
+		const time = timeMap[interaction.options.getString("time")] || 1;
 
-		const time = interaction.options.getString("time") == "end" ? 2 : 1;
+		const hsr = await getUserHSRData(interaction, tr, targetUser.id);
+		if (hsr == null) return;
 
-		try {
-			const hsr = new HonkaiStarRail({
-				cookie:
-					(await db.has(`${user.id}.account`)) &&
-					(await db.get(`${user.id}.account`))[0].cookie
-						? (await db.get(`${user.id}.account`))[0].cookie
-						: await db.get(`${user.id}.cookie`),
-				lang: (await db?.has(`${interaction.user.id}.locale`))
-					? (await db?.get(`${interaction.user.id}.locale`)) == "tw"
-						? LanguageEnum.TRADIIONAL_CHINESE
-						: LanguageEnum.ENGLISH
-					: interaction.locale == "zh-TW"
-						? LanguageEnum.TRADIIONAL_CHINESE
-						: LanguageEnum.ENGLISH,
-				uid:
-					(await db.has(`${user.id}.account`)) &&
-					(await db.get(`${user.id}.account`))[0].uid
-						? (await db.get(`${user.id}.account`))[0].uid
-						: await db.get(`${user.id}.uid`)
-			});
-
-			const res = await hsr.record.forgottenHall(mode, time);
-
-			if (res.has_data == false)
-				return await interaction.reply({
-					embeds: [
-						new EmbedBuilder()
-							.setConfig("#E76161")
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(tr("forgottenHall_noninfo"))
-					],
-					ephemeral: true
-				});
-
-			await interaction.deferReply();
-
-			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setConfig()
-						.setTitle(tr("profile_Searching"))
-						.setThumbnail(
-							"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
-						)
-				]
-			});
-
-			const floor = res.all_floor_detail[0];
-
-			await handleDrawRequest(
-				hsr.uid,
-				user.id,
-				mode,
-				time,
-				res,
-				floor,
-				interaction,
-				tr
-			);
-		} catch (e) {
-			const userdb = (await db?.has(`${user.id}.account`))
-				? (await db?.get(`${user.id}.account`))[0]
-				: await db?.get(`${user.id}`);
-
-			const desc = [
-				userdb?.cookie ? "" : tr("cookie_failedDesc"),
-				userdb?.uid ? "" : tr("uid_failedDesc")
-			]
-				.filter(Boolean)
-				.join("\n");
-
-			replyOrfollowUp(interaction, {
-				embeds: [
-					new EmbedBuilder()
-						.setConfig()
-						.setTitle(tr("notify_failed"))
-						.setDescription(
-							`<@${user.id}>\n\n${desc}\n\n${tr("err_code")}${e}`
-						)
-				],
-				ephemeral: true
-			});
-		}
-	}
-};
-
-async function handleDrawRequest(
-	uid,
-	userId,
-	mode,
-	time,
-	res,
-	floor,
-	interaction,
-	tr
-) {
-	const drawTask = async () => {
-		try {
-			const imageBuffer = await indexImage(uid, res, mode, floor, tr);
-			if (imageBuffer == null) throw new Error(tr("draw_NoData"));
-
-			const image = new AttachmentBuilder(imageBuffer, {
-				name: `${floor.maze_id}.png`
-			});
-
-			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setAuthor({
-							name: `${interaction.user.username}`,
-							iconURL: `${interaction.user.displayAvatarURL({
-								size: 4096,
-								dynamic: true
-							})}`
-						})
-						.setImage(`attachment://${image.name}`)
-				],
-				files: [image],
-				components: [
-					new ActionRowBuilder().addComponents(
-						new StringSelectMenuBuilder()
-							.setPlaceholder(tr("forgottenHall_selectFloor"))
-							.setCustomId("forgottenHall_Floor")
-							.setMinValues(1)
-							.setMaxValues(1)
-							.addOptions(
-								res.all_floor_detail.map((floor, i) => {
-									return {
-										label: `${floor.name.replace(
-											/<\/?[^>]+(>|$)/g,
-											""
-										)}`,
-										description:
-											mode == 3
-												? `${tr("forgottenHall_desc3", {
-														s: `${floor.star_num}`,
-														z: `${
-															(parseInt(
-																floor.node_1
-																	?.score
-															) || 0) +
-															(parseInt(
-																floor.node_2
-																	?.score
-															) || 0)
-														}`
-													})}`
-												: mode == 2
-													? `${tr(
-															"forgottenHall_desc2",
-															{
-																s: `${floor.star_num}`,
-																r: `${floor.round_num}`,
-																z: `${
-																	(parseInt(
-																		floor
-																			.node_1
-																			?.score
-																	) || 0) +
-																	(parseInt(
-																		floor
-																			.node_2
-																			?.score
-																	) || 0)
-																}`
-															}
-														)}`
-													: `${tr(
-															"forgottenHall_desc",
-															{
-																s: `${floor.star_num}`,
-																r: `${floor.round_num}`
-															}
-														)}`,
-										value: `${userId}-${mode}-${time}-${i}`
-									};
-								})
-							)
-					)
-				]
-			});
-		} catch (error) {
-			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setConfig()
-
-						.setTitle(
-							`${tr("draw_fail")}\n${tr("err_code")}${
-								error.message
-							}`
-						)
-						.setThumbnail(
-							"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
-						)
-				]
-			});
-		}
-	};
-
-	drawQueue.push(drawTask);
-
-	if (drawQueue.length != 1)
+		await interaction.deferReply();
 		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
-					.setConfig()
-
-					.setTitle(
-						`${tr("draw_wait", {
-							z: drawQueue.length - 1
-						})}`
-					)
+					.setTitle(tr("Searching"))
+					.setColor(getRandomColor())
 					.setThumbnail(
-						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+						"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
 					)
-			]
+			],
+			fetchReply: true
 		});
-}
+
+		handleForgottenHallDraw(interaction, tr, targetUser, mode, time, hsr);
+	}
+};

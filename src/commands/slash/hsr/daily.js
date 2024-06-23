@@ -3,7 +3,15 @@ import {
 	SlashCommandBuilder,
 	EmbedBuilder
 } from "discord.js";
-import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
+import {
+	getRandomColor,
+	getUserHSRData
+} from "../../../utilities/utilities.js";
+
+const timeChoices = Array.from({ length: 24 }, (_, i) => ({
+	name: i + 1 < 10 ? `0${i + 1}` : `${i + 1}`,
+	value: `${i + 1}`
+}));
 
 export default {
 	data: new SlashCommandBuilder()
@@ -68,106 +76,7 @@ export default {
 					"zh-TW": "自動簽到的時間"
 				})
 				.setRequired(false)
-				.addChoices(
-					{
-						name: "01",
-						value: "1"
-					},
-					{
-						name: "02",
-						value: "2"
-					},
-					{
-						name: "03",
-						value: "3"
-					},
-					{
-						name: "04",
-						value: "4"
-					},
-
-					{
-						name: "05",
-						value: "5"
-					},
-					{
-						name: "06",
-						value: "6"
-					},
-
-					{
-						name: "07",
-						value: "7"
-					},
-					{
-						name: "08",
-						value: "8"
-					},
-					{
-						name: "09",
-						value: "9"
-					},
-					{
-						name: "10",
-						value: "10"
-					},
-					{
-						name: "11",
-						value: "11"
-					},
-					{
-						name: "12",
-						value: "12"
-					},
-					{
-						name: "13",
-						value: "13"
-					},
-					{
-						name: "14",
-						value: "14"
-					},
-					{
-						name: "15",
-						value: "15"
-					},
-					{
-						name: "16",
-						value: "16"
-					},
-					{
-						name: "17",
-						value: "17"
-					},
-					{
-						name: "18",
-						value: "18"
-					},
-					{
-						name: "19",
-						value: "19"
-					},
-					{
-						name: "20",
-						value: "20"
-					},
-					{
-						name: "21",
-						value: "21"
-					},
-					{
-						name: "22",
-						value: "22"
-					},
-					{
-						name: "23",
-						value: "23"
-					},
-					{
-						name: "24",
-						value: "24"
-					}
-				)
+				.addChoices(...timeChoices)
 		)
 		.addStringOption(option =>
 			option
@@ -209,182 +118,122 @@ export default {
 	 */
 	async execute(client, interaction, args, tr, db, emoji) {
 		await interaction.deferReply({ ephemeral: true });
-
-		const user = interaction.options.getUser("user") ?? interaction.user;
-		try {
-			const auto = interaction.options.getString("autosign");
-			const time = interaction.options.getString("time");
-			const tag = interaction.options.getString("tag");
-
-			if (auto == "off") {
-				await db.delete(`autoDaily.${interaction.user.id}`);
-				return interaction.editReply({
-					embeds: [
-						new EmbedBuilder()
-							.setConfig("#E76161")
-							.setTitle(tr("autoDaily_off"))
-							.setThumbnail(
-								"https://media.discordapp.net/attachments/1057244827688910850/1120715314678730832/kuru.gif"
-							)
-					]
-				});
-			}
-
-			if (time || tag || auto == "on") {
-				if (
-					!(
-						(await db.has(`${interaction.user.id}.account`)) &&
-						(await db.get(`${interaction.user.id}.account`))[0]
-							.cookie
-					)
-				)
-					return interaction.editReply({
-						embeds: [
-							new EmbedBuilder()
-								.setConfig("#E76161")
-								.setThumbnail(
-									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-								)
-								.setTitle(`${tr("cookie_failed")}`)
-								.setDescription(`${tr("cookie_failedDesc")}`)
-						]
-					});
-
-				await db.set(`autoDaily.${interaction.user.id}`, {
-					channelId: interaction.channel.id,
-					time: time ? time : "12",
-					tag: tag ? tag : false
-				});
-
-				return interaction.editReply({
-					embeds: [
-						new EmbedBuilder()
-							.setConfig("#A2CDB0")
-							.setTitle(tr("autoDaily_on"))
-							.setDescription(
-								`${tr("autoDaily_time", {
-									z: time ? `\`${time}:00\`` : "`12:00`"
-								})}\n${tr("autoDaily_tag", {
-									z:
-										tag == "true"
-											? `\`${tr("true")}\``
-											: `\`${tr("false")}\``
-								})}`
-							)
-							.setThumbnail(
-								"https://media.discordapp.net/attachments/1057244827688910850/1120715314678730832/kuru.gif"
-							)
-					]
-				});
-			}
-
-			const hsr = new HonkaiStarRail({
-				cookie:
-					(await db.has(`${user.id}.account`)) &&
-					(await db.get(`${user.id}.account`))[0].cookie
-						? (await db.get(`${user.id}.account`))[0].cookie
-						: await db.get(`${user.id}.cookie`),
-				lang: (await db?.has(`${interaction.user.id}.locale`))
-					? (await db?.get(`${interaction.user.id}.locale`)) == "tw"
-						? LanguageEnum.TRADIIONAL_CHINESE
-						: LanguageEnum.ENGLISH
-					: interaction.locale == "zh-TW"
-						? LanguageEnum.TRADIIONAL_CHINESE
-						: LanguageEnum.ENGLISH
-			});
-
-			const info = await hsr.daily.info();
-			const reward = await hsr.daily.reward();
-			const rewards = await hsr.daily.rewards();
-			const todaySign =
-				rewards.awards[
-					info.month_last_day != true
-						? info.total_sign_day
-						: info.total_sign_day - 1
-				];
-			const tmrSign =
-				rewards.awards[
-					info.month_last_day != true
-						? info.total_sign_day + 1
-						: info.total_sign_day
-				];
-			const res = await hsr.daily.claim();
-
-			if (res.code == -5003 || res.info.is_sign == true)
-				return interaction.editReply({
-					embeds: [
-						new EmbedBuilder()
-							.setConfig("#E76161")
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(
-								`${tr("daily_failed")} ${tr("daily_signed")}`
-							)
-					]
-				});
-
-			interaction.editReply({
+		const haveAccount = await db.get(`${interaction.user.id}.account`);
+		if (!haveAccount) {
+			return interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
-						.setConfig()
-						.setTitle(tr("daily_sign"))
-						.setThumbnail(todaySign?.icon)
-						.setDescription(
-							`${tr("daily_desc", {
-								a: `\`${todaySign?.name}x${todaySign?.cnt}\``
-							})}${
-								info.month_last_day != true
-									? `\n\n${tr("daily_desc2", {
-											b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-										})}`
-									: ""
-							}`
-						)
-						.addFields(
-							{
-								name: `${reward.month} ${tr("daily_month")}`,
-								value: "\u200b",
-								inline: true
-							},
-							{
-								name: tr("daily_signedDay", {
-									z:
-										info.month_last_day != true
-											? info.total_sign_day + 1
-											: info.total_sign_day
-								}),
-								value: "\u200b",
-								inline: true
-							},
-							{
-								name: tr("daily_missedDay", {
-									z: info.sign_cnt_missed
-								}),
-								value: "\u200b",
-								inline: true
-							}
-						)
-				]
-			});
-		} catch (e) {
-			return replyOrfollowUp(interaction, {
-				embeds: [
-					new EmbedBuilder()
-						.setConfig("#E76161")
+						.setColor("#E76161")
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
-						.setTitle(
-							`${tr("daily_failed")} ${tr("cookie_failed")}`
+						.setTitle(tr("daily_NonAccount"))
+						.setDescription(tr("daily_NonAccountDesc"))
+				]
+			});
+		}
+
+		const user = interaction.options.getUser("user") ?? interaction.user;
+		const auto = interaction.options.getString("autosign");
+		const time = interaction.options.getString("time");
+		const tag = interaction.options.getString("tag");
+
+		if (auto === "off") {
+			await db.delete(`autoDaily.${interaction.user.id}`);
+			return interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#E76161")
+						.setTitle(tr("autoDaily_Off"))
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1120715314678730832/kuru.gif"
 						)
+				]
+			});
+		} else if (time || tag || auto === "on") {
+			await db.set(`autoDaily.${interaction.user.id}`, {
+				channelId: interaction.channel.id,
+				time: time || "12",
+				tag: tag || false
+			});
+
+			return interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#A2CDB0")
+						.setTitle(tr("autoDaily_On"))
 						.setDescription(
-							`<@${user.id}>\n\n${tr(
-								"cookie_failedDesc"
-							)}\n\n${tr("err_code")}${e}`
+							tr("autoDaily_Time", {
+								time: time ? "`" + time + ":00`" : "`12:00`"
+							}) +
+								"\n" +
+								tr("autoDaily_Tag", {
+									z:
+										tag === "true"
+											? "`" + tr("True") + "`"
+											: "`" + tr("False") + "`"
+								})
+						)
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1120715314678730832/kuru.gif"
 						)
 				]
 			});
 		}
+
+		const hsr = await getUserHSRData(interaction, tr, user.id);
+		if (!hsr) return;
+
+		const info = await hsr.daily.info();
+		const reward = await hsr.daily.reward();
+		const rewards = await hsr.daily.rewards();
+		const todaySign = rewards.awards[info.total_sign_day - 1];
+		const tmrSign = rewards.awards[info.total_sign_day];
+		const res = await hsr.daily.claim();
+
+		if (res.code === -5003 || res.info.is_sign)
+			return interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#E76161")
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+						.setTitle(`${tr("daily_Failed")} ${tr("daily_Signed")}`)
+				]
+			});
+
+		interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setColor(getRandomColor())
+					.setTitle(tr("daily_SignSuccess"))
+					.setThumbnail(todaySign?.icon)
+					.setDescription(
+						`${tr("daily_Description", { a: `\`${todaySign?.name}x${todaySign?.cnt}\`` })}${info.month_last_day ? "" : `\n\n${tr("daily_DescriptionTmr", { b: `\`${tmrSign?.name}x${tmrSign?.cnt}\`` })}`}`
+					)
+					.addFields(
+						{
+							name: `${reward.month} ${tr("daily_Month")}`,
+							value: "\u200b",
+							inline: true
+						},
+						{
+							name: tr("daily_SignedDay", {
+								z: "`" + info.total_sign_day + "`"
+							}),
+							value: "\u200b",
+							inline: true
+						},
+						{
+							name: tr("daily_MissedDay", {
+								z: "`" + info.sign_cnt_missed + "`"
+							}),
+							value: "\u200b",
+							inline: true
+						}
+					)
+			]
+		});
 	}
 };

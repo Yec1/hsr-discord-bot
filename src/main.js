@@ -3,7 +3,7 @@ import { client } from "./index.js";
 import { Collection } from "discord.js";
 import { ClusterClient } from "discord-hybrid-sharding";
 import { QuickDB } from "quick.db";
-import { Logger } from "./services/logger.js";
+import { Logger } from "./utilities/core/logger.js";
 import { MongoDriver } from "quickmongo";
 import { ApplicationCommandType } from "discord.js";
 import { promisify } from "util";
@@ -65,11 +65,10 @@ async function getMessageCommands(client, messageCommandPaths) {
 async function bindEvents() {
 	const paths = await glob(`${process.cwd()}/src/events/*.js`);
 	for (let path of paths) {
-		console.log(path);
 		await import(`file://${path}`);
 	}
-	return paths 
-} 
+	return paths;
+}
 
 async function getSlashCommands(client, slashs) {
 	const slashArr = [];
@@ -83,7 +82,6 @@ async function getSlashCommands(client, slashs) {
 			);
 		}
 		client.commands.slash.set(file.name, file);
-
 
 		// why do we need this?
 		if (
@@ -103,7 +101,10 @@ export async function load(client) {
 		`${process.cwd()}/src/commands/message/**/*.js`
 	);
 
-	const messageCommands = await getMessageCommands(client, messageCommandPaths);	
+	const messageCommands = await getMessageCommands(
+		client,
+		messageCommandPaths
+	);
 
 	const eventPaths = await bindEvents();
 
@@ -117,13 +118,12 @@ export async function load(client) {
 		`已載入 ${eventPaths.length} 事件、${slashCommands.length} 斜線指令、${messageCommands.length} 訊息指令`
 	);
 
-
 	client.on("ready", async () => {
 		await client.application.commands.set(slashCommands);
 	});
 }
 
-await load(client)
+await load(client);
 
 client.login(
 	process.env.NODE_ENV === "dev" ? process.env.TESTOKEN : process.env.TOKEN

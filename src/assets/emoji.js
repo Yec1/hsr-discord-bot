@@ -43,25 +43,25 @@ export default {
 	dot: "<:dot:1117294259083681792>",
 	crown: "<:crown:1148245594410848256>",
 	avatarIcon: "<:AvatarIcon:1149937538182684743>",
-  
+
 	Rogue: "<:Hunt:1121276976414609489>",
 	"The Hunt": "<:Hunt:1121276976414609489>",
-  
+
 	Shaman: "<:Harmony:1121276974174842962>",
 	Harmony: "<:Harmony:1121276974174842962>",
-  
+
 	Priest: "<:Abundance:1121276966868365382>",
 	Abundance: "<:Abundance:1121276966868365382>",
-  
+
 	Warrior: "<:Destruction:1121276969594671144>",
 	Destruction: "<:Destruction:1121276969594671144>",
-  
+
 	Mage: "<:Erudition:1121276971511468135>",
 	Erudition: "<:Erudition:1121276971511468135>",
-  
+
 	Warlock: "<:Nihility:1121276961554174054>",
 	Nihility: "<:Nihility:1121276961554174054>",
-  
+
 	Knight: "<:Preservation:1121276965207416882>",
-	Preservation: "<:Preservation:1121276965207416882>",
+	Preservation: "<:Preservation:1121276965207416882>"
 };

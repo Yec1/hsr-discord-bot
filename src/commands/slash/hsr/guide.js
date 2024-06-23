@@ -2,11 +2,10 @@ import {
 	CommandInteraction,
 	SlashCommandBuilder,
 	EmbedBuilder,
-	ActionRowBuilder,
-	StringSelectMenuBuilder
+	ActionRowBuilder
 } from "discord.js";
-import { toI18nLang } from "../../../services/i18n.js";
-import axios from "axios";
+import { getRandomColor } from "../../../utilities/utilities.js";
+import { getSelectMenu } from "../../../utilities/hsr/selectmenu.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -30,78 +29,16 @@ export default {
 		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
-					.setConfig()
-					.setTitle(tr("profile_Searching"))
+					.setTitle(tr("Searching"))
+					.setColor(getRandomColor())
 					.setThumbnail(
-						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+						"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
 					)
-			]
+			],
+			fetchReply: true
 		});
 
-		const locale = (await db?.has(`${interaction.user.id}.locale`))
-			? await db?.get(`${interaction.user.id}.locale`)
-			: toI18nLang(interaction.locale) || "en";
-
-		const responses = await axios.get(
-			`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/${
-				locale == "tw" ? "cht" : "en"
-			}/characters.json`
-		);
-		const localeJson = responses.data;
-
-		const leaderboardData = (await db.get("LeaderBoard")) || [];
-
-		const allCharacterOptions = Object.values(leaderboardData).map(
-			character => {
-				return {
-					emoji: emoji[character.element.id.toLowerCase()],
-					label: `${
-						localeJson[character.id].name == "{NICKNAME}"
-							? `${tr("mainCharacter")}`
-							: localeJson[character.id].name
-					}`,
-					value: `${character.id}`
-				};
-			}
-		);
-
-		const chunkSize = 25;
-		const startIndexes = Array.from(
-			{ length: Math.ceil(allCharacterOptions.length / chunkSize) },
-			(_, index) => index * chunkSize + 1
-		);
-
-		const characterOptionChunks = Array.from(
-			{ length: startIndexes.length },
-			(_, index) => {
-				const start = startIndexes[index] - 1;
-				const end = Math.min(
-					start + chunkSize,
-					allCharacterOptions.length
-				);
-				return allCharacterOptions.slice(start, end);
-			}
-		);
-
-		const selectMenus = characterOptionChunks.map((optionsChunk, index) => {
-			const startIndex = startIndexes[index];
-			const endIndex = Math.min(
-				startIndex + chunkSize - 1,
-				allCharacterOptions.length
-			);
-
-			return new StringSelectMenuBuilder()
-				.setPlaceholder(
-					`${tr("guide_character")} ${tr("character_placeholder", {
-						s: startIndex,
-						e: endIndex
-					})}`
-				)
-				.setCustomId(`guide-${index}`)
-				.setMinValues(1)
-				.setMaxValues(1)
-				.addOptions(optionsChunk);
-		});
+		const selectMenus = await getSelectMenu(interaction, tr, "guide");
 
 		interaction.editReply({
 			embeds: [],

@@ -12,7 +12,7 @@ client.on(Events.GuildCreate, async guild => {
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()
-				.setColor("#57F287")
+				.setColor(guild.memberCount > 100 ? "#FFFF80" : "#57F287")
 				.setThumbnail(guild.iconURL())
 				.setTitle("新的伺服器出現了")
 				.addFields({

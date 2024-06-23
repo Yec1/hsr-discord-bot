@@ -23,16 +23,16 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(client, interaction, args, tr, db, emoji) {
-		await db?.delete(`${interaction.user.id}`);
+		await db.delete(`${interaction.user.id}`);
 
-		await interaction.reply({
+		interaction.reply({
 			embeds: [
 				new EmbedBuilder()
-					.setConfig("F6F1F1")
+					.setColor("#F6F1F1")
 					.setThumbnail(
 						"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
 					)
-					.setTitle(tr("clear_cache"))
+					.setTitle(tr("clear_Success"))
 			],
 			ephemeral: true
 		});

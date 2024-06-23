@@ -44,16 +44,12 @@ export default {
 						.addChoices(
 							{
 								name: "autodaily",
-								name_localizations: {
-									"zh-TW": "自動簽到"
-								},
+								name_localizations: { "zh-TW": "自動簽到" },
 								value: "autoDaily"
 							},
 							{
 								name: "autonotify",
-								name_localizations: {
-									"zh-TW": "自動通知"
-								},
+								name_localizations: { "zh-TW": "自動通知" },
 								value: "autoNotify"
 							}
 						)
@@ -107,23 +103,17 @@ export default {
 						.addChoices(
 							{
 								name: "all",
-								name_localizations: {
-									"zh-TW": "全部"
-								},
+								name_localizations: { "zh-TW": "全部" },
 								value: "all"
 							},
 							{
 								name: "autodaily",
-								name_localizations: {
-									"zh-TW": "自動簽到"
-								},
+								name_localizations: { "zh-TW": "自動簽到" },
 								value: "autoDaily"
 							},
 							{
 								name: "autonotify",
-								name_localizations: {
-									"zh-TW": "自動通知"
-								},
+								name_localizations: { "zh-TW": "自動通知" },
 								value: "autoNotify"
 							}
 						)
@@ -153,215 +143,223 @@ export default {
 			!interaction.member.permissions.has(
 				PermissionsBitField.Flags.ManageGuild
 			)
-		)
-			return await interaction.reply({
+		) {
+			return interaction.reply({
 				embeds: [
-					new EmbedBuilder()
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-						.setConfig("#E76161")
-						.setTitle(`${tr("admin_noPer")}`)
+					createEmbed(
+						tr("admin_NoPermission"),
+						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png",
+						"#E76161"
+					)
 				],
 				ephemeral: true
 			});
+		}
 
 		const cmd = interaction.options.getSubcommand();
-		if (cmd == "remove") {
-			const user = interaction.options.getUser("user");
-			const userid = user
-				? user.id
-				: interaction.options.getString("userid");
-			const feature = interaction.options.getString("feature");
-			const datas = await db.get(feature);
-			const data = Object.keys(datas);
+		switch (cmd) {
+			case "remove":
+				await handleRemove(interaction, tr, db);
+				break;
+			case "move":
+				await handleMove(interaction, tr, db);
+				break;
+		}
+	}
+};
 
-			if (!userid)
-				return await interaction.reply({
-					embeds: [
-						new EmbedBuilder()
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setConfig("#E76161")
-							.setTitle(`${tr("admin_removeFail")}`)
-					],
-					ephemeral: true
-				});
+const createEmbed = (title, thumbnail, color, description = "") => {
+	const embed = new EmbedBuilder()
+		.setThumbnail(thumbnail)
+		.setColor(color)
+		.setTitle(title);
+	if (description) embed.setDescription(description);
 
-			if (!data.includes(userid))
-				return await interaction.reply({
-					embeds: [
-						new EmbedBuilder()
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setConfig("#E76161")
-							.setTitle(`${tr("admin_removeFail")}`)
-							.setDescription(
-								`${tr("admin_noUserSet", {
-									z: `<@${userid}>`
-								})}`
-							)
-					],
-					ephemeral: true
-				});
+	return embed;
+};
 
-			const userData = datas[userid];
-			if (
-				!interaction.guild.channels.cache.some(
-					channel => channel.id === userData.channelId
+const handleRemove = async (interaction, tr, db) => {
+	const user = interaction.options.getUser("user");
+	const userid = user ? user.id : interaction.options.getString("userid");
+	const feature = interaction.options.getString("feature");
+	const datas = await db.get(feature);
+	const data = Object.keys(datas);
+
+	if (!userid) {
+		return interaction.reply({
+			embeds: [
+				createEmbed(
+					tr("admin_RemoveFail"),
+					"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png",
+					"#E76161"
 				)
+			],
+			ephemeral: true
+		});
+	}
+
+	if (!data.includes(userid)) {
+		return interaction.reply({
+			embeds: [
+				createEmbed(
+					tr("admin_RemoveFail"),
+					"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png",
+					"#E76161",
+					tr("admin_UserNotSet", { user: `<@${userid}>` })
+				)
+			],
+			ephemeral: true
+		});
+	}
+
+	const userData = datas[userid];
+	if (
+		!interaction.guild.channels.cache.some(
+			channel => channel.id === userData.channelId
+		)
+	) {
+		return interaction.reply({
+			embeds: [
+				createEmbed(
+					tr("admin_RemoveFail"),
+					"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png",
+					"#E76161",
+					tr("admin_RemoveFailUserOtherServer", {
+						user: `<@${userid}>`
+					})
+				)
+			],
+			ephemeral: true
+		});
+	}
+
+	interaction.reply({
+		embeds: [
+			createEmbed(
+				tr("admin_RemoveSuccess"),
+				"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png",
+				"#F6F1F1",
+				tr("admin_RemoveSuccessMessage", {
+					user: `<@${userid}>`,
+					channel: `<#${userData.channelId}>`
+				})
 			)
-				return await interaction.reply({
-					embeds: [
-						new EmbedBuilder()
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setConfig("#E76161")
-							.setTitle(`${tr("admin_removeFail")}`)
-							.setDescription(
-								`${tr("admin_removeFailed", {
-									z: `<@${userid}>`
-								})}`
-							)
-					],
-					ephemeral: true
-				});
+		],
+		ephemeral: true
+	});
+	await db.delete(`${feature}.${userid}`);
+};
 
-			await interaction.reply({
-				embeds: [
-					new EmbedBuilder()
-						.setThumbnail(
-							"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
-						)
-						.setConfig("#F6F1F1")
-						.setTitle(`${tr("admin_removeSus")}`)
-						.setDescription(
-							`${tr("admin_removeSusMsg", {
-								z: `<@${userid}>`,
-								c: `<#${userData.channelId}>`
-							})}`
-						)
-				],
-				ephemeral: true
-			});
-			await db.delete(`${feature}.${userid}`);
-		} else if (cmd == "move") {
-			const channel = interaction.options.getChannel("channel");
-			const feature = interaction.options.getString("feature");
+const handleMove = async (interaction, tr, db) => {
+	const channel = interaction.options.getChannel("channel");
+	const feature = interaction.options.getString("feature");
 
-			if (
-				!interaction.guild.members.me
-					.permissionsIn(channel)
-					.has(PermissionsBitField.Flags.SendMessages)
-			)
-				return await interaction.reply({
-					embeds: [
-						new EmbedBuilder()
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setConfig("#E76161")
-							.setTitle(`${tr("admin_moveFail")}`)
-							.setDescription(
-								`${tr("admin_moveNoPer", {
-									z: `<#${channel.id}>`
-								})}`
-							)
-					],
-					ephemeral: true
-				});
+	if (
+		!interaction.guild.members.me
+			.permissionsIn(channel)
+			.has(PermissionsBitField.Flags.SendMessages)
+	) {
+		return interaction.reply({
+			embeds: [
+				createEmbed(
+					tr("admin_MoveFail"),
+					"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png",
+					"#E76161",
+					tr("admin_MoveNoPermission", {
+						channel: `<#${channel.id}>`
+					})
+				)
+			],
+			ephemeral: true
+		});
+	}
 
-			if (
-				channel.type == ChannelType.GuildText ||
-				channel.type == ChannelType.PrivateThread ||
-				channel.type == ChannelType.PublicThread ||
-				channel.type == ChannelType.GuildVoice
-			) {
-				await interaction.deferReply({ ephemeral: true });
+	if (
+		[
+			ChannelType.GuildText,
+			ChannelType.PrivateThread,
+			ChannelType.PublicThread,
+			ChannelType.GuildVoice
+		].includes(channel.type)
+	) {
+		await interaction.deferReply({ ephemeral: true });
 
-				const keywords =
-					feature === "all" ? ["autoDaily", "autoNotify"] : [feature];
-				const datas = {};
+		const keywords =
+			feature === "all" ? ["autoDaily", "autoNotify"] : [feature];
+		const datas = await fetchData(db, keywords);
 
-				const [autoDailyData, autoNotifyData] = await Promise.all([
-					db.get("autoDaily"),
-					db.get("autoNotify")
-				]);
+		const matchUsers = findMatchedUsers(
+			datas,
+			interaction.guild.channels.cache
+		);
 
-				datas.autoDaily = autoDailyData;
-				datas.autoNotify = autoNotifyData;
+		await updateUsersChannel(datas, matchUsers, keywords, channel.id, db);
 
-				const matchUsers = [];
-				const serverChannelIds = interaction.guild.channels.cache.map(
-					channel => channel.id
-				);
+		interaction.editReply({
+			embeds: [
+				createEmbed(
+					tr("admin_MoveSuccess"),
+					"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png",
+					"#F6F1F1",
+					tr("admin_MoveSuccessMessage", {
+						count: matchUsers.length,
+						channel: `<#${channel.id}>`
+					})
+				)
+			]
+		});
+	} else {
+		return interaction.reply({
+			embeds: [
+				createEmbed(
+					tr("admin_MoveFail"),
+					"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png",
+					"#E76161",
+					tr("admin_MoveFailMessage", { channel: `<#${channel.id}>` })
+				)
+			],
+			ephemeral: true
+		});
+	}
+};
 
-				for (const keyword of keywords) {
-					if (Array.isArray(datas[keyword])) {
-						const matchedUsers = Object.keys(datas[keyword]).filter(
-							userId =>
-								serverChannelIds.includes(
-									datas[keyword][userId].channelId
-								)
-						);
-						matchUsers.push(...matchedUsers);
-					} else {
-						const matchedUsers = Object.keys(datas[keyword]).filter(
-							userId =>
-								serverChannelIds.includes(
-									datas[keyword][userId].channelId
-								)
-						);
-						matchUsers.push(...matchedUsers);
-					}
-				}
+const fetchData = async (db, keywords) => {
+	const [autoDailyData, autoNotifyData] = await Promise.all([
+		db.get("autoDaily"),
+		db.get("autoNotify")
+	]);
 
-				for (const userId of matchUsers) {
-					for (const keyword of keywords) {
-						const userData = datas[keyword][userId];
-						if (userData) {
-							userData.channelId = channel.id;
-							await db.set(`${keyword}.${userId}`, userData);
-						}
-					}
-				}
+	return {
+		autoDaily: autoDailyData,
+		autoNotify: autoNotifyData
+	};
+};
 
-				interaction.editReply({
-					embeds: [
-						new EmbedBuilder()
-							.setThumbnail(
-								"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
-							)
-							.setConfig("#F6F1F1")
-							.setTitle(`${tr("admin_moveSus")}`)
-							.setDescription(
-								`${tr("admin_moveSusMsg", {
-									c: `${matchUsers.length}`,
-									z: `<#${channel.id}>`
-								})}`
-							)
-					]
-				});
-			} else
-				return await interaction.reply({
-					embeds: [
-						new EmbedBuilder()
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setConfig("#E76161")
-							.setTitle(`${tr("admin_moveFail")}`)
-							.setDescription(
-								`${tr("admin_moveFailed", {
-									z: `<#${channel.id}>`
-								})}`
-							)
-					],
-					ephemeral: true
-				});
+const findMatchedUsers = (datas, channelsCache) => {
+	const serverChannelIds = channelsCache.map(channel => channel.id);
+
+	return Object.keys(datas).reduce((acc, keyword) => {
+		const matchedUsers = Object.keys(datas[keyword]).filter(userId =>
+			serverChannelIds.includes(datas[keyword][userId].channelId)
+		);
+		return acc.concat(matchedUsers);
+	}, []);
+};
+
+const updateUsersChannel = async (
+	datas,
+	matchUsers,
+	keywords,
+	channelId,
+	db
+) => {
+	for (const userId of matchUsers) {
+		for (const keyword of keywords) {
+			const userData = datas[keyword][userId];
+			if (userData) {
+				userData.channelId = channelId;
+				await db.set(`${keyword}.${userId}`, userData);
+			}
 		}
 	}
 };

@@ -1,7 +1,6 @@
 import { client } from "../index.js";
 import { ApplicationCommandOptionType } from "discord.js";
-import { i18nMixin, toI18nLang } from "../services/i18n.js";
-import { calXP } from "../services/utils.js";
+import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
 import {
 	Events,
 	EmbedBuilder,
@@ -12,10 +11,9 @@ import {
 	ButtonStyle
 } from "discord.js";
 import emoji from "../assets/emoji.js";
-import { Logger } from "../services/logger.js";
+import { Logger } from "../utilities/core/logger.js";
 
 const db = client.db;
-const FBwebhook = new WebhookClient({ url: process.env.FBWEBHOOK });
 const webhook = new WebhookClient({ url: process.env.CMDWEBHOOK });
 
 client.on(Events.InteractionCreate, async interaction => {
@@ -26,53 +24,6 @@ client.on(Events.InteractionCreate, async interaction => {
 			? await db?.get(`${interaction.user.id}.locale`)
 			: toI18nLang(interaction.locale) || "en"
 	);
-
-	if (interaction.isModalSubmit()) {
-		if (interaction.customId == "feedback") {
-			const feedback = interaction.fields.getTextInputValue("suggest");
-
-			await FBwebhook.send({
-				embeds: [
-					new EmbedBuilder()
-						.setConfig("#FFFFFF")
-						.setAuthor({
-							name: `${interaction.user.username}`,
-							iconURL: interaction.user.displayAvatarURL({
-								size: 4096,
-								dynamic: true
-							}),
-							url: interaction.user.displayAvatarURL({
-								size: 4096,
-								dynamic: true
-							})
-						})
-						.setTimestamp()
-						.setDescription(`\`\`\`\n${feedback}\`\`\``)
-				]
-			});
-
-			await interaction.reply({
-				embeds: [
-					new EmbedBuilder()
-						.setConfig("#FF9B9B")
-						.setTitle(i18n("feedback_Sus"))
-						.setThumbnail(
-							"https://media.discordapp.net/attachments/1057244827688910850/1126797186844348426/310737454_186864900516151_6902700007088914183_n.png"
-						)
-				],
-				components: [
-					new ActionRowBuilder().addComponents(
-						new ButtonBuilder()
-							.setStyle(ButtonStyle.Link)
-							.setURL("https://discord.gg/mPCEATJDve")
-							.setLabel(`${i18n("support")}`)
-							.setEmoji(emoji.s900001)
-					)
-				],
-				ephemeral: true
-			});
-		}
-	}
 
 	if (interaction.isButton()) {
 		await interaction.deferUpdate().catch(() => {});
@@ -119,8 +70,6 @@ client.on(Events.InteractionCreate, async interaction => {
 				1000
 			).toFixed(2)} 秒`;
 
-			calXP(interaction.user.id).catch(() => {});
-
 			new Logger("指令").command(
 				`${interaction.user.displayName}(${interaction.user.id}) 執行 ${command.data.name} - ${time}`
 			);
@@ -164,7 +113,6 @@ client.on(Events.InteractionCreate, async interaction => {
 			webhook.send({
 				embeds: [
 					new EmbedBuilder()
-						.setConfig(null, time)
 						.setTimestamp()
 						.setAuthor({
 							iconURL: interaction.user.displayAvatarURL({

@@ -1,80 +1,64 @@
 import { client } from "../index.js";
-import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { EmbedBuilder, WebhookClient } from "discord.js";
-import { i18nMixin } from "../services/i18n.js";
-import { Logger } from "../services/logger.js";
+import { Logger } from "../utilities/core/logger.js";
+import {
+	getUserCookie,
+	getUserLang,
+	getUserUid,
+	getRandomColor
+} from "../utilities/utilities.js";
+import { i18nMixin } from "../utilities/core/i18n.js";
+import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 
 const webhook = new WebhookClient({ url: process.env.LOGWEBHOOK });
 const db = client.db;
+let success, failed, signed, total;
 
-let sus, fail, signed, total, remove, removeInvaild;
+export default async function autoDailySign() {
+	const dailyData = await db.get("autoDaily");
+	const autoDaily = Object.keys(dailyData);
 
-export default async function dailyCheck() {
-	const daily = await db.get("autoDaily");
-	const autoDaily = Object.keys(daily);
-
+	// Initialize the variables
 	const nowTime = new Date().toLocaleString("en-US", {
 		timeZone: "Asia/Taipei",
 		hour: "numeric",
 		hour12: false
 	});
-	const start_time = Date.now();
-	remove = [];
-	removeInvaild = [];
+	const startTime = Date.now();
 	total = 0;
 	signed = 0;
-	fail = 0;
-	sus = 0;
+	failed = 0;
+	success = 0;
 
-	// Start
+	// Loop through the autoDaily array
 	new Logger("自動執行").success(`已開始 ${nowTime} 點自動簽到`);
 	for (const id of autoDaily) {
-		const time = daily[id]?.time ? daily[id].time : "13";
+		const time = dailyData[id]?.time ? dailyData[id].time : "13";
 
 		if (parseInt(time) == nowTime) {
-			if (
-				(await db.has(`${id}.account`)) &&
-				(await db.get(`${id}.account`))[0].uid &&
-				(await db.get(`${id}.account`))[0].cookie
-			) {
-				const accounts = await db.get(`${id}.account`);
-				let n = 0;
-				for (const account of accounts)
-					await dailySend(
-						daily,
-						id,
-						account.uid,
-						account.cookie,
-						n != 0 ? true : false
-					);
-				n++;
-			} else
-				await dailySend(
-					daily,
-					id,
-					await db.get(`${id}.uid`),
-					await db.get(`${id}.cookie`)
-				);
+			const accounts = await db.get(`${id}.account`);
+			for (const account of accounts) {
+				let accountIndex = 0;
+				if (
+					getUserCookie(id, accountIndex) &&
+					getUserUid(id, accountIndex)
+				)
+					await dailySign(dailyData, id, account.uid, account.cookie);
+				accountIndex++;
+			}
 		}
 	}
 
-	await db.set("autoDaily", daily);
-	await Promise.all(remove.map(id => db.delete(`autoDaily.${id}`)));
-	await Promise.all(
-		removeInvaild.map(id => db.delete(`autoDaily.${id}.invaild`))
-	);
-
-	UpdateStatistics(total, start_time, sus, fail, signed, nowTime);
+	// End
+	UpdateStatistics(total, startTime, success, failed, signed, nowTime);
 }
 
-async function dailySend(daily, id, uid, cookie, mutiAcc) {
+async function dailySign(dailyData, userId, uid, cookie) {
 	total++;
-	const locale = (await db?.has(`${id}.locale`))
-		? await db?.get(`${id}.locale`)
-		: "tw";
+	const locale = await getUserLang(userId);
 	const tr = i18nMixin(locale);
-	const channelId = daily[id].channelId;
-	const tag = daily[id].tag === "true" ? `<@${id}>` : "";
+	const channelId = dailyData[userId].channelId;
+	const tag = dailyData[userId].tag === "true" ? "<@" + id + ">" : "";
 	let channel;
 
 	try {
@@ -83,75 +67,50 @@ async function dailySend(daily, id, uid, cookie, mutiAcc) {
 
 	try {
 		const hsr = new HonkaiStarRail({
-			cookie: cookie,
-			lang: (await db?.has(`${id}.locale`))
-				? (await db?.get(`${id}.locale`)) === "en"
-					? LanguageEnum.ENGLISH
-					: LanguageEnum.TRADIIONAL_CHINESE
-				: LanguageEnum.TRADIIONAL_CHINESE
+			cookie,
+			lang:
+				locale === "tw" || interaction.locale === "zh-TW"
+					? LanguageEnum.TRADIIONAL_CHINESE
+					: LanguageEnum.ENGLISH
 		});
 
 		const info = await hsr.daily.info();
 		const reward = await hsr.daily.reward();
 		const rewards = await hsr.daily.rewards();
-
-		const todaySign =
-			rewards.awards[
-				info.month_last_day !== true || info.total_sign_day == 0
-					? info.total_sign_day
-					: info.total_sign_day - 1
-			];
-		const tmrSign =
-			rewards.awards[
-				info.month_last_day !== true || info.total_sign_day == 0
-					? info.total_sign_day + 1
-					: info.total_sign_day
-			];
+		const todaySign = rewards.awards[info.total_sign_day - 1];
+		const tmrSign = rewards.awards[info.total_sign_day];
 		const res = await hsr.daily.claim();
 
 		if (res.code === -5003 || res.info.is_sign === true) {
 			signed++;
 		} else {
-			sus++;
-
-			if (daily[id]?.invaild) removeInvaild.push(id);
-
-			send(channelId, {
+			success++;
+			sendMessage(channelId, {
 				content: tag,
 				embeds: [
 					new EmbedBuilder()
-						.setTitle(`${tr("auto")}${tr("daily_sign")}`)
+						.setColor(getRandomColor())
+						.setTitle(tr("Auto") + tr("daily_SignSuccess"))
 						.setThumbnail(todaySign?.icon)
 						.setDescription(
-							`<@${id}> ${tr("daily_desc", {
-								a: `\`${todaySign?.name}x${todaySign?.cnt}\``
-							})}${
-								info.month_last_day !== true
-									? `\n\n${tr("daily_desc2", {
-											b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-										})}`
-									: ""
-							}`
+							`${tr("daily_Description", { a: `\`${todaySign?.name}x${todaySign?.cnt}\`` })}${info.month_last_day ? "" : `\n\n${tr("daily_DescriptionTmr", { b: `\`${tmrSign?.name}x${tmrSign?.cnt}\`` })}`}`
 						)
 						.addFields(
 							{
-								name: `${reward.month} ${tr("daily_month")}`,
+								name: `${reward.month} ${tr("daily_Month")}`,
 								value: "\u200b",
 								inline: true
 							},
 							{
-								name: tr("daily_signedDay", {
-									z:
-										info.month_last_day !== true
-											? info.total_sign_day + 1
-											: info.total_sign_day
+								name: tr("daily_SignedDay", {
+									z: "`" + info.total_sign_day + "`"
 								}),
 								value: "\u200b",
 								inline: true
 							},
 							{
-								name: tr("daily_missedDay", {
-									z: info.sign_cnt_missed
+								name: tr("daily_MissedDay", {
+									z: "`" + info.sign_cnt_missed + "`"
 								}),
 								value: "\u200b",
 								inline: true
@@ -160,48 +119,36 @@ async function dailySend(daily, id, uid, cookie, mutiAcc) {
 				]
 			}).catch(() => {});
 		}
-	} catch (e) {
-		if (cookie) {
-			fail++;
-			daily[id]?.invaild ? daily[id].invaild++ : (daily[id].invaild = 1);
-
-			if (daily[id]?.invaild > 6) remove.push(id);
-
-			send(channelId, {
-				content: tag,
-				embeds: [
-					new EmbedBuilder()
-						.setConfig(
-							"#E76161",
-							`${tr("auto_Fail", {
-								z: daily[id]?.invaild,
-								max: 7
-							})}`
-						)
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-						.setTitle(`${tr("auto")}${tr("daily_failed")} - ${uid}`)
-						.setDescription(
-							`<@${id}> ${tr("cookie_failedDesc")}\n\n${tr(
-								"err_code"
-							)}**${e.message}**`
-						)
-				]
-			});
-		}
+	} catch (error) {
+		failed++;
 	}
 }
 
-function UpdateStatistics(total, start_time, sus, fail, signed, nowTime) {
-	const end_time = Date.now();
+async function sendMessage(channelId, embed) {
+	try {
+		await client.cluster.broadcastEval(
+			async (c, context) => {
+				const channel = c.channels.cache.get(context.channelId);
+				channel.send(context.embed).catch(() => {});
+			},
+			{
+				context: { channelId: channelId, embed: embed },
+				timeout: 10e3
+			}
+		);
+	} catch (e) {}
+}
+
+function UpdateStatistics(total, startTime, success, failed, signed, nowTime) {
+	const endTime = Date.now();
 	const average_time = parseFloat(
-		((end_time - start_time) / (total > 0 ? total : 1) / 1000).toFixed(3)
+		((endTime - startTime) / (total > 0 ? total : 1) / 1000).toFixed(3)
 	);
 
 	new Logger("自動執行").success(
-		`已結束 ${nowTime} 點自動簽到，簽到 ${sus}/${total} 人`
+		`已結束 ${nowTime} 點自動簽到，簽到 ${success}/${total} 人`
 	);
+
 	webhook.send({
 		embeds: [
 			new EmbedBuilder()
@@ -215,7 +162,7 @@ function UpdateStatistics(total, start_time, sus, fail, signed, nowTime) {
 						inline: false
 					},
 					{
-						name: `簽到成功人數 \`${sus}\` 人`,
+						name: `簽到成功人數 \`${success}\` 人`,
 						value: "\u200b",
 						inline: true
 					},
@@ -225,13 +172,13 @@ function UpdateStatistics(total, start_time, sus, fail, signed, nowTime) {
 						inline: true
 					},
 					{
-						name: `無效人數 \`${fail}\` 人`,
+						name: `簽到失敗人數 \`${failed}\` 人`,
 						value: "\u200b",
 						inline: true
 					},
 					{
 						name: `花費時間 \`${parseFloat(
-							((end_time - start_time) / 1000).toFixed(3)
+							((endTime - startTime) / 1000).toFixed(3)
 						)}\` 秒`,
 						value: "\u200b",
 						inline: true
@@ -244,19 +191,4 @@ function UpdateStatistics(total, start_time, sus, fail, signed, nowTime) {
 				)
 		]
 	});
-}
-
-async function send(channelId, embed) {
-	try {
-		await client.cluster.broadcastEval(
-			async (c, context) => {
-				const channel = c.channels.cache.get(context.channelId);
-				channel.send(context.embed).catch(() => {});
-			},
-			{
-				context: { channelId: channelId, embed: embed },
-				timeout: 10e3
-			}
-		);
-	} catch (e) {}
 }

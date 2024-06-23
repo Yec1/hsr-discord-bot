@@ -9,20 +9,7 @@ import {
 	StringSelectMenuBuilder
 } from "discord.js";
 
-import {
-	USER_ID_FIELD,
-	SET_USER_ID_MODAL,
-	SET_COOKIE_SELECT_MENU,
-	EDIT_CONFIGURED_ACCOUNT_SELECT_MENU,
-	DELETE_CONFIGURED_ACCOUNT_SELECT_MENU
-} from "../../../services/account.js";
-
-const HOW_TO_SET_UP_ACCOUNT = "how";
-const SET_USER_ID = "set_Uid";
-const SET_COOKIE = "setCookie";
-const VIEW_ON_CONFIGURED_ACCOUNT = "viewSet";
-const EDIT_CONFIGURED_ACCOUNT = "editSet";
-const DELETE_CONFIGURED_ACCOUNT = "delSet";
+import { failedReply, getRandomColor } from "../../../utilities/utilities.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -51,42 +38,42 @@ export default {
 						name_localizations: {
 							"zh-TW": "❓ 如何設定帳號"
 						},
-						value: HOW_TO_SET_UP_ACCOUNT
+						value: "HowToSetUpAccount"
 					},
 					{
 						name: "① Set UID",
 						name_localizations: {
 							"zh-TW": "① 設定 UID"
 						},
-						value: SET_USER_ID
+						value: "SetUserID"
 					},
 					{
 						name: "② Set Cookie",
 						name_localizations: {
 							"zh-TW": "② 設定 Cookie"
 						},
-						value: SET_COOKIE
+						value: "SetUserCookie"
 					},
 					{
 						name: "🔸 View configured account",
 						name_localizations: {
 							"zh-TW": "🔸 檢視已設定帳號"
 						},
-						value: VIEW_ON_CONFIGURED_ACCOUNT
+						value: "ViewAccount"
 					},
 					{
 						name: "⚙️ Edit configured account",
 						name_localizations: {
 							"zh-TW": "⚙️ 編輯已設定帳號"
 						},
-						value: EDIT_CONFIGURED_ACCOUNT
+						value: "EditAccount"
 					},
 					{
 						name: "❌ Delete configured account",
 						name_localizations: {
 							"zh-TW": "❌ 刪除已設定帳號"
 						},
-						value: DELETE_CONFIGURED_ACCOUNT
+						value: "DeleteAccount"
 					}
 				)
 		),
@@ -97,103 +84,48 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(_client, interaction, _args, tr, db, emoji) {
-		const cmd = interaction.options.getString("options");
+		const command = interaction.options.getString("options");
 		const userId = interaction.user.id;
+		const accountKey = `${userId}.account`;
+		const hasAccount = await db.has(accountKey);
 
 		if (
-			cmd == VIEW_ON_CONFIGURED_ACCOUNT ||
-			cmd == EDIT_CONFIGURED_ACCOUNT ||
-			cmd == DELETE_CONFIGURED_ACCOUNT
+			command == "ViewAccount" ||
+			command == "EditAccount" ||
+			command == "DeleteAccount"
 		) {
-			if (!(await db.has(`${userId}.account`)))
-				return await interaction.reply({
-					embeds: [
-						new EmbedBuilder()
-							.setConfig("#E76161")
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(`${tr("account_nonAcc")}`)
-					],
-					ephemeral: true
-				});
-
-			await interaction.deferReply({ ephemeral: true }).catch(() => {});
+			if (!hasAccount)
+				return failedReply(interaction, tr("account_NoAccount"));
+			await interaction.deferReply({ ephemeral: true });
 		}
 
-		const accounts = await db.get(`${userId}.account`);
+		const accounts = await db.get(accountKey);
 
-		switch (cmd) {
-			case HOW_TO_SET_UP_ACCOUNT:
-				await interaction.reply({
+		switch (command) {
+			case "HowToSetUpAccount":
+				interaction.reply({
 					embeds: [
 						new EmbedBuilder()
-							.setConfig()
-							.setTitle(tr("cookie_how"))
+							.setTitle(tr("account_HowToSetUpAccount"))
+							.setColor(getRandomColor())
+							.setDescription(tr("account_HowToSetUpAccountDesc"))
 							.setImage(
 								"https://media.discordapp.net/attachments/1149960935654559835/1185194443322687528/cookieT.png"
 							)
-							.setDescription(tr("cookie_desc"))
-					],
-					ephemeral: true
-				});
-
-				await interaction.followUp({
-					content: "java+script: document.write(document.cookie)",
-					ephemeral: true
-				});
-				return;
-			case SET_COOKIE:
-				if (await db.has(`${interaction.user.id}.account`)) {
-					const accounts = await db.get(
-						`${interaction.user.id}.account`
-					);
-					await interaction.reply({
-						components: [
-							new ActionRowBuilder().addComponents(
-								new StringSelectMenuBuilder()
-									.setPlaceholder(
-										`${tr("account_cookieSelectUID")}`
-									)
-									.setCustomId(SET_COOKIE_SELECT_MENU)
-									.setMinValues(1)
-									.setMaxValues(1)
-									.addOptions(
-										accounts.map((account, i) => ({
-											emoji: `${emoji.avatarIcon}`,
-											label: `${account.uid}`,
-											value: `${i}`
-										}))
-									)
-							)
-						],
-						ephemeral: true
-					});
-					return;
-				}
-				await interaction.reply({
-					embeds: [
-						new EmbedBuilder()
-							.setConfig("#E76161")
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(`${tr("account_setUID")}`)
 					],
 					ephemeral: true
 				});
 				return;
-
-			case SET_USER_ID:
+			case "SetUserID":
 				await interaction.showModal(
 					new ModalBuilder()
-						.setCustomId(SET_USER_ID_MODAL)
-						.setTitle(tr("account_uidTitle"))
+						.setCustomId("account_SetUserIDModal")
+						.setTitle(tr("account_SetUserID"))
 						.addComponents(
 							new ActionRowBuilder().addComponents(
 								new TextInputBuilder()
-									.setCustomId(USER_ID_FIELD)
-									.setLabel(tr("account_uidDesc"))
+									.setCustomId("account_SetUserIDModalField")
+									.setLabel(tr("account_SetUserIDDesc"))
 									.setPlaceholder("e.g. 809279679")
 									.setStyle(TextInputStyle.Short)
 									.setRequired(true)
@@ -203,15 +135,40 @@ export default {
 						)
 				);
 				return;
-			case VIEW_ON_CONFIGURED_ACCOUNT:
+			case "SetUserCookie":
+				if (!hasAccount)
+					return failedReply(interaction, tr("account_NoAccount"));
+				interaction.reply({
+					components: [
+						new ActionRowBuilder().addComponents(
+							new StringSelectMenuBuilder()
+								.setPlaceholder(
+									tr("account_SelectAccountSetCookie")
+								)
+								.setCustomId("account_SetUserCookieSelect")
+								.setMinValues(1)
+								.setMaxValues(1)
+								.addOptions(
+									accounts.map((account, index) => ({
+										emoji: emoji.avatarIcon,
+										label: `${account.uid}`,
+										value: `${index}`
+									}))
+								)
+						)
+					],
+					ephemeral: true
+				});
+				return;
+			case "ViewAccount":
 				interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
-							.setConfig()
+							.setColor(getRandomColor())
 							.setAuthor({
-								name: `${interaction.user.username} ${tr(
-									"account_listAcc"
-								)}`,
+								name: tr("account_ListOfAccount", {
+									Username: interaction.user.username
+								}),
 								iconURL: `${interaction.user.displayAvatarURL({
 									size: 4096,
 									dynamic: true
@@ -222,8 +179,8 @@ export default {
 									name: `${emoji.avatarIcon} ${account.uid}`,
 									value: `${
 										account.cookie
-											? `🔗 \`${tr("account_linked")}\``
-											: `❌ \`${tr("account_nolink")}\``
+											? `🔗 \`${tr("account_Linked")}\``
+											: `❌ \`${tr("account_NotLinked")}\``
 									}`,
 									inline: true
 								}))
@@ -231,21 +188,19 @@ export default {
 					]
 				});
 				return;
-			case EDIT_CONFIGURED_ACCOUNT:
+			case "EditAccount":
 				interaction.editReply({
 					components: [
 						new ActionRowBuilder().addComponents(
 							new StringSelectMenuBuilder()
-								.setPlaceholder(tr("account_editUIDTitle"))
-								.setCustomId(
-									EDIT_CONFIGURED_ACCOUNT_SELECT_MENU
-								)
+								.setPlaceholder(tr("account_SelectAccountEdit"))
+								.setCustomId("account_EditAccountSelect")
 								.setMinValues(1)
 								.setMaxValues(1)
 								.addOptions(
 									accounts.map((account, i) => {
 										return {
-											emoji: `${emoji.avatarIcon}`,
+											emoji: emoji.avatarIcon,
 											label: `${account.uid}`,
 											value: `${i}`
 										};
@@ -256,20 +211,20 @@ export default {
 					ephemeral: true
 				});
 				return;
-			case DELETE_CONFIGURED_ACCOUNT:
+			case "DeleteAccount":
 				interaction.editReply({
 					components: [
 						new ActionRowBuilder().addComponents(
 							new StringSelectMenuBuilder()
-								.setPlaceholder(tr("account_delUIDTitle"))
-								.setCustomId(
-									DELETE_CONFIGURED_ACCOUNT_SELECT_MENU
+								.setPlaceholder(
+									tr("account_SelectAccountDelete")
 								)
+								.setCustomId("account_DeleteAccountSelect")
 								.setMinValues(1)
 								.setMaxValues(1)
 								.addOptions(
 									accounts.map((account, i) => ({
-										emoji: `${emoji.avatarIcon}`,
+										emoji: emoji.avatarIcon,
 										label: `${account.uid}`,
 										value: `${i}`
 									}))

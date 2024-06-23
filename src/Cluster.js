@@ -3,7 +3,7 @@ import fs from "fs";
 Object.assign(process.env, dotenv.parse(fs.readFileSync("./.env")));
 
 import { ClusterManager, HeartbeatManager } from "discord-hybrid-sharding";
-import { Logger } from "./services/logger.js";
+import { Logger } from "./utilities/core/logger.js";
 
 const manager = new ClusterManager(`${process.cwd()}/src/index.js`, {
 	totalShards: "auto",

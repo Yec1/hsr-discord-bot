@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 Object.assign(process.env, dotenv.parse(fs.readFileSync("./.env")));
 
-import "./services/index.js";
+import "./utilities/index.js";
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { getInfo } from "discord-hybrid-sharding";
 
