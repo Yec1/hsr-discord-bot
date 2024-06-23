@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Hoyolab Geetest Validation</title>
+		<script src="https://static.geetest.com/static/js/gt.0.5.0.js"></script>
+		<script type="module" src="/script.js"></script>
+		<style>
+			body {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				min-height: 100vh;
+				color: #f5f5f5;
+				font-size: large;
+				background: #181818;
+			}
+			.container {
+				position: absolute;
+				min-width: 500px;
+				width: max-content;
+				background: #222;
+				z-index: 1000;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				padding: 40px;
+				border-radius: 10px;
+				box-shadow: 0 15px 35px rgba(0, 0, 0, 9);
+			}
+			.container .content {
+				position: relative;
+				width: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				flex-direction: column;
+			}
+			.message {
+				margin: 20px;
+				padding: 20px;
+				border: 1px solid #afafaf;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="content">
+				<h1>Hoyolab Geetest Chanllenge Validation</h1>
+				<p>Verify you are human by completing the captcha below:</p>
+				<div id="geetest"></div>
+			</div>
+		</div>
+	</body>
+</html>
