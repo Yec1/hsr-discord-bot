@@ -7,7 +7,7 @@ import {
 	getUserHSRData,
 	getRandomColor
 } from "../../../utilities/utilities.js";
-import e from "express";
+import { handleNoteDraw } from "../../../utilities/hsr/note.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -189,10 +189,7 @@ export default {
 				fetchReply: true
 			});
 
-			const res = await hsr.record.note();
-			console.log(res);
-
-			// TODO: Draw note
+			handleNoteDraw(interaction, tr, hsr);
 		}
 	}
 };

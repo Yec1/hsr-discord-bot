@@ -1,15 +1,8 @@
 import { client } from "../index.js";
 import { AxiosError } from "axios";
-import {
-	Events,
-	ActionRowBuilder,
-	AttachmentBuilder,
-	StringSelectMenuBuilder,
-	EmbedBuilder
-} from "discord.js";
-import emoji from "../assets/emoji.js";
+import { Events, EmbedBuilder } from "discord.js";
 import { HonkaiStarRail } from "hoyoapi";
-import { getRandomColor, requestPlayerData } from "../utilities/utilities.js";
+import { getUserLang, requestPlayerData } from "../utilities/utilities.js";
 import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
 
 const db = client.db;
@@ -17,7 +10,8 @@ const db = client.db;
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isModalSubmit()) return;
 
-	const { locale, customId, fields } = interaction;
+	const { customId, fields } = interaction;
+	const locale = await getUserLang(interaction.user.id);
 	const tr = i18nMixin(toI18nLang(locale) || "en");
 
 	if (customId.startsWith("accountEdit"))

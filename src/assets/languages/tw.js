@@ -1,5 +1,8 @@
 const langs = {
 	// Global
+	Hour: "時",
+	Minute: "分",
+	Second: "秒",
 	isSet: "已設置",
 	isNotSet: "未設置",
 	ms: "毫秒",
@@ -23,8 +26,24 @@ const langs = {
 	True: "是",
 	False: "否",
 	Auto: "自動",
-	// Commands
+	Current: "當前抽數",
+	Soft: "加機率抽數",
+	Max: "保底抽數",
+	Chance: "五星機率",
+	Rateup: "UP機率",
+	Guarantee: "下次必定UP",
+	waitFormat1: "請等待 `<time>` 秒後再試一次！",
+	waitFormat2: "請等待 `<time>` 後再試一次！",
 	Searching: "正在搜尋資料中，開拓者請稍後...",
+	TrailblazePower: "開拓力",
+	TP_RecoveryTime: "剩餘恢復時間",
+	DailyTraining: "每日實訓",
+	EchoOfWar: "歷戰餘響",
+	SynchronicityPoints: "本周額外擬合值",
+	OngoingAssignments: "派遣執行:",
+	Remaining: "剩餘",
+
+	// Commands
 	profile_UidNotSet: "尚未設置 UID，設置後即可快速搜尋自己",
 	profile_UidNotSetDesc:
 		"請使用 </account:1160207139151818852> 指令設置帳號 UID",
@@ -110,8 +129,8 @@ const langs = {
 	daily_Failed: "簽到失敗",
 	daily_Signed: "開拓者，你今天已經簽到過了～",
 	daily_SignSuccess: "簽到成功！",
-	daily_Description: "今日獲得：<a>",
-	daily_DescriptionTmr: "明日獲得：<b>",
+	daily_Description: "您已獲得今日獎勵 <a>",
+	daily_DescriptionTmr: "明日獎勵為 <b>",
 	daily_Month: "月份簽到",
 	daily_SignedDay: "已簽到天數：<z>",
 	daily_MissedDay: "漏簽天數：<z>",
@@ -120,7 +139,35 @@ const langs = {
 	autoDaily_Off: "已關閉自動簽到",
 	autoDaily_On: "已開啟自動簽到",
 	autoDaily_Time: "自動簽到時間：<time>",
-	autoDaily_Tag: "簽到時提及：<z>"
+	autoDaily_Tag: "簽到時提及：<z>",
+
+	warp_TypeCharacter: "限定角色躍遷",
+	warp_TypeLightcone: "限定光錐躍遷",
+	warp_TypeRegular: "常駐躍遷",
+	warp_Loading: "載入 <a> 中",
+	warplog_Title: "抽卡分析",
+	warplog_Count: "躍遷總數",
+	warplog_Cost: "花費星瓊",
+	warplog_5Count: "五星數量",
+	warplog_5CountAverage: "平均五星抽數",
+	warplog_React: "近期五星紀錄",
+	warp_SimSetError: "請輸入有效的數字：<z>",
+	warp_SimSetChanceError: "五星機率必須介於 0 至 1 之間",
+	warp_SimSetRateUpError: "UP機率必須介於 0 至 1 之間",
+	warp_SimSetSus: "已變更模擬躍遷設定",
+	warp_SimSetTitle: "模擬躍遷設定",
+	warp_Error: "請確認已輸入正確的躍遷紀錄網址",
+	warp_ErrorDesc: "如何取得躍遷記錄網址 </warp:1120925141338177543>",
+	draw_NoData: "資料抓取失敗",
+	warp_SelectMenuTitle: "選擇遷躍紀錄",
+	warp_SimFooter: "請不要移動或切換畫面以獲得更好的躍遷體驗",
+	warp_Skip: "跳過",
+	warp_Pity: "已累計 <z> 抽未出五星",
+	warp_Title: "查詢躍遷紀錄",
+	warp_Input: "在這放入躍遷紀錄網址",
+	warp_HowToGet: "如何獲取躍遷紀錄",
+	warp_HowToGetDesc:
+		"**1.** 在 PC 上打開崩壞：星穹鐵道\n**2.** 打開`遷躍`的`歷史紀錄`\n**3.** 打開 Windows PowerShell 並貼上以下指令 <z>\n**4.** 複製網址後使用指令 </warp:1120003658243915847> 查詢遷躍紀錄"
 };
 
 export default langs;

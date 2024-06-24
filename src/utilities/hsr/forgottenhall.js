@@ -709,7 +709,6 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
-		console.log(e);
 		new Logger("分片").error(`ForgottenHall Error: ${e}`);
 		return null;
 	}

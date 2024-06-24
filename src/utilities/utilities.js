@@ -4,6 +4,23 @@ import axios from "axios";
 import { HonkaiStarRail, LanguageEnum, HoyoAPIError } from "hoyoapi";
 const db = client.db;
 
+function secondsToHms(d, tr) {
+	d = Number(d);
+	var h = Math.floor(d / 3600);
+	var m = Math.floor((d % 3600) / 60);
+	var s = Math.floor((d % 3600) % 60);
+
+	var hDisplay = h > 0 ? h.toString().padStart(2, "0") + tr("Hour") : "";
+	var mDisplay = m > 0 ? m.toString().padStart(2, "0") + tr("Minute") : "";
+	var sDisplay = s > 0 ? s.toString().padStart(2, "0") + tr("Second") : "";
+
+	if (!hDisplay && !mDisplay && !sDisplay) {
+		sDisplay = "已完成";
+	}
+
+	return hDisplay + mDisplay + sDisplay;
+}
+
 async function requestPlayerData(uid, interaction) {
 	const userLocaleKey = `${interaction?.user.id}.locale`;
 	let langParam = "?lang=en";
@@ -184,6 +201,7 @@ global.replyOrfollowUp = async function (interaction, ...args) {
 };
 
 export {
+	secondsToHms,
 	requestPlayerData,
 	drawInQueueReply,
 	failedReply,

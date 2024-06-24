@@ -32,11 +32,12 @@ const image_Header =
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isStringSelectMenu()) return;
 
-	const { locale, customId, values } = interaction;
+	const { customId, fields } = interaction;
+	const locale = await getUserLang(interaction.user.id);
 	const tr = i18nMixin(toI18nLang(locale) || "en");
+
 	if (!customId.startsWith("account"))
 		await interaction.update({ fetchReply: true }).catch(() => {});
-
 	if (customId.startsWith("guide")) handleGuide(interaction, tr, values[0]);
 	if (customId.startsWith("leaderboard"))
 		handleLeaderboard(interaction, tr, values[0]);

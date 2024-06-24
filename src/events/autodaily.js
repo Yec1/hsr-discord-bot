@@ -56,7 +56,7 @@ export default async function autoDailySign() {
 async function dailySign(dailyData, userId, uid, cookie) {
 	total++;
 	const locale = await getUserLang(userId);
-	const tr = i18nMixin(locale);
+	const tr = i18nMixin(toI18nLang(locale) || "en");
 	const channelId = dailyData[userId].channelId;
 	const tag = dailyData[userId].tag === "true" ? "<@" + id + ">" : "";
 	let channel;
@@ -90,10 +90,12 @@ async function dailySign(dailyData, userId, uid, cookie) {
 				embeds: [
 					new EmbedBuilder()
 						.setColor(getRandomColor())
-						.setTitle(tr("Auto") + tr("daily_SignSuccess"))
+						.setTitle(
+							uid + " " + tr("Auto") + tr("daily_SignSuccess")
+						)
 						.setThumbnail(todaySign?.icon)
 						.setDescription(
-							`${tr("daily_Description", { a: `\`${todaySign?.name}x${todaySign?.cnt}\`` })}${info.month_last_day ? "" : `\n\n${tr("daily_DescriptionTmr", { b: `\`${tmrSign?.name}x${tmrSign?.cnt}\`` })}`}`
+							`${tr("daily_Description", { a: `\`${todaySign?.name}x${todaySign?.cnt}\`` })}${info.month_last_day ? "" : `\n\n<@${id}> ${tr("daily_DescriptionTmr", { b: `\`${tmrSign?.name}x${tmrSign?.cnt}\`` })}`}`
 						)
 						.addFields(
 							{
