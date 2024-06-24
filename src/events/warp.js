@@ -14,7 +14,7 @@ import {
 	drawInQueueReply
 } from "../utilities/utilities.js";
 import { warpLog, warpLogImage } from "../utilities/hsr/warp.js";
-import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
+import { i18nMixin } from "../utilities/core/i18n.js";
 import Queue from "queue";
 
 const db = client.db;
@@ -23,7 +23,7 @@ const drawQueue = new Queue({ autostart: true });
 client.on(Events.InteractionCreate, async interaction => {
 	if (interaction.isModalSubmit()) {
 		const locale = await getUserLang(interaction.user.id);
-		const tr = i18nMixin(toI18nLang(locale) || "en");
+		const tr = i18nMixin(locale || "en");
 
 		if (interaction.customId == "simulator-set") {
 			const current =

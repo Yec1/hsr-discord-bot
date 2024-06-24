@@ -32,7 +32,6 @@ async function handleNoteDraw(interaction, tr, hsr) {
 			const res = await hsr.record.note();
 			const requestEndTime = Date.now();
 			const drawStartTime = Date.now();
-			console.log(res);
 			const imageBuffer = await drawNoteImage(tr, res);
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 
@@ -238,7 +237,6 @@ async function drawNoteImage(tr, res) {
 
 		return canvas.toBuffer("image/png");
 	} catch (e) {
-		console.log(e);
 		new Logger("分片").error(`Note Error: ${e}`);
 		return null;
 	}

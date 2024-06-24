@@ -91,7 +91,6 @@ async function saveLeaderboard(playerData) {
 	}
 
 	await db.set("LeaderBoard", leaderboard);
-	console.log(await db.get("LeaderBoard"));
 }
 
 async function handleProfileDraw(interaction, tr, user, uid) {

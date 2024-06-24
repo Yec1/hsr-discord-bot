@@ -10,9 +10,9 @@ const db = client.db;
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isModalSubmit()) return;
 
-	const { customId, fields } = interaction;
-	const locale = await getUserLang(interaction.user.id);
-	const tr = i18nMixin(toI18nLang(locale) || "en");
+	const { locale, customId, fields } = interaction;
+	const userLocale = await getUserLang(interaction.user.id);
+	const tr = i18nMixin(userLocale || toI18nLang(locale) || "en");
 
 	if (customId.startsWith("accountEdit"))
 		handleAccountEdit(interaction, tr, customId, fields);

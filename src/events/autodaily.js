@@ -56,7 +56,7 @@ export default async function autoDailySign() {
 async function dailySign(dailyData, userId, uid, cookie) {
 	total++;
 	const locale = await getUserLang(userId);
-	const tr = i18nMixin(toI18nLang(locale) || "en");
+	const tr = i18nMixin(locale || "en");
 	const channelId = dailyData[userId].channelId;
 	const tag = dailyData[userId].tag === "true" ? "<@" + id + ">" : "";
 	let channel;

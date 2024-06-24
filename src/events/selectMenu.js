@@ -32,9 +32,9 @@ const image_Header =
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isStringSelectMenu()) return;
 
-	const { customId, fields } = interaction;
-	const locale = await getUserLang(interaction.user.id);
-	const tr = i18nMixin(toI18nLang(locale) || "en");
+	const { locale, customId, values } = interaction;
+	const userLocale = await getUserLang(interaction.user.id);
+	const tr = i18nMixin(userLocale || toI18nLang(locale) || "en");
 
 	if (!customId.startsWith("account"))
 		await interaction.update({ fetchReply: true }).catch(() => {});
@@ -406,6 +406,7 @@ async function handleForgottenHall(interaction, tr, value) {
 			});
 
 			const commonParams = { s: `${floor.star_num}` };
+
 			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -451,7 +452,7 @@ async function handleForgottenHall(interaction, tr, value) {
 											""
 										)}`,
 										description:
-											mode === 3
+											parseInt(mode) === 3
 												? tr(
 														"forgottenHall_FloorFormat3",
 														{
@@ -459,7 +460,7 @@ async function handleForgottenHall(interaction, tr, value) {
 															z: `${totalScore}`
 														}
 													)
-												: mode === 2
+												: parseInt(mode) === 2
 													? tr(
 															"forgottenHall_FloorFormat2",
 															{
