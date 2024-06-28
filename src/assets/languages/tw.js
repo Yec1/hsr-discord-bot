@@ -42,8 +42,17 @@ const langs = {
 	SynchronicityPoints: "本周額外擬合值",
 	OngoingAssignments: "派遣執行:",
 	Remaining: "剩餘",
+	Year: "年",
+	Month: "月",
+	Day: "日",
 
 	// Commands
+	news_Notice: "公告",
+	news_Events: "活動",
+	news_Info: "資訊",
+	news_SelectType: "請選擇一種新聞類別",
+	news_SelectPost: "🐣 請選擇一篇文章",
+
 	profile_UidNotSet: "尚未設置 UID，設置後即可快速搜尋自己",
 	profile_UidNotSetDesc:
 		"請使用 </account:1160207139151818852> 指令設置帳號 UID",

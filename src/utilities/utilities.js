@@ -1,10 +1,74 @@
 import { client } from "../index.js";
 import { EmbedBuilder } from "discord.js";
 import axios from "axios";
+import emoji from "../assets/emoji.js";
 import { HonkaiStarRail, LanguageEnum, HoyoAPIError } from "hoyoapi";
+const BASE_URL = "https://bbs-api-os.hoyolab.com/community/post/wapi/";
 const db = client.db;
 
-function secondsToHms(d, tr) {
+export async function getNewsList(lang, type) {
+	return await axios({
+		headers: {
+			"x-rpc-app_version": "2.43.0",
+			"x-rpc-client_type": 4,
+			"X-Rpc-Language": lang
+		},
+		method: "get",
+		url: BASE_URL + "getNewsList",
+		params: { gids: 6, page_size: 25, type: type }
+	}).then(response => response.data);
+}
+
+export async function getPostFull(lang, postId) {
+	return await axios({
+		headers: {
+			"x-rpc-app_version": "2.43.0",
+			"x-rpc-client_type": 4,
+			"X-Rpc-Language": lang
+		},
+		method: "get",
+		url: BASE_URL + "getPostFull",
+		params: { gids: 6, post_id: postId }
+	}).then(response => response.data.data);
+}
+
+export async function parsePostContent(content) {
+	content = content.replace(/<br\s*\/?>/g, "\n");
+	content = content.replace(/<\p[^>]*>/g, "\n");
+	content = content.replace(/<\/p>/g, "");
+	content = content.replace(/<\/?strong[^>]*>/g, "**");
+	content = content.replace(/<\/?em[^>]*>/g, "*");
+	content = content.replace(/<\/?span[^>]*>/g, "");
+	content = content.replace(/<\/?div[^>]*>/g, "");
+	content = content.replace(/<\/?img[^>]*>/g, "");
+	content = content.replace(/<h4[^>]*>/g, "\n### ");
+	content = content.replace(/<\/h4>/g, "");
+	content = content.replace(/<h3[^>]*>/g, "\n## ");
+	content = content.replace(/<\/h3>/g, "");
+	content = content.replace(/&gt;/g, ">");
+	content = content.replace(/&lt;/g, "<");
+	content = content.replace(/&nbsp;/g, " ");
+
+	content = content.replace(
+		/<([a-z]+)\s+(?:[^>]*?\s+)?href="([^"]*)"[^>]*>(.*?)<\/\1>/gi,
+		(match, tag, href, text) =>
+			href == text
+				? `${emoji.link}${href}`
+				: `${emoji.link}[${text}](${href})`
+	);
+
+	content = content.replace(
+		/<iframe[^>]*src="([^"]*)"[^>]*><\/iframe>/gi,
+		(match, p1) => `### ${emoji.link}[影片](${p1})`
+	);
+
+	content = content.replace(/\s*class="[^"]*"/g, "");
+	// content = content.replace(/\n\s*\n/g, "\n");
+
+	return content;
+}
+
+export function secondsToHms(d, tr) {
 	d = Number(d);
 	var h = Math.floor(d / 3600);
 	var m = Math.floor((d % 3600) / 60);
@@ -21,7 +85,7 @@ function secondsToHms(d, tr) {
 	return hDisplay + mDisplay + sDisplay;
 }
 
-async function requestPlayerData(uid, interaction) {
+export async function requestPlayerData(uid, interaction) {
 	const userLocaleKey = `${interaction?.user.id}.locale`;
 	let langParam = "?lang=en";
 
@@ -41,7 +105,7 @@ async function requestPlayerData(uid, interaction) {
 	return { status: response.status, playerData: response.data };
 }
 
-async function drawInQueueReply(interaction, title = "") {
+export async function drawInQueueReply(interaction, title = "") {
 	interaction.editReply({
 		embeds: [
 			new EmbedBuilder()
@@ -54,7 +118,7 @@ async function drawInQueueReply(interaction, title = "") {
 	});
 }
 
-async function failedReply(interaction, title = "", description = "") {
+export async function failedReply(interaction, title = "", description = "") {
 	const embed = new EmbedBuilder()
 		.setTitle(title)
 		.setColor("#E76161")
@@ -71,28 +135,28 @@ async function failedReply(interaction, title = "", description = "") {
 	});
 }
 
-async function getUserUid(userId, index = 0) {
+export async function getUserUid(userId, index = 0) {
 	const accountKey = `${userId}.account`;
 
 	const account = await db.get(accountKey);
 	return account?.[index]?.uid || null;
 }
 
-async function getUserCookie(userId, index = 0) {
+export async function getUserCookie(userId, index = 0) {
 	const accountKey = `${userId}.account`;
 
 	const account = await db.get(accountKey);
 	return account?.[index]?.cookie || null;
 }
 
-async function getUserLang(userId) {
+export async function getUserLang(userId) {
 	const langKey = `${userId}.locale`;
 
 	const lang = await db.get(langKey);
 	return lang || null;
 }
 
-async function getUserHSRData(interaction, tr, userId) {
+export async function getUserHSRData(interaction, tr, userId) {
 	const [cookie, userLang, uid] = await Promise.all([
 		getUserCookie(userId),
 		getUserLang(userId),
@@ -132,7 +196,7 @@ async function getUserHSRData(interaction, tr, userId) {
 	}
 }
 
-function checkAccount(interaction, tr, userId, data) {
+export function checkAccount(interaction, tr, userId, data) {
 	if (data.ErrorCode == 10035) {
 		replyOrfollowUp(interaction, {
 			embeds: [
@@ -185,7 +249,7 @@ function checkAccount(interaction, tr, userId, data) {
 	}
 }
 
-function getRandomColor() {
+export function getRandomColor() {
 	const letters = "0123456789ABCDEF";
 	let color = "#";
 	for (let i = 0; i < 6; i++)
@@ -198,16 +262,4 @@ global.replyOrfollowUp = async function (interaction, ...args) {
 	if (interaction.replied) return interaction.editReply(...args);
 	if (interaction.deferred) return await interaction.followUp(...args);
 	return await interaction.reply(...args);
-};
-
-export {
-	secondsToHms,
-	requestPlayerData,
-	drawInQueueReply,
-	failedReply,
-	getUserUid,
-	getUserCookie,
-	getUserLang,
-	getUserHSRData,
-	getRandomColor
 };

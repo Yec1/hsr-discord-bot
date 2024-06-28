@@ -43,8 +43,16 @@ const langs = {
 	SynchronicityPoints: "Additional Sync Points for the Week",
 	OngoingAssignments: "Ongoing Assignments:",
 	Remaining: "Remaining",
+	Year: "year",
+	Month: "month",
+	Day: "日",
 
 	// Commands
+	news_Notice: "Announcement",
+	news_Events: "Activities",
+	news_Info: "Information",
+	news_SelectType: "Please select a news category",
+	news_SelectPost: "🐣 Please select an article",
 	profile_UidNotSet: "UID not set yet, set it to quickly search for yourself",
 	profile_UidNotSetDesc:
 		"Please use the </account:1160207139151818852> command to set your account UID",

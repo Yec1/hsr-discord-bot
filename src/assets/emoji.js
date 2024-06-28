@@ -63,5 +63,6 @@ export default {
 	Nihility: "<:Nihility:1121276961554174054>",
 
 	Knight: "<:Preservation:1121276965207416882>",
-	Preservation: "<:Preservation:1121276965207416882>"
+	Preservation: "<:Preservation:1121276965207416882>",
+	link: "<:link:1256225760474038316>"
 };
