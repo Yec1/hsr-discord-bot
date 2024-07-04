@@ -64,7 +64,7 @@ async function dailySign(dailyData, userId, uid, cookie) {
 		const hsr = new HonkaiStarRail({
 			cookie,
 			lang:
-				locale === "tw" || interaction.locale === "zh-TW"
+				locale === "tw"
 					? LanguageEnum.TRADIIONAL_CHINESE
 					: LanguageEnum.ENGLISH
 		});
