@@ -203,7 +203,7 @@ export function checkAccount(interaction, tr, userId, data) {
 				new EmbedBuilder()
 					.setColor("#FFE9D0")
 					.setTitle("請先通過 Geetest 來繼續使用指令！")
-					.setURL(`http://127.0.0.1:3000/geetest/${userId}`)
+					.setURL(`http://yeci.rocks:3000/geetest/${userId}`)
 			],
 			ephemeral: true
 		});

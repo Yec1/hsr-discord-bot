@@ -154,14 +154,13 @@ async function handleCookieSet(interaction, tr, customId, fields) {
 	const ltoken = fields.getTextInputValue("ltoken") || "";
 	const ltuid = fields.getTextInputValue("ltuid") || "";
 	const cookie = `ltoken_v2=${ltoken}; ltuid_v2=${ltuid}`;
+	const account = (await db.get(`${interaction.user.id}.account`)) ?? "";
 
 	try {
 		const hsr = new HonkaiStarRail({
 			cookie: cookie
 		});
 		await hsr.daily.info();
-
-		const account = (await db.get(`${interaction.user.id}.account`)) ?? "";
 
 		account[accountIndex].cookie = cookie;
 		await db.set(`${interaction.user.id}.account`, account);
@@ -194,7 +193,7 @@ async function handleCookieSet(interaction, tr, customId, fields) {
 						tr("account_CookieSetFailedDesc") +
 							"\n\n" +
 							"`" +
-							accountStats.ErrorCode +
+							error.message +
 							"`"
 					)
 					.setColor("#E76161")
