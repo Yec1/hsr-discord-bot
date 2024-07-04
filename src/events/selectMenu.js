@@ -330,7 +330,7 @@ async function handleAccountAction(interaction, tr, customId, value) {
 			components: [
 				new ActionRowBuilder().addComponents(
 					new StringSelectMenuBuilder()
-						.setPlaceholder(tr("account_selectEdit"))
+						.setPlaceholder(tr("account_SelectAccountEdit"))
 						.setCustomId("account_EditAccountSelectType")
 						.setMinValues(1)
 						.setMaxValues(1)
