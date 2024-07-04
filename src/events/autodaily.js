@@ -59,11 +59,6 @@ async function dailySign(dailyData, userId, uid, cookie) {
 	const tr = i18nMixin(locale || "en");
 	const channelId = dailyData[userId].channelId;
 	const tag = dailyData[userId].tag === "true" ? "<@" + userId + ">" : "";
-	let channel;
-
-	try {
-		channel = await client.channels.fetch(channelId);
-	} catch (e) {}
 
 	try {
 		const hsr = new HonkaiStarRail({
