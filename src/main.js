@@ -44,6 +44,7 @@ client.commands = {
 	slash: new Collection(),
 	message: new Collection()
 };
+import "./server.js";
 
 async function getMessageCommands(client, messageCommandPaths) {
 	const result = [];
