@@ -268,7 +268,7 @@ export function checkAccount(interaction, tr, userId, data) {
 				new EmbedBuilder()
 					.setColor("#FFE9D0")
 					.setTitle("請先通過 Geetest 來繼續使用指令！")
-					.setURL(`http://yeci.rocks:3000/geetest/${userId}`)
+					.setURL(`https://yeci226.vercel.app/geetest/${userId}`)
 			],
 			ephemeral: true
 		});
