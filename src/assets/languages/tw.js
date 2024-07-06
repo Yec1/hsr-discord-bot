@@ -45,6 +45,10 @@ const langs = {
 	Year: "年",
 	Month: "月",
 	Day: "日",
+	Optional: "可選",
+	stellarjades: "星瓊",
+	credits: "信用點",
+	materials: "材料",
 
 	// Commands
 	news_Notice: "公告",
@@ -176,7 +180,14 @@ const langs = {
 	warp_Input: "在這放入躍遷紀錄網址",
 	warp_HowToGet: "如何獲取躍遷紀錄",
 	warp_HowToGetDesc:
-		"**1.** 在 PC 上打開崩壞：星穹鐵道\n**2.** 打開`遷躍`的`歷史紀錄`\n**3.** 打開 Windows PowerShell 並貼上以下指令 <z>\n**4.** 複製網址後使用指令 </warp:1120003658243915847> 查詢遷躍紀錄"
+		"**1.** 在 PC 上打開崩壞：星穹鐵道\n**2.** 打開`遷躍`的`歷史紀錄`\n**3.** 打開 Windows PowerShell 並貼上以下指令 <z>\n**4.** 複製網址後使用指令 </warp:1120003658243915847> 查詢遷躍紀錄",
+
+	redeem_Success: "兌換成功，請稍後前往信箱領取",
+	redeem_Failed: "兌換失敗",
+	redeen_NoCookie: "尚未設定 CookieToken 或 AccountMid",
+	autoRedeem_Off: "已關閉自動兌換",
+	autoRedeem_On: "已開啟自動兌換",
+	autoRedeem_Tag: "兌換時提及：<z>"
 };
 
 export default langs;

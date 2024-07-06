@@ -48,9 +48,9 @@ export default {
 								value: "autoDaily"
 							},
 							{
-								name: "autonotify",
-								name_localizations: { "zh-TW": "自動通知" },
-								value: "autoNotify"
+								name: "autoredeem",
+								name_localizations: { "zh-TW": "自動兌換" },
+								value: "autoRedeem"
 							}
 						)
 				)
@@ -112,9 +112,9 @@ export default {
 								value: "autoDaily"
 							},
 							{
-								name: "autonotify",
-								name_localizations: { "zh-TW": "自動通知" },
-								value: "autoNotify"
+								name: "autoredeem",
+								name_localizations: { "zh-TW": "自動兌換" },
+								value: "autoRedeem"
 							}
 						)
 				)
@@ -285,7 +285,7 @@ const handleMove = async (interaction, tr, db) => {
 		await interaction.deferReply({ ephemeral: true });
 
 		const keywords =
-			feature === "all" ? ["autoDaily", "autoNotify"] : [feature];
+			feature === "all" ? ["autoDaily", "autoRedeem"] : [feature];
 		const datas = await fetchData(db, keywords);
 
 		const matchUsers = findMatchedUsers(
@@ -324,14 +324,14 @@ const handleMove = async (interaction, tr, db) => {
 };
 
 const fetchData = async (db, keywords) => {
-	const [autoDailyData, autoNotifyData] = await Promise.all([
+	const [autoDailyData, autoRedeemData] = await Promise.all([
 		db.get("autoDaily"),
-		db.get("autoNotify")
+		db.get("autoRedeem")
 	]);
 
 	return {
 		autoDaily: autoDailyData,
-		autoNotify: autoNotifyData
+		autoRedeem: autoRedeemData
 	};
 };
 

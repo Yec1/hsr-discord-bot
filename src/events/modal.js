@@ -151,9 +151,13 @@ async function handleUidSet(interaction, tr, fields) {
 
 async function handleCookieSet(interaction, tr, customId, fields) {
 	const accountIndex = customId.split("-")[1];
-	const ltoken = fields.getTextInputValue("ltoken") || "";
-	const ltuid = fields.getTextInputValue("ltuid") || "";
-	const cookie = `ltoken_v2=${ltoken}; ltuid_v2=${ltuid}`;
+	const ltoken = `ltoken_v2=${fields.getTextInputValue("ltoken")}; ` || "";
+	const ltuid = `ltuid_v2=${fields.getTextInputValue("ltuid")}; ` || "";
+	const cookieToken =
+		`cookie_token_v2=${fields.getTextInputValue("cookieToken")}; ` || "";
+	const accountMid =
+		`account_mid_v2=${fields.getTextInputValue("accountMid")}; ` || "";
+	const cookie = ltoken + ltuid + cookieToken + accountMid;
 	const account = (await db.get(`${interaction.user.id}.account`)) ?? "";
 
 	try {

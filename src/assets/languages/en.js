@@ -26,7 +26,7 @@ const langs = {
 	None: "None",
 	True: "Yes",
 	False: "No",
-	Auto: "Auto",
+	Auto: "Auto ",
 	Current: "Current Pulls",
 	Soft: "Soft Pity Pulls",
 	Max: "Guaranteed Pulls",
@@ -46,6 +46,10 @@ const langs = {
 	Year: "year",
 	Month: "month",
 	Day: "日",
+	Optional: "Optional",
+	stellarjades: "Stellar Jades",
+	credits: "Credits",
+	materials: "Materials",
 
 	// Commands
 	news_Notice: "Announcement",
@@ -182,7 +186,15 @@ const langs = {
 	warp_Input: "Place the Warp Record URL here",
 	warp_HowToGet: "How to Get Warp Record",
 	warp_HowToGetDesc:
-		"**1.** Open Honkai: Star Rail on PC\n**2.** Open the `Warp` `History`\n**3.** Open Windows PowerShell and paste the following command <z>\n**4.** Copy the URL and use the command </warp:1120003658243915847> to query the Warp Record"
+		"**1.** Open Honkai: Star Rail on PC\n**2.** Open the `Warp` `History`\n**3.** Open Windows PowerShell and paste the following command <z>\n**4.** Copy the URL and use the command </warp:1120003658243915847> to query the Warp Record",
+
+	redeem_Success:
+		"Redeem successful, please go to the mailbox to collect it later",
+	redeem_Failed: "Redeem failed",
+	redeen_NoCookie: "CookieToken or AccountMid has not been set yet",
+	autoRedeem_Off: "Auto-redeem is turned off",
+	autoRedeem_On: "Automatic redemption is turned on",
+	autoRedeem_Tag: "Mention when redeeming: <z>"
 };
 
 export default langs;

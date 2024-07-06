@@ -1,13 +1,13 @@
-import { client } from "../index.js";
+import { client } from "../../index.js";
 import { EmbedBuilder, WebhookClient } from "discord.js";
-import { Logger } from "../utilities/core/logger.js";
+import { Logger } from "../core/logger.js";
 import {
 	getUserCookie,
 	getUserLang,
 	getUserUid,
 	getRandomColor
-} from "../utilities/utilities.js";
-import { i18nMixin } from "../utilities/core/i18n.js";
+} from "../utilities.js";
+import { i18nMixin } from "../core/i18n.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
 
 const webhook = new WebhookClient({ url: process.env.LOGWEBHOOK });
@@ -90,7 +90,7 @@ async function dailySign(dailyData, userId, uid, cookie) {
 						)
 						.setThumbnail(todaySign?.icon)
 						.setDescription(
-							`${tr("daily_Description", { a: `\`${todaySign?.name}x${todaySign?.cnt}\`` })}${info.month_last_day ? "" : `\n\n<@${id}> ${tr("daily_DescriptionTmr", { b: `\`${tmrSign?.name}x${tmrSign?.cnt}\`` })}`}`
+							`${tr("daily_Description", { a: `\`${todaySign?.name} x${todaySign?.cnt}\`` })}${info.month_last_day ? "" : `\n\n<@${userId}> ${tr("daily_DescriptionTmr", { b: `\`${tmrSign?.name} x${tmrSign?.cnt}\`` })}`}`
 						)
 						.addFields(
 							{
