@@ -44,7 +44,10 @@ client.commands = {
 	slash: new Collection(),
 	message: new Collection()
 };
-import "./server.js";
+
+if (client.cluster.id == 0) {
+	await import("./server.js");
+}
 
 async function getMessageCommands(client, messageCommandPaths) {
 	const result = [];
