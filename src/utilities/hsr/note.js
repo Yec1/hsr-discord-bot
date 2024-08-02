@@ -1,14 +1,10 @@
 import { drawInQueueReply, secondsToHms } from "../utilities.js";
-import {
-	EmbedBuilder,
-	AttachmentBuilder,
-	ActionRowBuilder,
-	StringSelectMenuBuilder
-} from "discord.js";
+import { EmbedBuilder, AttachmentBuilder } from "discord.js";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import { join } from "path";
 import { Logger } from "../core/logger.js";
 import Queue from "queue";
+import moment from "moment";
 
 const drawQueue = new Queue({ autostart: true });
 
@@ -50,6 +46,15 @@ async function handleNoteDraw(interaction, tr, hsr) {
 								dynamic: true
 							})
 						})
+						.setTitle(
+							`${tr("TP_RecoveryTime")}  ${`<t:${
+								moment(new Date()).unix() +
+								res.stamina_recover_time
+							}:f>`} (${`<t:${
+								moment(new Date()).unix() +
+								res.stamina_recover_time
+							}:R>`})`
+						)
 						.setImage(`attachment://${image.name}`)
 						.setFooter({
 							text: tr("CostTime", {

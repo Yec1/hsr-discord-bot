@@ -44,7 +44,7 @@ async function fetchWarpData(query, id, endId) {
 
 	return axios
 		.get(
-			"https://api-os-takumi.mihoyo.com/common/gacha_record/api/getGachaLog?" +
+			"https://public-operation-hkrpg-sg.hoyoverse.com/common/gacha_record/api/getGachaLog?" +
 				query
 		)
 		.then(response => response.data);

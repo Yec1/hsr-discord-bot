@@ -3,20 +3,8 @@ import { EmbedBuilder } from "discord.js";
 import axios from "axios";
 import emoji from "../assets/emoji.js";
 import { HonkaiStarRail, LanguageEnum, HoyoAPIError } from "hoyoapi";
-import { load } from "cheerio";
 const BASE_URL = "https://bbs-api-os.hoyolab.com/community/post/wapi/";
 const db = client.db;
-
-const codeRewardIcon = [
-	{
-		name: "stellarjades",
-		url: "https://static.wikia.nocookie.net/houkai-star-rail/images/d/d9/Item_Stellar_Jade.png/revision/latest?cb=20230722074903"
-	},
-	{
-		name: "credits",
-		url: "https://static.wikia.nocookie.net/houkai-star-rail/images/d/d9/Item_Credit.png/revision/latest?cb=20230722075044"
-	}
-];
 
 export async function getNewsList(lang, type) {
 	return await axios({
@@ -81,56 +69,11 @@ export async function parsePostContent(content) {
 }
 
 export async function getRedeemCodes() {
-	const res = await axios.get("https://www.prydwen.gg/star-rail/", {
-		responseType: "text"
-	});
+	const res = await axios
+		.get("https://hoyo-codes.seriaati.xyz/codes?game=hkrpg")
+		.then(response => response.data);
 
-	const codes = [];
-	const $ = load(res.data);
-	const $codes = $(".codes .box");
-
-	$codes.each((index, element) => {
-		codes.push($(element).text().trim());
-	});
-
-	for (let i = 0; i < $codes.length; i++) {
-		const $code = $($codes[i]);
-		const code = $code
-			.find(".code")
-			.text()
-			.replace(" NEW!", "")
-			.split("/")[0]
-			.replace(" ", "");
-		const rewardsText = $code.find(".rewards").text();
-
-		const rewards = rewardsText.split("+").map(reward => {
-			const parts = reward.trim().split(" ");
-			let count = null;
-			let rewardName = null;
-
-			if (parts.length == 1) {
-				rewardName = parts[0].toLowerCase();
-			} else {
-				count = parseInt(parts[0], 10);
-				rewardName = parts.slice(1).join(" ").toLowerCase();
-			}
-
-			rewardName = rewardName.replace(" ", "");
-			const picture = codeRewardIcon.find(pic =>
-				rewardName.includes(pic.name)
-			);
-			return {
-				reward: rewardName,
-				icon: picture ? picture.url : null,
-				count: isNaN(count) ? null : count
-			};
-		});
-
-		codes.push({ code, rewards });
-	}
-
-	const filteredCodes = codes.filter(item => typeof item === "object");
-	return filteredCodes;
+	return res.codes;
 }
 
 export function secondsToHms(d, tr) {

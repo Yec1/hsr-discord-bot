@@ -1,7 +1,8 @@
 import en from "../../assets/languages/en.js";
 import tw from "../../assets/languages/tw.js";
+import cn from "../../assets/languages/cn.js";
 
-const langs = { en, tw };
+const langs = { en, tw, cn };
 
 export function i18nMixin(lang) {
 	if (!Object.keys(langs).includes(lang))

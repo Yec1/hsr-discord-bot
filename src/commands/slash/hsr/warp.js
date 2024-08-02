@@ -77,7 +77,8 @@ const versionChoices = [
 	{ value: "2.2.1", name: "Robin", localName: "知更鳥" },
 	{ value: "2.2.2", name: "Boothill", localName: "波提歐" },
 	{ value: "2.3.1", name: "Firefly", localName: "流螢" },
-	{ value: "2.3.2", name: "Jade", localName: "翡翠" }
+	{ value: "2.3.2", name: "Jade", localName: "翡翠" },
+	{ value: "2.4.1", name: "Yunli", localName: "雲離" }
 ];
 
 const createChoiceOption = ({ value, name, localName }) => ({

@@ -3,20 +3,19 @@ import { Logger } from "./utilities/core/logger.js";
 import { QuickDB } from "quick.db";
 import { MongoDriver } from "quickmongo";
 
-let db;
-const driver = new MongoDriver("mongodb://127.0.0.1/quickdb");
+const db = new QuickDB();
 const app = express();
 const PORT = process.env.WEBSERVER_PORT || 3000;
-driver
-	.connect()
-	.then(() => {
-		db = new QuickDB({ driver });
-		new Logger("網站").command("已連接至資料庫！");
-		// db = new QuickDB();
-	})
-	.catch(error => {
-		new Logger("網站").command(`連線至資料庫失敗！錯誤訊息：${error}`);
-	});
+// driver
+// 	.connect()
+// 	.then(() => {
+// 		db = new QuickDB({ driver });
+// 		new Logger("網站").command("已連接至資料庫！");
+// 		// db = new QuickDB();
+// 	})
+// 	.catch(error => {
+// 		new Logger("網站").command(`連線至資料庫失敗！錯誤訊息：${error}`);
+// 	});
 
 // Show server state
 app.get("/", (req, res) => {

@@ -183,15 +183,15 @@ export default {
 			const hsr = await getUserHSRData(interaction, tr, targetUser.id);
 			if (!hsr) return;
 
+			let userRedeemedCodes =
+				(await db.get(`${targetUser.id}.redeemedCodes`)) || [];
+
 			try {
 				const res = await hsr.redeem.claim(code);
-				console.log(res);
-				if (res.retcode == 0) {
-					const codesList = await getRedeemCodes();
-					const matchCode = codesList.find(c => c.code == code);
-					const userRedeemedCodes =
-						(await db.get(`${targetUser.id}.redeemedCodes`)) || [];
-					userRedeemedCodes.push(code);
+				if (res.retcode == 0 || res.message == "OK") {
+					if (!userRedeemedCodes.includes(code))
+						userRedeemedCodes.push(code);
+					userRedeemedCodes = Array.from(new Set(userRedeemedCodes));
 					await db.set(
 						`${targetUser.id}.redeemedCodes`,
 						userRedeemedCodes
@@ -202,21 +202,21 @@ export default {
 							new EmbedBuilder()
 								.setColor(getRandomColor())
 								.setTitle(tr("redeem_Success"))
-								.setThumbnail(matchCode.rewards[0].icon || "")
-								.setDescription(
-									matchCode.rewards
-										.map((reward, index) => {
-											return `${index}. \`${tr(reward.reward)}${
-												reward.count != null
-													? ` x${reward.count}`
-													: ""
-											}\``;
-										})
-										.join("\n")
+								.setThumbnail(
+									"https://static.wikia.nocookie.net/houkai-star-rail/images/d/d9/Item_Stellar_Jade.png/revision/latest?cb=20230722074903"
 								)
 						],
 						ephemeral: true
 					});
+				} else if (res.retcode == -2017) {
+					if (!userRedeemedCodes.includes(code))
+						userRedeemedCodes.push(code);
+					userRedeemedCodes = Array.from(new Set(userRedeemedCodes));
+					await db.set(
+						`${targetUser.id}.redeemedCodes`,
+						userRedeemedCodes
+					);
+					failedReply(interaction, res.message);
 				} else {
 					failedReply(interaction, res.message);
 				}

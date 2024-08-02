@@ -1,5 +1,5 @@
-// const axios = require("axios");
-// import { Logger } from "./logger.js";
+import axios from "axios";
+import { Logger } from "../core/logger.js";
 
 const cleanText = text => {
 	return text
@@ -8,50 +8,50 @@ const cleanText = text => {
 		.replace(/\s+/g, "-");
 };
 
-import localBannerJSON from "../../assets/banners.json" assert { type: "json" };
-import localCharJSON from "../../assets/char.json" assert { type: "json" };
-import localWeaponJSON from "../../assets/weapons.json" assert { type: "json" };
+// import localBannerJSON from "../../assets/banners.json" assert { type: "json" };
+// import localCharJSON from "../../assets/char.json" assert { type: "json" };
+// import localWeaponJSON from "../../assets/weapons.json" assert { type: "json" };
 
-const bannerJSON = localBannerJSON;
-const charJSON = localCharJSON.reduce((acc, item) => {
-	acc[cleanText(item.name)] = item;
-	return acc;
-}, {});
-const weaponJSON = localWeaponJSON.reduce((acc, item) => {
-	acc[cleanText(item.name)] = item;
-	return acc;
-}, {});
+// const bannerJSON = localBannerJSON;
+// const charJSON = localCharJSON.reduce((acc, item) => {
+// 	acc[cleanText(item.name)] = item;
+// 	return acc;
+// }, {});
+// const weaponJSON = localWeaponJSON.reduce((acc, item) => {
+// 	acc[cleanText(item.name)] = item;
+// 	return acc;
+// }, {});
 
-// let charJSON = {};
-// let weaponJSON = {};
-// let bannerJSON = {};
+let charJSON = {};
+let weaponJSON = {};
+let bannerJSON = {};
 
-// async function fetchData() {
-// try {
-//   const urls = [
-//     "https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/master/src/assets/data/banners.json",
-//     "https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/master/src/assets/data/char.json",
-//     "https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/master/src/assets/data/weapons.json",
-//   ];
-//   const responses = await Promise.all(urls.map((url) => axios.get(url)));
-//   bannerJSON = responses[0].data;
-//   charJSON = responses[1].data.reduce((acc, item) => {
-//     acc[cleanText(item.name)] = item;
-//     return acc;
-//   }, {});
-//   weaponJSON = responses[2].data.reduce((acc, item) => {
-//     acc[cleanText(item.name)] = item;
-//     return acc;
-//   }, {});
-// } catch (error) {
-// new Logger("網路請求").info(`錯誤訊息：${error}`);
-// charJSON = require(`./assets/char.json`);
-// weaponJSON = require(`./assets/weapons.json`);
-// bannerJSON = require(`./assets/banners.json`);
-// }
-// }
+async function fetchData() {
+	try {
+		const urls = [
+			"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/master/src/assets/data/banners.json",
+			"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/master/src/assets/data/char.json",
+			"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/master/src/assets/data/weapons.json"
+		];
+		const responses = await Promise.all(urls.map(url => axios.get(url)));
+		bannerJSON = responses[0].data;
+		charJSON = responses[1].data.reduce((acc, item) => {
+			acc[cleanText(item.name)] = item;
+			return acc;
+		}, {});
+		weaponJSON = responses[2].data.reduce((acc, item) => {
+			acc[cleanText(item.name)] = item;
+			return acc;
+		}, {});
+	} catch (error) {
+		new Logger("網路請求").info(`錯誤訊息：${error}`);
+		charJSON = require(`./assets/char.json`);
+		weaponJSON = require(`./assets/weapons.json`);
+		bannerJSON = require(`./assets/banners.json`);
+	}
+}
 
-// fetchData();
+fetchData();
 
 function isChar(item) {
 	return Object.keys(charJSON).includes(cleanText(item));

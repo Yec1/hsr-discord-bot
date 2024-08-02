@@ -36,15 +36,31 @@ export default async function autoDailySign() {
 		const time = dailyData[id]?.time ? dailyData[id].time : "13";
 
 		if (parseInt(time) == nowTime) {
-			const accounts = await db.get(`${id}.account`);
-			for (const account of accounts) {
-				let accountIndex = 0;
+			try {
+				const accounts = await db.get(`${id}.account`);
 				if (
-					getUserCookie(id, accountIndex) &&
-					getUserUid(id, accountIndex)
+					!accounts ||
+					!Array.isArray(accounts) ||
+					accounts.length <= 0
 				)
-					await dailySign(dailyData, id, account.uid, account.cookie);
-				accountIndex++;
+					continue;
+				for (const account of accounts) {
+					let accountIndex = 0;
+					if (
+						getUserCookie(id, accountIndex) &&
+						getUserUid(id, accountIndex)
+					)
+						await dailySign(
+							dailyData,
+							id,
+							account.uid,
+							account.cookie
+						);
+					accountIndex++;
+				}
+			} catch (e) {
+				console.log("自動簽到錯誤" + e);
+				continue;
 			}
 		}
 	}
