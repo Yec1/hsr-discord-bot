@@ -17,11 +17,11 @@ GlobalFonts.registerFromPath(
 	"URW DIN Arabic"
 );
 GlobalFonts.registerFromPath(
-	join(".", "src", ".", "assets", "Hanyi.ttf"),
+	join(".", "src", ".", "assets", "zh-tw.ttf"),
 	"Hanyi"
 );
 GlobalFonts.registerFromPath(
-	join(".", "src", ".", "assets", "PingFang-SC-Regular.ttf"),
+	join(".", "src", ".", "assets", "zh-tw.ttf"),
 	"PingFang"
 );
 
