@@ -109,10 +109,10 @@ async function redeemCode(dailyData, codesList, userId, uid, cookie) {
 
 				await new Promise(resolve => setTimeout(resolve, 3000));
 			}
+			await db.set(`${userId}.redeemedCodes`, userRedeemedCodes);
 
 			if (redeemSuccess) {
 				success++;
-				await db.set(`${userId}.redeemedCodes`, userRedeemedCodes);
 
 				sendMessage(channelId, {
 					content: tag,
