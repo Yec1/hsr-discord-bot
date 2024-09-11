@@ -19,7 +19,10 @@ import {
 import { warp, createImage } from "../../../utilities/hsr/warp.js";
 import ms from "ms";
 import { CommandCooldown } from "discord-command-cooldown";
-import { getRandomColor } from "../../../utilities/utilities.js";
+import {
+	getRandomColor,
+	addVersionChoices
+} from "../../../utilities/utilities.js";
 const warpSimCD = new CommandCooldown("warpSimCD", ms("5s"));
 
 const rarityToUrl = {
@@ -55,45 +58,6 @@ const rarityToUrl = {
 	}
 };
 
-const versionChoices = [
-	{ value: "1.0.1", name: "Seele", localName: "希兒" },
-	{ value: "1.0.2", name: "Jing-Yuan", localName: "景元" },
-	{ value: "1.1.1", name: "Silver-Wolf", localName: "銀狼" },
-	{ value: "1.1.2", name: "LuoCha", localName: "羅剎" },
-	{ value: "1.2.1", name: "Blade", localName: "刃" },
-	{ value: "1.2.2", name: "Kafka", localName: "卡芙卡" },
-	{ value: "1.3.1", name: "Imbibitor Lunae", localName: "丹恆・飲月" },
-	{ value: "1.3.2", name: "Fu Xuan", localName: "符玄" },
-	{ value: "1.4.1", name: "Jing Liu", localName: "鏡流" },
-	{ value: "1.4.2", name: "Topaz & Numdy", localName: "托帕&賬賬" },
-	{ value: "1.5.1", name: "HuoHuo", localName: "霍霍" },
-	{ value: "1.5.2", name: "Argenti", localName: "銀枝" },
-	{ value: "1.6.1", name: "Ruan Mei", localName: "阮梅" },
-	{ value: "1.6.2", name: "Dr. Ratio", localName: "真理醫生" },
-	{ value: "2.0.1", name: "Black Swan", localName: "黑天鵝" },
-	{ value: "2.0.2", name: "Sparkle", localName: "花火" },
-	{ value: "2.1.1", name: "Acheron", localName: "黃泉" },
-	{ value: "2.1.2", name: "Aventurine", localName: "砂金" },
-	{ value: "2.2.1", name: "Robin", localName: "知更鳥" },
-	{ value: "2.2.2", name: "Boothill", localName: "波提歐" },
-	{ value: "2.3.1", name: "Firefly", localName: "流螢" },
-	{ value: "2.3.2", name: "Jade", localName: "翡翠" },
-	{ value: "2.4.1", name: "Yunli", localName: "雲離" }
-];
-
-const createChoiceOption = ({ value, name, localName }) => ({
-	name: `${value} - ${name}`,
-	name_localizations: { "zh-TW": `${value} - ${localName}` },
-	value
-});
-
-const addVersionChoices = option => {
-	versionChoices.forEach(choice =>
-		option.addChoices(createChoiceOption(choice))
-	);
-	return option;
-};
-
 export default {
 	data: new SlashCommandBuilder()
 		.setName("warp")
@@ -115,14 +79,14 @@ export default {
 					"zh-TW": "..."
 				})
 				.addStringOption(option =>
-					addVersionChoices(
-						option
-							.setName("version")
-							.setDescription("...")
-							.setNameLocalizations({ "zh-TW": "版本" })
-							.setDescriptionLocalizations({ "zh-TW": "..." })
-							.setRequired(true)
-					)
+					option
+						.setName("version")
+						.setDescription("...")
+						.setNameLocalizations({
+							"zh-TW": "版本"
+						})
+						.setRequired(true)
+						.setAutocomplete(true)
 				)
 				.addStringOption(option =>
 					option
@@ -434,6 +398,7 @@ export default {
 				});
 
 			let warpResults = [];
+
 			for (let i = 0; i < time; i++) {
 				const res = await warp(version, type, interaction);
 				warpResults.push({

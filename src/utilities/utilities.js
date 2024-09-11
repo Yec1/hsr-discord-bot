@@ -6,6 +6,64 @@ import { HonkaiStarRail, LanguageEnum, HoyoAPIError } from "hoyoapi";
 const BASE_URL = "https://bbs-api-os.hoyolab.com/community/post/wapi/";
 const db = client.db;
 
+const versionChoices = [
+	{ value: "1.0.1", name: "Seele", localName: "希兒" },
+	{ value: "1.0.2", name: "Jing-Yuan", localName: "景元" },
+	{ value: "1.1.1", name: "Silver-Wolf", localName: "銀狼" },
+	{ value: "1.1.2", name: "LuoCha", localName: "羅剎" },
+	{ value: "1.2.1", name: "Blade", localName: "刃" },
+	{ value: "1.2.2", name: "Kafka", localName: "卡芙卡" },
+	{ value: "1.3.1", name: "Imbibitor Lunae", localName: "丹恆・飲月" },
+	{ value: "1.3.2", name: "Fu Xuan", localName: "符玄" },
+	{ value: "1.4.1", name: "Jing Liu", localName: "鏡流" },
+	{ value: "1.4.2", name: "Topaz & Numdy", localName: "托帕&賬賬" },
+	{ value: "1.5.1", name: "HuoHuo", localName: "霍霍" },
+	{ value: "1.5.2", name: "Argenti", localName: "銀枝" },
+	{ value: "1.6.1", name: "Ruan Mei", localName: "阮梅" },
+	{ value: "1.6.2", name: "Dr. Ratio", localName: "真理醫生" },
+	{ value: "2.0.1", name: "Black Swan", localName: "黑天鵝" },
+	{ value: "2.0.2", name: "Sparkle", localName: "花火" },
+	{ value: "2.1.1", name: "Acheron", localName: "黃泉" },
+	{ value: "2.1.2", name: "Aventurine", localName: "砂金" },
+	{ value: "2.2.1", name: "Robin", localName: "知更鳥" },
+	{ value: "2.2.2", name: "Boothill", localName: "波提歐" },
+	{ value: "2.3.1", name: "Firefly", localName: "流螢" },
+	{ value: "2.3.2", name: "Jade", localName: "翡翠" },
+	{ value: "2.4.1", name: "Yunli", localName: "雲離" },
+	{ value: "2.4.2", name: "Jiaoqiu", localName: "椒丘" }
+	// { value: "2.5.1", name: "Feixiao", localName: "飛霄" },
+	// { value: "2.5.2", name: "Lingsha", localName: "靈砂" }
+];
+
+export const createChoiceOption = ({ value, name, localName }) => ({
+	name: `${value} - ${name}`,
+	name_localizations: { "zh-TW": `${value} - ${localName}` },
+	value
+});
+
+export const filterVersionChoices = (input, limit = 25) => {
+	return versionChoices
+		.filter(
+			choice =>
+				choice.value.includes(input) ||
+				choice.name.toLowerCase().includes(input.toLowerCase()) ||
+				choice.localName.includes(input)
+		)
+		.slice(0, limit); // 只取前 limit 個
+};
+
+export const getLastVersionChoices = (limit = 25) => {
+	return versionChoices.slice(-limit);
+};
+
+export const addVersionChoices = option => {
+	const lastChoices = getLastVersionChoices();
+	lastChoices.forEach(choice =>
+		option.addChoices(createChoiceOption(choice))
+	);
+	return option;
+};
+
 export async function getNewsList(lang, type) {
 	return await axios({
 		headers: {
@@ -70,7 +128,7 @@ export async function parsePostContent(content) {
 
 export async function getRedeemCodes() {
 	const res = await axios
-		.get("https://hoyo-codes.seriaati.xyz/codes?game=hkrpg")
+		.get("https://hoyo-codes.seria.moe/codes?game=hkrpg")
 		.then(response => response.data);
 
 	return res.codes;
@@ -126,6 +184,29 @@ export async function drawInQueueReply(interaction, title = "") {
 	});
 }
 
+const languageMapping = {
+	tw: LanguageEnum.TRADIIONAL_CHINESE,
+	cn: LanguageEnum.SIMPLIFIED_CHINESE,
+	vi: LanguageEnum.VIETNAMESE,
+	jp: LanguageEnum.JAPANESE,
+	kr: LanguageEnum.KOREAN,
+	fr: LanguageEnum.FRENCH,
+	default: LanguageEnum.ENGLISH
+};
+
+export async function setupDefaultLang(userId, userSystemLang) {
+	const langMap = {
+		"zh-TW": "tw",
+		"zh-CN": "cn",
+		ja: "jp",
+		ko: "kr"
+	};
+
+	const langCode = langMap[userSystemLang] || userSystemLang;
+
+	if (languageMapping[langCode]) await db.set(`${userId}.locale`, langCode);
+}
+
 export async function failedReply(interaction, title = "", description = "") {
 	const embed = new EmbedBuilder()
 		.setTitle(title)
@@ -143,18 +224,18 @@ export async function failedReply(interaction, title = "", description = "") {
 	});
 }
 
-export async function getUserUid(userId, index = 0) {
+export async function getUserUid(userId, accountIndex = 0) {
 	const accountKey = `${userId}.account`;
 
 	const account = await db.get(accountKey);
-	return account?.[index]?.uid || null;
+	return account?.[accountIndex]?.uid || null;
 }
 
-export async function getUserCookie(userId, index = 0) {
+export async function getUserCookie(userId, accountIndex = 0) {
 	const accountKey = `${userId}.account`;
 
 	const account = await db.get(accountKey);
-	return account?.[index]?.cookie || null;
+	return account?.[accountIndex]?.cookie || null;
 }
 
 export async function getUserLang(userId) {
@@ -164,11 +245,11 @@ export async function getUserLang(userId) {
 	return lang || null;
 }
 
-export async function getUserHSRData(interaction, tr, userId) {
+export async function getUserHSRData(interaction, tr, userId, accountIndex) {
 	const [cookie, userLang, uid] = await Promise.all([
-		getUserCookie(userId),
+		getUserCookie(userId, accountIndex),
 		getUserLang(userId),
-		getUserUid(userId)
+		getUserUid(userId, accountIndex)
 	]);
 
 	const lang =

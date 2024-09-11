@@ -203,54 +203,92 @@ const chanceFour = (currentPity, baseRate) => {
 
 async function warp(vers, type, interaction) {
 	const userdb = `${interaction.user.id}.sim`;
-	const banner = await db.get(`${userdb}`);
+	const banner = await db.get(userdb);
 	const warpChance = Math.random();
 	const rateUpChance = type === "char" ? banner.rateup : banner.rateup + 0.25;
-	const rateUp = Math.random() < rateUpChance ? true : false;
+	const rateUp = Math.random() < rateUpChance;
 	const char = Math.random() < 0.5;
+
 	let warpItem;
+
+	// Helper function to handle banner updates
+	const updateBanner = async (
+		pityFive,
+		pityFour,
+		guaranteeFive = null,
+		guaranteeFour = null
+	) => {
+		await db.set(`${userdb}.pityFive`, pityFive);
+		await db.set(`${userdb}.pityFour`, pityFour);
+		if (guaranteeFive !== null)
+			await db.set(`${userdb}.guaranteeFive`, guaranteeFive);
+		if (guaranteeFour !== null)
+			await db.set(`${userdb}.guaranteeFour`, guaranteeFour);
+	};
+
+	// Handle five-star warp
 	if (
 		warpChance <
 		chanceFive(banner.pityFive, banner.max, banner.soft, banner.chance)
 	) {
-		await db.set(`${userdb}.pityFive`, "0");
-		await db.set(`${userdb}.pityFour`, parseInt(banner.pityFour) + 1);
+		await updateBanner(0, parseInt(banner.pityFour) + 1);
+
 		if (type !== "standard") {
-			if (rateUp || banner.guaranteeFive == "true") {
-				await db.set(`${userdb}.guaranteeFive`, "false");
+			if (rateUp || banner.guaranteeFive === "true") {
 				warpItem = randItem(getRateUpFive(vers, type));
+				await updateBanner(0, parseInt(banner.pityFour) + 1, "false");
 			} else {
-				warpItem =
+				warpItem = randItem(
 					type === "weap"
-						? randItem(getPoolFiveWeap(vers, type))
-						: randItem(getPoolFiveChar(vers, type));
-				await db.set(`${userdb}.guaranteeFive`, "true");
+						? getPoolFiveWeap(vers, type)
+						: getPoolFiveChar(vers, type)
+				);
+				await updateBanner(0, parseInt(banner.pityFour) + 1, "true");
 			}
 		} else {
-			if (type === "standard") {
-				if (char) warpItem = randItem(getPoolFiveChar(vers, type));
-				else warpItem = randItem(getPoolFiveWeap(vers, type));
-			} else warpItem = randItem(getPoolFiveChar(vers, type));
+			warpItem = char
+				? randItem(getPoolFiveChar(vers, type))
+				: randItem(getPoolFiveWeap(vers, type));
 		}
-	} else if (warpChance < chanceFour(banner.pityFour, 0.051)) {
-		await db.set(`${userdb}.pityFive`, parseInt(banner.pityFive) + 1);
-		await db.set(`${userdb}.pityFour`, "0");
+	}
+	// Handle four-star warp
+	else if (warpChance < chanceFour(banner.pityFour, 0.051)) {
+		await updateBanner(parseInt(banner.pityFive) + 1, 0);
+
 		if (type !== "standard") {
-			if (rateUp || banner.guaranteeFour == "true") {
-				await db.set(`${userdb}.guaranteeFour`, "false");
+			if (rateUp || banner.guaranteeFour === "true") {
 				warpItem = randItem(getRateUpFour(vers, type));
+				await updateBanner(
+					parseInt(banner.pityFive) + 1,
+					0,
+					null,
+					"false"
+				);
 			} else {
-				await db.set(`${userdb}.guaranteeFour`, "true");
-				if (char) warpItem = randItem(getPoolFourChar(vers, type));
-				else warpItem = randItem(getPoolFourWeap(vers, type));
+				warpItem = randItem(
+					char
+						? getPoolFourChar(vers, type)
+						: getPoolFourWeap(vers, type)
+				);
+				await updateBanner(
+					parseInt(banner.pityFive) + 1,
+					0,
+					null,
+					"true"
+				);
 			}
 		} else {
-			if (char) warpItem = randItem(getPoolFourChar(vers, type));
-			else warpItem = randItem(getPoolFourWeap(vers, type));
+			warpItem = char
+				? randItem(getPoolFourChar(vers, type))
+				: randItem(getPoolFourWeap(vers, type));
 		}
-	} else {
-		await db.set(`${userdb}.pityFive`, parseInt(banner.pityFive) + 1);
-		await db.set(`${userdb}.pityFour`, parseInt(banner.pityFour) + 1);
+	}
+	// Handle base weapons
+	else {
+		await updateBanner(
+			parseInt(banner.pityFive) + 1,
+			parseInt(banner.pityFour) + 1
+		);
 		warpItem = randItem(baseWeapons);
 	}
 

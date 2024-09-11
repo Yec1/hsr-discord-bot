@@ -31,7 +31,7 @@ async function handleForgottenHallDraw(interaction, tr, user, mode, time, hsr) {
 			const requestStartTime = Date.now();
 			const res = await hsr.record.forgottenHall(mode, time);
 
-			if (res.has_data == false)
+			if (res.has_data == false || !res)
 				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
@@ -141,6 +141,7 @@ async function handleForgottenHallDraw(interaction, tr, user, mode, time, hsr) {
 				]
 			});
 		} catch (error) {
+			console.log(error);
 			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()

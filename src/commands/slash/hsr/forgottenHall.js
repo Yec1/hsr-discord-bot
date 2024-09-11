@@ -87,6 +87,16 @@ export default {
 					}
 				)
 		)
+		.addStringOption(option =>
+			option
+				.setName("account")
+				.setDescription("...")
+				.setNameLocalizations({
+					"zh-TW": "帳號"
+				})
+				.setRequired(false)
+				.setAutocomplete(true)
+		)
 		.addUserOption(option =>
 			option
 				.setName("user")
@@ -109,10 +119,16 @@ export default {
 	async execute(client, interaction, args, tr, db, emoji) {
 		const targetUser =
 			interaction.options.getUser("user") || interaction.user;
+		const accountIndex = interaction.options.getString("account") || 0;
 		const mode = modeMap[interaction.options.getString("mode")] || 1;
 		const time = timeMap[interaction.options.getString("time")] || 1;
 
-		const hsr = await getUserHSRData(interaction, tr, targetUser.id);
+		const hsr = await getUserHSRData(
+			interaction,
+			tr,
+			targetUser.id,
+			accountIndex
+		);
 		if (hsr == null) return;
 
 		await interaction.deferReply();

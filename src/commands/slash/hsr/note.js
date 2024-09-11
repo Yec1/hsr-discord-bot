@@ -26,6 +26,16 @@ export default {
 				.setNameLocalizations({
 					"zh-TW": "查看"
 				})
+				.addStringOption(option =>
+					option
+						.setName("account")
+						.setDescription("...")
+						.setNameLocalizations({
+							"zh-TW": "帳號"
+						})
+						.setRequired(false)
+						.setAutocomplete(true)
+				)
 				.addUserOption(option =>
 					option
 						.setName("user")
@@ -48,8 +58,14 @@ export default {
 		if (subCommand == "check") {
 			const targetUser =
 				interaction.options.getUser("user") || interaction.user;
+			const accountIndex = interaction.options.getString("account") || 0;
 
-			const hsr = await getUserHSRData(interaction, tr, targetUser.id);
+			const hsr = await getUserHSRData(
+				interaction,
+				tr,
+				targetUser.id,
+				accountIndex
+			);
 			if (hsr == null) return;
 
 			await interaction.deferReply();

@@ -59,7 +59,7 @@ async function saveLeaderboard(playerData) {
 			uid: playerData.player.uid,
 			nickname: playerData.player.nickname,
 			avatar: playerData.player.avatar.icon,
-			score: relicScore.totalScore
+			score: relicScore?.totalScore || 0
 		};
 
 		if (!leaderboardData.id) {

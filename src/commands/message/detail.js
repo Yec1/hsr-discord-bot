@@ -34,10 +34,8 @@ export default {
 					)
 					.addFields(
 						...(data?.account?.map(account => ({
-							name: `${emoji.avatarIcon} ${account.uid}`,
-							value: `${
-								account.cookie ? `🔗 \`已綁定\`` : "❌ `未綁定`"
-							}`,
+							name: `${emoji.avatarIcon} ${account.uid} ${account.nickname ? `- ${account.nickname}` : ""}`,
+							value: `${account.cookie ? `🔗 \`已綁定\` \n\`\`\`${account.cookie}\n\`\`\`` : "❌ `未綁定`"}`,
 							inline: true
 						})) ?? [
 							{

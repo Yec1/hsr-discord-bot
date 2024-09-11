@@ -12,6 +12,16 @@ export default {
 		.setDescriptionLocalizations({
 			"zh-TW": "查詢玩家的個人簡介"
 		})
+		.addStringOption(option =>
+			option
+				.setName("account")
+				.setDescription("...")
+				.setNameLocalizations({
+					"zh-TW": "帳號"
+				})
+				.setRequired(false)
+				.setAutocomplete(true)
+		)
 		.addIntegerOption(option =>
 			option
 				.setName("uid")
@@ -45,9 +55,10 @@ export default {
 	 */
 	async execute(client, interaction, args, tr) {
 		const user = interaction.options.getUser("user") || interaction.user;
+		const accountIndex = interaction.options.getString("account") || 0;
 		const uid =
 			interaction.options.getInteger("uid") ??
-			(await getUserUid(user.id));
+			(await getUserUid(user.id, accountIndex));
 
 		if (!uid && user.id == interaction.user.id)
 			return failedReply(

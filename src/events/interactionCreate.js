@@ -1,23 +1,19 @@
 import { client } from "../index.js";
 import { ApplicationCommandOptionType } from "discord.js";
 import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
-import {
-	Events,
-	EmbedBuilder,
-	WebhookClient,
-	ChannelType,
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle
-} from "discord.js";
+import { Events, EmbedBuilder, WebhookClient, ChannelType } from "discord.js";
 import emoji from "../assets/emoji.js";
 import { Logger } from "../utilities/core/logger.js";
+import { setupDefaultLang, getUserLang } from "../utilities/utilities.js";
 
 const db = client.db;
 const webhook = new WebhookClient({ url: process.env.CMDWEBHOOK });
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (interaction.channel.type == ChannelType.DM) return;
+
+	if (!(await getUserLang(interaction.user.id)))
+		await setupDefaultLang(interaction.user.id, interaction.locale);
 
 	const i18n = i18nMixin(
 		(await db?.has(`${interaction.user.id}.locale`))
