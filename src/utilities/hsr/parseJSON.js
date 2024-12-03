@@ -125,6 +125,14 @@ function getPoolFourWeap(vers, type) {
 	return key?.poolFourWeap || [];
 }
 
+function getTypes(vers) {
+	let types = [];
+	for (const key of this.bannerJSON) {
+		if (key.vers.includes(vers)) types.push(key.type);
+	}
+	return types;
+}
+
 export {
 	isChar,
 	getName,
@@ -137,5 +145,6 @@ export {
 	getPoolFiveChar,
 	getPoolFiveWeap,
 	getPoolFourChar,
-	getPoolFourWeap
+	getPoolFourWeap,
+	getTypes
 };

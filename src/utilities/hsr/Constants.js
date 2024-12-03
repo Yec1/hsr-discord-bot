@@ -77,10 +77,17 @@ const allChars = [
 	"jiaoqiu",
 	"feixiao",
 	"lingsha",
-	"moze"
+	"moze",
+	"rappa",
+	"sunday",
+	"fugue"
 ];
 
 const allWeapons = [
+	"a-grounded-ascent",
+	"long-road-leads-home",
+	"ninjutsu-inscription-dazzling-evilbreaker",
+	"dreams-montage",
 	"shadowed-by-night",
 	"i-venture-forth-to-hunt",
 	"scent-alone-stays-true",
@@ -194,8 +201,12 @@ const BGM = {
 };
 
 const allVers = [
-	// "2.5.2",
-	// "2.5.1",
+	"2.7.2",
+	"2.7.1",
+	"2.6.2",
+	"2.6.1",
+	"2.5.2",
+	"2.5.1",
 	"2.4.2",
 	"2.4.1",
 	"2.3.2",
@@ -222,9 +233,7 @@ const allVers = [
 	"1.0.1"
 ];
 
-const hidden = [];
-
-const LATESTVERS = allVers.filter(vers => !hidden.includes(vers))[0];
+const LATESTVERS = allVers[1];
 
 const asianLang = ["zh", "ko", "ja"];
 
@@ -242,7 +251,9 @@ const colourMap = {
 	// unknown
 	6: "#6748c7",
 	// bright red
-	7: "#bb323e"
+	7: "#bb323e",
+	// brownish red: lingsha 2.5.2
+	8: "#a44d4d"
 };
 
 export {
@@ -253,6 +264,5 @@ export {
 	allVers,
 	asianLang,
 	LATESTVERS,
-	hidden,
 	colourMap
 };

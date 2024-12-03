@@ -30,9 +30,12 @@ const versionChoices = [
 	{ value: "2.3.1", name: "Firefly", localName: "流螢" },
 	{ value: "2.3.2", name: "Jade", localName: "翡翠" },
 	{ value: "2.4.1", name: "Yunli", localName: "雲離" },
-	{ value: "2.4.2", name: "Jiaoqiu", localName: "椒丘" }
-	// { value: "2.5.1", name: "Feixiao", localName: "飛霄" },
-	// { value: "2.5.2", name: "Lingsha", localName: "靈砂" }
+	{ value: "2.4.2", name: "Jiaoqiu", localName: "椒丘" },
+	{ value: "2.5.1", name: "Feixiao", localName: "飛霄" },
+	{ value: "2.5.2", name: "Lingsha", localName: "靈砂" },
+	{ value: "2.6.1", name: "Rappa", localName: "亂破" },
+	{ value: "2.7.1", name: "Sunday", localName: "星期日" },
+	{ value: "2.7.2", name: "Fugue", localName: "忘歸人" }
 ];
 
 export const createChoiceOption = ({ value, name, localName }) => ({
