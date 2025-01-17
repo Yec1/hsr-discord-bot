@@ -188,8 +188,12 @@ const langs = {
 	warp_HowToGetDesc:
 		"**1.** 在 PC 上打開崩壞：星穹鐵道\n**2.** 打開`遷躍`的`歷史紀錄`\n**3.** 打開 Windows PowerShell 並貼上以下指令 <z>\n**4.** 複製網址後使用指令 </warp:1120003658243915847> 查詢遷躍紀錄",
 
-	redeem_Success: "兌換成功，請稍後前往信箱領取",
+	redeem_SuccessDesc: "兌換成功，請稍後前往信箱領取",
+	redeem_Success: "兌換成功",
+	redeem_Already: "已兌換過",
+	redeem_Invalid: "無效或過期",
 	redeem_Failed: "兌換失敗",
+	redeem_RedeemStats: "兌換結果統計:",
 	redeen_NoCookie: "尚未設定 CookieToken 或 AccountMid",
 	autoRedeem_Off: "已關閉自動兌換",
 	autoRedeem_On: "已開啟自動兌換",

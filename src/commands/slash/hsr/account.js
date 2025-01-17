@@ -187,7 +187,7 @@ export default {
 								.addOptions(
 									accounts.map((account, index) => ({
 										emoji: emoji.avatarIcon,
-										label: `${account.uid}`,
+										label: `${account.uid} ${account.nickname ? `- ${account.nickname}` : ""}`,
 										value: `${index}`
 									}))
 								)
@@ -237,7 +237,7 @@ export default {
 									accounts.map((account, i) => {
 										return {
 											emoji: emoji.avatarIcon,
-											label: `${account.uid}`,
+											label: `${account.uid} ${account.nickname ? `- ${account.nickname}` : ""}`,
 											value: `${i}`
 										};
 									})
@@ -261,7 +261,7 @@ export default {
 								.addOptions(
 									accounts.map((account, i) => ({
 										emoji: emoji.avatarIcon,
-										label: `${account.uid}`,
+										label: `${account.uid} ${account.nickname ? `- ${account.nickname}` : ""}`,
 										value: `${i}`
 									}))
 								)

@@ -81,8 +81,7 @@ const langs = {
 
 	clear_Success: "All saved data cleared!",
 
-	account_LoginAccount:
-		"Log in with an account (account information will not be saved)",
+	account_LoginAccount: "Login Account (Info won't be saved)",
 	account_LoginAccountDesc: "Account (Email)",
 	account_LoginAccountDesc2: "Password",
 	account_LoginFailed: "Login failed",
@@ -196,9 +195,13 @@ const langs = {
 	warp_HowToGetDesc:
 		"**1.** Open Honkai: Star Rail on PC\n**2.** Open the `Warp` `History`\n**3.** Open Windows PowerShell and paste the following command <z>\n**4.** Copy the URL and use the command </warp:1120003658243915847> to query the Warp Record",
 
-	redeem_Success:
-		"Redeem successful, please go to the mailbox to collect it later",
+	redeem_SuccessDesc:
+		"Redeem successful, please go to the mailbox to collect",
+	redeem_Success: "Redeem successful",
+	redeem_Already: "Already redeemed",
+	redeem_Invalid: "Invalid or expired",
 	redeem_Failed: "Redeem failed",
+	redeem_RedeemStats: "Redeem Result Statistics:",
 	redeen_NoCookie: "CookieToken or AccountMid has not been set yet",
 	autoRedeem_Off: "Auto-redeem is turned off",
 	autoRedeem_On: "Automatic redemption is turned on",

@@ -27,16 +27,6 @@ client.on(Events.ClientReady, async () => {
 	autoDailySign();
 	autoRedeem();
 
-	if ((await client.db.get("autoNotify")) == null) {
-		await client.db.set("autoNotify", {
-			"283946584461410305": {
-				channelId: "1125008836860837938",
-				tag: false,
-				stamina: 220
-			}
-		});
-	}
-
 	schedule.scheduleJob("0 * * * *", function () {
 		if (client.cluster.id == 0) {
 			autoDailySign();
