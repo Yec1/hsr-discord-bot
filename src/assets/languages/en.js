@@ -201,6 +201,11 @@ const langs = {
 	redeem_Already: "Already redeemed",
 	redeem_Invalid: "Invalid or expired",
 	redeem_Failed: "Redeem failed",
+	redeem_Processing: "Processing...",
+	redeem_ProcessingDesc:
+		"<noRedeemedCodes> unredeemed gift codes remaining, <seconds> seconds remaining",
+	redeem_Processed: "Processed Redeem Codes",
+	redeem_Redeeming: "Redeeming...",
 	redeem_RedeemStats: "Redeem Result Statistics:",
 	redeen_NoCookie: "CookieToken or AccountMid has not been set yet",
 	autoRedeem_Off: "Auto-redeem is turned off",

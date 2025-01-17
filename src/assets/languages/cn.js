@@ -193,6 +193,11 @@ const langs = {
 	redeem_Already: "已兑换过",
 	redeem_Invalid: "无效或过期",
 	redeem_Failed: "兑换失败",
+	redeem_Processing: "处理中...",
+	redeem_Processed: "已处理的兑换码",
+	redeem_Redeeming: "正在兑换...",
+	redeem_ProcessingDesc:
+		"剩余 <noRedeemedCodes> 个未兑换的礼包码，约剩余 <seconds> 秒",
 	redeem_RedeemStats: "兑换结果统计:",
 	redeen_NoCookie: "尚未设定 CookieToken 或 AccountMid",
 	autoRedeem_Off: "已关闭自动兑换",

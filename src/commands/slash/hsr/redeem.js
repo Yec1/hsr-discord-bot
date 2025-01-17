@@ -262,14 +262,14 @@ export default {
 						.slice(0, i)
 						.map(c => {
 							if (c.status === "success")
-								return `✅ ${c.code} (兌換成功)`;
+								return `✅ ${c.code} (${tr("redeem_Success")})`;
 							if (c.status === "already")
-								return `ℹ️ ${c.code} (已兌換過)`;
+								return `ℹ️ ${c.code} (${tr("redeem_Already")})`;
 							if (c.status === "invalid")
-								return `⚠️ ${c.code} (無效兌換碼)`;
+								return `⚠️ ${c.code} (${tr("redeem_Invalid")})`;
 							if (c.status === "failed")
-								return `❌ ${c.code} (兌換失敗)`;
-							return `⏳ ${c.code} (處理中)`;
+								return `❌ ${c.code} (${tr("redeem_Failed")})`;
+							return `⏳ ${c.code} (${tr("redeem_Processing")})`;
 						})
 						.join("\n");
 
@@ -277,11 +277,19 @@ export default {
 						embeds: [
 							new EmbedBuilder()
 								.setColor(getRandomColor())
-								.setTitle(`正在兌換 ${code.code}`)
+								.setTitle(
+									`${tr("redeem_Redeeming")} ${code.code}`
+								)
 								.setDescription(
-									`剩餘 ${noRedeemedCodes.length - i} 個未兌換的禮包碼，約剩餘 ${(noRedeemedCodes.length - i) * 3} 秒\n\n` +
+									tr("redeem_ProcessingDesc", {
+										noRedeemedCodes:
+											noRedeemedCodes.length - i,
+										seconds:
+											(noRedeemedCodes.length - i) * 3
+									}) +
+										"\n\n" +
 										(processedResults
-											? `已處理的兌換碼:\n${processedResults}`
+											? `${tr("redeem_Processed")}:\n${processedResults}`
 											: "")
 								)
 								.setThumbnail(

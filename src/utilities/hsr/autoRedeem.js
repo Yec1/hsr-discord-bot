@@ -142,7 +142,7 @@ class AutoRedeemSystem {
 		};
 
 		const description = [
-			`<@${context.userId}> - ${account.nickname} (${account.uid})`
+			`<@${context.userId}> - ${account.nickname ? `- ${account.nickname}` : ""} (${account.uid})`
 		];
 
 		for (const code of unredeemedCodes) {
@@ -223,11 +223,14 @@ class AutoRedeemSystem {
 			);
 		}
 
-		await this.sendRedeemSuccessMessage(context.channelId, {
-			tag: context.tag,
-			tr: context.tr,
-			description: description.join("\n")
-		});
+		if (results.success.length > 0) {
+			// 有成功兌換的才發送訊息
+			await this.sendRedeemSuccessMessage(context.channelId, {
+				tag: context.tag,
+				tr: context.tr,
+				description: description.join("\n")
+			});
+		}
 	}
 
 	async attemptCodeRedeem(hsr, code, retries = 3) {
