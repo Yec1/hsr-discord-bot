@@ -2,8 +2,13 @@ import { client } from "../index.js";
 import { AxiosError } from "axios";
 import { Events, EmbedBuilder } from "discord.js";
 import { HonkaiStarRail } from "hoyoapi";
-import { getUserLang, requestPlayerData } from "../utilities/utilities.js";
+import {
+	getUserLang,
+	requestPlayerData,
+	getUserGameUid
+} from "../utilities/utilities.js";
 import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
+import loginAccount from "../utilities/hsr/login.js";
 
 const db = client.db;
 
@@ -16,11 +21,76 @@ client.on(Events.InteractionCreate, async interaction => {
 
 	if (customId.startsWith("accountEdit"))
 		handleAccountEdit(interaction, tr, customId, fields);
+	if (customId == "account_LoginAccountModal")
+		handleAccountLogin(interaction, tr, fields);
 	if (customId == "account_SetUserIDModal")
 		handleUidSet(interaction, tr, fields);
 	if (customId.startsWith("cookie_set"))
 		handleCookieSet(interaction, tr, customId, fields);
 });
+
+async function handleAccountLogin(interaction, tr, fields) {
+	const email = fields.getTextInputValue("account_LoginAccountModalField");
+	const password = fields.getTextInputValue(
+		"account_LoginAccountModalField2"
+	);
+	await interaction.deferReply({ ephemeral: true });
+	try {
+		// Make sure Email is correct
+		const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+		if (!emailRegex.test(email)) {
+			return interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setTitle(tr("account_LoginFailed"))
+						.setDescription(tr("account_LoginFailedDesc"))
+						.setColor("#E76161")
+				]
+			});
+		}
+		const existedAccounts =
+			(await db.get(`${interaction.user.id}.account`)) || [];
+		if (existedAccounts.length >= 3) {
+			return interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setTitle(tr("account_LimitExceeded"))
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+				]
+			});
+		}
+		const cookie = await loginAccount(email, password);
+		const { uid, nickname } = await getUserGameUid(cookie);
+		interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setColor("#F6F1F1")
+					.setThumbnail(
+						"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+					)
+					.setTitle(tr("account_LoginSuccess"))
+			]
+		});
+
+		await db.push(`${interaction.user.id}.account`, {
+			uid: uid,
+			cookie: cookie,
+			nickname: nickname
+		});
+	} catch (error) {
+		console.log(error);
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setTitle(tr("account_LoginFailed"))
+					.setDescription(tr("account_LoginFailedDesc"))
+					.setColor("#E76161")
+			]
+		});
+	}
+}
 
 async function handleAccountEdit(interaction, tr, customId, fields) {
 	await interaction.deferReply({ ephemeral: true });
@@ -101,7 +171,7 @@ async function handleUidSet(interaction, tr, fields) {
 
 	if (await db.has(`${interaction.user.id}.account`)) {
 		const accounts = await db.get(`${interaction.user.id}.account`);
-		if (accounts.size >= 3)
+		if (accounts.length >= 3)
 			return interaction.editReply({
 				embeds: [
 					new EmbedBuilder()

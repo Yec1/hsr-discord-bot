@@ -19,7 +19,9 @@ const baseWeapons = [
 	"mediation",
 	"defense",
 	"pioneering",
-	"mutual-demise"
+	"mutual-demise",
+	"shadowburn",
+	"reminiscence"
 ];
 
 const allChars = [
@@ -80,10 +82,17 @@ const allChars = [
 	"moze",
 	"rappa",
 	"sunday",
-	"fugue"
+	"fugue",
+	"the-herta",
+	"aglaea"
+	// "mydei",
 ];
 
 const allWeapons = [
+	"victory-in-a-blink",
+	"geniuses-greetings",
+	"time-woven-into-gold",
+	"into-the-unreachable-veil",
 	"a-grounded-ascent",
 	"long-road-leads-home",
 	"ninjutsu-inscription-dazzling-evilbreaker",
@@ -191,7 +200,9 @@ const allWeapons = [
 	"mediation",
 	"defense",
 	"pioneering",
-	"mutual-demise"
+	"mutual-demise",
+	"shadowburn",
+	"reminiscence"
 ];
 
 const BGM = {
@@ -201,6 +212,8 @@ const BGM = {
 };
 
 const allVers = [
+	// "3.0.2",
+	"3.0.1",
 	"2.7.2",
 	"2.7.1",
 	"2.6.2",
@@ -233,7 +246,7 @@ const allVers = [
 	"1.0.1"
 ];
 
-const LATESTVERS = allVers[1];
+const LATESTVERS = allVers[0];
 
 const asianLang = ["zh", "ko", "ja"];
 

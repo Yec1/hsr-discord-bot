@@ -80,6 +80,12 @@ const langs = {
 
 	clear_Success: "已清除所有儲存資料！",
 
+	account_LoginAccount: "使用帳號密碼登入 (我們不會儲存您的帳號和密碼)",
+	account_LoginAccountDesc: "帳號(Email)",
+	account_LoginAccountDesc2: "密碼",
+	account_LoginFailed: "登入失敗",
+	account_LoginFailedDesc: "請確認帳號密碼是否正確",
+	account_LoginSuccess: "帳號登入成功，並且已設定 Cookie",
 	account_Linked: "已綁定",
 	account_NotLinked: "未綁定",
 	account_ListOfAccount: "<Username> 已設定的帳號",

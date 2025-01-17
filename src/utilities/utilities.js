@@ -2,7 +2,7 @@ import { client } from "../index.js";
 import { EmbedBuilder } from "discord.js";
 import axios from "axios";
 import emoji from "../assets/emoji.js";
-import { HonkaiStarRail, LanguageEnum, HoyoAPIError } from "hoyoapi";
+import { HonkaiStarRail, LanguageEnum, HoyoAPIError, Hoyolab } from "hoyoapi";
 const BASE_URL = "https://bbs-api-os.hoyolab.com/community/post/wapi/";
 const db = client.db;
 
@@ -35,7 +35,9 @@ const versionChoices = [
 	{ value: "2.5.2", name: "Lingsha", localName: "靈砂" },
 	{ value: "2.6.1", name: "Rappa", localName: "亂破" },
 	{ value: "2.7.1", name: "Sunday", localName: "星期日" },
-	{ value: "2.7.2", name: "Fugue", localName: "忘歸人" }
+	{ value: "2.7.2", name: "Fugue", localName: "忘歸人" },
+	{ value: "3.0.1", name: "The Herta", localName: "大黑塔" },
+	{ value: "3.0.2", name: "Aglaea", localName: "阿格萊雅" }
 ];
 
 export const createChoiceOption = ({ value, name, localName }) => ({
@@ -355,3 +357,17 @@ global.replyOrfollowUp = async function (interaction, ...args) {
 	if (interaction.deferred) return await interaction.followUp(...args);
 	return await interaction.reply(...args);
 };
+
+export async function getUserGameUid(cookie, gameName = "Honkai: Star Rail") {
+	const hoyolab = new Hoyolab({
+		cookie: cookie
+	});
+
+	const gameRecord = await hoyolab.gameRecordCard();
+	const filteredData = gameRecord.filter(item => item.game_name === gameName);
+
+	return {
+		uid: filteredData[0].game_role_id,
+		nickname: filteredData[0].nickname
+	};
+}

@@ -81,6 +81,14 @@ const langs = {
 
 	clear_Success: "All saved data cleared!",
 
+	account_LoginAccount:
+		"Log in with an account (account information will not be saved)",
+	account_LoginAccountDesc: "Account (Email)",
+	account_LoginAccountDesc2: "Password",
+	account_LoginFailed: "Login failed",
+	account_LoginFailedDesc:
+		"Please check if the account and password are correct",
+	account_LoginSuccess: "Account login successful, and Cookie has been set",
 	account_Linked: "Linked",
 	account_NotLinked: "Not Linked",
 	account_ListOfAccount: "Accounts set by <Username>",

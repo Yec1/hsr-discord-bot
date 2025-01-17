@@ -80,6 +80,12 @@ const langs = {
 
 	clear_Success: "已清除所有储存资料！",
 
+	account_LoginAccount: "使用帐号密码登入 (我们不会储存您的帐号和密码)",
+	account_LoginAccountDesc: "帐号(Email)",
+	account_LoginAccountDesc2: "密码",
+	account_LoginFailed: "登入失败",
+	account_LoginFailedDesc: "请确认帐号密码是否正确",
+	account_LoginSuccess: "帐号登入成功，并且已设定 Cookie",
 	account_Linked: "已绑定",
 	account_NotLinked: "未绑定",
 	account_ListOfAccount: "<Username> 已设定的帐号",

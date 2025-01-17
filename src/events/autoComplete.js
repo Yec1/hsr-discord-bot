@@ -1,19 +1,19 @@
 import { client } from "../index.js";
 import { Events } from "discord.js";
 import {
-	createChoiceOption,
 	filterVersionChoices,
 	getLastVersionChoices
-} from "../utilities/utilities.js"; // 假設你有 getLastVersionChoices 函數
+} from "../utilities/utilities.js";
 const db = client.db;
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isAutocomplete()) return;
-	const { options, user, locale } = interaction;
-	const optionName = options._hoistedOptions[0].name;
 
-	if (optionName == "account") {
-		const userAccounts = await db.get(`${user.id}.account`);
+	const focusedOption = interaction.options.getFocused(true);
+	const { name: optionName, value: userInput } = focusedOption;
+
+	if (optionName === "account") {
+		const userAccounts = await db.get(`${interaction.user.id}.account`);
 		if (!userAccounts) return;
 
 		const choices = [];
@@ -27,9 +27,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		await interaction.respond(choices);
 	}
 
-	if (optionName == "version") {
-		const userInput = interaction.options.getString("version", true);
-
+	if (optionName === "version") {
 		// 篩選選項
 		const filteredChoices = userInput
 			? filterVersionChoices(userInput)
@@ -37,7 +35,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 		const choices = filteredChoices.map(choice => ({
 			name:
-				locale === "zh-TW"
+				interaction.locale === "zh-TW"
 					? `${choice.value} - ${choice.localName}`
 					: `${choice.value} - ${choice.name}`,
 			value: choice.value
