@@ -229,13 +229,23 @@ async function drawMainImage(tr, playerData, playerActivity) {
 		const ctx = canvas.getContext("2d");
 
 		// Load images concurrently
-		const [bg, avatar, ...charImages] = await Promise.all([
+		const allImages = await Promise.all([
 			loadImageAsync("./src/assets/image/warp/bg.jpg"),
 			loadImageAsync(`${image_Header}${playerData.player.avatar.icon}`),
 			...playerData.characters.map(char =>
 				loadImageAsync(`${image_Header}${char.preview}`)
+			),
+			...playerActivity?.info.map(activity =>
+				loadImageAsync(`./src/assets/image/${activity.content.icon}`)
 			)
 		]);
+
+		const bg = allImages[0];
+		const avatar = allImages[1];
+		const charImages = allImages.slice(2, 2 + playerData.characters.length);
+		const playerActivityIcons = allImages.slice(
+			2 + playerData.characters.length
+		);
 
 		// Background
 		ctx.drawImage(bg, 0, 0, 1920, 1080);
@@ -397,11 +407,22 @@ async function drawMainImage(tr, playerData, playerActivity) {
 			ctx.fillText(record.value, 1200, 900 + index * 40);
 		});
 
+		const iconPositions = chaosRecords?.map(record => {
+			const recordTextWidth = ctx.measureText(record.text).width;
+			return 980 - recordTextWidth / 2;
+		});
+
+		const minIconX = Math.min(...iconPositions);
+
 		// Chaos Records
 		chaosRecords?.forEach((record, index) => {
-			ctx.font = "bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
 			ctx.textAlign = "center";
-			ctx.fillText(record.text, 960, 910 + index * 40);
+			ctx.font = "bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+			ctx.fillText(record.text, 980, 910 + index * 40);
+
+			const recordIcon = playerActivityIcons[index];
+			recordIcon &&
+				ctx.drawImage(recordIcon, minIconX, 880 + index * 40, 40, 40);
 		});
 
 		return canvas.toBuffer("image/png");
