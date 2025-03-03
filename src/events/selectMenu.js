@@ -21,7 +21,8 @@ import {
 	getUserLang,
 	getNewsList,
 	getPostFull,
-	parsePostContent
+	parsePostContent,
+	requestPlayerActivity
 } from "../utilities/utilities.js";
 import { getSelectMenu } from "../utilities/hsr/selectmenu.js";
 import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
@@ -145,8 +146,8 @@ async function handleNews(interaction, tr, value) {
 					.setDescription(
 						content.length < 4096
 							? content
-							: content.slice(0, 4096 - 3).concat("...") ??
-									tr("None")
+							: (content.slice(0, 4096 - 3).concat("...") ??
+									tr("None"))
 					)
 					.setFooter({
 						text:
@@ -740,7 +741,8 @@ async function handleSelectCharacter(interaction, tr, value) {
 
 			const requestStartTime = Date.now();
 			const [uid, userId, i] = value.split("-");
-			const { status, playerData } = await requestPlayerData(
+			const { _, playerData } = await requestPlayerData(uid, interaction);
+			const { __, playerActivity } = await requestPlayerActivity(
 				uid,
 				interaction
 			);
@@ -752,7 +754,7 @@ async function handleSelectCharacter(interaction, tr, value) {
 			const drawStartTime = Date.now();
 			const imageBuffer =
 				i == "main"
-					? await drawMainImage(tr, playerData)
+					? await drawMainImage(tr, playerData, playerActivity)
 					: await drawCharacterImage(tr, playerData, characters[i]);
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 			const drawEndTime = Date.now();

@@ -153,6 +153,7 @@ class AutoRedeemSystem {
 					CONFIG.MAX_RETRIES
 				);
 
+				if (!result.success && result.retcode === -1071) return;
 				if (result.success) {
 					results.success.push(code);
 					userRedeemedCodes.push(code.code);

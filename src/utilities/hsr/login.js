@@ -59,9 +59,15 @@ async function loginAccount(account, password) {
 		const result = response.headers;
 		const cookie = parseCookie(result.get("set-cookie"));
 
-		return cookie;
+		return {
+			cookie: cookie,
+			error: null
+		};
 	} catch (error) {
-		throw error;
+		return {
+			cookie: null,
+			error: error
+		};
 	}
 }
 

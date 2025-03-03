@@ -300,7 +300,12 @@ export default {
 					});
 
 					const res = await hsr.redeem.claim(code.code);
-					if (res.retcode == 0 || res.message == "OK") {
+
+					if (res.retcode == -1071) {
+						throw new Error(tr("redeem_CookieTokenInvalid"));
+					} else if (res.retcode == -1048) {
+						throw new Error(tr("redeem_SystemBusy"));
+					} else if (res.retcode == 0 || res.message == "OK") {
 						code.status = "success"; // 標記為兌換成功
 						if (!userRedeemedCodes.includes(code.code))
 							userRedeemedCodes.push(code.code);
@@ -330,6 +335,23 @@ export default {
 				invalid: noRedeemedCodes.filter(c => c.status === "invalid"),
 				failed: noRedeemedCodes.filter(c => c.status === "failed")
 			};
+
+			if (
+				results.success.length +
+					results.already.length +
+					results.invalid.length +
+					results.failed.length ===
+				0
+			) {
+				return interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setColor(getRandomColor())
+							.setTitle(tr("redeem_NoCode"))
+					],
+					ephemeral: true
+				});
+			}
 
 			interaction.editReply({
 				embeds: [
@@ -425,7 +447,21 @@ export default {
 					await db.set(`${uid}.redeemedCodes`, userRedeemedCodes);
 					failedReply(interaction, res.message);
 				} else {
-					failedReply(interaction, res.message);
+					const userAccount = (
+						await db.get(`${targetUser.id}.account`)
+					)[accountIndex];
+
+					if (
+						userAccount.cookie.includes("cookie_token_v2") ||
+						userAccount.cookie.includes("account_mid_v2")
+					) {
+						failedReply(
+							interaction,
+							`${userAccount.uid} ${tr("redeem_CookieTokenInvalid")}`
+						);
+					} else {
+						failedReply(interaction, tr("redeem_NoCookie"));
+					}
 				}
 			} catch (e) {
 				failedReply(interaction, e.message);
@@ -442,7 +478,7 @@ export default {
 				!userAccount[0].cookie.includes("cookie_token_v2") &&
 				!userAccount[0].cookie.includes("account_mid_v2")
 			) {
-				return failedReply(interaction, tr("redeen_NoCookie"));
+				return failedReply(interaction, tr("redeem_NoCookie"));
 			}
 
 			const enable = interaction.options.getString("enable");

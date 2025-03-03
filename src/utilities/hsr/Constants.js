@@ -84,8 +84,9 @@ const allChars = [
 	"sunday",
 	"fugue",
 	"the-herta",
-	"aglaea"
-	// "mydei",
+	"aglaea",
+	"mydei",
+	"tribbie"
 ];
 
 const allWeapons = [
@@ -212,7 +213,9 @@ const BGM = {
 };
 
 const allVers = [
-	// "3.0.2",
+	"3.1.2",
+	"3.1.1",
+	"3.0.2",
 	"3.0.1",
 	"2.7.2",
 	"2.7.1",
@@ -246,7 +249,9 @@ const allVers = [
 	"1.0.1"
 ];
 
-const LATESTVERS = allVers[0];
+const hidden = [];
+
+const LATESTVERS = allVers.filter(vers => !hidden.includes(vers))[1];
 
 const asianLang = ["zh", "ko", "ja"];
 
@@ -266,7 +271,11 @@ const colourMap = {
 	// bright red
 	7: "#bb323e",
 	// brownish red: lingsha 2.5.2
-	8: "#a44d4d"
+	8: "#a44d4d",
+	// bright purple: the herta 3.0.1
+	9: "#7855cd",
+	// gold
+	10: "#b38a5a"
 };
 
 export {
@@ -277,5 +286,6 @@ export {
 	allVers,
 	asianLang,
 	LATESTVERS,
-	colourMap
+	colourMap,
+	hidden
 };

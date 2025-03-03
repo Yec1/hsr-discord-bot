@@ -37,7 +37,9 @@ const versionChoices = [
 	{ value: "2.7.1", name: "Sunday", localName: "星期日" },
 	{ value: "2.7.2", name: "Fugue", localName: "忘歸人" },
 	{ value: "3.0.1", name: "The Herta", localName: "大黑塔" },
-	{ value: "3.0.2", name: "Aglaea", localName: "阿格萊雅" }
+	{ value: "3.0.2", name: "Aglaea", localName: "阿格萊雅" },
+	{ value: "3.1.1", name: "Tribbie", localName: "緹寶" },
+	{ value: "3.1.2", name: "Mydei", localName: "萬敵" }
 ];
 
 export const createChoiceOption = ({ value, name, localName }) => ({
@@ -174,6 +176,26 @@ export async function requestPlayerData(uid, interaction) {
 		});
 
 	return { status: response.status, playerData: response.data };
+}
+
+export async function requestPlayerActivity(uid, interaction) {
+	const userLocaleKey = `${interaction?.user.id}.locale`;
+	let langParam = "?lang=en";
+
+	if (await db?.has(userLocaleKey)) {
+		const storedLocale = await db.get(userLocaleKey);
+		langParam = storedLocale === "tw" ? "?lang=cht" : "?lang=en";
+	} else if (interaction) {
+		langParam = interaction.locale === "zh-TW" ? "?lang=cht" : "?lang=en";
+	}
+
+	const response = await axios
+		.get(`https://api.mihomo.me/sr_activity/${uid}${langParam}`)
+		.catch(err => {
+			return { status: 400, data: null };
+		});
+
+	return { status: response.status, playerActivity: response.data };
 }
 
 export async function drawInQueueReply(interaction, title = "") {

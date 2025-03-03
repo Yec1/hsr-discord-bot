@@ -199,7 +199,10 @@ const langs = {
 	redeem_ProcessingDesc:
 		"剩余 <noRedeemedCodes> 个未兑换的礼包码，约剩余 <seconds> 秒",
 	redeem_RedeemStats: "兑换结果统计:",
-	redeen_NoCookie: "尚未设定 CookieToken 或 AccountMid",
+	redeem_NoCode: "所有兑换码已兑换完毕",
+	redeem_SystemBusy: "系统繁忙，请稍后再试",
+	redeem_CookieTokenInvalid: "CookieToken 过期了，请重新设定",
+	redeem_NoCookie: "尚未设定 CookieToken 或 AccountMid",
 	autoRedeem_Off: "已关闭自动兑换",
 	autoRedeem_On: "已开启自动兑换",
 	autoRedeem_Tag: "兑换时提及：<z>"

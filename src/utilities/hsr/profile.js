@@ -2,7 +2,8 @@ import { client } from "../../index.js";
 import {
 	requestPlayerData,
 	drawInQueueReply,
-	getRandomColor
+	getRandomColor,
+	requestPlayerActivity
 } from "../utilities.js";
 import { join } from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
@@ -113,6 +114,8 @@ async function handleProfileDraw(interaction, tr, user, uid) {
 				uid,
 				interaction
 			);
+			const { activityStatus, playerActivity } =
+				await requestPlayerActivity(uid, interaction);
 
 			if (status !== 200) {
 				return interaction.editReply({
@@ -136,7 +139,11 @@ async function handleProfileDraw(interaction, tr, user, uid) {
 			const characters = playerData.characters;
 			const drawStartTime = Date.now();
 
-			const imageBuffer = await drawMainImage(tr, playerData);
+			const imageBuffer = await drawMainImage(
+				tr,
+				playerData,
+				playerActivity
+			);
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 
 			const drawEndTime = Date.now();
@@ -216,7 +223,7 @@ async function handleProfileDraw(interaction, tr, user, uid) {
 	}
 }
 
-async function drawMainImage(tr, playerData) {
+async function drawMainImage(tr, playerData, playerActivity) {
 	try {
 		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
@@ -247,14 +254,74 @@ async function drawMainImage(tr, playerData) {
 		ctx.fillStyle = "lightgray";
 		ctx.fillText(playerData.player.uid, 960, 300);
 
-		// Levels
-		ctx.font = "bold 30px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+		const xRange = {
+			start: 610,
+			end: 1300
+		};
+
+		const profileStatsData = [
+			{
+				labelText: tr("profile_TrailblazeLevel"),
+				valueText: `${playerData.player.level}`
+			},
+			{
+				labelText: tr("profile_EquilibriumLevel"),
+				valueText: `${playerData.player.world_level}`
+			},
+			{
+				labelText: tr("profile_CharactersCount"),
+				valueText: `${playerData.player.space_info.avatar_count}`
+			},
+			{
+				labelText: tr("profile_AchievementsCount"),
+				valueText: `${playerData.player.space_info.achievement_count}`
+			}
+		];
+
+		function calculatePositions(statsData, xRange) {
+			const count = statsData.length;
+
+			if (count === 1) {
+				const centerX = (xRange.start + xRange.end) / 2;
+				return [
+					{
+						labelX: centerX,
+						labelY: 355,
+						valueX: centerX,
+						valueY: 400
+					}
+				];
+			}
+
+			const totalWidth = xRange.end - xRange.start;
+			const spacing = totalWidth / (count - 1);
+
+			return statsData.map((stat, index) => {
+				const x = xRange.start + spacing * index;
+				return {
+					...stat,
+					labelX: x,
+					labelY: 355,
+					valueX: x,
+					valueY: 400
+				};
+			});
+		}
+
+		const profileStats = calculatePositions(profileStatsData, xRange);
 		ctx.fillStyle = "white";
-		ctx.fillText(tr("profile_TrailblazeLevel"), 720, 355);
-		ctx.fillText(tr("profile_EquilibriumLevel"), 1200, 355);
+
+		// Render labels
+		ctx.font = "bold 30px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+		profileStats.forEach(stat => {
+			ctx.fillText(stat.labelText, stat.labelX, stat.labelY);
+		});
+
+		// Render values
 		ctx.font = "32px 'URW DIN Arabic', Arial, sans-serif'";
-		ctx.fillText(`${playerData.player.level}`, 720, 400);
-		ctx.fillText(`${playerData.player.world_level}`, 1200, 400);
+		profileStats.forEach(stat => {
+			ctx.fillText(stat.valueText, stat.valueX, stat.valueY);
+		});
 
 		// Line1
 		ctx.strokeStyle = "#fff";
@@ -309,39 +376,32 @@ async function drawMainImage(tr, playerData) {
 		ctx.fillText(tr("profile_Records"), 960, 860);
 
 		// Record details
-		const memoryData = playerData.player.space_info.memory_data || {};
-		const chaosLevel = memoryData.chaos_level ?? "0";
-		const chaosIdStartsWith2 = `${memoryData.chaos_id}`.startsWith("2");
-		const chaosMaxLevel = chaosIdStartsWith2 ? "4" : "12";
-
 		const records = [
-			{
-				label: tr("profile_CharactersCount"),
-				value: `${playerData.player.space_info.avatar_count}`
-			},
-			{
-				label: tr("profile_AchievementsCount"),
-				value: `${playerData.player.space_info.achievement_count}`
-			},
-			{
-				label: tr("profile_MemoryLevel"),
-				value: `${memoryData.level ?? "0"}/21`
-			},
-			{
-				label: chaosIdStartsWith2
-					? tr("profile_PureFictionLevel")
-					: tr("profile_MemoryLevel"),
-				value: `${chaosLevel}/${chaosMaxLevel}`
-			}
+			// {
+			// 	label: tr("profile_CharactersCount"),
+			// 	value: `${playerData.player.space_info.avatar_count}`
+			// }
+			// {
+			// 	label: tr("profile_AchievementsCount"),
+			// 	value: `${playerData.player.space_info.achievement_count}`
+			// }
 		];
+		const chaosRecords = playerActivity?.info || [];
 
-		records.forEach((record, index) => {
+		records?.forEach((record, index) => {
 			ctx.font = "24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
 			ctx.textAlign = "left";
 			ctx.fillText(record.label, 720, 900 + index * 40);
 			ctx.font = "bold 24px 'URW DIN Arabic', Arial, sans-serif'";
 			ctx.textAlign = "right";
 			ctx.fillText(record.value, 1200, 900 + index * 40);
+		});
+
+		// Chaos Records
+		chaosRecords?.forEach((record, index) => {
+			ctx.font = "bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+			ctx.textAlign = "center";
+			ctx.fillText(record.text, 960, 910 + index * 40);
 		});
 
 		return canvas.toBuffer("image/png");
@@ -418,8 +478,9 @@ async function drawCharacterImage(tr, playerData, character) {
 
 		// Attributes
 		const allAttributes = [...character.attributes, ...character.additions];
-		const attributesWithAdditions = allAttributes.reduce(
-			(acc, attribute) => {
+		const attributesWithAdditions = allAttributes
+			.filter(attribute => attribute.field)
+			.reduce((acc, attribute) => {
 				if (acc[attribute.field])
 					acc[attribute.field].value += attribute.value;
 				else acc[attribute.field] = { ...attribute };
@@ -432,9 +493,7 @@ async function drawCharacterImage(tr, playerData, character) {
 						`${Math.floor(acc[attribute.field].value)}`;
 
 				return acc;
-			},
-			{}
-		);
+			}, {});
 
 		const result = Object.values(attributesWithAdditions);
 		for (let i = 0; i < result.length; i++) {
@@ -751,31 +810,43 @@ async function drawCharacterImage(tr, playerData, character) {
 			}
 		});
 
-		ctx.textAlign = "center";
+		ctx.textAlign = "left"; // Changed from "center" to make positioning more predictable
 		ctx.fillStyle = "white";
 		ctx.font = `bold 36px 'YaHei', URW DIN Arabic, Arial, sans-serif`;
+
+		// Calculate the center position
+		const centerX = 1480;
+
 		if (relicsScore) {
-			ctx.fillText(
-				tr("RelicGrade", {
-					grade: `${relicsScore.totalScore}`
-				}),
-				1480,
-				830
-			);
+			// First get the score text
+			const scoreText = tr("RelicGrade", {
+				grade: `${relicsScore.totalScore}`
+			});
+
+			// Measure the score text width
+			const scoreWidth = ctx.measureText(scoreText).width;
+
+			// Calculate the starting position to center both texts together
+			const startX =
+				centerX -
+				(scoreWidth +
+					ctx.measureText(relicsScore.totalGrade.grade).width) /
+					2;
+
+			// Draw the score text
+			ctx.fillText(scoreText, startX, 830);
+
+			// Draw the grade text with its color right after the score text
 			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
 			ctx.fillText(
 				relicsScore.totalGrade.grade,
-				1480 +
-					ctx.measureText(
-						tr("RelicGrade", {
-							grade: `${relicsScore.totalScore}`
-						})
-					).width -
-					155,
-				832
+				startX + scoreWidth + 10,
+				830
 			);
 		} else {
-			ctx.fillText(tr("RelicNoScore"), 1480, 830);
+			// Center the "no score" text
+			ctx.textAlign = "center";
+			ctx.fillText(tr("RelicNoScore"), centerX, 830);
 		}
 
 		return canvas.toBuffer("image/png");

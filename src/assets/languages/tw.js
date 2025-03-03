@@ -199,7 +199,10 @@ const langs = {
 	redeem_Processed: "已處理的兌換碼",
 	redeem_Redeeming: "正在兌換...",
 	redeem_RedeemStats: "兌換結果統計:",
-	redeen_NoCookie: "尚未設定 CookieToken 或 AccountMid",
+	redeem_NoCode: "所有兌換碼已兌換完畢",
+	redeem_SystemBusy: "系統繁忙，請稍後再試",
+	redeem_CookieTokenInvalid: "CookieToken 過期了，請重新設定",
+	redeem_NoCookie: "尚未設定 CookieToken 或 AccountMid",
 	autoRedeem_Off: "已關閉自動兌換",
 	autoRedeem_On: "已開啟自動兌換",
 	autoRedeem_Tag: "兌換時提及：<z>"

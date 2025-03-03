@@ -61,7 +61,21 @@ async function handleAccountLogin(interaction, tr, fields) {
 				]
 			});
 		}
-		const cookie = await loginAccount(email, password);
+
+		const { cookie, error } = (await loginAccount(email, password)) || "";
+		if (error || !cookie) {
+			return interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setTitle(tr("account_LoginFailed"))
+						.setDescription(
+							`${tr("account_LoginFailedDesc")}\n\n\`${error}\``
+						)
+						.setColor("#E76161")
+				]
+			});
+		}
+
 		const { uid, nickname } = await getUserGameUid(cookie);
 		interaction.editReply({
 			embeds: [

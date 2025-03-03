@@ -207,7 +207,10 @@ const langs = {
 	redeem_Processed: "Processed Redeem Codes",
 	redeem_Redeeming: "Redeeming...",
 	redeem_RedeemStats: "Redeem Result Statistics:",
-	redeen_NoCookie: "CookieToken or AccountMid has not been set yet",
+	redeem_NoCode: "All redeem codes have been redeemed",
+	redeem_SystemBusy: "System busy, please try again later",
+	redeem_CookieTokenInvalid: "CookieToken has expired, please reset",
+	redeem_NoCookie: "CookieToken or AccountMid has not been set yet",
 	autoRedeem_Off: "Auto-redeem is turned off",
 	autoRedeem_On: "Automatic redemption is turned on",
 	autoRedeem_Tag: "Mention when redeeming: <z>"

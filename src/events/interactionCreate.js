@@ -15,11 +15,11 @@ client.on(Events.InteractionCreate, async interaction => {
 	if (!(await getUserLang(interaction.user.id)))
 		await setupDefaultLang(interaction.user.id, interaction.locale);
 
-	const i18n = i18nMixin(
-		(await db?.has(`${interaction.user.id}.locale`))
-			? await db?.get(`${interaction.user.id}.locale`)
-			: toI18nLang(interaction.locale) || "en"
-	);
+	const userLocale =
+		(await getUserLang(interaction.user.id)) ||
+		toI18nLang(interaction.locale) ||
+		"en";
+	const i18n = i18nMixin(userLocale);
 
 	if (interaction.isButton()) {
 		await interaction.deferUpdate().catch(() => {});
@@ -69,6 +69,42 @@ client.on(Events.InteractionCreate, async interaction => {
 			new Logger("指令").command(
 				`${interaction.user.displayName}(${interaction.user.id}) 執行 ${command.data.name} - ${time}`
 			);
+
+			// if (
+			// 	(await db.get(`${interaction.user.id}.premium`)) != true &&
+			// 	Math.floor(Math.random() * 100) < 10
+			// ) {
+			// 	await interaction.fetchReply().catch(() => {});
+			// 	if (Math.floor(Math.random() * 100) <= 50) {
+			// 		interaction.followUp({
+			// 			embeds: [
+			// 				new EmbedBuilder()
+			// 					.setColor("#FFA042")
+			// 					.setDescription(
+			// 						"## MEPay魔儲，多位知名實況主推薦，全台最大遊戲儲值平台。想要既安全又便宜課金？\n\n### 使用我的註冊連結，即可獲得折價券以及抽獎資格！\n\n## [前往 MEPay 魔儲](https://www.mepay.com.tw/auth?rcode=yeci)"
+			// 					)
+			// 					.setImage(
+			// 						"https://media.discordapp.net/attachments/1179006627026833478/1330750504980054016/image.png?ex=678f1d7c&is=678dcbfc&hm=3d8b1cad655f5efda507e5a0d9faea6e23f642c33f7a6aa278ce292f1344d628&=&format=webp&quality=lossless&width=1046&height=671"
+			// 					)
+			// 			],
+			// 			ephemeral: true
+			// 		});
+			// 	} else {
+			// 		interaction.followUp({
+			// 			embeds: [
+			// 				new EmbedBuilder()
+			// 					.setColor("#A6FFA6")
+			// 					.setDescription(
+			// 						"## 魔儲賀新春－實況主大應援！\n\n全館單筆消費每滿500元就能獲的一張投票券！\n投票支持創作者，再拿新春紅包，讓魔儲陪你憶起過好年！\n\n## [前往 MEPay 魔儲](https://www.mepay.com.tw/auth?rcode=yeci)"
+			// 					)
+			// 					.setImage(
+			// 						"https://media.discordapp.net/attachments/1239819123098386493/1330127651704274944/line.png?ex=678ed3a8&is=678d8228&hm=e0e7f6ce944a95212efeb81422e7169a6080673b9ebae8f08d8a2e55534fea44&=&format=webp&quality=lossless&width=671&height=671"
+			// 					)
+			// 			],
+			// 			ephemeral: true
+			// 		});
+			// 	}
+			// }
 
 			webhook.send({
 				embeds: [
