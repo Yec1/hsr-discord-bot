@@ -12,7 +12,7 @@ import {
 	getPoolFourWeap
 } from "./parseJSON.js";
 import { getRandomColor } from "../utilities.js";
-import trans from "../../assets/translations.json" assert { type: "json" };
+import trans from "../../assets/translations.json" with { type: "json" };
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 const db = client.db;
 

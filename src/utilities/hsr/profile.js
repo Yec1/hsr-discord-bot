@@ -236,7 +236,7 @@ async function drawMainImage(tr, playerData, playerActivity) {
 				loadImageAsync(`${image_Header}${char.preview}`)
 			),
 			...playerActivity?.info.map(activity =>
-				loadImageAsync(`./src/assets/image/${activity.content.icon}`)
+				loadImageAsync(`${image_Header}${activity.content.icon}`)
 			)
 		]);
 
