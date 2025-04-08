@@ -86,10 +86,14 @@ const allChars = [
 	"the-herta",
 	"aglaea",
 	"mydei",
-	"tribbie"
+	"tribbie",
+	"anaxa",
+	"castorice"
 ];
 
 const allWeapons = [
+	"make-farewells-more-beautiful",
+	"life-sShould-be-cast-to-flames",
 	"victory-in-a-blink",
 	"geniuses-greetings",
 	"time-woven-into-gold",
@@ -213,6 +217,8 @@ const BGM = {
 };
 
 const allVers = [
+	"3.2.2",
+	"3.2.1",
 	"3.1.2",
 	"3.1.1",
 	"3.0.2",
