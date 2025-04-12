@@ -25,9 +25,22 @@ const image_Header =
 
 const loadImageAsync = async url => {
 	try {
-		return await loadImage(url);
+		if (!loadImageAsync.cache) loadImageAsync.cache = new Map();
+
+		if (loadImageAsync.cache.has(url)) {
+			return loadImageAsync.cache.get(url);
+		}
+
+		const image = await loadImage(url);
+		loadImageAsync.cache.set(url, image);
+		return image;
 	} catch {
-		return await loadImage(`${image_Header}icon/element/None.png`);
+		const defaultUrl = `${image_Header}icon/character/None.png`;
+		if (!loadImageAsync.cache.has(defaultUrl)) {
+			const defaultImage = await loadImage(defaultUrl);
+			loadImageAsync.cache.set(defaultUrl, defaultImage);
+		}
+		return loadImageAsync.cache.get(defaultUrl);
 	}
 };
 
@@ -77,13 +90,21 @@ async function saveLeaderboard(playerData) {
 			entry => entry.uid === playerEntry.uid
 		);
 
-		if (
-			existingEntryIndex !== -1 &&
-			playerEntry.score > leaderboardData.score[existingEntryIndex].score
-		)
-			leaderboardData.score[existingEntryIndex].score = playerEntry.score;
-		else if (existingEntryIndex === -1)
+		if (existingEntryIndex !== -1) {
+			if (
+				playerEntry.score >
+				leaderboardData.score[existingEntryIndex].score
+			) {
+				leaderboardData.score[existingEntryIndex].score =
+					playerEntry.score;
+			}
+			leaderboardData.score[existingEntryIndex].nickname =
+				playerEntry.nickname;
+			leaderboardData.score[existingEntryIndex].avatar =
+				playerEntry.avatar;
+		} else {
 			leaderboardData.score.push(playerEntry);
+		}
 
 		leaderboardData.score.sort((a, b) => b.score - a.score);
 		leaderboardData.score.splice(10);
@@ -228,39 +249,53 @@ async function drawMainImage(tr, playerData, playerActivity) {
 		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
 
-		// Load images concurrently
-		const allImages = await Promise.all([
-			loadImageAsync("./src/assets/image/warp/bg.jpg"),
-			loadImageAsync(`${image_Header}${playerData.player.avatar.icon}`),
-			...playerData.characters.map(char =>
-				loadImageAsync(`${image_Header}${char.preview}`)
-			),
-			...playerActivity?.info.map(activity =>
-				loadImageAsync(`${image_Header}${activity.content.icon}`)
+		const imageUrls = [
+			"./src/assets/image/warp/bg.jpg",
+			`${image_Header}${playerData.player.avatar.icon}`
+		];
+
+		const visibleCharacters = playerData.characters.slice(
+			0,
+			Math.min(playerData.characters.length, 8)
+		);
+		imageUrls.push(
+			...visibleCharacters.map(char => `${image_Header}${char.preview}`)
+		);
+
+		const visibleActivities = playerActivity?.info?.slice(0, 5) || [];
+		imageUrls.push(
+			...visibleActivities.map(
+				activity => `${image_Header}${activity.content.icon}`
 			)
-		]);
+		);
+
+		const allImages = await Promise.all(imageUrls.map(loadImageAsync));
 
 		const bg = allImages[0];
 		const avatar = allImages[1];
-		const charImages = allImages.slice(2, 2 + playerData.characters.length);
+		const charImages = allImages.slice(2, 2 + visibleCharacters.length);
 		const playerActivityIcons = allImages.slice(
-			2 + playerData.characters.length
+			2 + visibleCharacters.length
 		);
 
-		// Background
 		ctx.drawImage(bg, 0, 0, 1920, 1080);
 
-		// Avatar
 		ctx.drawImage(avatar, 896, 70, 128, 128);
 
-		// Name
-		ctx.font = "bold 40px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+		const setupMainFont = (size, isBold = false) => {
+			ctx.font = `${isBold ? "bold " : ""}${size}px 'YaHei', 'URW DIN Arabic', Arial, sans-serif`;
+		};
+
+		const setupNumberFont = (size, isBold = false) => {
+			ctx.font = `${isBold ? "bold " : ""}${size}px 'URW DIN Arabic', Arial, sans-serif`;
+		};
+
+		setupMainFont(40, true);
 		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
 		ctx.fillText(playerData.player.nickname, 960, 260);
 
-		// UID
-		ctx.font = "24px 'URW DIN Arabic', Arial, sans-serif'";
+		setupNumberFont(24);
 		ctx.fillStyle = "lightgray";
 		ctx.fillText(playerData.player.uid, 960, 300);
 
@@ -321,37 +356,40 @@ async function drawMainImage(tr, playerData, playerActivity) {
 		const profileStats = calculatePositions(profileStatsData, xRange);
 		ctx.fillStyle = "white";
 
-		// Render labels
-		ctx.font = "bold 30px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
 		profileStats.forEach(stat => {
+			setupMainFont(30, true);
 			ctx.fillText(stat.labelText, stat.labelX, stat.labelY);
 		});
 
-		// Render values
-		ctx.font = "32px 'URW DIN Arabic', Arial, sans-serif'";
 		profileStats.forEach(stat => {
+			setupNumberFont(32);
 			ctx.fillText(stat.valueText, stat.valueX, stat.valueY);
 		});
 
-		// Line1
 		ctx.strokeStyle = "#fff";
 		ctx.beginPath();
 		ctx.moveTo(560, 435);
 		ctx.lineTo(1360, 435);
 		ctx.stroke();
 
-		// Characters
 		const width =
 			(920 + (playerData.characters.length - 4) * 230) /
 			playerData.characters.length;
-		playerData.characters.forEach((char, i) => {
+
+		const characterRenderData = visibleCharacters.map((char, i) => {
 			const x =
 				520 - (playerData.characters.length - 4) * 115 + i * width;
 			const y = 716;
-			const charImage = charImages[i];
+			return { char, x, y, image: charImages[i] };
+		});
 
-			ctx.drawImage(charImage, x, 460, 187, 256);
+		characterRenderData.forEach(data => {
+			ctx.drawImage(data.image, data.x, 460, 187, 256);
+		});
 
+		ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+		characterRenderData.forEach(data => {
+			const { x, y } = data;
 			ctx.beginPath();
 			ctx.moveTo(x, y);
 			ctx.lineTo(x, y + 56);
@@ -360,13 +398,19 @@ async function drawMainImage(tr, playerData, playerActivity) {
 			ctx.quadraticCurveTo(x + 187, y + 76, x + 187, y + 56);
 			ctx.lineTo(x + 187, y);
 			ctx.closePath();
-			ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
 			ctx.fill();
+		});
 
-			ctx.font = "bold 28px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+		setupMainFont(28, true);
+		characterRenderData.forEach(data => {
+			const { char, x, y } = data;
 			ctx.fillStyle = char.pos <= 2 ? "#FFD89C" : "white";
 			ctx.fillText(char.name, x + 93, y + 35);
-			ctx.font = "20px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+		});
+
+		setupMainFont(20);
+		characterRenderData.forEach(data => {
+			const { char, x, y } = data;
 			ctx.fillText(
 				tr("level_Format", { level: char.level }),
 				x + 93,
@@ -375,6 +419,7 @@ async function drawMainImage(tr, playerData, playerActivity) {
 		});
 
 		// Line2
+		ctx.strokeStyle = "#fff";
 		ctx.beginPath();
 		ctx.moveTo(560, 817);
 		ctx.lineTo(1360, 817);
@@ -385,17 +430,7 @@ async function drawMainImage(tr, playerData, playerActivity) {
 		ctx.fillStyle = "white";
 		ctx.fillText(tr("profile_Records"), 960, 860);
 
-		// Record details
-		const records = [
-			// {
-			// 	label: tr("profile_CharactersCount"),
-			// 	value: `${playerData.player.space_info.avatar_count}`
-			// }
-			// {
-			// 	label: tr("profile_AchievementsCount"),
-			// 	value: `${playerData.player.space_info.achievement_count}`
-			// }
-		];
+		const records = [];
 		const chaosRecords = playerActivity?.info || [];
 
 		records?.forEach((record, index) => {
@@ -414,7 +449,6 @@ async function drawMainImage(tr, playerData, playerActivity) {
 
 		const minIconX = Math.min(...iconPositions);
 
-		// Chaos Records
 		chaosRecords?.forEach((record, index) => {
 			ctx.textAlign = "center";
 			ctx.font = "bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
@@ -437,67 +471,75 @@ async function drawCharacterImage(tr, playerData, character) {
 		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
 
-		// Load images concurrently
 		const imagePaths = [
 			"./src/assets/image/warp/bg.jpg",
 			`./src/assets/image/${character.element.icon.toLowerCase()}`,
 			`./src/assets/image/${character.path.icon.toLowerCase()}`,
 			`./src/assets/image/icon/deco/Star${character.rarity == 5 ? "5" : "4"}.png`,
-			image_Header + character.portrait,
-			...character.relics.map(relic => image_Header + relic.icon)
+			image_Header + character.portrait
 		];
+
+		const relicImagePaths = character.relics.map(
+			relic => image_Header + relic.icon
+		);
+		imagePaths.push(...relicImagePaths);
+
 		const [bg, element, path, star, characterImage, ...relicImages] =
 			await Promise.all(imagePaths.map(loadImageAsync));
 
-		// BG
 		ctx.drawImage(bg, 0, 0, 1920, 1080);
 
-		// Name
+		const setupFont = (
+			size,
+			isBold = false,
+			fontFamily = "'YaHei', 'URW DIN Arabic', Arial, sans-serif'"
+		) => {
+			ctx.font = `${isBold ? "bold " : ""}${size}px ${fontFamily}`;
+		};
+
 		const maxWidth = 200;
-		let fontSize = 44;
+		let minFontSize = 30;
+		let maxFontSize = 44;
+		let fontSize = maxFontSize;
+
 		ctx.fillStyle = "white";
 		ctx.textAlign = "left";
 
-		const tempCanvas = createCanvas(1920, 1080);
-		const tempCtx = tempCanvas.getContext("2d");
-		tempCtx.font = `bold ${fontSize}px 'YaHei', URW DIN Arabic, Arial, sans-serif' `;
-		let textWidth = tempCtx.measureText(character.name).width;
+		while (maxFontSize - minFontSize > 1) {
+			fontSize = Math.floor((minFontSize + maxFontSize) / 2);
+			setupFont(fontSize, true);
+			const textWidth = ctx.measureText(character.name).width;
 
-		while (textWidth > maxWidth && fontSize > 30) {
-			fontSize -= 2;
-			tempCtx.font = `bold ${fontSize}px 'YaHei', URW DIN Arabic, Arial, sans-serif' `;
-			textWidth = tempCtx.measureText(character.name).width;
+			if (textWidth > maxWidth) {
+				maxFontSize = fontSize;
+			} else {
+				minFontSize = fontSize;
+			}
 		}
 
-		ctx.font = `bold ${fontSize}px 'YaHei', URW DIN Arabic, Arial, sans-serif' `;
+		setupFont(minFontSize, true);
 		ctx.fillText(character.name, 120, 100);
 
-		// Element
 		ctx.drawImage(element, 50, 50, 64, 64);
 
-		// Path
 		ctx.drawImage(path, 50, 120, 64, 64);
 
-		// Path Name
-		ctx.font = "bold 28px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+		setupFont(28, true);
 		ctx.fillText(character.path.name, 130, 165);
 
-		// Star
 		ctx.drawImage(star, 50, 185, 160, 32);
 
-		// Eidolon
-		ctx.font = "bold 26px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+		setupFont(26, true);
 		ctx.textAlign = "center";
 		ctx.fillText(`${tr("Eidolon", { rank: character.rank })}`, 280, 255);
 
-		// Level
+		setupFont(28, true);
 		ctx.fillText(
 			`${tr("level")} ${character.level} / ${20 + character.promotion * 10}`,
 			280,
 			295
 		);
 
-		// Attributes
 		const allAttributes = [...character.attributes, ...character.additions];
 		const attributesWithAdditions = allAttributes
 			.filter(attribute => attribute.field)
@@ -523,23 +565,21 @@ async function drawCharacterImage(tr, playerData, character) {
 			);
 			ctx.drawImage(attributeImage, 50, 300 + i * 45, 48, 48);
 
-			ctx.font = "bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+			setupFont(24, true);
 			ctx.textAlign = "left";
 			ctx.fillText(`${result[i].name}`, 105, 333 + i * 45);
 
-			ctx.font = "bold 24px 'URW DIN Arabic', Arial, sans-serif' ";
+			setupFont(24, true);
 			ctx.textAlign = "right";
 			ctx.fillText(`${result[i].display}`, 500, 333 + i * 45);
 		}
 
-		// Line1
 		ctx.strokeStyle = "#fff";
 		ctx.beginPath();
 		ctx.moveTo(50, 333 + result.length * 45 - 20);
 		ctx.lineTo(500, 333 + result.length * 45 - 20);
 		ctx.stroke();
 
-		// Light Cone
 		if (character.light_cone?.preview) {
 			const light_cone = await loadImageAsync(
 				image_Header + character.light_cone.preview
@@ -549,20 +589,23 @@ async function drawCharacterImage(tr, playerData, character) {
 
 		if (character.light_cone?.name) {
 			ctx.textAlign = "left";
-			ctx.font = "bold 28px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+			setupFont(28, true);
 			ctx.fillText(
 				`${character.light_cone.name}`,
 				300,
 				333 + result.length * 45 + 120
 			);
-			ctx.font = "bold 22px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+			setupFont(22, true);
 			ctx.fillStyle = "#DCC491";
+			setupFont(22, true);
 			ctx.fillText(
 				`${tr("lightConeLevel_Format", { rank: character.light_cone.rank })}`,
 				300,
 				333 + result.length * 45 + 160
 			);
+			setupFont(22);
 			ctx.fillStyle = "white";
+			setupFont(22);
 			ctx.fillText(
 				`${tr("level")} ${character.light_cone.level} / ${20 + character.light_cone.promotion * 10}`,
 				300,
@@ -570,10 +613,8 @@ async function drawCharacterImage(tr, playerData, character) {
 			);
 		}
 
-		// Character Image
 		ctx.drawImage(characterImage, 500, 0, 768, 768);
 
-		// Traces
 		const skillPromises = character.skills
 			.map((skill, i) => {
 				if (i != 4 && i <= 5) {
@@ -594,9 +635,9 @@ async function drawCharacterImage(tr, playerData, character) {
 		skills.forEach((skill, index) => {
 			ctx.drawImage(skill.skillImage, 630 + index * 90, 760, 80, 80);
 			ctx.textAlign = "center";
-			ctx.font = "bold 18px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+			setupFont(18, true);
 			ctx.fillText(`${skill.type_text}`, 670 + index * 90, 870);
-			ctx.font = "bold 16px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+			setupFont(16, true);
 			ctx.fillText(
 				`${tr("level")} ${skill.level}`,
 				670 + index * 90,
@@ -604,50 +645,59 @@ async function drawCharacterImage(tr, playerData, character) {
 			);
 		});
 
-		// Line2
 		ctx.strokeStyle = "#fff";
 		ctx.beginPath();
 		ctx.moveTo(650, 920);
 		ctx.lineTo(1030, 920);
 		ctx.stroke();
 
-		// Name
-		ctx.font = "bold 32px 'YaHei', URW DIN Arabic, Arial, sans-serif' ";
+		setupFont(32, true);
 		ctx.fillText(playerData.player.nickname, 840, 970);
 
-		// uid
-		ctx.font = "26px 'URW DIN Arabic', Arial, sans-serif' ";
+		setupFont(26);
 		ctx.fillStyle = "lightgray";
 		ctx.fillText(playerData.player.uid, 840, 1010);
 
-		// Relics
 		const relics = character.relics;
 		const relicsScore = await getRelicsScore(character);
-		const relicPromises = relics.map(async relic => {
-			const images = await Promise.all([
-				loadImageAsync(image_Header + relic.icon),
-				loadImageAsync(
+
+		const relicRenderData = await Promise.all(
+			relics.map(async (relic, i) => {
+				const subAffixIcons = await Promise.all(
+					relic.sub_affix.map(subAff =>
+						loadImageAsync(`./src/assets/image/${subAff.icon}`)
+					)
+				);
+
+				const mainAffixIcon = await loadImageAsync(
+					`./src/assets/image/${relic.main_affix.icon}`
+				);
+				const rarityIcon = await loadImageAsync(
 					`./src/assets/image/icon/deco/Star${relic.rarity == 5 ? "5" : "4"}.png`
-				),
-				loadImageAsync(`./src/assets/image/${relic.main_affix.icon}`),
-				...relic.sub_affix.map(subAff =>
-					loadImageAsync(`./src/assets/image/${subAff.icon}`)
-				)
-			]);
-			return {
-				...relic,
-				images
-			};
-		});
+				);
 
-		const loadedRelics = await Promise.all(relicPromises);
+				return {
+					relic,
+					index: i,
+					icons: {
+						main: relicImages[i],
+						rarity: rarityIcon,
+						mainAffix: mainAffixIcon,
+						subAffixes: subAffixIcons
+					},
+					score: relicsScore ? relicsScore[i] : null
+				};
+			})
+		);
 
-		let width = 335,
+		const width = 335,
 			height = 220,
 			radius = 10,
 			padding = 20;
 
-		loadedRelics.forEach((relic, i) => {
+		relicRenderData.forEach(data => {
+			const { relic, index: i, icons, score } = data;
+
 			let row = Math.floor(i / 2);
 			let column = i % 2;
 			let x = 1170 + column * (width + padding);
@@ -668,30 +718,26 @@ async function drawCharacterImage(tr, playerData, character) {
 			ctx.restore();
 			ctx.globalAlpha = 1;
 
-			// Relic Icon
-			ctx.drawImage(relic.images[0], x + 10, y + 20, 96, 96);
-			ctx.drawImage(relic.images[1], x + 15, y + 115, 83.78, 16.75);
+			ctx.drawImage(icons.main, x + 10, y + 20, 96, 96);
+			ctx.drawImage(icons.rarity, x + 15, y + 115, 83.78, 16.75);
 
-			// Relic Level
-			ctx.font = "bold 20px 'URW DIN Arabic', Arial, sans-serif' ";
+			setupFont(20, true);
 			ctx.fillStyle = "white";
 			ctx.textAlign = "center";
-			ctx.fillText(`+${relics[i].level}`, x + 55, y + 150);
+			ctx.fillText(`+${relic.level}`, x + 55, y + 150);
 
-			// Relic Main Stat
-			const mainAff = relics[i].main_affix.weight;
-			ctx.drawImage(relic.images[2], x + 100, y + 15, 40, 40);
-			ctx.font = "bold 18px 'YaHei', URW DIN Arabic, Arial, sans-serif";
+			const mainAff = relic.main_affix.weight;
+			ctx.drawImage(icons.mainAffix, x + 100, y + 15, 40, 40);
 			ctx.fillStyle =
 				mainAff >= 0.75
 					? "#F3B664"
 					: mainAff > 0
 						? "#FFFFFF"
-						: "#B6BBC4"; //"#EAB308"; // #FFFFFF
+						: "#B6BBC4";
 			ctx.textAlign = "left";
 
 			let lineHeight = 24;
-			let text = `${relics[i].main_affix.name}`;
+			let text = `${relic.main_affix.name}`;
 
 			let lines, words;
 			let hasLineBreak = false;
@@ -756,17 +802,16 @@ async function drawCharacterImage(tr, playerData, character) {
 			}
 
 			ctx.textAlign = "right";
-			ctx.font = "bold 20px 'URW DIN Arabic', Arial, sans-serif";
-			ctx.fillText(`${relics[i].main_affix.display}`, x + 320, y + 43);
+			setupFont(20, true);
+			ctx.fillText(`${relic.main_affix.display}`, x + 320, y + 43);
 
 			let affixYStart = hasLineBreak ? 75 : 53;
 			const maxWidth = 100;
 			const initialFontSize = 18;
 
-			// Relic Sub Stats
 			relic.sub_affix.forEach((subAffix, subIndex) => {
 				ctx.drawImage(
-					relic.images[subIndex + 3],
+					icons.subAffixes[subIndex],
 					x + 103,
 					y + affixYStart + subIndex * 32,
 					32,
@@ -774,7 +819,7 @@ async function drawCharacterImage(tr, playerData, character) {
 				);
 
 				let fontSize = initialFontSize;
-				ctx.font = `bold ${fontSize}px 'YaHei', URW DIN Arabic, Arial, sans-serif`;
+				setupFont(fontSize, true);
 
 				const weight = subAffix.weight;
 				const color =
@@ -791,7 +836,7 @@ async function drawCharacterImage(tr, playerData, character) {
 
 				while (textWidth > maxWidth && fontSize > 16) {
 					fontSize -= 1;
-					ctx.font = `bold ${fontSize}px 'YaHei', URW DIN Arabic, Arial, sans-serif`;
+					setupFont(fontSize, true);
 					textWidth = ctx.measureText(text).width;
 				}
 
@@ -802,14 +847,14 @@ async function drawCharacterImage(tr, playerData, character) {
 				);
 
 				ctx.textAlign = "right";
-				ctx.font = `bold 20px 'URW DIN Arabic', Arial, sans-serif`;
+				setupFont(20, true);
 				ctx.fillText(
 					`${subAffix.display}`,
 					x + 320,
 					y + affixYStart + 25 + subIndex * 32
 				);
 
-				ctx.font = `bold 16px 'URW DIN Arabic', Arial, sans-serif`;
+				setupFont(16, true);
 				ctx.textAlign = "center";
 				ctx.fillText(
 					">".repeat(subAffix.count - 1 || 0),
@@ -818,46 +863,39 @@ async function drawCharacterImage(tr, playerData, character) {
 				);
 			});
 
-			// Score
-			if (relicsScore) {
-				ctx.font = "bold 22px 'URW DIN Arabic', Arial, sans-serif' ";
-				ctx.fillStyle = `${relicsScore[i].grade.color}`;
+			if (score) {
+				setupFont(22, true);
+				ctx.fillStyle = `${score.grade.color}`;
 				ctx.textAlign = "center";
 				ctx.fillText(
-					`${relicsScore[i].scoreN} - ${relicsScore[i].grade.grade}`,
+					`${score.scoreN} - ${score.grade.grade}`,
 					x + 55,
 					y + 190
 				);
 			}
 		});
 
-		ctx.textAlign = "left"; // Changed from "center" to make positioning more predictable
+		ctx.textAlign = "left";
 		ctx.fillStyle = "white";
-		ctx.font = `bold 36px 'YaHei', URW DIN Arabic, Arial, sans-serif`;
+		setupFont(36, true);
 
-		// Calculate the center position
 		const centerX = 1480;
 
 		if (relicsScore) {
-			// First get the score text
 			const scoreText = tr("RelicGrade", {
 				grade: `${relicsScore.totalScore}`
 			});
 
-			// Measure the score text width
 			const scoreWidth = ctx.measureText(scoreText).width;
 
-			// Calculate the starting position to center both texts together
 			const startX =
 				centerX -
 				(scoreWidth +
 					ctx.measureText(relicsScore.totalGrade.grade).width) /
 					2;
 
-			// Draw the score text
 			ctx.fillText(scoreText, startX, 830);
 
-			// Draw the grade text with its color right after the score text
 			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
 			ctx.fillText(
 				relicsScore.totalGrade.grade,
@@ -865,7 +903,6 @@ async function drawCharacterImage(tr, playerData, character) {
 				830
 			);
 		} else {
-			// Center the "no score" text
 			ctx.textAlign = "center";
 			ctx.fillText(tr("RelicNoScore"), centerX, 830);
 		}
@@ -876,4 +913,15 @@ async function drawCharacterImage(tr, playerData, character) {
 	}
 }
 
-export { handleProfileDraw, drawMainImage, drawCharacterImage };
+function clearImageCache() {
+	if (loadImageAsync.cache) {
+		loadImageAsync.cache.clear();
+	}
+}
+
+export {
+	handleProfileDraw,
+	drawMainImage,
+	drawCharacterImage,
+	clearImageCache
+};

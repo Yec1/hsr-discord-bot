@@ -183,14 +183,19 @@ client.on(Events.InteractionCreate, async interaction => {
 			) {
 				const drawTask = async () => {
 					try {
+						if (!datas || !datas.data || datas.data.length === 0) {
+							throw new Error(tr("draw_NoData"));
+						}
+
 						const imageBuffer = await warpLogImage(
-							interaction,
 							tr,
 							datas,
 							title
 						);
-						if (imageBuffer == null)
-							throw new Error(tr("draw_NoData"));
+
+						if (!imageBuffer) {
+							throw new Error(tr("draw_ImageGenerationFailed"));
+						}
 
 						const image = new AttachmentBuilder(imageBuffer, {
 							name: `warplog.png`
@@ -231,12 +236,13 @@ client.on(Events.InteractionCreate, async interaction => {
 							files: [image]
 						});
 					} catch (error) {
+						console.error("处理跃迁请求时出错:", error);
 						interaction.editReply({
 							embeds: [
 								new EmbedBuilder()
 									.setColor("#E76161")
 									.setTitle(tr("DrawError"))
-									.setDescription(`\`${error}\``)
+									.setDescription(`\`${error.message}\``)
 									.setThumbnail(
 										"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 									)
@@ -285,7 +291,9 @@ client.on(Events.InteractionCreate, async interaction => {
 
 			collector.on("collect", async interaction => {
 				const type = interaction.values[0];
-				await interaction.deferUpdate({ fetchReply: true });
+				await interaction
+					.deferUpdate({ fetchReply: true })
+					.catch(() => {});
 				interaction.editReply({
 					embeds: [
 						new EmbedBuilder()

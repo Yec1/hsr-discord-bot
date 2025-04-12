@@ -20,21 +20,31 @@ async function getSelectMenu(interaction, tr, type) {
 	);
 	const localeJson = responses.data;
 
-	const leaderboardData = (await db.get("LeaderBoard")) || [];
+	const leaderboardData = (await db.get("LeaderBoard")) || {};
 
-	const allCharacterOptions = Object.values(leaderboardData).map(
-		character => {
-			return {
-				emoji: emoji[character.element.id.toLowerCase()],
-				label: `${
-					localeJson[character.id].name == "{NICKNAME}"
-						? tr("MainCharacter")
-						: localeJson[character.id].name
-				}`,
-				value: `${character.id}`
-			};
-		}
+	// 过滤掉没有分数记录的角色
+	const charactersWithScores = Object.values(leaderboardData).filter(
+		character => character.score && character.score.length > 0
 	);
+
+	// 按角色名称排序
+	const sortedCharacters = charactersWithScores.sort((a, b) => {
+		const nameA = localeJson[a.id]?.name || a.id;
+		const nameB = localeJson[b.id]?.name || b.id;
+		return nameA.localeCompare(nameB);
+	});
+
+	const allCharacterOptions = sortedCharacters.map(character => {
+		return {
+			emoji: emoji[character.element.id.toLowerCase()],
+			label: `${
+				localeJson[character.id]?.name == "{NICKNAME}"
+					? tr("MainCharacter")
+					: localeJson[character.id]?.name || character.id
+			}`,
+			value: `${character.id}`
+		};
+	});
 
 	const chunkSize = 25;
 	const startIndexes = Array.from(

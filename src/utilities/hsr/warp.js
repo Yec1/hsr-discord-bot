@@ -14,6 +14,7 @@ import {
 import { getRandomColor } from "../utilities.js";
 import trans from "../../assets/translations.json" with { type: "json" };
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
+import fs from "fs/promises";
 const db = client.db;
 
 GlobalFonts.registerFromPath(
@@ -34,7 +35,16 @@ async function loadImageAsync(url) {
 	try {
 		return await loadImage(url);
 	} catch {
-		return await loadImage(image_Header + "icon/element/None.png");
+		// 创建一个简单的空白图片作为最后的备用方案
+		const canvas = createCanvas(64, 64);
+		const ctx = canvas.getContext("2d");
+		ctx.fillStyle = "#333333";
+		ctx.fillRect(0, 0, 64, 64);
+		ctx.fillStyle = "#FFFFFF";
+		ctx.font = "12px 'URW DIN Arabic'";
+		ctx.textAlign = "center";
+		ctx.fillText("加載失敗", 32, 32);
+		return canvas;
 	}
 }
 
@@ -45,7 +55,13 @@ async function fetchWarpData(query, id, endId) {
 	return axios
 		.get(
 			"https://public-operation-hkrpg-sg.hoyoverse.com/common/gacha_record/api/getGachaLog?" +
-				query
+				query,
+			{
+				headers: {
+					"User-Agent":
+						"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+				}
+			}
 		)
 		.then(response => response.data);
 }
@@ -175,6 +191,14 @@ async function warpLog(input, interaction, tr) {
 					)
 				: 0;
 			list[warpType].total = total;
+		}
+
+		try {
+			// 保存抽卡历史记录
+			await saveWarpHistory(interaction.user.id, list);
+		} catch (error) {
+			console.error("保存抽卡历史记录失败:", error);
+			// 不中断主流程，继续返回结果
 		}
 
 		return list;
@@ -646,179 +670,251 @@ async function createImage(id, warpResults) {
 	return canvas.toBuffer("image/png");
 }
 
-async function warpLogImage(interaction, tr, datas, title) {
+async function warpLogImage(tr, datas, title) {
 	try {
+		// 檢查數據是否有效
+		if (!datas || !datas.data) {
+			throw new Error(tr("draw_InvalidData"));
+		}
+
+		// 限制處理的數據量，避免過多的渲染操作
+		const maxItems = 23;
+		const historyData = [...datas.data.slice(0, maxItems)];
+		historyData.unshift({ count: datas.pity });
+
+		// 創建畫布 - 使用更小的尺寸以提高性能
 		const canvas = createCanvas(1370, 900);
 		const ctx = canvas.getContext("2d");
 
-		const bg = await loadImageAsync("./src/assets/image/warp/warpbg.jpg");
-		ctx.drawImage(bg, 0, 0, 1920, 1080);
+		// 使用離屏渲染緩存常用元素
+		const circleCache = new Map();
+		const rectCache = new Map();
 
-		// Draw Icon
-		const drawIcon = await loadImageAsync(
-			image_Header + "icon/sign/DrawcardIcon.png"
-		);
+		// 預加載所有圖像資源，避免渲染過程中的等待
+		const imagePromises = [
+			// 背景和UI元素
+			loadImageAsync("./src/assets/image/warp/warpbg.jpg").catch(
+				() => null
+			),
+			loadImageAsync(image_Header + "icon/sign/DrawcardIcon.png"),
+			loadImageAsync(image_Header + "icon/deco/StarBig.png"),
+			loadImageAsync(image_Header + "icon/item/102.png"),
+			loadImageAsync(image_Header + "icon/item/900001.png"),
+			// 預加載角色/光錐圖像
+			...historyData.map((res, index) => {
+				if (index === 0)
+					return loadImageAsync(
+						image_Header + "icon/character/None.png"
+					);
+				if (!res.id || !res.type) return Promise.resolve(null);
+				const imagePath = `icon/${res.type == "light_cone" ? "light_cone" : "avatar"}/${res.id}.png`;
+				return loadImageAsync(image_Header + imagePath);
+			})
+		];
+
+		// 並行加載所有圖像
+		const [bg, drawIcon, star, item102, item900001, ...characterImages] =
+			await Promise.all(imagePromises);
+
+		// 繪製背景
+		if (bg) {
+			ctx.drawImage(bg, 0, 0, 1920, 1080);
+		} else {
+			// 創建一個簡單的背景
+			ctx.fillStyle = "#1A1A2E";
+			ctx.fillRect(0, 0, 1370, 900);
+		}
+
+		// 繪製標題區域
 		ctx.drawImage(drawIcon, 50, 22.5, 64, 64);
-
-		// Draw Text
-		ctx.font =
-			"48px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		ctx.font = "48px 'Hanyi', URW DIN Arabic, Arial, sans-serif'";
 		ctx.fillStyle = "#F1C376";
 		ctx.textAlign = "left";
 		ctx.fillText(`${title} ${tr("warplog_Title")}`, 130, 70);
 
-		// Texts
-		// Count
-		ctx.font =
-			"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		// 繪製統計信息 - 使用批處理減少狀態切換
+		const statItems = [
+			{
+				label: tr("warplog_Count"),
+				value: `${datas.total}`,
+				y: 250,
+				icon: item102
+			},
+			{
+				label: tr("warplog_Cost"),
+				value: `${datas.total * 160}`,
+				y: 300,
+				icon: item900001
+			},
+			{
+				label: tr("warplog_5Count"),
+				value: `${datas?.data.length}`,
+				y: 350
+			},
+			{
+				label: tr("warplog_5CountAverage"),
+				value: `${datas.average}`,
+				y: 400
+			}
+		];
+
+		// 批量繪製標籤
+		ctx.font = "bold 24px 'Hanyi', URW DIN Arabic, Arial, sans-serif'";
 		ctx.fillStyle = "#FFFFFF";
 		ctx.textAlign = "left";
-		ctx.fillText(tr("warplog_Count"), 55, 250);
+		for (const item of statItems) {
+			ctx.fillText(item.label, 55, item.y);
+		}
 
-		ctx.font =
-			"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
+		// 批量繪製值
+		ctx.font = "bold 24px 'URW DIN Arabic', Arial, sans-serif'";
 		ctx.fillStyle = "#80B3FF";
 		ctx.textAlign = "right";
-		ctx.fillText(`${datas.total}`, 400, 252.5);
+		for (const item of statItems) {
+			ctx.fillText(item.value, 400, item.y + 2.5);
+		}
 
-		ctx.drawImage(
-			await loadImageAsync(image_Header + "icon/item/102.png"),
-			410,
-			225,
-			36,
-			36
-		);
+		// 繪製圖標
+		for (const item of statItems) {
+			if (item.icon) {
+				ctx.drawImage(item.icon, 410, item.y - 25, 36, 36);
+			}
+		}
 
-		// Count Cost
-		ctx.font =
-			"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "#FFFFFF";
-		ctx.textAlign = "left";
-		ctx.fillText(tr("warplog_Cost"), 55, 300);
-
-		ctx.font =
-			"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "#80B3FF";
-		ctx.textAlign = "right";
-		ctx.fillText(`${datas.total * 160}`, 400, 302.5);
-
-		ctx.drawImage(
-			await loadImageAsync(image_Header + "icon/item/900001.png"),
-			410,
-			275,
-			36,
-			36
-		);
-
-		// 5 Star Count
-		ctx.font =
-			"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "#FFFFFF";
-		ctx.textAlign = "left";
-		ctx.fillText(tr("warplog_5Count"), 55, 350);
-
-		ctx.font =
-			"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "#80B3FF";
-		ctx.textAlign = "right";
-		ctx.fillText(`${datas?.data.length}`, 400, 352.5);
-
-		// 5 Star Average
-		ctx.font =
-			"bold 24px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "#FFFFFF";
-		ctx.textAlign = "left";
-		ctx.fillText(tr("warplog_5CountAverage"), 55, 400);
-
-		ctx.font =
-			"bold 24px ' URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "#80B3FF";
-		ctx.textAlign = "right";
-		ctx.fillText(`${datas.average}`, 400, 402.5);
-
-		// Draw History Icon
-		const star = await loadImageAsync(
-			image_Header + "icon/deco/StarBig.png"
-		);
+		// 繪製歷史記錄標題
 		ctx.drawImage(star, 530, 103, 60, 60);
-
-		// Draw History Text
-		ctx.font =
-			"38px 'Hanyi', URW DIN Arabic, URW DIN Arabic, Arial, sans-serif' ";
+		ctx.font = "38px 'Hanyi', URW DIN Arabic, Arial, sans-serif'";
 		ctx.fillStyle = "#FFFFFF";
 		ctx.textAlign = "left";
 		ctx.fillText(`${tr("warplog_React")}`, 600, 145);
 
-		// Draw History
-		datas.data.slice(0, 23);
-		// datas.data.reverse();
-		datas.data.unshift({
-			count: datas.pity
-		});
+		// 創建進度條顏色映射函數
+		const getProgressColor = progress => {
+			if (progress <= 50) return "#9DF1DF";
+			if (progress <= 70) return "#FFBB5C";
+			return "#FF6969";
+		};
 
-		for (let y = 0; y < Math.ceil(datas?.data.length / 5); y++) {
-			for (let x = 0; x < 5; x++) {
-				if (y * 5 + x < datas.data.length) {
-					const res = datas.data[y * 5 + x];
-					const progress = res.count;
-					const centerX = 600 + x * 150;
-					const centerY = 250 + y * 130;
-					const radius = 55;
-					const lineWidth = 8;
-					const startAngle = -Math.PI / 2;
-					const endAngle =
-						startAngle + (progress / 100) * (2 * Math.PI);
+		// 預先計算佈局
+		const layout = [];
+		for (let i = 0; i < historyData.length; i++) {
+			const y = Math.floor(i / 5);
+			const x = i % 5;
+			const centerX = 600 + x * 150;
+			const centerY = 250 + y * 130;
 
-					// Progress BG
-					ctx.beginPath();
-					ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-					ctx.lineWidth = lineWidth;
-					ctx.strokeStyle = "#000000";
-					ctx.stroke();
+			layout.push({
+				centerX,
+				centerY,
+				rectX: 610 + x * 150,
+				rectY: 270 + y * 130
+			});
+		}
 
-					// Progress
-					const progressColor = [
-						{ threshold: 50, color: "#9DF1DF" },
-						{ threshold: 70, color: "#FFBB5C" },
-						{ threshold: 100, color: "#FF6969" }
-					];
-					let color = "#000000";
+		// 創建圓形進度條緩存函數
+		const getCircleCanvas = (progress, radius, lineWidth) => {
+			const cacheKey = `${progress}-${radius}-${lineWidth}`;
+			if (circleCache.has(cacheKey)) return circleCache.get(cacheKey);
 
-					for (const {
-						threshold,
-						color: colorValue
-					} of progressColor)
-						if (progress <= threshold) {
-							color = colorValue;
-							break;
-						}
+			const size = (radius + lineWidth) * 2;
+			const circleCanvas = createCanvas(size, size);
+			const circleCtx = circleCanvas.getContext("2d");
 
-					ctx.beginPath();
-					ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-					ctx.lineWidth = lineWidth;
-					ctx.strokeStyle = color;
-					ctx.lineCap = "round";
-					ctx.stroke();
+			const centerX = size / 2;
+			const centerY = size / 2;
+			const startAngle = -Math.PI / 2;
+			const endAngle = startAngle + (progress / 100) * (2 * Math.PI);
 
-					// Character
-					const id = res.id;
-					const type = res.type;
-					ctx.globalCompositeOperation = "source-over";
-					const image = await loadImageAsync(
-						image_Header +
-							(x + y == 0
-								? "icon/element/None.png"
-								: `icon/${
-										type == "light_cone"
-											? "light_cone"
-											: "avatar"
-									}/${id}.png`)
-					);
+			// 繪製背景
+			circleCtx.beginPath();
+			circleCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+			circleCtx.lineWidth = lineWidth;
+			circleCtx.strokeStyle = "#000000";
+			circleCtx.stroke();
+
+			// 繪製進度
+			circleCtx.beginPath();
+			circleCtx.arc(centerX, centerY, radius, startAngle, endAngle);
+			circleCtx.lineWidth = lineWidth;
+			circleCtx.strokeStyle = getProgressColor(progress);
+			circleCtx.lineCap = "round";
+			circleCtx.stroke();
+
+			circleCache.set(cacheKey, circleCanvas);
+			return circleCanvas;
+		};
+
+		// 創建矩形計數框緩存函數
+		const getRectCanvas = () => {
+			if (rectCache.has("default")) return rectCache.get("default");
+
+			const rectWidth = 60;
+			const rectHeight = 30;
+			const cornerRadius = 17.5;
+
+			const rectCanvas = createCanvas(rectWidth, rectHeight);
+			const rectCtx = rectCanvas.getContext("2d");
+
+			rectCtx.fillStyle = "#FFFFFF";
+			rectCtx.beginPath();
+			rectCtx.moveTo(cornerRadius, 0);
+			rectCtx.lineTo(rectWidth - cornerRadius, 0);
+			rectCtx.quadraticCurveTo(rectWidth, 0, rectWidth, cornerRadius);
+			rectCtx.lineTo(rectWidth, rectHeight - cornerRadius);
+			rectCtx.quadraticCurveTo(
+				rectWidth,
+				rectHeight,
+				rectWidth - cornerRadius,
+				rectHeight
+			);
+			rectCtx.lineTo(cornerRadius, rectHeight);
+			rectCtx.quadraticCurveTo(
+				0,
+				rectHeight,
+				0,
+				rectHeight - cornerRadius
+			);
+			rectCtx.lineTo(0, cornerRadius);
+			rectCtx.quadraticCurveTo(0, 0, cornerRadius, 0);
+			rectCtx.fill();
+
+			rectCache.set("default", rectCanvas);
+			return rectCanvas;
+		};
+
+		// 批量繪製歷史記錄
+		const radius = 55;
+		const lineWidth = 8;
+		const rectCanvas = getRectCanvas();
+
+		// 使用requestAnimationFrame模擬的批處理渲染
+		for (let i = 0; i < historyData.length; i++) {
+			try {
+				const res = historyData[i];
+				if (!res) continue;
+
+				const progress = res.count;
+				const { centerX, centerY, rectX, rectY } = layout[i];
+
+				// 繪製進度圓
+				const circleCanvas = getCircleCanvas(
+					progress,
+					radius,
+					lineWidth
+				);
+				ctx.drawImage(
+					circleCanvas,
+					centerX - circleCanvas.width / 2,
+					centerY - circleCanvas.height / 2
+				);
+
+				// 繪製角色/光錐圖像
+				const image = characterImages[i];
+				if (image) {
 					const imageWidth = 2 * (radius - lineWidth);
 					const imageHeight = 2 * (radius - lineWidth);
 					const imageX = centerX - imageWidth / 2;
 					const imageY = centerY - imageHeight / 2;
-
 					ctx.drawImage(
 						image,
 						imageX,
@@ -826,64 +922,176 @@ async function warpLogImage(interaction, tr, datas, title) {
 						imageWidth,
 						imageHeight
 					);
-
-					// Count
-					const rectWidth = 60;
-					const rectHeight = 30;
-					const rectX = 610 + x * 150;
-					const rectY = 270 + y * 130;
-					const cornerRadius = 17.5;
-
-					ctx.fillStyle = "#FFFFFF";
-					ctx.beginPath();
-					ctx.moveTo(rectX + cornerRadius, rectY);
-					ctx.lineTo(rectX + rectWidth - cornerRadius, rectY);
-					ctx.quadraticCurveTo(
-						rectX + rectWidth,
-						rectY,
-						rectX + rectWidth,
-						rectY + cornerRadius
-					);
-					ctx.lineTo(
-						rectX + rectWidth,
-						rectY + rectHeight - cornerRadius
-					);
-					ctx.quadraticCurveTo(
-						rectX + rectWidth,
-						rectY + rectHeight,
-						rectX + rectWidth - cornerRadius,
-						rectY + rectHeight
-					);
-					ctx.lineTo(rectX + cornerRadius, rectY + rectHeight);
-					ctx.quadraticCurveTo(
-						rectX,
-						rectY + rectHeight,
-						rectX,
-						rectY + rectHeight - cornerRadius
-					);
-					ctx.lineTo(rectX, rectY + cornerRadius);
-					ctx.quadraticCurveTo(
-						rectX,
-						rectY,
-						rectX + cornerRadius,
-						rectY
-					);
-					ctx.fill();
-
-					// Count Text
-					ctx.font =
-						"bold 20px 'URW DIN Arabic', URW DIN Arabic, Arial, sans-serif' ";
-					ctx.fillStyle = "#000000";
-					ctx.textAlign = "center";
-					ctx.fillText(`${progress}`, rectX + 30, rectY + 22.5);
 				}
+
+				// 繪製計數框
+				ctx.drawImage(rectCanvas, rectX, rectY);
+
+				// 繪製計數文本
+				ctx.font = "bold 20px 'URW DIN Arabic', Arial, sans-serif'";
+				ctx.fillStyle = "#000000";
+				ctx.textAlign = "center";
+				ctx.fillText(`${progress}`, rectX + 30, rectY + 22.5);
+			} catch {
+				// 靜默處理錯誤，繼續下一個項目
+				continue;
 			}
 		}
 
-		return canvas.toBuffer("image/png");
+		// 清理緩存
+		circleCache.clear();
+		rectCache.clear();
+
+		// 返回結果
+		const result = canvas.toBuffer("image/png");
+		if (!result) {
+			throw new Error(tr("draw_CanvasError"));
+		}
+		return result;
 	} catch (e) {
+		throw new Error(tr("draw_Error") + ": " + e.message);
+	}
+}
+
+/**
+ * 保存用户抽卡记录到数据库
+ * @param {string} userId - 用户ID
+ * @param {Object} warpData - 抽卡数据
+ */
+async function saveWarpHistory(userId, warpData) {
+	try {
+		// 获取现有记录
+		const existingData = (await db.get(`${userId}.warpHistory`)) || {
+			character: { total: 0, data: [] },
+			light_cone: { total: 0, data: [] },
+			regular: { total: 0, data: [] },
+			lastUpdated: 0
+		};
+
+		// 合并新数据
+		for (const type of ["character", "light_cone", "regular"]) {
+			if (warpData[type] && warpData[type].data) {
+				// 检查是否有新数据
+				const newItems = warpData[type].data.filter(newItem => {
+					// 检查此物品是否已存在于历史记录中
+					return !existingData[type].data.some(
+						existingItem =>
+							existingItem.id === newItem.id &&
+							existingItem.time === newItem.time
+					);
+				});
+
+				// 添加新数据
+				existingData[type].data = [
+					...newItems,
+					...existingData[type].data
+				];
+				existingData[type].total =
+					warpData[type].total || existingData[type].total;
+
+				// 重新计算平均值
+				if (existingData[type].data.length > 0) {
+					existingData[type].average = parseFloat(
+						(
+							existingData[type].data.reduce(
+								(acc, i) => acc + i.count,
+								0
+							) / existingData[type].data.length
+						).toFixed(2)
+					);
+				}
+
+				// 更新当前保底计数
+				existingData[type].pity =
+					warpData[type].pity || existingData[type].pity;
+			}
+		}
+
+		// 更新时间戳
+		existingData.lastUpdated = Date.now();
+
+		// 保存到数据库
+		await db.set(`${userId}.warpHistory`, existingData);
+
+		return existingData;
+	} catch (error) {
+		console.error("保存抽卡历史记录失败:", error);
+		throw error;
+	}
+}
+
+/**
+ * 获取用户抽卡历史记录
+ * @param {string} userId - 用户ID
+ * @param {string} type - 记录类型 (character, light_cone, regular)
+ * @returns {Object} 抽卡历史记录
+ */
+async function getWarpHistory(userId, type = null) {
+	try {
+		const history = await db.get(`${userId}.warpHistory`);
+		if (!history) return null;
+
+		if (type && history[type]) {
+			return history[type];
+		}
+
+		return history;
+	} catch (error) {
+		console.error("获取抽卡历史记录失败:", error);
 		return null;
 	}
 }
 
-export { warpLog, warp, createImage, warpLogImage };
+/**
+ * 导出用户抽卡历史记录
+ * @param {string} userId - 用户ID
+ * @returns {Object} 历史记录数据
+ */
+async function exportWarpHistory(userId) {
+	try {
+		const history = await getWarpHistory(userId);
+		if (!history) throw new Error("没有找到抽卡历史记录");
+		return history;
+	} catch (error) {
+		console.error("导出抽卡历史记录失败:", error);
+		throw error;
+	}
+}
+
+/**
+ * 导入用户抽卡历史记录
+ * @param {string} userId - 用户ID
+ * @param {Object} importedData - 要导入的历史记录数据
+ * @returns {Object} 导入的历史记录
+ */
+async function importWarpHistory(userId, importedData) {
+	try {
+		// 验证数据格式
+		if (
+			!importedData.character ||
+			!importedData.light_cone ||
+			!importedData.regular
+		) {
+			throw new Error("无效的抽卡历史记录格式");
+		}
+
+		// 保存到数据库
+		await db.set(`${userId}.warpHistory`, importedData);
+
+		return importedData;
+	} catch (error) {
+		console.error("导入抽卡历史记录失败:", error);
+		throw error;
+	}
+}
+
+export {
+	warpLog,
+	warp,
+	createImage,
+	warpLogImage,
+	saveWarpHistory,
+	getWarpHistory,
+	exportWarpHistory,
+	importWarpHistory
+};

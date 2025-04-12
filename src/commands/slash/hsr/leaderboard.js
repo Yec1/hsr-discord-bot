@@ -26,25 +26,79 @@ export default {
 	async execute(client, interaction, args, tr, db, emoji) {
 		await interaction.deferReply();
 
-		interaction.editReply({
-			embeds: [
-				new EmbedBuilder()
-					.setTitle(tr("Searching"))
-					.setColor(getRandomColor())
-					.setThumbnail(
-						"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
-					)
-			],
-			fetchReply: true
-		});
+		try {
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setTitle(tr("Searching"))
+						.setColor(getRandomColor())
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
+						)
+				],
+				fetchReply: true
+			});
 
-		const selectMenus = await getSelectMenu(interaction, tr, "leaderboard");
+			const leaderboardData = await db.get("LeaderBoard");
 
-		interaction.editReply({
-			embeds: [],
-			components: selectMenus.map(selectMenu => {
-				return new ActionRowBuilder().addComponents(selectMenu);
-			})
-		});
+			if (!leaderboardData || Object.keys(leaderboardData).length === 0) {
+				return interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setTitle(tr("leaderboard_NoData") || "No Data")
+							.setDescription(
+								tr("leaderboard_NoDataDesc") || "No Data"
+							)
+							.setColor("#E76161")
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+					],
+					components: []
+				});
+			}
+
+			const selectMenus = await getSelectMenu(
+				interaction,
+				tr,
+				"leaderboard"
+			);
+
+			if (selectMenus.length === 0) {
+				return interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setTitle(tr("leaderboard_NoData"))
+							.setDescription(tr("leaderboard_NoDataDesc"))
+							.setColor("#E76161")
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+					],
+					components: []
+				});
+			}
+
+			interaction.editReply({
+				embeds: [],
+				components: selectMenus.map(selectMenu => {
+					return new ActionRowBuilder().addComponents(selectMenu);
+				})
+			});
+		} catch (error) {
+			console.error("Leaderboard error:", error);
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setTitle(tr("Error"))
+						.setDescription(`\`${error.message || error}\``)
+						.setColor("#E76161")
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+				],
+				components: []
+			});
+		}
 	}
 };
