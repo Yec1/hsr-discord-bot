@@ -77,6 +77,10 @@ async function handleAccountLogin(interaction, tr, fields) {
 		}
 
 		const { uid, nickname } = await getUserGameUid(cookie);
+
+		// 清除過期標記
+		await db.delete(`${uid}.cookieExpired`);
+
 		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
@@ -88,11 +92,25 @@ async function handleAccountLogin(interaction, tr, fields) {
 			]
 		});
 
-		await db.push(`${interaction.user.id}.account`, {
-			uid: uid,
-			cookie: cookie,
-			nickname: nickname
-		});
+		if (existedAccounts.some(account => account.uid == uid)) {
+			existedAccounts.map(async account => {
+				if (account.uid == uid) {
+					account.cookie = cookie;
+					account.nickname = nickname;
+
+					await db.set(
+						`${interaction.user.id}.account`,
+						existedAccounts
+					);
+				}
+			});
+		} else {
+			await db.push(`${interaction.user.id}.account`, {
+				uid: uid,
+				cookie: cookie,
+				nickname: nickname
+			});
+		}
 	} catch (error) {
 		console.log(error);
 		await interaction.editReply({
@@ -249,6 +267,9 @@ async function handleCookieSet(interaction, tr, customId, fields) {
 			cookie: cookie
 		});
 		await hsr.daily.info();
+
+		// 清除過期標記
+		await db.delete(`${account[accountIndex].uid}.cookieExpired`);
 
 		account[accountIndex].cookie = cookie;
 		await db.set(`${interaction.user.id}.account`, account);

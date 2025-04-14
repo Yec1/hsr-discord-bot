@@ -12,7 +12,7 @@ import {
 	updateCookie
 } from "../utilities.js";
 
-// 統一配置
+// Constants
 const CONFIG = {
 	TAIPEI_TIMEZONE: "Asia/Taipei",
 	API_TIMEOUT: 10000,
@@ -23,19 +23,13 @@ const CONFIG = {
 		ALREADY_CLAIMED: -2017,
 		CODE_CLAIMED: -2018,
 		CODE_INVALID: -2001,
-		CODE_EXPIRED: -2006,
-		COOKIE_INVALID: -1071,
-		SYSTEM_BUSY: -1048
+		CODE_EXPIRED: -2006
 	}
 };
 
 const LANGUAGE_MAPPING = {
 	tw: LanguageEnum.TRADIIONAL_CHINESE,
 	cn: LanguageEnum.SIMPLIFIED_CHINESE,
-	vi: LanguageEnum.VIETNAMESE,
-	jp: LanguageEnum.JAPANESE,
-	kr: LanguageEnum.KOREAN,
-	fr: LanguageEnum.FRENCH,
 	default: LanguageEnum.ENGLISH
 };
 
@@ -43,12 +37,13 @@ class AutoRedeemSystem {
 	constructor(client) {
 		this.client = client;
 		this.db = client.db;
-		this.logger = new Logger("AutoRedeem");
+		this.logger = new Logger("自動兌換");
 		this.stats = {
 			total: 0,
 			success: 0,
 			failed: 0,
-			already: 0
+			alreadyClaimed: 0,
+			invalid: 0
 		};
 	}
 
@@ -75,92 +70,143 @@ class AutoRedeemSystem {
 		}
 	}
 
-	async handleRedeemResult(code, res, userRedeemedCodes, uid, tr) {
-		let status = "failed";
-		let message = "";
-
-		switch (res.retcode) {
-			case 0:
-			case res.message === "OK":
-				status = "success";
-				message = tr("redeem_Success");
-				this.stats.success++;
-				break;
-			case CONFIG.ERROR_CODES.ALREADY_CLAIMED:
-			case CONFIG.ERROR_CODES.CODE_CLAIMED:
-				status = "already";
-				message = tr("redeem_Already");
-				this.stats.already++;
-				break;
-			case CONFIG.ERROR_CODES.CODE_INVALID:
-			case CONFIG.ERROR_CODES.CODE_EXPIRED:
-				status = "invalid";
-				message = tr("redeem_Invalid");
-				break;
-			case CONFIG.ERROR_CODES.COOKIE_INVALID:
-				throw new Error(tr("redeem_CookieTokenInvalid"));
-			case CONFIG.ERROR_CODES.SYSTEM_BUSY:
-				throw new Error(tr("redeem_SystemBusy"));
-			default:
-				status = "failed";
-				message = tr("redeem_Failed");
-				this.stats.failed++;
-		}
-
-		if (status !== "failed" && !userRedeemedCodes.includes(code)) {
-			userRedeemedCodes.push(code);
-			await this.db.set(
-				`${uid}.redeemedCodes`,
-				Array.from(new Set(userRedeemedCodes))
-			);
-		}
-
-		return { status, message };
-	}
-
-	async redeemCode(hsr, code, retries = CONFIG.MAX_RETRIES) {
-		for (let attempt = 0; attempt < retries; attempt++) {
+	async withRetry(operation, maxRetries = 3) {
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
 			try {
-				const res = await hsr.redeem.claim(code);
-				return res;
+				return await operation();
 			} catch (error) {
-				if (attempt === retries - 1) throw error;
+				if (attempt === maxRetries) throw error;
 				await new Promise(resolve =>
-					setTimeout(resolve, 1000 * (attempt + 1))
+					setTimeout(resolve, 1000 * attempt)
 				);
 			}
 		}
 	}
 
-	async processAccount(userId, accountIndex, codes, tr) {
-		const cookie = await getUserCookie(userId, accountIndex);
-		const uid = await getUserUid(userId, accountIndex);
+	async processCode(hsr, code, userRedeemedCodes) {
+		try {
+			const result = await this.withRetry(() =>
+				hsr.redeem.claim(code.code)
+			);
 
-		if (!cookie || !uid) {
-			this.logger.warn(`使用者 ${userId} 缺少 Cookie 或 UID `);
+			const status = {
+				success: result.retcode === 0 || result.message === "OK",
+				alreadyClaimed: [
+					CONFIG.ERROR_CODES.ALREADY_CLAIMED,
+					CONFIG.ERROR_CODES.CODE_CLAIMED
+				].includes(result.retcode),
+				invalid: [
+					CONFIG.ERROR_CODES.CODE_INVALID,
+					CONFIG.ERROR_CODES.CODE_EXPIRED
+				].includes(result.retcode),
+				tokenInvalid: result.retcode === -1071
+			};
+
+			if (status.success || status.alreadyClaimed || status.invalid) {
+				userRedeemedCodes.push(code.code);
+			}
+
+			if (status.tokenInvalid) {
+				await this.db.set(`${account.uid}.cookieExpired`, true);
+			}
+
+			return {
+				code,
+				status,
+				message: result.message
+			};
+		} catch (error) {
+			return {
+				code,
+				status: { failed: true },
+				message: error.message
+			};
+		}
+	}
+
+	formatResults(results, tr) {
+		const description = [];
+		const stats = {
+			success: 0,
+			alreadyClaimed: 0,
+			invalid: 0,
+			failed: 0
+		};
+
+		results.forEach(result => {
+			const { code, status } = result;
+			if (status.success) {
+				description.push(
+					`✅ **${code.code}** - (${tr("redeem_Success")})`
+				);
+				stats.success++;
+			} else if (status.alreadyClaimed) {
+				description.push(
+					`ℹ️ **${code.code}** - (${tr("redeem_Already")})`
+				);
+				stats.alreadyClaimed++;
+			} else if (status.invalid) {
+				description.push(
+					`⚠️ **${code.code}** - (${tr("redeem_Invalid")})`
+				);
+				stats.invalid++;
+			} else {
+				description.push(
+					`❌ **${code.code}** - (${tr("redeem_Failed")})`
+				);
+				stats.failed++;
+			}
+		});
+
+		if (description.length > 0) {
+			description.push(`\n### ${tr("redeem_RedeemStats")}`);
+			description.push(`✅ ${tr("redeem_Success")}: ${stats.success}`);
+			description.push(
+				`ℹ️ ${tr("redeem_Already")}: ${stats.alreadyClaimed}`
+			);
+			description.push(`⚠️ ${tr("redeem_Invalid")}: ${stats.invalid}`);
+			description.push(`❌ ${tr("redeem_Failed")}: ${stats.failed}`);
+		}
+
+		return {
+			description: description.join("\n"),
+			stats
+		};
+	}
+
+	async processAccount(account, codes, context) {
+		const { userId, userLang, tr, accountIndex } = context;
+
+		const isCookieExpired = await this.db.get(
+			`${account.uid}.cookieExpired`
+		);
+		if (isCookieExpired) {
+			this.logger.warn(
+				`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 已過期，跳過兌換流程`
+			);
 			return null;
 		}
 
 		const hsr = new HonkaiStarRail({
-			uid,
-			cookie,
-			lang: this.getLanguage(tr.locale)
+			uid: account.uid,
+			cookie: account.cookie,
+			lang: this.getLanguage(userLang)
 		});
 
 		let userRedeemedCodes =
-			(await this.db.get(`${uid}.redeemedCodes`)) || [];
+			(await this.db.get(`${account.uid}.redeemedCodes`)) || [];
 		const unRedeemedCodes = codes.filter(
 			code => !userRedeemedCodes.includes(code.code)
 		);
 
 		if (!unRedeemedCodes.length) {
 			this.logger.info(
-				`使用者 ${userId} 的帳號 #${accountIndex} 沒有未兌換的禮包碼，略過...`
+				`[用戶 ${userId}] [帳號 #${accountIndex}] 沒有新的禮包碼需要兌換`
 			);
 			return null;
 		}
 		this.logger.info(
-			`使用者 ${userId} 的帳號 #${accountIndex} 有 ${unRedeemedCodes.length} 個未標記兌換的禮包碼，開始嘗試兌換...`
+			`[用戶 ${userId}] [帳號 #${accountIndex}] 發現 ${unRedeemedCodes.length} 個未兌換的禮包碼`
 		);
 
 		const results = [];
@@ -169,62 +215,120 @@ class AutoRedeemSystem {
 		for (const code of unRedeemedCodes) {
 			try {
 				this.logger.info(
-					`• 使用者 ${userId} 的帳號 #${accountIndex} 正在嘗試兌換禮包碼 ${code.code}...`
+					`[用戶 ${userId}] [帳號 #${accountIndex}] 正在兌換: ${code.code}`
 				);
-				const res = await this.redeemCode(hsr, code.code);
-				const result = await this.handleRedeemResult(
-					code.code,
-					res,
-					userRedeemedCodes,
-					uid,
-					tr
+				const result = await this.processCode(
+					hsr,
+					code,
+					userRedeemedCodes
 				);
+				if (result.status.tokenInvalid) {
+					this.logger.warn(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 已過期，跳過兌換流程`
+					);
+					return null;
+				}
 
-				if (result.status === "success") hasSuccessfulRedeem = true;
+				if (result.status.success) {
+					this.logger.success(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] 兌換成功: ${code.code}`
+					);
+					hasSuccessfulRedeem = true;
+				} else if (result.status.alreadyClaimed) {
+					this.logger.info(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] 已經兌換過: ${code.code}`
+					);
+				} else if (result.status.invalid) {
+					this.logger.warn(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] 無效的禮包碼: ${code.code}`
+					);
+				} else {
+					this.logger.error(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] 兌換失敗: ${code.code} - ${result.message}`
+					);
+				}
 
-				results.push({ code: code.code, ...result });
+				results.push(result);
 				await new Promise(resolve =>
 					setTimeout(resolve, CONFIG.REDEEM_DELAY)
 				);
 			} catch (error) {
 				this.logger.error(
-					`兌換禮包碼 ${code.code} 失敗: ${error.message}`
+					`[用戶 ${userId}] [帳號 #${accountIndex}] 兌換出錯: ${code.code} - ${error.message}`
 				);
-				results.push({
-					code: code.code,
-					status: "failed",
-					message: error.message
-				});
 			}
 		}
 
 		if (hasSuccessfulRedeem) {
 			try {
-				await updateCookie(userId, accountIndex, hsr.cookie);
-				this.logger.info(
-					`使用者 ${userId} 的帳號 #${accountIndex} 成功兌換 ${results.filter(r => r.status === "success").length} 個禮包碼並更新 Cookie`
+				await updateCookie(userId, accountIndex, account.cookie);
+				this.logger.success(
+					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 更新成功`
 				);
 			} catch (error) {
 				this.logger.error(
-					`使用者 ${userId} 的帳號 #${accountIndex} 更新 Cookie 失敗: ${error.message}`
+					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 更新失敗: ${error.message}`
 				);
 			}
-		} else {
-			this.logger.info(
-				`使用者 ${userId} 的帳號 #${accountIndex} 沒有成功兌換任何禮包碼，略過...`
-			);
 		}
 
-		return { uid, results };
+		await this.db.set(`${account.uid}.redeemedCodes`, [
+			...new Set(userRedeemedCodes)
+		]);
+
+		const { description, stats } = this.formatResults(results, tr);
+
+		Object.entries(stats).forEach(([key, value]) => {
+			this.stats[key] += value;
+		});
+
+		return {
+			uid: account.uid,
+			nickname: account.nickname,
+			description,
+			hasSuccess: stats.success > 0
+		};
 	}
 
-	async sendRedeemMessage(channelId, content, results, tr) {
-		if (!results.some(r => r.status === "success")) return;
+	async processRedemption(userId, redeemData, codesList) {
+		const { userLang, accounts } = await this.getUserPreferences(userId);
+		if (!accounts?.length) return;
 
+		const channelId = redeemData[userId].channelId;
+		const tag = redeemData[userId].tag === "true" ? `<@${userId}>` : "";
+		const tr = i18nMixin(userLang);
+
+		const accountPromises = accounts.map(async (account, index) => {
+			const cookie = await getUserCookie(userId, index);
+			const uid = await getUserUid(userId, index);
+
+			if (!cookie || !uid) return;
+
+			try {
+				await this.processAccount(account, codesList, {
+					userId,
+					channelId,
+					tag,
+					tr,
+					userLang,
+					accountIndex: index
+				});
+			} catch (error) {
+				this.logger.error(
+					`使用者 ${userId} 的帳號 #${index} 處理失敗: ${error.message}`
+				);
+				this.stats.failed++;
+			}
+		});
+
+		await Promise.allSettled(accountPromises);
+	}
+
+	async sendRedeemMessage(channelId, data) {
 		const embed = new EmbedBuilder()
 			.setColor(getRandomColor())
-			.setTitle(tr("Auto") + tr("redeem_SuccessDesc"))
-			.setDescription(this.formatResults(results, tr))
+			.setTitle(data.tr("Auto") + data.tr("redeem_SuccessDesc"))
+			.setDescription(data.description)
 			.setThumbnail(
 				"https://static.wikia.nocookie.net/houkai-star-rail/images/d/d9/Item_Stellar_Jade.png/revision/latest?cb=20230722074903"
 			)
@@ -234,56 +338,41 @@ class AutoRedeemSystem {
 			await this.client.cluster.broadcastEval(
 				async (c, { channelId, content, embed }) => {
 					const channel = c.channels.cache.get(channelId);
-					if (channel) {
+					if (channel)
 						await channel.send({ content, embeds: [embed] });
-					}
 				},
 				{
-					context: { channelId, content, embed },
+					context: { channelId, content: data.tag || "", embed },
 					timeout: CONFIG.API_TIMEOUT
 				}
 			);
 		} catch (error) {
 			this.logger.error(
-				`Failed to send message to channel ${channelId}: ${error.message}`
+				`發送訊息至頻道 ${channelId} 時發生錯誤: ${error.message}`
 			);
 		}
 	}
 
-	formatResults(results, tr) {
-		const groups = {
-			success: results.filter(r => r.status === "success"),
-			already: results.filter(r => r.status === "already"),
-			invalid: results.filter(r => r.status === "invalid"),
-			failed: results.filter(r => r.status === "failed")
-		};
-
-		return [
-			...groups.success.map(r => `✅ **${r.code}** (${r.message})`),
-			...groups.already.map(r => `ℹ️ **${r.code}** (${r.message})`),
-			...groups.invalid.map(r => `⚠️ **${r.code}** (${r.message})`),
-			...groups.failed.map(r => `❌ **${r.code}** (${r.message})`),
-			`\n### ${tr("redeem_RedeemStats")}`,
-			`✅ ${tr("redeem_Success")}: ${groups.success.length}`,
-			`ℹ️ ${tr("redeem_Already")}: ${groups.already.length}`,
-			`⚠️ ${tr("redeem_Invalid")}: ${groups.invalid.length}`,
-			`❌ ${tr("redeem_Failed")}: ${groups.failed.length}`
-		].join("\n");
-	}
-
-	async updateStatistics(currentHour) {
-		this.logger.success(
-			`${currentHour}:00 自動兌換已完成: ` +
-				`${this.stats.total} 總數, ${this.stats.success} 成功, ` +
-				`${this.stats.already} 已領取, ${this.stats.failed} 失敗`
-		);
+	async updateStatistics(nowTime) {
+		this.logger.info("========== 自動兌換統計 ==========");
+		this.logger.info(`時間: ${nowTime}:00`);
+		this.logger.info(`總計處理: ${this.stats.total} 個禮包碼`);
+		this.logger.success(`成功兌換: ${this.stats.success} 個`);
+		this.logger.info(`已兌換過: ${this.stats.alreadyClaimed} 個`);
+		this.logger.warn(`無效代碼: ${this.stats.invalid} 個`);
+		this.logger.error(`兌換失敗: ${this.stats.failed} 個`);
+		this.logger.info("================================");
 	}
 }
 
 export default async function autoRedeem() {
 	const system = new AutoRedeemSystem(client);
+
 	const redeemData = await system.db.get("autoRedeem");
-	if (!redeemData) return;
+	if (!redeemData) {
+		system.logger.warn("沒有找到需要自動兌換的用戶數據");
+		return;
+	}
 
 	const currentHour = new Date().toLocaleString("en-US", {
 		timeZone: CONFIG.TAIPEI_TIMEZONE,
@@ -291,40 +380,27 @@ export default async function autoRedeem() {
 		hour12: false
 	});
 
-	system.logger.info(`正在進行 ${currentHour}:00 自動兌換`);
+	system.logger.info("========== 開始自動兌換 ==========");
+	system.logger.info(`執行時間: ${currentHour}:00`);
 
 	try {
-		const codes = await getRedeemCodes();
+		const codesList = await getRedeemCodes();
+		system.logger.info(`已獲取 ${codesList.length} 個禮包碼`);
 
-		for (const [userId, data] of Object.entries(redeemData)) {
-			const userLang = await getUserLang(userId);
-			const tr = i18nMixin(userLang);
-			const accounts = await system.db.get(`${userId}.account`);
-
-			if (!accounts?.length) continue;
-
-			for (let i = 0; i < accounts.length; i++) {
-				const result = await system.processAccount(
-					userId,
-					i,
-					codes,
-					tr
+		for (const userId of Object.keys(redeemData)) {
+			try {
+				await system.processRedemption(userId, redeemData, codesList);
+			} catch (error) {
+				system.logger.error(
+					`處理用戶 ${userId} 時發生錯誤: ${error.message}`
 				);
-
-				if (result) {
-					const tag = data.tag === "true" ? `<@${userId}>` : "";
-					await system.sendRedeemMessage(
-						data.channelId,
-						tag,
-						result.results,
-						tr
-					);
-				}
 			}
 		}
 
 		await system.updateStatistics(currentHour);
 	} catch (error) {
-		system.logger.error(`自動兌換失敗: ${error.message}`);
+		system.logger.error("自動兌換過程中發生錯誤:");
+		system.logger.error(error.message);
 	}
+	system.logger.info("========== 自動兌換結束 ==========");
 }
