@@ -101,22 +101,19 @@ class AutoDailySignSystem {
 		});
 
 		try {
-			// Get all required information first
 			const [info, reward, rewards] = await Promise.all([
-				hsr.daily.info(),
-				hsr.daily.reward(),
-				hsr.daily.rewards()
+				this.retryOperation(() => hsr.daily.info()),
+				this.retryOperation(() => hsr.daily.reward()),
+				this.retryOperation(() => hsr.daily.rewards())
 			]);
 
-			// Perform the claim
-			const result = await hsr.daily.claim();
+			const result = await this.retryOperation(() => hsr.daily.claim());
 
 			if (result.code === -5003 || result.info.is_sign === true) {
 				this.stats.signed++;
 				return;
 			}
 
-			// Get sign info for today and tomorrow
 			const todaySign =
 				rewards.awards[info.total_sign_day] || rewards.awards[0];
 			const tmrSign =
@@ -125,53 +122,78 @@ class AutoDailySignSystem {
 			this.stats.success++;
 			await this.sendSuccessMessage(channelId, {
 				content: tag,
-				embeds: [
-					new EmbedBuilder()
-						.setColor(getRandomColor())
-						.setTitle(
-							`${account.uid} ${tr("Auto")}${tr("daily_SignSuccess")}`
-						)
-						.setThumbnail(todaySign?.icon)
-						.setDescription(
-							`${tr("daily_Description", {
-								a: `\`${todaySign?.name}x${todaySign?.cnt}\``
-							})}${
-								info.month_last_day
-									? ""
-									: `\n\n<@${userId}> ${tr(
-											"daily_DescriptionTmr",
-											{
-												b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-											}
-										)}`
-							}`
-						)
-						.addFields(
-							{
-								name: `${reward.month} ${tr("daily_Month")}`,
-								value: "\u200b",
-								inline: true
-							},
-							{
-								name: tr("daily_SignedDay", {
-									z: `\`${info.total_sign_day}\``
-								}),
-								value: "\u200b",
-								inline: true
-							},
-							{
-								name: tr("daily_MissedDay", {
-									z: `\`${info.sign_cnt_missed}\``
-								}),
-								value: "\u200b",
-								inline: true
-							}
-						)
-				]
+				embed: this.createSuccessEmbed(
+					account.uid,
+					todaySign,
+					tmrSign,
+					info,
+					reward,
+					userId,
+					tr
+				)
 			});
 		} catch (error) {
+			this.stats.failed++;
 			throw new Error(`API Error: ${error.message}`);
 		}
+	}
+
+	async retryOperation(operation, retries = CONFIG.WEBHOOK_RETRIES) {
+		let lastError;
+
+		for (let i = 0; i < retries; i++) {
+			try {
+				return await operation();
+			} catch (error) {
+				lastError = error;
+				if (i < retries - 1) {
+					await new Promise(resolve =>
+						setTimeout(resolve, 1000 * (i + 1))
+					);
+				}
+			}
+		}
+
+		throw lastError;
+	}
+
+	createSuccessEmbed(uid, todaySign, tmrSign, info, reward, userId, tr) {
+		return new EmbedBuilder()
+			.setColor(getRandomColor())
+			.setTitle(`${uid} ${tr("Auto")}${tr("daily_SignSuccess")}`)
+			.setThumbnail(todaySign?.icon)
+			.setDescription(
+				`${tr("daily_Description", {
+					a: `\`${todaySign?.name}x${todaySign?.cnt}\``
+				})}${
+					info.month_last_day
+						? ""
+						: `\n\n<@${userId}> ${tr("daily_DescriptionTmr", {
+								b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
+							})}`
+				}`
+			)
+			.addFields(
+				{
+					name: `${reward.month} ${tr("daily_Month")}`,
+					value: "\u200b",
+					inline: true
+				},
+				{
+					name: tr("daily_SignedDay", {
+						z: `\`${info.total_sign_day}\``
+					}),
+					value: "\u200b",
+					inline: true
+				},
+				{
+					name: tr("daily_MissedDay", {
+						z: `\`${info.sign_cnt_missed}\``
+					}),
+					value: "\u200b",
+					inline: true
+				}
+			);
 	}
 
 	async sendSuccessMessage(channelId, messageData) {
@@ -267,14 +289,40 @@ export default async function autoDailySign() {
 	});
 
 	const startTime = Date.now();
-	system.logger.success(`Starting ${currentHour}:00 auto sign-in`);
+	system.logger.info(`Starting ${currentHour}:00 auto sign-in`);
 
-	for (const userId of Object.keys(dailyData)) {
-		const scheduledTime = dailyData[userId]?.time || "13";
+	for (const [userId, data] of Object.entries(dailyData)) {
+		const scheduledTime = data?.time || "13";
 
 		if (parseInt(scheduledTime) === parseInt(currentHour)) {
 			try {
-				await system.processDailySign(userId, dailyData);
+				const userLang = await getUserLang(userId);
+				const tr = i18nMixin(userLang);
+				const accounts = await system.db.get(`${userId}.account`);
+
+				if (!accounts?.length) continue;
+
+				for (let i = 0; i < accounts.length; i++) {
+					try {
+						const cookie = await getUserCookie(userId, i);
+						const uid = await getUserUid(userId, i);
+
+						if (!cookie || !uid) continue;
+
+						await system.performSignIn(
+							{ cookie, uid },
+							userLang,
+							userId,
+							data.channelId,
+							data.tag === "true" ? `<@${userId}>` : "",
+							tr
+						);
+					} catch (error) {
+						system.logger.error(
+							`Error processing account ${i} for user ${userId}: ${error.message}`
+						);
+					}
+				}
 			} catch (error) {
 				system.logger.error(
 					`Error processing user ${userId}: ${error.message}`

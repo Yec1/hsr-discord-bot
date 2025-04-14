@@ -109,7 +109,6 @@ export default {
 				)
 				.addUserOption(option =>
 					option
-
 						.setName("user")
 						.setDescription("Help other user redeem code")
 						.setNameLocalizations({
@@ -254,76 +253,41 @@ export default {
 				code => !userRedeemedCodes.includes(code.code)
 			);
 
+			if (noRedeemedCodes.length === 0) {
+				return interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setColor(getRandomColor())
+							.setTitle(tr("redeem_NoCode"))
+					],
+					ephemeral: true
+				});
+			}
+
 			for (let i = 0; i < noRedeemedCodes.length; i++) {
 				const code = noRedeemedCodes[i];
 				try {
-					// 更新進度訊息，加入已處理的兌換結果
-					const processedResults = noRedeemedCodes
-						.slice(0, i)
-						.map(c => {
-							if (c.status === "success")
-								return `✅ ${c.code} (${tr("redeem_Success")})`;
-							if (c.status === "already")
-								return `ℹ️ ${c.code} (${tr("redeem_Already")})`;
-							if (c.status === "invalid")
-								return `⚠️ ${c.code} (${tr("redeem_Invalid")})`;
-							if (c.status === "failed")
-								return `❌ ${c.code} (${tr("redeem_Failed")})`;
-							return `⏳ ${c.code} (${tr("redeem_Processing")})`;
-						})
-						.join("\n");
-
-					interaction.editReply({
-						embeds: [
-							new EmbedBuilder()
-								.setColor(getRandomColor())
-								.setTitle(
-									`${tr("redeem_Redeeming")} ${code.code}`
-								)
-								.setDescription(
-									tr("redeem_ProcessingDesc", {
-										noRedeemedCodes:
-											noRedeemedCodes.length - i,
-										seconds:
-											(noRedeemedCodes.length - i) * 3
-									}) +
-										"\n\n" +
-										(processedResults
-											? `${tr("redeem_Processed")}:\n${processedResults}`
-											: "")
-								)
-								.setThumbnail(
-									"https://media.discordapp.net/attachments/1057244827688910850/1120715314678730832/kuru.gif"
-								)
-						],
+					await interaction.editReply({
+						embeds: [createProgressEmbed(noRedeemedCodes, i, tr)],
 						ephemeral: true
 					});
 
 					const res = await hsr.redeem.claim(code.code);
+					const result = await handleRedeemResult(
+						code.code,
+						res,
+						userRedeemedCodes,
+						db,
+						uid,
+						tr
+					);
+					code.status = result.status;
+					code.message = result.message;
 
-					if (res.retcode == -1071) {
-						throw new Error(tr("redeem_CookieTokenInvalid"));
-					} else if (res.retcode == -1048) {
-						throw new Error(tr("redeem_SystemBusy"));
-					} else if (res.retcode == 0 || res.message == "OK") {
-						code.status = "success"; // 標記為兌換成功
-						if (!userRedeemedCodes.includes(code.code))
-							userRedeemedCodes.push(code.code);
-					} else if (res.retcode == -2017 || res.retcode == -2018) {
-						code.status = "already"; // 標記為已兌換過
-						if (!userRedeemedCodes.includes(code.code))
-							userRedeemedCodes.push(code.code);
-					} else if (res.retcode == -2001 || res.retcode == -2006) {
-						code.status = "invalid"; // 標記為無效
-						if (!userRedeemedCodes.includes(code.code))
-							userRedeemedCodes.push(code.code);
-					}
-
-					userRedeemedCodes = Array.from(new Set(userRedeemedCodes));
-					await db.set(`${uid}.redeemedCodes`, userRedeemedCodes);
 					await new Promise(resolve => setTimeout(resolve, 3000));
 				} catch (e) {
-					code.status = "failed"; // 標記為兌換失敗
+					code.status = "failed";
+					code.message = e.message;
 					failedReply(interaction, e.message);
 				}
 			}
@@ -362,7 +326,7 @@ export default {
 							results.success
 								.map(
 									code =>
-										`✅ **${code.code}** (${tr("redeem_Success")})`
+										`✅ **${code.code}** (${code.message})`
 								)
 								.join("\n") +
 								(results.already.length
@@ -370,7 +334,7 @@ export default {
 										results.already
 											.map(
 												code =>
-													`ℹ️ **${code.code}** (${tr("redeem_Already")})`
+													`ℹ️ **${code.code}** (${code.message})`
 											)
 											.join("\n")
 									: "") +
@@ -379,7 +343,7 @@ export default {
 										results.invalid
 											.map(
 												code =>
-													`⚠️ **${code.code}** (${tr("redeem_Invalid")})`
+													`⚠️ **${code.code}** (${code.message})`
 											)
 											.join("\n")
 									: "") +
@@ -388,7 +352,7 @@ export default {
 										results.failed
 											.map(
 												code =>
-													`❌ **${code.code}** (${tr("redeem_Failed")})`
+													`❌ **${code.code}** (${code.message})`
 											)
 											.join("\n")
 									: "") +
@@ -524,3 +488,79 @@ export default {
 		}
 	}
 };
+
+// 添加一個新的輔助函數來處理兌換結果
+async function handleRedeemResult(code, res, userRedeemedCodes, db, uid, tr) {
+	let status = "failed";
+	let message = "";
+
+	switch (res.retcode) {
+		case 0:
+		case res.message === "OK":
+			status = "success";
+			message = tr("redeem_Success");
+			break;
+		case -2017:
+		case -2018:
+			status = "already";
+			message = tr("redeem_Already");
+			break;
+		case -2001:
+		case -2006:
+			status = "invalid";
+			message = tr("redeem_Invalid");
+			break;
+		case -1071:
+			throw new Error(tr("redeem_CookieTokenInvalid"));
+		case -1048:
+			throw new Error(tr("redeem_SystemBusy"));
+		default:
+			status = "failed";
+			message = tr("redeem_Failed");
+	}
+
+	if (status !== "failed" && !userRedeemedCodes.includes(code)) {
+		userRedeemedCodes.push(code);
+		await db.set(
+			`${uid}.redeemedCodes`,
+			Array.from(new Set(userRedeemedCodes))
+		);
+	}
+
+	return { status, message };
+}
+
+// 添加一個新的輔助函數來生成進度嵌入
+function createProgressEmbed(codes, currentIndex, tr) {
+	const processedResults = codes
+		.slice(0, currentIndex)
+		.map(code => {
+			const statusMap = {
+				success: "✅",
+				already: "ℹ️",
+				invalid: "⚠️",
+				failed: "❌",
+				processing: "⏳"
+			};
+			const icon = statusMap[code.status || "processing"];
+			return `${icon} ${code.code} (${code.message || tr("redeem_Processing")})`;
+		})
+		.join("\n");
+
+	return new EmbedBuilder()
+		.setColor(getRandomColor())
+		.setTitle(`${tr("redeem_Redeeming")} ${codes[currentIndex]?.code}`)
+		.setDescription(
+			tr("redeem_ProcessingDesc", {
+				noRedeemedCodes: codes.length - currentIndex,
+				seconds: (codes.length - currentIndex) * 3
+			}) +
+				"\n\n" +
+				(processedResults
+					? `${tr("redeem_Processed")}:\n${processedResults}`
+					: "")
+		)
+		.setThumbnail(
+			"https://media.discordapp.net/attachments/1057244827688910850/1120715314678730832/kuru.gif"
+		);
+}

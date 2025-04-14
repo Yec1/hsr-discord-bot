@@ -11,7 +11,7 @@ import {
 	getRedeemCodes
 } from "../utilities.js";
 
-// Constants
+// 統一配置
 const CONFIG = {
 	TAIPEI_TIMEZONE: "Asia/Taipei",
 	API_TIMEOUT: 10000,
@@ -22,7 +22,9 @@ const CONFIG = {
 		ALREADY_CLAIMED: -2017,
 		CODE_CLAIMED: -2018,
 		CODE_INVALID: -2001,
-		CODE_EXPIRED: -2006
+		CODE_EXPIRED: -2006,
+		COOKIE_INVALID: -1071,
+		SYSTEM_BUSY: -1048
 	}
 };
 
@@ -44,7 +46,8 @@ class AutoRedeemSystem {
 		this.stats = {
 			total: 0,
 			success: 0,
-			failed: 0
+			failed: 0,
+			already: 0
 		};
 	}
 
@@ -73,252 +76,180 @@ class AutoRedeemSystem {
 		}
 	}
 
-	async processRedemption(userId, redeemData, codesList) {
-		const { userLang, accounts } = await this.getUserPreferences(userId);
-		if (!accounts?.length) return;
+	async handleRedeemResult(code, res, userRedeemedCodes, uid, tr) {
+		let status = "failed";
+		let message = "";
 
-		const channelId = redeemData[userId].channelId;
-		const tag = redeemData[userId].tag === "true" ? `<@${userId}>` : "";
-		const tr = i18nMixin(userLang);
-
-		const accountPromises = accounts.map(async (account, index) => {
-			const cookie = await getUserCookie(userId, index);
-			const uid = await getUserUid(userId, index);
-			const redeemedCodes =
-				(await this.db.get(`${uid}.redeemedCodes`)) || [];
-
-			if (!cookie || !uid) return;
-
-			try {
-				await this.redeemCodesForAccount(
-					account,
-					codesList,
-					redeemedCodes,
-					{
-						userId,
-						channelId,
-						tag,
-						tr,
-						userLang
-					}
-				);
-			} catch (error) {
-				console.log(error);
-				this.logger.error(
-					`Failed to process account ${uid}: ${error.message}`
-				);
+		switch (res.retcode) {
+			case 0:
+			case res.message === "OK":
+				status = "success";
+				message = tr("redeem_Success");
+				this.stats.success++;
+				break;
+			case CONFIG.ERROR_CODES.ALREADY_CLAIMED:
+			case CONFIG.ERROR_CODES.CODE_CLAIMED:
+				status = "already";
+				message = tr("redeem_Already");
+				this.stats.already++;
+				break;
+			case CONFIG.ERROR_CODES.CODE_INVALID:
+			case CONFIG.ERROR_CODES.CODE_EXPIRED:
+				status = "invalid";
+				message = tr("redeem_Invalid");
+				break;
+			case CONFIG.ERROR_CODES.COOKIE_INVALID:
+				throw new Error(tr("redeem_CookieTokenInvalid"));
+			case CONFIG.ERROR_CODES.SYSTEM_BUSY:
+				throw new Error(tr("redeem_SystemBusy"));
+			default:
+				status = "failed";
+				message = tr("redeem_Failed");
 				this.stats.failed++;
-			}
-		});
+		}
 
-		await Promise.allSettled(accountPromises);
+		if (status !== "failed" && !userRedeemedCodes.includes(code)) {
+			userRedeemedCodes.push(code);
+			await this.db.set(
+				`${uid}.redeemedCodes`,
+				Array.from(new Set(userRedeemedCodes))
+			);
+		}
+
+		return { status, message };
 	}
 
-	async redeemCodesForAccount(
-		account,
-		codesList,
-		userRedeemedCodes,
-		context
-	) {
-		this.stats.total++;
-
-		const unredeemedCodes = codesList.filter(
-			code => !userRedeemedCodes.includes(code.code)
-		);
-
-		if (!unredeemedCodes.length) return;
-
-		const hsr = new HonkaiStarRail({
-			uid: account.uid,
-			cookie: account.cookie,
-			lang: this.getLanguage(context.userLang)
-		});
-
-		const results = {
-			success: [],
-			alreadyClaimed: [],
-			invalid: [],
-			failed: []
-		};
-
-		const description = [
-			`<@${context.userId}> - ${account.nickname ? `- ${account.nickname}` : ""} (${account.uid})`
-		];
-
-		for (const code of unredeemedCodes) {
-			try {
-				const result = await this.attemptCodeRedeem(
-					hsr,
-					code.code,
-					CONFIG.MAX_RETRIES
-				);
-
-				if (!result.success && result.retcode === -1071) return;
-				if (result.success) {
-					results.success.push(code);
-					userRedeemedCodes.push(code.code);
-					description.push(
-						`✅ **${code.code}** - (${context.tr("redeem_Success")})`
-					);
-				} else {
-					if (
-						result.retcode === CONFIG.ERROR_CODES.ALREADY_CLAIMED ||
-						result.retcode === CONFIG.ERROR_CODES.CODE_CLAIMED
-					) {
-						results.alreadyClaimed.push(code);
-						userRedeemedCodes.push(code.code);
-						description.push(
-							`ℹ️ **${code.code}** - (${context.tr("redeem_Already")})`
-						);
-					} else if (
-						[
-							CONFIG.ERROR_CODES.CODE_INVALID,
-							CONFIG.ERROR_CODES.CODE_EXPIRED
-						].includes(result.retcode)
-					) {
-						results.invalid.push(code);
-						userRedeemedCodes.push(code.code);
-						description.push(
-							`⚠️ **${code.code}** - (${context.tr("redeem_Invalid")})`
-						);
-					} else {
-						results.failed.push(code);
-						this.stats.failed++;
-						description.push(
-							`❌ **${code.code}** - (${context.tr("redeem_Failed")})`
-						);
-					}
-				}
-
-				await this.sleep(CONFIG.REDEEM_DELAY);
-			} catch (error) {
-				results.failed.push(code);
-				this.stats.failed++;
-				this.logger.error(
-					`Failed to redeem code ${code.code}: ${error.message}`
-				);
-				description.push(`❌ **${code.code}** - ${error.message}`);
-			}
-		}
-
-		await this.updateUserRedeemedCodes(account.uid, userRedeemedCodes);
-
-		if (results.success.length > 0) {
-			this.stats.success++;
-		}
-
-		// 加入統計資訊
-		if (unredeemedCodes.length > 0) {
-			description.push(`\n### ${context.tr("redeem_RedeemStats")}`);
-			description.push(
-				`✅ ${context.tr("redeem_Success")}: ${results.success.length}`
-			);
-			description.push(
-				`ℹ️ ${context.tr("redeem_Already")}: ${results.alreadyClaimed.length}`
-			);
-			description.push(
-				`⚠️ ${context.tr("redeem_Invalid")}: ${results.invalid.length}`
-			);
-			description.push(
-				`❌ ${context.tr("redeem_Failed")}: ${results.failed.length}`
-			);
-		}
-
-		if (results.success.length > 0) {
-			// 有成功兌換的才發送訊息
-			await this.sendRedeemSuccessMessage(context.channelId, {
-				tag: context.tag,
-				tr: context.tr,
-				description: description.join("\n")
-			});
-		}
-	}
-
-	async attemptCodeRedeem(hsr, code, retries = 3) {
+	async redeemCode(hsr, code, retries = CONFIG.MAX_RETRIES) {
 		for (let attempt = 0; attempt < retries; attempt++) {
 			try {
 				const res = await hsr.redeem.claim(code);
-
-				if (res.retcode === 0 || res.message === "OK") {
-					return { success: true };
-				}
-
-				return {
-					success: false,
-					retcode: res.retcode,
-					message: res.message || "Unknown error"
-				};
+				return res;
 			} catch (error) {
-				if (attempt === retries - 1) {
-					return {
-						success: false,
-						failed: true,
-						message: error.message
-					};
-				}
-				await this.sleep(1000 * (attempt + 1));
+				if (attempt === retries - 1) throw error;
+				await new Promise(resolve =>
+					setTimeout(resolve, 1000 * (attempt + 1))
+				);
 			}
 		}
 	}
 
-	async updateUserRedeemedCodes(uid, codes) {
-		try {
-			const uniqueCodes = [...new Set(codes)];
-			await this.db.set(`${uid}.redeemedCodes`, uniqueCodes);
-		} catch (error) {
-			this.logger.error(
-				`Failed to update redeemed codes for ${uid}: ${error.message}`
-			);
+	async processAccount(userId, accountIndex, codes, tr) {
+		const cookie = await getUserCookie(userId, accountIndex);
+		const uid = await getUserUid(userId, accountIndex);
+
+		if (!cookie || !uid) {
+			this.logger.warn(`Missing cookie or UID for user ${userId}`);
+			return null;
 		}
+
+		const hsr = new HonkaiStarRail({
+			uid,
+			cookie,
+			lang: this.getLanguage(tr.locale)
+		});
+
+		let userRedeemedCodes =
+			(await this.db.get(`${uid}.redeemedCodes`)) || [];
+		const unredeemedCodes = codes.filter(
+			code => !userRedeemedCodes.includes(code.code)
+		);
+
+		if (!unredeemedCodes.length) return null;
+
+		const results = [];
+		for (const code of unredeemedCodes) {
+			try {
+				const res = await this.redeemCode(hsr, code.code);
+				const result = await this.handleRedeemResult(
+					code.code,
+					res,
+					userRedeemedCodes,
+					uid,
+					tr
+				);
+				results.push({ code: code.code, ...result });
+				await new Promise(resolve =>
+					setTimeout(resolve, CONFIG.REDEEM_DELAY)
+				);
+			} catch (error) {
+				this.logger.error(
+					`Failed to redeem code ${code.code} for ${uid}: ${error.message}`
+				);
+				results.push({
+					code: code.code,
+					status: "failed",
+					message: error.message
+				});
+			}
+		}
+
+		return { uid, results };
 	}
 
-	async sendRedeemSuccessMessage(channelId, data) {
+	async sendRedeemMessage(channelId, content, results, tr) {
+		if (!results.some(r => r.status === "success")) return;
+
 		const embed = new EmbedBuilder()
 			.setColor(getRandomColor())
-			.setTitle(data.tr("Auto") + data.tr("redeem_SuccessDesc"))
+			.setTitle(tr("Auto") + tr("redeem_SuccessDesc"))
+			.setDescription(this.formatResults(results, tr))
 			.setThumbnail(
 				"https://static.wikia.nocookie.net/houkai-star-rail/images/d/d9/Item_Stellar_Jade.png/revision/latest?cb=20230722074903"
 			)
-			.setDescription(data.description)
-			.setTimestamp(); // 加入時間戳記
-
-		const content = data.tag ?? "";
+			.setTimestamp();
 
 		try {
 			await this.client.cluster.broadcastEval(
-				async (c, { channelId, content, embeds }) => {
+				async (c, { channelId, content, embed }) => {
 					const channel = c.channels.cache.get(channelId);
 					if (channel) {
-						await channel.send({ content, embeds });
+						await channel.send({ content, embeds: [embed] });
 					}
 				},
 				{
-					context: {
-						channelId,
-						content: content,
-						embeds: [embed]
-					},
+					context: { channelId, content, embed },
 					timeout: CONFIG.API_TIMEOUT
 				}
 			);
 		} catch (error) {
 			this.logger.error(
-				`Failed to send success message to channel ${channelId}: ${error.message}`
+				`Failed to send message to channel ${channelId}: ${error.message}`
 			);
 		}
 	}
 
-	async updateStatistics(nowTime) {
+	formatResults(results, tr) {
+		const groups = {
+			success: results.filter(r => r.status === "success"),
+			already: results.filter(r => r.status === "already"),
+			invalid: results.filter(r => r.status === "invalid"),
+			failed: results.filter(r => r.status === "failed")
+		};
+
+		return [
+			...groups.success.map(r => `✅ **${r.code}** (${r.message})`),
+			...groups.already.map(r => `ℹ️ **${r.code}** (${r.message})`),
+			...groups.invalid.map(r => `⚠️ **${r.code}** (${r.message})`),
+			...groups.failed.map(r => `❌ **${r.code}** (${r.message})`),
+			`\n### ${tr("redeem_RedeemStats")}`,
+			`✅ ${tr("redeem_Success")}: ${groups.success.length}`,
+			`ℹ️ ${tr("redeem_Already")}: ${groups.already.length}`,
+			`⚠️ ${tr("redeem_Invalid")}: ${groups.invalid.length}`,
+			`❌ ${tr("redeem_Failed")}: ${groups.failed.length}`
+		].join("\n");
+	}
+
+	async updateStatistics(currentHour) {
 		this.logger.success(
-			`Completed ${nowTime}:00 auto redemption: ${this.stats.total} total, ` +
-				`${this.stats.success} successful, ${this.stats.failed} failed`
+			`Completed ${currentHour}:00 auto redemption: ` +
+				`${this.stats.total} total, ${this.stats.success} successful, ` +
+				`${this.stats.already} already claimed, ${this.stats.failed} failed`
 		);
 	}
 }
 
 export default async function autoRedeem() {
 	const system = new AutoRedeemSystem(client);
-
 	const redeemData = await system.db.get("autoRedeem");
 	if (!redeemData) return;
 
@@ -331,15 +262,32 @@ export default async function autoRedeem() {
 	system.logger.info(`Starting ${currentHour}:00 auto redemption`);
 
 	try {
-		const codesList = await getRedeemCodes();
+		const codes = await getRedeemCodes();
 
-		for (const userId of Object.keys(redeemData)) {
-			try {
-				await system.processRedemption(userId, redeemData, codesList);
-			} catch (error) {
-				system.logger.error(
-					`Error processing user ${userId}: ${error.message}`
+		for (const [userId, data] of Object.entries(redeemData)) {
+			const userLang = await getUserLang(userId);
+			const tr = i18nMixin(userLang);
+			const accounts = await system.db.get(`${userId}.account`);
+
+			if (!accounts?.length) continue;
+
+			for (let i = 0; i < accounts.length; i++) {
+				const result = await system.processAccount(
+					userId,
+					i,
+					codes,
+					tr
 				);
+
+				if (result) {
+					const tag = data.tag === "true" ? `<@${userId}>` : "";
+					await system.sendRedeemMessage(
+						data.channelId,
+						tag,
+						result.results,
+						tr
+					);
+				}
 			}
 		}
 
