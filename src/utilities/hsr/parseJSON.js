@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Logger } from "../core/logger.js";
+import Logger from "../core/logger.js";
 
 const cleanText = text => {
 	return text

@@ -1,5 +1,5 @@
 import express from "express";
-import { Logger } from "./utilities/core/logger.js";
+import Logger from "./utilities/core/logger.js";
 import { QuickDB } from "quick.db";
 import { MongoDriver } from "quickmongo";
 

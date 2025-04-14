@@ -103,7 +103,7 @@ const langs = {
 	account_CookieSetFailed: "Cookie 绑定失败",
 	account_CookieSetFailedDesc: "请确认 Cookie 是否正确",
 	account_DeletedSuccess: "已解除绑定帐号",
-	account_LimitExceeded: "最多只能设定至多 `3` 个帐号！",
+	account_LimitExceeded: "最多只能设定至多 `5` 个帐号！",
 	account_AlreadySet: "您已经设定过 <z> 了！",
 	account_UidSetSuccess: "UID <z> 设定成功！",
 

@@ -3,7 +3,7 @@ import { client } from "./index.js";
 import { Collection } from "discord.js";
 import { ClusterClient } from "discord-hybrid-sharding";
 import { QuickDB } from "quick.db";
-import { Logger } from "./utilities/core/logger.js";
+import Logger from "./utilities/core/logger.js";
 import { ApplicationCommandType } from "discord.js";
 import { promisify } from "util";
 import _glob from "glob";

@@ -50,7 +50,7 @@ async function handleAccountLogin(interaction, tr, fields) {
 		}
 		const existedAccounts =
 			(await db.get(`${interaction.user.id}.account`)) || [];
-		if (existedAccounts.length >= 3) {
+		if (existedAccounts.length >= 5) {
 			return interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -185,7 +185,7 @@ async function handleUidSet(interaction, tr, fields) {
 
 	if (await db.has(`${interaction.user.id}.account`)) {
 		const accounts = await db.get(`${interaction.user.id}.account`);
-		if (accounts.length >= 3)
+		if (accounts.length >= 5)
 			return interaction.editReply({
 				embeds: [
 					new EmbedBuilder()

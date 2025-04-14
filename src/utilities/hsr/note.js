@@ -2,7 +2,7 @@ import { drawInQueueReply, secondsToHms } from "../utilities.js";
 import { EmbedBuilder, AttachmentBuilder } from "discord.js";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import { join } from "path";
-import { Logger } from "../core/logger.js";
+import Logger from "../core/logger.js";
 import Queue from "queue";
 import moment from "moment";
 

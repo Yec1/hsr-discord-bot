@@ -3,7 +3,7 @@ import { ApplicationCommandOptionType } from "discord.js";
 import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
 import { Events, EmbedBuilder, WebhookClient, ChannelType } from "discord.js";
 import emoji from "../assets/emoji.js";
-import { Logger } from "../utilities/core/logger.js";
+import Logger from "../utilities/core/logger.js";
 import { setupDefaultLang, getUserLang } from "../utilities/utilities.js";
 
 const db = client.db;
@@ -83,8 +83,6 @@ client.on(Events.InteractionCreate, async interaction => {
 								"## 星穹鐵道迎來二周年魔儲與你一同慶祝！\n" +
 									"## 🔶 購買遐蝶組合包，即可獲得組合包加碼贈送的福利\n" +
 									"賣場新增3個組合包品項，每個組合包都有額外贈送商品，還可以參加抽獎\n" +
-									"## 🔶 搭配魔儲發薪券，結帳時可再享 2% 折抵\n" +
-									"4/10 前輸入優惠券代碼【25MEP4】，消費金額超過 500元 即可立即折抵「2%」消費金額\n" +
 									"## 🔶 註冊新會員即領折價券\n" +
 									"4/9~4/29期間註冊成為魔儲會員，帳號內就會獲得一張鐵道賣場專用的百元折價券\n" +
 									"記得要用我的推薦碼【yeci】喔！！\n" +

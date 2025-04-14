@@ -105,7 +105,7 @@ const langs = {
 	account_CookieSetFailed: "Cookie binding failed",
 	account_CookieSetFailedDesc: "Please check if the Cookie is correct",
 	account_DeletedSuccess: "Account unlinked successfully",
-	account_LimitExceeded: "You can set up to `3` accounts!",
+	account_LimitExceeded: "You can set up to `5` accounts!",
 	account_AlreadySet: "You have already set <z>!",
 	account_UidSetSuccess: "UID <z> set successfully!",
 

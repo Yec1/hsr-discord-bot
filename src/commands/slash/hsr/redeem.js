@@ -8,8 +8,10 @@ import {
 	getRedeemCodes,
 	getRandomColor,
 	getUserHSRData,
-	getUserUid
+	getUserUid,
+	updateCookie
 } from "../../../utilities/utilities.js";
+import Logger from "../../../utilities/core/logger.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -315,6 +317,19 @@ export default {
 					],
 					ephemeral: true
 				});
+			}
+
+			if (results.success.length > 0) {
+				try {
+					await updateCookie(targetUser.id, accountIndex, hsr.cookie);
+					new Logger("Redeem").info(
+						`使用者 ${targetUser.id} 的帳號 #${accountIndex} 成功兌換 ${results.success.length} 個禮包碼並更新 Cookie`
+					);
+				} catch (e) {
+					new Logger("Redeem").error(
+						`使用者 ${targetUser.id} 的帳號 #${accountIndex} 更新 Cookie 失敗: ${e.message}`
+					);
+				}
 			}
 
 			interaction.editReply({

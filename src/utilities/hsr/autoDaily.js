@@ -1,7 +1,7 @@
 import { client } from "../../index.js";
 import { EmbedBuilder, WebhookClient } from "discord.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
-import { Logger } from "../core/logger.js";
+import Logger from "../core/logger.js";
 import { i18nMixin } from "../core/i18n.js";
 import {
 	getUserCookie,
@@ -85,7 +85,7 @@ class AutoDailySignSystem {
 				);
 			} catch (error) {
 				this.logger.error(
-					`Sign-in failed for user ${userId} account ${accountIndex}: ${error.message}`
+					`簽到失敗: 使用者 ${userId} 帳號 #${accountIndex}: ${error.message}`
 				);
 				this.stats.failed++;
 			}
@@ -134,7 +134,7 @@ class AutoDailySignSystem {
 			});
 		} catch (error) {
 			this.stats.failed++;
-			throw new Error(`API Error: ${error.message}`);
+			throw new Error(`API 錯誤: ${error.message}`);
 		}
 	}
 
@@ -212,7 +212,7 @@ class AutoDailySignSystem {
 			);
 		} catch (error) {
 			this.logger.error(
-				`Failed to send message to channel ${channelId}: ${error.message}`
+				`發送訊息到頻道 ${channelId} 失敗: ${error.message}`
 			);
 		}
 	}
@@ -225,14 +225,14 @@ class AutoDailySignSystem {
 			this.stats.total > 0 ? duration / this.stats.total : 0;
 
 		this.logger.success(
-			`Completed ${currentHour}:00 auto sign-in: ${this.stats.total} total, ` +
-				`${this.stats.success} successful, ${this.stats.signed} already signed, ` +
-				`${this.stats.failed} failed`
+			`${currentHour}:00 自動簽到已完成: ${this.stats.total} 總數, ` +
+				`${this.stats.success} 成功, ${this.stats.signed} 已領取, ` +
+				`${this.stats.failed} 失敗`
 		);
 
 		const statsEmbed = new EmbedBuilder()
 			.setColor("#F2BE22")
-			.setTitle(`${currentHour}:00 Auto Sign-in Stats`)
+			.setTitle(`${currentHour}:00 自動簽到統計`)
 			.setTimestamp()
 			.addFields(this.buildStatsFields(duration, averageTime));
 
@@ -242,32 +242,32 @@ class AutoDailySignSystem {
 	buildStatsFields(duration, averageTime) {
 		return [
 			{
-				name: `Total Users: \`${this.stats.total}\``,
+				name: `總使用者: \`${this.stats.total}\``,
 				value: "\u200b",
 				inline: false
 			},
 			{
-				name: `Successful: \`${this.stats.success}\``,
+				name: `成功: \`${this.stats.success}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `Already Signed: \`${this.stats.signed}\``,
+				name: `已領取: \`${this.stats.signed}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `Failed: \`${this.stats.failed}\``,
+				name: `失敗: \`${this.stats.failed}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `Total Duration: \`${duration.toFixed(3)}\` seconds`,
+				name: `總時間: \`${duration.toFixed(3)}\` 秒`,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `Average Time: \`${averageTime.toFixed(3)}\` seconds`,
+				name: `平均時間: \`${averageTime.toFixed(3)}\` 秒`,
 				value: "\u200b",
 				inline: true
 			}
@@ -289,7 +289,7 @@ export default async function autoDailySign() {
 	});
 
 	const startTime = Date.now();
-	system.logger.info(`Starting ${currentHour}:00 auto sign-in`);
+	system.logger.info(`正在進行 ${currentHour}:00 自動簽到`);
 
 	for (const [userId, data] of Object.entries(dailyData)) {
 		const scheduledTime = data?.time || "13";
@@ -319,13 +319,13 @@ export default async function autoDailySign() {
 						);
 					} catch (error) {
 						system.logger.error(
-							`Error processing account ${i} for user ${userId}: ${error.message}`
+							`處理使用者 ${userId} 的帳號 #${i} 失敗: ${error.message}`
 						);
 					}
 				}
 			} catch (error) {
 				system.logger.error(
-					`Error processing user ${userId}: ${error.message}`
+					`處理使用者 ${userId} 失敗: ${error.message}`
 				);
 			}
 		}

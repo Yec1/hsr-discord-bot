@@ -1,6 +1,6 @@
 import { client } from "../index.js";
 import { Events, ActivityType } from "discord.js";
-import { Logger } from "../utilities/core/logger.js";
+import Logger from "../utilities/core/logger.js";
 import autoDailySign from "../utilities/hsr/autoDaily.js";
 import autoRedeem from "../utilities/hsr/autoRedeem.js";
 import schedule from "node-schedule";

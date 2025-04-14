@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import { join } from "path";
-import { Logger } from "../core/logger.js";
+import Logger from "../core/logger.js";
 import Queue from "queue";
 
 const drawQueue = new Queue({ autostart: true });

@@ -1,14 +1,15 @@
 import { client } from "../../index.js";
 import { EmbedBuilder } from "discord.js";
 import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
-import { Logger } from "../core/logger.js";
+import Logger from "../core/logger.js";
 import { i18nMixin } from "../core/i18n.js";
 import {
 	getUserCookie,
 	getUserLang,
 	getUserUid,
 	getRandomColor,
-	getRedeemCodes
+	getRedeemCodes,
+	updateCookie
 } from "../utilities.js";
 
 // 統一配置
@@ -66,9 +67,7 @@ class AutoRedeemSystem {
 			const accounts = await this.db.get(`${userId}.account`);
 			return { userLang, accounts };
 		} catch (error) {
-			this.logger.error(
-				`Failed to get user preferences for ${userId}: ${error.message}`
-			);
+			this.logger.error(`獲取使用者偏好設定失敗: ${error.message}`);
 			return {
 				userLang: CONFIG.DEFAULT_LANGUAGE,
 				accounts: []
@@ -138,7 +137,7 @@ class AutoRedeemSystem {
 		const uid = await getUserUid(userId, accountIndex);
 
 		if (!cookie || !uid) {
-			this.logger.warn(`Missing cookie or UID for user ${userId}`);
+			this.logger.warn(`使用者 ${userId} 缺少 Cookie 或 UID `);
 			return null;
 		}
 
@@ -150,15 +149,28 @@ class AutoRedeemSystem {
 
 		let userRedeemedCodes =
 			(await this.db.get(`${uid}.redeemedCodes`)) || [];
-		const unredeemedCodes = codes.filter(
+		const unRedeemedCodes = codes.filter(
 			code => !userRedeemedCodes.includes(code.code)
 		);
 
-		if (!unredeemedCodes.length) return null;
+		if (!unRedeemedCodes.length) {
+			this.logger.info(
+				`使用者 ${userId} 的帳號 #${accountIndex} 沒有未兌換的禮包碼，略過...`
+			);
+			return null;
+		}
+		this.logger.info(
+			`使用者 ${userId} 的帳號 #${accountIndex} 有 ${unRedeemedCodes.length} 個未標記兌換的禮包碼，開始嘗試兌換...`
+		);
 
 		const results = [];
-		for (const code of unredeemedCodes) {
+		let hasSuccessfulRedeem = false;
+
+		for (const code of unRedeemedCodes) {
 			try {
+				this.logger.info(
+					`• 使用者 ${userId} 的帳號 #${accountIndex} 正在嘗試兌換禮包碼 ${code.code}...`
+				);
 				const res = await this.redeemCode(hsr, code.code);
 				const result = await this.handleRedeemResult(
 					code.code,
@@ -167,13 +179,16 @@ class AutoRedeemSystem {
 					uid,
 					tr
 				);
+
+				if (result.status === "success") hasSuccessfulRedeem = true;
+
 				results.push({ code: code.code, ...result });
 				await new Promise(resolve =>
 					setTimeout(resolve, CONFIG.REDEEM_DELAY)
 				);
 			} catch (error) {
 				this.logger.error(
-					`Failed to redeem code ${code.code} for ${uid}: ${error.message}`
+					`兌換禮包碼 ${code.code} 失敗: ${error.message}`
 				);
 				results.push({
 					code: code.code,
@@ -181,6 +196,23 @@ class AutoRedeemSystem {
 					message: error.message
 				});
 			}
+		}
+
+		if (hasSuccessfulRedeem) {
+			try {
+				await updateCookie(userId, accountIndex, hsr.cookie);
+				this.logger.info(
+					`使用者 ${userId} 的帳號 #${accountIndex} 成功兌換 ${results.filter(r => r.status === "success").length} 個禮包碼並更新 Cookie`
+				);
+			} catch (error) {
+				this.logger.error(
+					`使用者 ${userId} 的帳號 #${accountIndex} 更新 Cookie 失敗: ${error.message}`
+				);
+			}
+		} else {
+			this.logger.info(
+				`使用者 ${userId} 的帳號 #${accountIndex} 沒有成功兌換任何禮包碼，略過...`
+			);
 		}
 
 		return { uid, results };
@@ -241,9 +273,9 @@ class AutoRedeemSystem {
 
 	async updateStatistics(currentHour) {
 		this.logger.success(
-			`Completed ${currentHour}:00 auto redemption: ` +
-				`${this.stats.total} total, ${this.stats.success} successful, ` +
-				`${this.stats.already} already claimed, ${this.stats.failed} failed`
+			`${currentHour}:00 自動兌換已完成: ` +
+				`${this.stats.total} 總數, ${this.stats.success} 成功, ` +
+				`${this.stats.already} 已領取, ${this.stats.failed} 失敗`
 		);
 	}
 }
@@ -259,7 +291,7 @@ export default async function autoRedeem() {
 		hour12: false
 	});
 
-	system.logger.info(`Starting ${currentHour}:00 auto redemption`);
+	system.logger.info(`正在進行 ${currentHour}:00 自動兌換`);
 
 	try {
 		const codes = await getRedeemCodes();
@@ -293,6 +325,6 @@ export default async function autoRedeem() {
 
 		await system.updateStatistics(currentHour);
 	} catch (error) {
-		system.logger.error(`Auto redemption failed: ${error.message}`);
+		system.logger.error(`自動兌換失敗: ${error.message}`);
 	}
 }
