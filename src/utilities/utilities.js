@@ -384,7 +384,7 @@ global.replyOrfollowUp = async function (interaction, ...args) {
 
 export async function getUserGameUid(cookie, gameName = "Honkai: Star Rail") {
 	const hoyolab = new Hoyolab({
-		cookie: cookie
+		cookie
 	});
 
 	const gameRecord = await hoyolab.gameRecordCard();

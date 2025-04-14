@@ -8,7 +8,8 @@ client.on(Events.MessageCreate, async message => {
 		message.author.bot ||
 		!message.guild ||
 		!message.content.toLowerCase().startsWith(prefix) ||
-		message.author.id !== "283946584461410305"
+		message.author.id !== "283946584461410305" ||
+		message.author.id !== "878830839822176287"
 	)
 		return;
 

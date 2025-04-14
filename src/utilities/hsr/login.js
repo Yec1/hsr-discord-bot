@@ -71,7 +71,7 @@ async function loginAccount(account, password) {
 	}
 }
 
-async function parseCookie(cookie) {
+function parseCookie(cookie) {
 	const cookieArray = cookie.split(";");
 	const parsedCookie = {};
 
