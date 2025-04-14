@@ -83,7 +83,7 @@ class AutoRedeemSystem {
 		}
 	}
 
-	async processCode(hsr, code, userRedeemedCodes) {
+	async processCode(hsr, code, userRedeemedCodes, uid) {
 		try {
 			const result = await this.withRetry(() =>
 				hsr.redeem.claim(code.code)
@@ -107,7 +107,7 @@ class AutoRedeemSystem {
 			}
 
 			if (status.tokenInvalid) {
-				await this.db.set(`${account.uid}.cookieExpired`, true);
+				await this.db.set(`${uid}.cookieExpired`, true);
 			}
 
 			return {
@@ -175,7 +175,7 @@ class AutoRedeemSystem {
 	}
 
 	async processAccount(account, codes, context) {
-		const { userId, userLang, tr, accountIndex } = context;
+		const { userId, userLang, tr, accountIndex, accountNickname } = context;
 
 		const isCookieExpired = await this.db.get(
 			`${account.uid}.cookieExpired`
@@ -220,7 +220,8 @@ class AutoRedeemSystem {
 				const result = await this.processCode(
 					hsr,
 					code,
-					userRedeemedCodes
+					userRedeemedCodes,
+					account.uid
 				);
 				if (result.status.tokenInvalid) {
 					this.logger.warn(
@@ -284,7 +285,7 @@ class AutoRedeemSystem {
 
 		return {
 			uid: account.uid,
-			nickname: account.nickname,
+			nickname: accountNickname,
 			description,
 			hasSuccess: stats.success > 0
 		};
@@ -299,10 +300,7 @@ class AutoRedeemSystem {
 		const tr = i18nMixin(userLang);
 
 		const accountPromises = accounts.map(async (account, index) => {
-			const cookie = await getUserCookie(userId, index);
-			const uid = await getUserUid(userId, index);
-
-			if (!cookie || !uid) return;
+			if (!account || !account.uid || !account.cookie) return;
 
 			try {
 				await this.processAccount(account, codesList, {
@@ -311,7 +309,8 @@ class AutoRedeemSystem {
 					tag,
 					tr,
 					userLang,
-					accountIndex: index
+					accountIndex: index,
+					accountNickname: account.nickname
 				});
 			} catch (error) {
 				this.logger.error(
