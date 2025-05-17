@@ -194,7 +194,33 @@ class AutoRedeemSystem {
 			code => !userRedeemedCodes.includes(code.code)
 		);
 
-		if (!unRedeemedCodes.length) return null;
+		if (!unRedeemedCodes || unRedeemedCodes.length === 0) {
+			try {
+				// 获取上次刷新Cookie的时间
+				const lastCookieRefresh =
+					(await this.db.get(`${account.uid}.lastCookieRefresh`)) ||
+					0;
+				const currentTime = Date.now();
+				const oneDayInMs = 24 * 60 * 60 * 1000; // 24小时的毫秒数
+
+				// 如果距离上次刷新已经过了24小时，则刷新Cookie
+				if (currentTime - lastCookieRefresh >= oneDayInMs) {
+					await updateCookie(userId, accountIndex, account.cookie);
+					await this.db.set(
+						`${account.uid}.lastCookieRefresh`,
+						currentTime
+					);
+					this.logger.success(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] 沒有未兌換的禮包碼，已刷新Cookie以防止過期`
+					);
+				}
+			} catch (error) {
+				this.logger.error(
+					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 刷新失敗: ${error.message}`
+				);
+			}
+			return null;
+		}
 		this.logger.info(
 			`[用戶 ${userId}] [帳號 #${accountIndex}] 發現 ${unRedeemedCodes.length} 個未兌換的禮包碼`
 		);

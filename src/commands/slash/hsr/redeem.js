@@ -255,7 +255,32 @@ export default {
 				code => !userRedeemedCodes.includes(code.code)
 			);
 
-			if (noRedeemedCodes.length === 0) {
+			if (!noRedeemedCodes || noRedeemedCodes.length === 0) {
+				try {
+					// 获取上次刷新Cookie的时间
+					const lastCookieRefresh =
+						(await db.get(`${uid}.lastCookieRefresh`)) || 0;
+					const currentTime = Date.now();
+					const oneDayInMs = 24 * 60 * 60 * 1000; // 24小时的毫秒数
+
+					// 如果距离上次刷新已经过了24小时，则刷新Cookie
+					if (currentTime - lastCookieRefresh >= oneDayInMs) {
+						await updateCookie(
+							targetUser.id,
+							accountIndex,
+							hsr.cookie
+						);
+						await db.set(`${uid}.lastCookieRefresh`, currentTime);
+						new Logger("Redeem").success(
+							`[用戶 ${targetUser.id}] [帳號 #${accountIndex}] 沒有未兌換的禮包碼，已刷新Cookie以防止過期`
+						);
+					}
+				} catch (error) {
+					new Logger("Redeem").error(
+						`[用戶 ${targetUser.id}] [帳號 #${accountIndex}] Cookie 刷新失敗: ${error.message}`
+					);
+				}
+
 				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()

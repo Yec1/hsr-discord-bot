@@ -41,7 +41,9 @@ const versionChoices = [
 	{ value: "3.1.1", name: "Tribbie", localName: "緹寶" },
 	{ value: "3.1.2", name: "Mydei", localName: "萬敵" },
 	{ value: "3.2.1", name: "Castorice", localName: "遐蝶" },
-	{ value: "3.2.2", name: "Anaxa", localName: "那刻夏" }
+	{ value: "3.2.2", name: "Anaxa", localName: "那刻夏" },
+	{ value: "3.3.1", name: "Hyacine", localName: "風堇" },
+	{ value: "3.3.2", name: "Cipher", localName: "賽飛兒" }
 ];
 
 export const createChoiceOption = ({ value, name, localName }) => ({

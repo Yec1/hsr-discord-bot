@@ -85,7 +85,7 @@ class AutoDailySignSystem {
 				);
 			} catch (error) {
 				this.logger.error(
-					`簽到失敗: 使用者 ${userId} 帳號 #${accountIndex}: ${error.message}`
+					`Sign-in failed for user ${userId} account ${accountIndex}: ${error.message}`
 				);
 				this.stats.failed++;
 			}
@@ -101,19 +101,22 @@ class AutoDailySignSystem {
 		});
 
 		try {
+			// Get all required information first
 			const [info, reward, rewards] = await Promise.all([
-				this.retryOperation(() => hsr.daily.info()),
-				this.retryOperation(() => hsr.daily.reward()),
-				this.retryOperation(() => hsr.daily.rewards())
+				hsr.daily.info(),
+				hsr.daily.reward(),
+				hsr.daily.rewards()
 			]);
 
-			const result = await this.retryOperation(() => hsr.daily.claim());
+			// Perform the claim
+			const result = await hsr.daily.claim();
 
 			if (result.code === -5003 || result.info.is_sign === true) {
 				this.stats.signed++;
 				return;
 			}
 
+			// Get sign info for today and tomorrow
 			const todaySign =
 				rewards.awards[info.total_sign_day] || rewards.awards[0];
 			const tmrSign =
@@ -122,78 +125,53 @@ class AutoDailySignSystem {
 			this.stats.success++;
 			await this.sendSuccessMessage(channelId, {
 				content: tag,
-				embed: this.createSuccessEmbed(
-					account.uid,
-					todaySign,
-					tmrSign,
-					info,
-					reward,
-					userId,
-					tr
-				)
+				embeds: [
+					new EmbedBuilder()
+						.setColor(getRandomColor())
+						.setTitle(
+							`${account.uid} ${tr("Auto")}${tr("daily_SignSuccess")}`
+						)
+						.setThumbnail(todaySign?.icon)
+						.setDescription(
+							`${tr("daily_Description", {
+								a: `\`${todaySign?.name}x${todaySign?.cnt}\``
+							})}${
+								info.month_last_day
+									? ""
+									: `\n\n<@${userId}> ${tr(
+											"daily_DescriptionTmr",
+											{
+												b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
+											}
+										)}`
+							}`
+						)
+						.addFields(
+							{
+								name: `${reward.month} ${tr("daily_Month")}`,
+								value: "\u200b",
+								inline: true
+							},
+							{
+								name: tr("daily_SignedDay", {
+									z: `\`${info.total_sign_day}\``
+								}),
+								value: "\u200b",
+								inline: true
+							},
+							{
+								name: tr("daily_MissedDay", {
+									z: `\`${info.sign_cnt_missed}\``
+								}),
+								value: "\u200b",
+								inline: true
+							}
+						)
+				]
 			});
 		} catch (error) {
-			this.stats.failed++;
-			throw new Error(`API 錯誤: ${error.message}`);
+			throw new Error(`API Error: ${error.message}`);
 		}
-	}
-
-	async retryOperation(operation, retries = CONFIG.WEBHOOK_RETRIES) {
-		let lastError;
-
-		for (let i = 0; i < retries; i++) {
-			try {
-				return await operation();
-			} catch (error) {
-				lastError = error;
-				if (i < retries - 1) {
-					await new Promise(resolve =>
-						setTimeout(resolve, 1000 * (i + 1))
-					);
-				}
-			}
-		}
-
-		throw lastError;
-	}
-
-	createSuccessEmbed(uid, todaySign, tmrSign, info, reward, userId, tr) {
-		return new EmbedBuilder()
-			.setColor(getRandomColor())
-			.setTitle(`${uid} ${tr("Auto")}${tr("daily_SignSuccess")}`)
-			.setThumbnail(todaySign?.icon)
-			.setDescription(
-				`${tr("daily_Description", {
-					a: `\`${todaySign?.name}x${todaySign?.cnt}\``
-				})}${
-					info.month_last_day
-						? ""
-						: `\n\n<@${userId}> ${tr("daily_DescriptionTmr", {
-								b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-							})}`
-				}`
-			)
-			.addFields(
-				{
-					name: `${reward.month} ${tr("daily_Month")}`,
-					value: "\u200b",
-					inline: true
-				},
-				{
-					name: tr("daily_SignedDay", {
-						z: `\`${info.total_sign_day}\``
-					}),
-					value: "\u200b",
-					inline: true
-				},
-				{
-					name: tr("daily_MissedDay", {
-						z: `\`${info.sign_cnt_missed}\``
-					}),
-					value: "\u200b",
-					inline: true
-				}
-			);
 	}
 
 	async sendSuccessMessage(channelId, messageData) {
@@ -212,7 +190,7 @@ class AutoDailySignSystem {
 			);
 		} catch (error) {
 			this.logger.error(
-				`發送訊息到頻道 ${channelId} 失敗: ${error.message}`
+				`Failed to send message to channel ${channelId}: ${error.message}`
 			);
 		}
 	}
@@ -225,14 +203,14 @@ class AutoDailySignSystem {
 			this.stats.total > 0 ? duration / this.stats.total : 0;
 
 		this.logger.success(
-			`${currentHour}:00 自動簽到已完成: ${this.stats.total} 總數, ` +
-				`${this.stats.success} 成功, ${this.stats.signed} 已領取, ` +
-				`${this.stats.failed} 失敗`
+			`Completed ${currentHour}:00 auto sign-in: ${this.stats.total} total, ` +
+				`${this.stats.success} successful, ${this.stats.signed} already signed, ` +
+				`${this.stats.failed} failed`
 		);
 
 		const statsEmbed = new EmbedBuilder()
 			.setColor("#F2BE22")
-			.setTitle(`${currentHour}:00 自動簽到統計`)
+			.setTitle(`${currentHour}:00 Auto Sign-in Stats`)
 			.setTimestamp()
 			.addFields(this.buildStatsFields(duration, averageTime));
 
@@ -242,32 +220,32 @@ class AutoDailySignSystem {
 	buildStatsFields(duration, averageTime) {
 		return [
 			{
-				name: `總使用者: \`${this.stats.total}\``,
+				name: `Total Users: \`${this.stats.total}\``,
 				value: "\u200b",
 				inline: false
 			},
 			{
-				name: `成功: \`${this.stats.success}\``,
+				name: `Successful: \`${this.stats.success}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `已領取: \`${this.stats.signed}\``,
+				name: `Already Signed: \`${this.stats.signed}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `失敗: \`${this.stats.failed}\``,
+				name: `Failed: \`${this.stats.failed}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `總時間: \`${duration.toFixed(3)}\` 秒`,
+				name: `Total Duration: \`${duration.toFixed(3)}\` seconds`,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `平均時間: \`${averageTime.toFixed(3)}\` 秒`,
+				name: `Average Time: \`${averageTime.toFixed(3)}\` seconds`,
 				value: "\u200b",
 				inline: true
 			}
@@ -289,43 +267,17 @@ export default async function autoDailySign() {
 	});
 
 	const startTime = Date.now();
-	system.logger.info(`正在進行 ${currentHour}:00 自動簽到`);
+	system.logger.success(`Starting ${currentHour}:00 auto sign-in`);
 
-	for (const [userId, data] of Object.entries(dailyData)) {
-		const scheduledTime = data?.time || "13";
+	for (const userId of Object.keys(dailyData)) {
+		const scheduledTime = dailyData[userId]?.time || "13";
 
 		if (parseInt(scheduledTime) === parseInt(currentHour)) {
 			try {
-				const userLang = await getUserLang(userId);
-				const tr = i18nMixin(userLang);
-				const accounts = await system.db.get(`${userId}.account`);
-
-				if (!accounts?.length) continue;
-
-				for (let i = 0; i < accounts.length; i++) {
-					try {
-						const cookie = await getUserCookie(userId, i);
-						const uid = await getUserUid(userId, i);
-
-						if (!cookie || !uid) continue;
-
-						await system.performSignIn(
-							{ cookie, uid },
-							userLang,
-							userId,
-							data.channelId,
-							data.tag === "true" ? `<@${userId}>` : "",
-							tr
-						);
-					} catch (error) {
-						system.logger.error(
-							`處理使用者 ${userId} 的帳號 #${i} 失敗: ${error.message}`
-						);
-					}
-				}
+				await system.processDailySign(userId, dailyData);
 			} catch (error) {
 				system.logger.error(
-					`處理使用者 ${userId} 失敗: ${error.message}`
+					`Error processing user ${userId}: ${error.message}`
 				);
 			}
 		}

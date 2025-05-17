@@ -88,12 +88,18 @@ const allChars = [
 	"mydei",
 	"tribbie",
 	"anaxa",
-	"castorice"
+	"castorice",
+	"cipher",
+	"hyacine"
 ];
 
 const allWeapons = [
+	"long-may-rainbows-adorn-the-sky",
+	"lies-dance-on-the-breeze",
 	"make-farewells-more-beautiful",
-	"life-sShould-be-cast-to-flames",
+	"if-time-were-a-flower",
+	"flame-of-blood-blaze-my-path",
+	"life-should-be-cast-to-flames",
 	"victory-in-a-blink",
 	"geniuses-greetings",
 	"time-woven-into-gold",
@@ -217,6 +223,8 @@ const BGM = {
 };
 
 const allVers = [
+	"3.3.2",
+	"3.3.1",
 	"3.2.2",
 	"3.2.1",
 	"3.1.2",
@@ -257,7 +265,7 @@ const allVers = [
 
 const hidden = [];
 
-const LATESTVERS = allVers.filter(vers => !hidden.includes(vers))[1];
+const LATESTVERS = allVers.filter(vers => !hidden.includes(vers))[0];
 
 const asianLang = ["zh", "ko", "ja"];
 
