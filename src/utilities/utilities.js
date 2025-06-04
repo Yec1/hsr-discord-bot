@@ -372,14 +372,16 @@ export function checkAccount(interaction, tr, userId, data) {
 export async function updateCookie(userId, accountIndex, cookieObj) {
 	const webAPI =
 		"https://webapi-os.account.hoyoverse.com/Api/fetch_cookie_accountinfo";
+	const parsedCookie = Object.fromEntries(
+		cookieObj
+			.split("; ")
+			.filter(Boolean)
+			.map(cookie => cookie.split("="))
+	);
 
 	const cookie = [
-		`ltoken_v2=${cookieObj.ltokenV2}`,
-		`ltuid_v2=${cookieObj.ltuidV2}`,
-		`ltmid_v2=${cookieObj.accountMidV2}`,
-		`cookie_token_v2=${cookieObj.cookieTokenV2}`,
-		`account_mid_v2=${cookieObj.accountMidV2}`,
-		`account_id_v2=${cookieObj.accountIdV2}`
+		`cookie_token_v2=${parsedCookie.cookie_token_v2}`,
+		`account_id_v2=${parsedCookie.ltuid_v2}`
 	].join("; ");
 
 	const response = await fetch(webAPI, {
@@ -394,7 +396,11 @@ export async function updateCookie(userId, accountIndex, cookieObj) {
 	}
 
 	const responseData = await response.json();
-	if (responseData?.code !== 200) return;
+	if (responseData?.code !== 200)
+		return {
+			error: true,
+			message: `Error: ${responseData.message || "Unknown error"}`
+		};
 
 	const newCookieToken = responseData.data.cookie_info.cookie_token;
 	const accountKey = `${userId}.account`;

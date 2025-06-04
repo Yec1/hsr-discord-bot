@@ -180,7 +180,9 @@ class AutoRedeemSystem {
 		const isCookieExpired = await this.db.get(
 			`${account.uid}.cookieExpired`
 		);
-		if (isCookieExpired) return null;
+		if (isCookieExpired) {
+			return null;
+		}
 
 		const hsr = new HonkaiStarRail({
 			uid: account.uid,
@@ -213,6 +215,10 @@ class AutoRedeemSystem {
 					this.logger.success(
 						`[用戶 ${userId}] [帳號 #${accountIndex}] 沒有未兌換的禮包碼，已刷新Cookie以防止過期`
 					);
+				} else {
+					this.logger.info(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] 沒有未兌換的禮包碼，且Cookie最近已刷新，跳過`
+					);
 				}
 			} catch (error) {
 				this.logger.error(
@@ -230,6 +236,7 @@ class AutoRedeemSystem {
 
 		for (const code of unRedeemedCodes) {
 			try {
+				this.stats.total++;
 				this.logger.info(
 					`[用戶 ${userId}] [帳號 #${accountIndex}] 正在兌換: ${code.code}`
 				);
@@ -263,6 +270,7 @@ class AutoRedeemSystem {
 					this.logger.error(
 						`[用戶 ${userId}] [帳號 #${accountIndex}] 兌換失敗: ${code.code} - ${result.message}`
 					);
+					await this.db.set(`${account.uid}.cookieExpired`, true);
 				}
 
 				results.push(result);
