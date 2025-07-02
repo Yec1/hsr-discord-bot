@@ -1,6 +1,6 @@
 import { client } from "../../index.js";
 import { EmbedBuilder, WebhookClient } from "discord.js";
-import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
+import { HonkaiStarRail, LanguageEnum } from "@yeci226/hoyoapi";
 import Logger from "../core/logger.js";
 import { i18nMixin } from "../core/i18n.js";
 import {
@@ -34,12 +34,7 @@ class AutoDailySignSystem {
 		this.db = client.db;
 		this.webhook = new WebhookClient({ url: webhookUrl });
 		this.logger = new Logger("AutoDailySign");
-		this.stats = {
-			total: 0,
-			success: 0,
-			failed: 0,
-			signed: 0
-		};
+		this.stats = { total: 0, success: 0, failed: 0, signed: 0 };
 	}
 
 	async initialize() {

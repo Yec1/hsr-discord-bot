@@ -63,6 +63,8 @@ const langs = {
 	profile_UidNotFound: "Cannot find this Trailblazer!",
 	DrawInQueue: "In queue, current queue position: <position>",
 	profile_NoImageData: "Unable to retrieve image data",
+	profile_NoHSRData: "Unable to retrieve Star Rail data",
+	profile_NoRecordData: "Unable to retrieve record data",
 	profile_SelectCharacter: "Select a character to view",
 	profile_TrailblazeLevel: "Trailblaze Level",
 	profile_EquilibriumLevel: "Equilibrium Level",

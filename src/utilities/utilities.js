@@ -2,7 +2,12 @@ import { client } from "../index.js";
 import { EmbedBuilder } from "discord.js";
 import axios from "axios";
 import emoji from "../assets/emoji.js";
-import { HonkaiStarRail, LanguageEnum, HoyoAPIError, Hoyolab } from "hoyoapi";
+import {
+	HonkaiStarRail,
+	LanguageEnum,
+	HoyoAPIError,
+	Hoyolab
+} from "@yeci226/hoyoapi";
 const BASE_URL = "https://bbs-api-os.hoyolab.com/community/post/wapi/";
 const db = client.db;
 
@@ -227,12 +232,7 @@ const languageMapping = {
 };
 
 export async function setupDefaultLang(userId, userSystemLang) {
-	const langMap = {
-		"zh-TW": "tw",
-		"zh-CN": "cn",
-		ja: "jp",
-		ko: "kr"
-	};
+	const langMap = { "zh-TW": "tw", "zh-CN": "cn", ja: "jp", ko: "kr" };
 
 	const langCode = langMap[userSystemLang] || userSystemLang;
 
@@ -303,9 +303,7 @@ export async function getUserHSRData(interaction, tr, userId, accountIndex) {
 			tr,
 			userId,
 			isHoyoAPIError && error.code == 10035
-				? {
-						ErrorCode: error.code
-					}
+				? { ErrorCode: error.code }
 				: {
 						hasCookie: cookie != null,
 						Lang: lang,
@@ -387,9 +385,7 @@ export async function updateCookie(userId, accountIndex, cookieObj) {
 
 	const response = await fetch(webAPI, {
 		method: "GET",
-		headers: {
-			Cookie: cookie
-		}
+		headers: { Cookie: cookie }
 	});
 
 	if (!response.ok) {
@@ -457,9 +453,7 @@ global.replyOrfollowUp = async function (interaction, ...args) {
 };
 
 export async function getUserGameInfo(cookie, gameName = "Honkai: Star Rail") {
-	const hoyolab = new Hoyolab({
-		cookie
-	});
+	const hoyolab = new Hoyolab({ cookie });
 
 	const gameRecord = await hoyolab.gameRecordCard();
 	const filteredData = gameRecord.filter(item => item.game_name === gameName);

@@ -301,6 +301,42 @@ const colourMap = {
 	12: "#5155a5"
 };
 
+export const propertyMap = {
+	1: "MaxHP",
+	2: "Attack",
+	3: "Defence",
+	4: "Speed",
+	5: "CriticalChance",
+	6: "CriticalDamage",
+	7: "HealRatio",
+	// 8: ""
+	9: "EnergyRecovery",
+	10: "StatusProbability",
+	11: "StatusResistance",
+	12: "PhysicalAddedRatio",
+	14: "FireAddedRatio",
+	16: "IceAddedRatio",
+	18: "ThunderAddedRatio",
+	20: "WindAddedRatio",
+	22: "QuantumAddedRatio",
+	24: "ImaginaryAddedRatio",
+	27: "MaxHP", // 小生命
+	29: "Attack", // 小攻擊
+	31: "Defence", // 小防禦
+	32: "MaxHP", // 大生命
+	33: "Attack", // 大攻擊
+	34: "Defence", // 大防禦
+	51: "Speed",
+	52: "CriticalChance",
+	53: "CriticalDamage",
+	54: "EnergyRecovery",
+	55: "HealRatio",
+	56: "StatusProbability",
+	57: "StatusResistance",
+	58: "BreakUp",
+	59: "BreakUp"
+};
+
 export {
 	allChars,
 	allWeapons,

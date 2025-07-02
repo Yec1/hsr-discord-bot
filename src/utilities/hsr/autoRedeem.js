@@ -1,6 +1,6 @@
 import { client } from "../../index.js";
 import { EmbedBuilder } from "discord.js";
-import { HonkaiStarRail, LanguageEnum } from "hoyoapi";
+import { HonkaiStarRail, LanguageEnum } from "@yeci226/hoyoapi";
 import Logger from "../core/logger.js";
 import { i18nMixin } from "../core/i18n.js";
 import {
@@ -63,10 +63,7 @@ class AutoRedeemSystem {
 			return { userLang, accounts };
 		} catch (error) {
 			this.logger.error(`獲取使用者偏好設定失敗: ${error.message}`);
-			return {
-				userLang: CONFIG.DEFAULT_LANGUAGE,
-				accounts: []
-			};
+			return { userLang: CONFIG.DEFAULT_LANGUAGE, accounts: [] };
 		}
 	}
 
@@ -110,28 +107,15 @@ class AutoRedeemSystem {
 				await this.db.set(`${uid}.cookieExpired`, true);
 			}
 
-			return {
-				code,
-				status,
-				message: result.message
-			};
+			return { code, status, message: result.message };
 		} catch (error) {
-			return {
-				code,
-				status: { failed: true },
-				message: error.message
-			};
+			return { code, status: { failed: true }, message: error.message };
 		}
 	}
 
 	formatResults(results, tr) {
 		const description = [];
-		const stats = {
-			success: 0,
-			alreadyClaimed: 0,
-			invalid: 0,
-			failed: 0
-		};
+		const stats = { success: 0, alreadyClaimed: 0, invalid: 0, failed: 0 };
 
 		results.forEach(result => {
 			const { code, status } = result;
@@ -168,10 +152,7 @@ class AutoRedeemSystem {
 			description.push(`❌ ${tr("redeem_Failed")}: ${stats.failed}`);
 		}
 
-		return {
-			description: description.join("\n"),
-			stats
-		};
+		return { description: description.join("\n"), stats };
 	}
 
 	async processAccount(account, codes, context) {

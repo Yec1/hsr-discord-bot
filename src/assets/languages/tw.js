@@ -63,6 +63,8 @@ const langs = {
 	profile_UidNotFound: "找不到這位開拓者！",
 	DrawInQueue: "正在排隊中，目前排隊位置：<position>",
 	profile_NoImageData: "無法獲取圖片資料",
+	profile_NoHSRData: "無法獲取星穹鐵道資料",
+	profile_NoRecordData: "無法獲取記錄資料",
 	profile_SelectCharacter: "選擇查看角色",
 	profile_TrailblazeLevel: "開拓等級",
 	profile_EquilibriumLevel: "均衡等級",

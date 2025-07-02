@@ -1143,14 +1143,16 @@ async function handleSelectCharacter(interaction, tr, value) {
 					}
 				};
 			} else {
-				const { status, playerData } = await requestPlayerData(
-					uid,
-					interaction
-				);
-				const { status: activityStatus, playerActivity } =
-					await requestPlayerActivity(uid, interaction);
+				const {
+					status: reqPlayerDataStatus,
+					playerData: reqPlayerData
+				} = await requestPlayerData(uid, interaction);
+				const {
+					status: reqPlayerActivityStatus,
+					playerActivity: reqPlayerActivity
+				} = await requestPlayerActivity(uid, interaction);
 
-				if (status !== 200 || !playerData) {
+				if (reqPlayerDataStatus !== 200 || !reqPlayerData) {
 					return interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
@@ -1168,8 +1170,8 @@ async function handleSelectCharacter(interaction, tr, value) {
 					});
 				}
 
-				characters = playerData.characters;
-				playerActivity = playerActivity;
+				characters = reqPlayerData.avatar_list;
+				playerActivity = reqPlayerActivity;
 			}
 
 			const character = characters.find(

@@ -1,58 +1,23 @@
 import { client } from "./index.js";
-
 import { Collection } from "discord.js";
 import { ClusterClient } from "discord-hybrid-sharding";
 import { QuickDB } from "quick.db";
 import Logger from "./utilities/core/logger.js";
 import { ApplicationCommandType } from "discord.js";
-import { promisify } from "util";
-import _glob from "glob";
+import { getAllJsFiles } from "./utilities/getAllJsFiles.js";
 
-const glob = promisify(_glob);
-
-// driver
-// 	.connect()
-// 	.then(() => {
-// 		client.db = new QuickDB({ driver });
-// 		new Logger("系統").info("已連接至資料庫！");
-
-// 		// const quickDB = new QuickDB();
-// 		// const mongodbdb = new QuickDB({ driver });
-
-// 		// try {
-// 		// 	const quickDBData = await quickDB.all();
-// 		// 	for (const key of quickDBData)
-// 		// 		await mongodbdb.set(key.id, key.value);
-
-// 		// 	new Logger("系統").info(
-// 		// 		`資料庫已合併 ${quickDBData.length} 筆資料`
-// 		// 	);
-// 		// } catch (error) {
-// 		// 	new Logger("系統").error(`資料庫合併失敗！錯誤訊息：${error}`);
-// 		// }
-// 	})
-// 	.catch(error => {
-// 		new Logger("系統").error(`連線至資料庫失敗！錯誤訊息：${error}`);
-// 	});
-
-// Global Variables
+// Client Variables
 client.db = new QuickDB();
 client.cluster = new ClusterClient(client);
-client.commands = {
-	slash: new Collection(),
-	message: new Collection()
-};
-
-if (client.cluster.id == 0) {
-	await import("./server.js");
-}
+client.commands = { slash: new Collection(), message: new Collection() };
+if (client.cluster.id == 0) await import("./server.js");
 
 async function getMessageCommands(client, messageCommandPaths) {
 	const result = [];
+
 	for (let path of messageCommandPaths) {
 		const file = (await import(`file://${path}`))?.default;
 		const splitted = path.split("/");
-		// why -2?
 		const folder = splitted[splitted.length - 2];
 
 		if (file.name) {
@@ -61,31 +26,35 @@ async function getMessageCommands(client, messageCommandPaths) {
 			result.push(file);
 		}
 	}
+
 	return result;
 }
 
 async function bindEvents() {
-	const paths = await glob(`${process.cwd()}/src/events/*.js`);
+	const paths = await getAllJsFiles(`${process.cwd()}/src/events`);
+
 	for (let path of paths) {
 		await import(`file://${path}`);
 	}
+
 	return paths;
 }
 
-async function getSlashCommands(client, slashs) {
-	const slashArr = [];
-	for (let dir of slashs) {
-		const file = (await import(`file://${dir}`))?.default;
+async function getSlashCommands(client, slashCommandPaths) {
+	const result = [];
+
+	for (let path of slashCommandPaths) {
+		const file = (await import(`file://${path}`))?.default;
+
 		if ("data" in file && "execute" in file) {
 			client.commands.slash.set(file.data.name, file);
 		} else {
 			new Logger("系統").error(
-				`${dir} 處的指令缺少必要的「資料」或「執行」屬性`
+				`${path} 處的指令缺少必要的「資料」或「執行」屬性`
 			);
 		}
 		client.commands.slash.set(file.name, file);
 
-		// why do we need this?
 		if (
 			[
 				ApplicationCommandType.Message,
@@ -93,28 +62,31 @@ async function getSlashCommands(client, slashs) {
 			].includes(file.type)
 		)
 			delete file.description;
-		slashArr.push(file.data);
+
+		result.push(file.data);
 	}
-	return slashArr;
+
+	return result;
 }
 
 export async function load(client) {
-	const messageCommandPaths = await glob(
-		`${process.cwd()}/src/commands/message/**/*.js`
+	// Message command
+	const messageCommandPaths = await getAllJsFiles(
+		`${process.cwd()}/src/commands/message`
 	);
-
 	const messageCommands = await getMessageCommands(
 		client,
 		messageCommandPaths
 	);
 
-	const eventPaths = await bindEvents();
-
-	const slashCommandPaths = await glob(
-		`${process.cwd()}/src/commands/slash/**/*.js`
+	// Slash command
+	const slashCommandPaths = await getAllJsFiles(
+		`${process.cwd()}/src/commands/slash`
 	);
-
 	const slashCommands = await getSlashCommands(client, slashCommandPaths);
+
+	// Event
+	const eventPaths = await bindEvents();
 
 	new Logger("系統").success(
 		`已載入 ${eventPaths.length} 事件、${slashCommands.length} 斜線指令、${messageCommands.length} 訊息指令`

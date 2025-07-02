@@ -19,7 +19,6 @@ import {
 import { getRelicsScore } from "./relics.js";
 import emoji from "../../assets/emoji.js";
 import Queue from "queue";
-import fs from "fs";
 const db = client.db;
 
 const drawQueue = new Queue({ autostart: true });
@@ -88,7 +87,9 @@ const loadImageAsync = async (url, fallbackUrl = null) => {
 		const image = await loadImage(url);
 		loadImageAsync.cache.set(url, image);
 		return { image, usedFallback: false };
-	} catch {
+	} catch (error) {
+		console.warn(`Failed to load image: ${url}`, error.message);
+
 		// 如果有备选URL，尝试加载备选图片
 		if (fallbackUrl) {
 			try {
@@ -100,20 +101,42 @@ const loadImageAsync = async (url, fallbackUrl = null) => {
 					image: loadImageAsync.cache.get(fallbackUrl),
 					usedFallback: true
 				};
-			} catch {
-				// 备选图片也失败，使用默认图片
+			} catch (fallbackError) {
+				console.warn(
+					`Failed to load fallback image: ${fallbackUrl}`,
+					fallbackError.message
+				);
 			}
 		}
 
-		const defaultUrl = `${image_Header}icon/character/None.png`;
-		if (!loadImageAsync.cache.has(defaultUrl)) {
-			const defaultImage = await loadImage(defaultUrl);
-			loadImageAsync.cache.set(defaultUrl, defaultImage);
+		// 使用本地默認圖片
+		const defaultUrl = "./src/assets/image/icon/property/iconAttack.png";
+		try {
+			if (!loadImageAsync.cache.has(defaultUrl)) {
+				const defaultImage = await loadImage(defaultUrl);
+				loadImageAsync.cache.set(defaultUrl, defaultImage);
+			}
+			return {
+				image: loadImageAsync.cache.get(defaultUrl),
+				usedFallback: false
+			};
+		} catch (defaultError) {
+			console.error(
+				`Failed to load default image: ${defaultUrl}`,
+				defaultError.message
+			);
+			// 如果連默認圖片都無法載入，創建一個簡單的空白圖片
+			const canvas = createCanvas(64, 64);
+			const ctx = canvas.getContext("2d");
+			ctx.fillStyle = "#666";
+			ctx.fillRect(0, 0, 64, 64);
+			const fallbackImage = await loadImage(canvas.toBuffer());
+			loadImageAsync.cache.set(defaultUrl, fallbackImage);
+			return {
+				image: fallbackImage,
+				usedFallback: false
+			};
 		}
-		return {
-			image: loadImageAsync.cache.get(defaultUrl),
-			usedFallback: false
-		};
 	}
 };
 
@@ -154,7 +177,9 @@ async function renderAttributesList(ctx, attributes, startX, startY, spacing) {
 		const attributeImageResult = await loadImageAsync(
 			`./src/assets/image/${attribute.icon}`
 		);
-		ctx.drawImage(attributeImageResult.image, startX, y, 48, 48);
+		if (attributeImageResult && attributeImageResult.image) {
+			ctx.drawImage(attributeImageResult.image, startX, y, 48, 48);
+		}
 
 		// 繪製屬性名稱
 		ctx.font = "bold 24px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
@@ -284,14 +309,16 @@ async function handleProfileDraw(
 
 				characters = data.avatar_list;
 			} else {
-				const { status, playerData } = await requestPlayerData(
-					uid,
-					interaction
-				);
-				const { activityStatus, playerActivity } =
-					await requestPlayerActivity(uid, interaction);
+				const {
+					status: reqPlayerDataStatus,
+					playerData: reqPlayerData
+				} = await requestPlayerData(uid, interaction);
+				const {
+					status: reqPlayerActivityStatus,
+					playerActivity: reqPlayerActivity
+				} = await requestPlayerActivity(uid, interaction);
 
-				if (status !== 200) {
+				if (reqPlayerDataStatus !== 200) {
 					return interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
@@ -309,11 +336,10 @@ async function handleProfileDraw(
 					});
 				}
 
-				saveLeaderboard(playerData);
-				characters = playerData.characters;
-				playerActivity = playerActivity;
-				status = status;
-				playerData = playerData;
+				saveLeaderboard(reqPlayerData);
+				characters = reqPlayerData.characters;
+				playerActivity = reqPlayerActivity;
+				playerData = reqPlayerData;
 			}
 
 			const requestEndTime = Date.now();
@@ -546,9 +572,13 @@ async function drawMainImage(tr, playerData, playerActivity) {
 			2 + visibleCharacters.length
 		);
 
-		ctx.drawImage(bg, 0, 0, 1920, 1080);
+		if (bg) {
+			ctx.drawImage(bg, 0, 0, 1920, 1080);
+		}
 
-		ctx.drawImage(avatar, 896, 70, 128, 128);
+		if (avatar) {
+			ctx.drawImage(avatar, 896, 70, 128, 128);
+		}
 
 		const setupMainFont = (size, isBold = false) => {
 			ctx.font = `${isBold ? "bold " : ""}${size}px 'YaHei', 'URW DIN Arabic', Arial, sans-serif`;
@@ -652,7 +682,9 @@ async function drawMainImage(tr, playerData, playerActivity) {
 		});
 
 		characterRenderData.forEach(data => {
-			ctx.drawImage(data.image, data.x, 460, 187, 256);
+			if (data.image) {
+				ctx.drawImage(data.image, data.x, 460, 187, 256);
+			}
 		});
 
 		ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
@@ -723,8 +755,9 @@ async function drawMainImage(tr, playerData, playerActivity) {
 			ctx.fillText(record.text, 980, 910 + index * 40);
 
 			const recordIcon = playerActivityIcons[index];
-			recordIcon &&
+			if (recordIcon) {
 				ctx.drawImage(recordIcon, minIconX, 880 + index * 40, 40, 40);
+			}
 		});
 
 		return canvas.toBuffer("image/png");
@@ -789,18 +822,22 @@ async function drawCharacterImage(
 			characterFallbackUrl
 		);
 
-		ctx.drawImage(bg, 0, 0, 1920, 1080);
+		if (bg) {
+			ctx.drawImage(bg, 0, 0, 1920, 1080);
+		}
 
-		if (characterImageResult.usedFallback) {
-			ctx.drawImage(
-				characterImageResult.image,
-				600,
-				-50,
-				characterImageResult.image.width / 1.5,
-				characterImageResult.image.height / 1.5
-			);
-		} else {
-			ctx.drawImage(characterImageResult.image, 475, 0, 768, 768);
+		if (characterImageResult.image) {
+			if (characterImageResult.usedFallback) {
+				ctx.drawImage(
+					characterImageResult.image,
+					600,
+					-50,
+					characterImageResult.image.width / 1.5,
+					characterImageResult.image.height / 1.5
+				);
+			} else {
+				ctx.drawImage(characterImageResult.image, 475, 0, 768, 768);
+			}
 		}
 
 		const setupFont = (
@@ -833,8 +870,12 @@ async function drawCharacterImage(
 
 		setupFont(minFontSize, true);
 		ctx.fillText(character.name, 120, 100);
-		ctx.drawImage(element, 50, 50, 64, 64);
-		ctx.drawImage(path, 50, 120, 64, 64);
+		if (element) {
+			ctx.drawImage(element, 50, 50, 64, 64);
+		}
+		if (path) {
+			ctx.drawImage(path, 50, 120, 64, 64);
+		}
 
 		setupFont(28, true);
 		ctx.fillText(
@@ -843,7 +884,9 @@ async function drawCharacterImage(
 			165
 		);
 
-		ctx.drawImage(star, 50, 185, 160, 32);
+		if (star) {
+			ctx.drawImage(star, 50, 185, 160, 32);
+		}
 
 		ctx.textAlign = "center";
 
@@ -999,13 +1042,15 @@ async function drawCharacterImage(
 			);
 			const light_cone = light_coneResult.image;
 			// 圖片靠左
-			ctx.drawImage(
-				light_cone,
-				light_cone_base_x + 50,
-				light_cone_base_y + 10,
-				128 * 1.25,
-				128 * 1.25
-			);
+			if (light_cone) {
+				ctx.drawImage(
+					light_cone,
+					light_cone_base_x + 50,
+					light_cone_base_y + 10,
+					128 * 1.25,
+					128 * 1.25
+				);
+			}
 
 			// 文字靠右區域內左側
 			ctx.textAlign = "left";
@@ -1141,7 +1186,9 @@ async function drawCharacterImage(
 		const skills = await Promise.all(skillPromises);
 
 		skills.forEach((skill, index) => {
-			ctx.drawImage(skill.skillImage, 630 + index * 90, 760, 80, 80);
+			if (skill.skillImage) {
+				ctx.drawImage(skill.skillImage, 630 + index * 90, 760, 80, 80);
+			}
 			ctx.textAlign = "center";
 			setupFont(18, true);
 			ctx.fillText(`${skill.type_text}`, 670 + index * 90, 870);
@@ -1183,7 +1230,7 @@ async function drawCharacterImage(
 				const subAffixIconResults = await Promise.all(
 					(relic.sub_affix || relic.properties || []).map(subAff =>
 						loadImageAsync(
-							`./src/assets/image/${subAff.icon || `icon/property/Icon${propertyMap[subAff.property_type]}.png`}`
+							`./src/assets/image/${subAff.icon || `icon/property/icon${propertyMap[subAff.property_type]}.png`}`
 						)
 					)
 				);
@@ -1193,8 +1240,9 @@ async function drawCharacterImage(
 
 				// 處理主屬性圖標
 				const mainAffixIconResult = await loadImageAsync(
-					`./src/assets/image/${relic.main_affix?.icon || `icon/property/Icon${propertyMap[relic.main_property?.property_type]}.png`}`
+					`./src/assets/image/${relic.main_affix?.icon || `icon/property/icon${propertyMap[relic.main_property?.property_type]}.png`}`
 				);
+
 				const rarityIconResult = await loadImageAsync(
 					`./src/assets/image/icon/deco/Star${relic.rarity == 5 ? "5" : "4"}.png`
 				);
@@ -1243,8 +1291,12 @@ async function drawCharacterImage(
 			ctx.restore();
 			ctx.globalAlpha = 1;
 
-			ctx.drawImage(icons.main, x + 10, y + 20, 96, 96);
-			ctx.drawImage(icons.rarity, x + 15, y + 115, 83.78, 16.75);
+			if (icons.main) {
+				ctx.drawImage(icons.main, x + 10, y + 20, 96, 96);
+			}
+			if (icons.rarity) {
+				ctx.drawImage(icons.rarity, x + 15, y + 115, 83.78, 16.75);
+			}
 
 			setupFont(20, true);
 			ctx.fillStyle = "white";
@@ -1252,7 +1304,9 @@ async function drawCharacterImage(
 			ctx.fillText(`+${relic.level}`, x + 55, y + 150);
 
 			const mainAff = relic.main_affix?.weight || 0;
-			ctx.drawImage(icons.mainAffix, x + 100, y + 15, 40, 40);
+			if (icons.mainAffix) {
+				ctx.drawImage(icons.mainAffix, x + 100, y + 15, 40, 40);
+			}
 			ctx.fillStyle =
 				mainAff >= 0.75
 					? "#F3B664"
@@ -1265,7 +1319,7 @@ async function drawCharacterImage(
 			let text =
 				relic.main_affix?.name ||
 				tr(
-					`property_${propertyMap[relic.main_property?.property_type]}`
+					`property_${relic.main_affix?.propertyName || propertyMap[relic.main_property?.property_type]}`
 				);
 			if (typeof text !== "string") text = "";
 
@@ -1345,13 +1399,15 @@ async function drawCharacterImage(
 
 			(relic.sub_affix || relic.properties || []).forEach(
 				(subAffix, subIndex) => {
-					ctx.drawImage(
-						icons.subAffixes[subIndex],
-						x + 103,
-						y + affixYStart + subIndex * 32,
-						32,
-						32
-					);
+					if (icons.subAffixes[subIndex]) {
+						ctx.drawImage(
+							icons.subAffixes[subIndex],
+							x + 103,
+							y + affixYStart + subIndex * 32,
+							32,
+							32
+						);
+					}
 
 					let fontSize = initialFontSize;
 					setupFont(fontSize, true);
@@ -1368,7 +1424,9 @@ async function drawCharacterImage(
 
 					const text =
 						subAffix.name ||
-						tr(`property_${propertyMap[subAffix.property_type]}`);
+						tr(
+							`property_${subAffix.propertyName || propertyMap[subAffix.property_type]}`
+						);
 					let textWidth = ctx.measureText(text).width;
 
 					while (textWidth > maxWidth && fontSize > 16) {
@@ -1445,20 +1503,24 @@ async function drawAllCharactersImage(
 		// 背景
 		const bgResult = await loadImageAsync("./src/assets/image/warp/bg.jpg");
 		const bg = bgResult.image;
-		ctx.drawImage(bg, 0, 0, canvasWidth, canvasHeight);
+		if (bg) {
+			ctx.drawImage(bg, 0, 0, canvasWidth, canvasHeight);
+		}
 
 		// 左上角頭像
 		const avatarResult = await loadImageAsync(
 			playerData.player.avatar.icon
 		);
 		const avatar = avatarResult.image;
-		ctx.save();
-		ctx.beginPath();
-		ctx.arc(110, 110, 70, 0, Math.PI * 2);
-		ctx.closePath();
-		ctx.clip();
-		ctx.drawImage(avatar, 40, 40, 140, 140);
-		ctx.restore();
+		if (avatar) {
+			ctx.save();
+			ctx.beginPath();
+			ctx.arc(110, 110, 70, 0, Math.PI * 2);
+			ctx.closePath();
+			ctx.clip();
+			ctx.drawImage(avatar, 40, 40, 140, 140);
+			ctx.restore();
+		}
 
 		// 文字資訊
 		ctx.textAlign = "left";
@@ -1557,13 +1619,15 @@ async function drawAllCharactersImage(
 			const scale = Math.max((2 * 36) / 168, (2 * 36) / 188);
 			const drawW = 168 * scale;
 			const drawH = 188 * scale;
-			ctx.drawImage(
-				charIcon,
-				iconCenterX - drawW / 2,
-				iconCenterY - drawH / 2,
-				drawW,
-				drawH
-			);
+			if (charIcon) {
+				ctx.drawImage(
+					charIcon,
+					iconCenterX - drawW / 2,
+					iconCenterY - drawH / 2,
+					drawW,
+					drawH
+				);
+			}
 			ctx.restore();
 
 			// 中間上方：命途icon、屬性icon（加大尺寸）
@@ -1582,8 +1646,12 @@ async function drawAllCharactersImage(
 			}
 			const pathIconResult = await loadImageAsync(pathIconPath);
 			const pathIcon = pathIconResult.image;
-			ctx.drawImage(pathIcon, x + 110, y + 12, 44, 44);
-			ctx.drawImage(elementIcon, x + 164, y + 12, 44, 44);
+			if (pathIcon) {
+				ctx.drawImage(pathIcon, x + 110, y + 12, 44, 44);
+			}
+			if (elementIcon) {
+				ctx.drawImage(elementIcon, x + 164, y + 12, 44, 44);
+			}
 
 			// 中間下方：等級、命座（下移，增加間隔）
 			ctx.font = "bold 22px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
@@ -1607,13 +1675,15 @@ async function drawAllCharactersImage(
 			if (char.equip && char.equip.icon) {
 				const lcIconResult = await loadImageAsync(char.equip.icon);
 				const lcIcon = lcIconResult.image;
-				ctx.drawImage(
-					lcIcon,
-					x + cardWidth - 62.5,
-					y + 12.5,
-					57.5,
-					57.5
-				);
+				if (lcIcon) {
+					ctx.drawImage(
+						lcIcon,
+						x + cardWidth - 62.5,
+						y + 12.5,
+						57.5,
+						57.5
+					);
+				}
 				ctx.font =
 					"bold 18px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
 				ctx.fillStyle = "#fff";
@@ -1733,56 +1803,6 @@ function drawColoredTextLines(lines, x, y, lineHeight, ctx, maxY) {
 		}
 		y += lineHeight;
 	}
-}
-
-// 新增：获取角色立绘的函数
-async function getCharacterPortrait(character, type = "portrait") {
-	const characterId = character.id;
-
-	// 定义不同的立绘类型和URL模板
-	const portraitTypes = {
-		// 标准肖像（方形）
-		portrait: [
-			`${image_Header}/image/character_portrait/${characterId}.png`,
-			`${image_Header}/icon/avatar/${characterId}.png`
-		],
-		// 高清立绘（完整角色）
-		full: [
-			`${image_Header}/image/character_full/${characterId}.png`,
-			`${image_Header}/image/character_splash/${characterId}.png`,
-			`${image_Header}/image/character_portrait/${characterId}.png`
-		],
-		// 背景立绘（带背景）
-		splash: [
-			`${image_Header}/image/character_splash/${characterId}.png`,
-			`${image_Header}/image/character_full/${characterId}.png`,
-			`${image_Header}/image/character_portrait/${characterId}.png`
-		],
-		// 图标
-		icon: [
-			`${image_Header}/icon/avatar/${characterId}.png`,
-			`${image_Header}/image/character_portrait/${characterId}.png`
-		]
-	};
-
-	// 获取指定类型的URL列表
-	const urls = portraitTypes[type] || portraitTypes.portrait;
-
-	// 尝试加载每个URL，直到成功
-	for (const url of urls) {
-		try {
-			const result = await loadImageAsync(url);
-			if (result.image) {
-				return result;
-			}
-		} catch (error) {
-			console.log(`Failed to load ${url}: ${error.message}`);
-			continue;
-		}
-	}
-
-	// 如果都失败了，返回默认图片
-	return await loadImageAsync(`${image_Header}icon/character/None.png`);
 }
 
 export {

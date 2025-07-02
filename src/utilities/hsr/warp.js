@@ -1,5 +1,5 @@
 import { EmbedBuilder } from "discord.js";
-import { baseWeapons } from "./Constants.js";
+import { baseWeapons } from "./constants.js";
 import { join } from "path";
 import axios from "axios";
 import { client } from "../../index.js";

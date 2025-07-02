@@ -1,5 +1,5 @@
 import axios from "axios";
-import { propertyMap } from "../hsr/profile.js";
+import { propertyMap } from "./constants.js";
 // import { lazy } from "discord.js";
 
 // this lazy() can be changed to getting the scores on web, etc
@@ -87,11 +87,12 @@ function calculateMainAffixScore(relic, weights, index) {
 			...mainAffix,
 			type: affixType,
 			// 為顯示添加必要的字段
-			name: mainAffix.name || propertyMap[affixType],
+			name: mainAffix.name,
+			propertyName: propertyMap[affixType],
 			display: mainAffix.value || mainAffix.display || "0",
 			icon:
 				mainAffix.icon ||
-				`icon/property/Icon${propertyMap[affixType]}.png`
+				`icon/property/icon${propertyMap[affixType]}.png`
 		};
 	}
 
@@ -121,11 +122,12 @@ function calculateSubScore(relic, weights) {
 					...sub,
 					type: subType,
 					count: count,
-					name: sub.name || propertyMap[subType],
+					name: sub.name,
+					propertyName: propertyMap[subType],
 					display: sub.value || sub.display || "0",
 					icon:
 						sub.icon ||
-						`icon/property/Icon${propertyMap[subType]}.png`
+						`icon/property/icon${propertyMap[subType]}.png`
 				});
 			}
 

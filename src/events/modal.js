@@ -1,7 +1,7 @@
 import { client } from "../index.js";
 import { AxiosError } from "axios";
 import { Events, EmbedBuilder } from "discord.js";
-import { HonkaiStarRail } from "hoyoapi";
+import { HonkaiStarRail } from "@yeci226/hoyoapi";
 import {
 	getUserLang,
 	requestPlayerData,
@@ -151,11 +151,7 @@ async function handleAccountEdit(interaction, tr, customId, fields) {
 					.setThumbnail(
 						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 					)
-					.setTitle(
-						tr("account_AlreadySet", {
-							z: `${uid}`
-						})
-					)
+					.setTitle(tr("account_AlreadySet", { z: `${uid}` }))
 			]
 		});
 
@@ -223,9 +219,7 @@ async function handleUidSet(interaction, tr, fields) {
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 						.setTitle(
-							`${tr("account_AlreadySet", {
-								z: `${uid}`
-							})}`
+							`${tr("account_AlreadySet", { z: `${uid}` })}`
 						)
 				]
 			});
@@ -238,17 +232,10 @@ async function handleUidSet(interaction, tr, fields) {
 				.setThumbnail(
 					"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
 				)
-				.setTitle(
-					`${tr("account_UidSetSuccess", {
-						z: `${uid}`
-					})}`
-				)
+				.setTitle(`${tr("account_UidSetSuccess", { z: `${uid}` })}`)
 		]
 	});
-	await db.push(`${interaction.user.id}.account`, {
-		uid: uid,
-		cookie: ""
-	});
+	await db.push(`${interaction.user.id}.account`, { uid: uid, cookie: "" });
 }
 
 async function handleCookieSet(interaction, tr, customId, fields) {
@@ -263,9 +250,7 @@ async function handleCookieSet(interaction, tr, customId, fields) {
 	const account = (await db.get(`${interaction.user.id}.account`)) ?? "";
 
 	try {
-		const hsr = new HonkaiStarRail({
-			cookie: cookie
-		});
+		const hsr = new HonkaiStarRail({ cookie: cookie });
 		await hsr.daily.info();
 
 		// 清除過期標記
