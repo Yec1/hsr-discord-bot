@@ -1130,6 +1130,24 @@ async function handleSelectCharacter(interaction, tr, value) {
 					userId,
 					accountIndex
 				);
+
+				if (!hsr) {
+					return interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setColor("#E76161")
+								.setTitle(tr("DrawError"))
+								.setDescription(
+									"無法取得遊戲資料，請檢查帳號設定"
+								)
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+								)
+						],
+						fetchReply: true
+					});
+				}
+
 				characters = await hsr.record.characters();
 				const data = await hsr.record.records();
 				const gameInfo = await getUserGameInfo(hsr.cookie);
@@ -1172,6 +1190,22 @@ async function handleSelectCharacter(interaction, tr, value) {
 
 				characters = reqPlayerData.avatar_list;
 				playerActivity = reqPlayerActivity;
+			}
+
+			// 檢查 characters 是否為空或未定義
+			if (!characters || characters.length === 0) {
+				return interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setColor("#E76161")
+							.setTitle(tr("DrawError"))
+							.setDescription("無法取得角色資料")
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+					],
+					fetchReply: true
+				});
 			}
 
 			const character = characters.find(

@@ -78,8 +78,9 @@ const loadImageAsync = async (url, fallbackUrl = null) => {
 		if (!loadImageAsync.cache) loadImageAsync.cache = new Map();
 
 		if (loadImageAsync.cache.has(url)) {
+			const cachedImage = loadImageAsync.cache.get(url);
 			return {
-				image: loadImageAsync.cache.get(url),
+				image: cachedImage,
 				usedFallback: false
 			};
 		}
@@ -295,6 +296,23 @@ async function handleProfileDraw(
 					user.id,
 					accountIndex
 				);
+
+				if (!hsr) {
+					return interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setColor("#E76161")
+								.setTitle(tr("DrawError"))
+								.setDescription(
+									"無法取得遊戲資料，請檢查帳號設定"
+								)
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+								)
+						],
+						fetchReply: true
+					});
+				}
 
 				const data = await hsr.record.records();
 				const gameInfo = await getUserGameInfo(hsr.cookie);
@@ -565,12 +583,14 @@ async function drawMainImage(tr, playerData, playerActivity) {
 
 		const allImages = await Promise.all(imageUrls.map(loadImageAsync));
 
-		const bg = allImages[0];
-		const avatar = allImages[1];
-		const charImages = allImages.slice(2, 2 + visibleCharacters.length);
-		const playerActivityIcons = allImages.slice(
-			2 + visibleCharacters.length
-		);
+		const bg = allImages[0]?.image;
+		const avatar = allImages[1]?.image;
+		const charImages = allImages
+			.slice(2, 2 + visibleCharacters.length)
+			.map(img => img?.image);
+		const playerActivityIcons = allImages
+			.slice(2 + visibleCharacters.length)
+			.map(img => img?.image);
 
 		if (bg) {
 			ctx.drawImage(bg, 0, 0, 1920, 1080);
@@ -808,7 +828,7 @@ async function drawCharacterImage(
 		// 加载基础图片
 		const imageResults = await Promise.all(imagePaths.map(loadImageAsync));
 		const [bg, element, path, star, ...relicImages] = imageResults.map(
-			result => result.image
+			result => result?.image
 		);
 
 		// 单独处理角色图片，支持备选方案
@@ -1040,7 +1060,7 @@ async function drawCharacterImage(
 				character.equip?.icon ||
 					`${image_Header}/icon/light_cone/${character.light_cone?.id}.png`
 			);
-			const light_cone = light_coneResult.image;
+			const light_cone = light_coneResult?.image;
 			// 圖片靠左
 			if (light_cone) {
 				ctx.drawImage(
@@ -1174,7 +1194,7 @@ async function drawCharacterImage(
 					return loadImageAsync(
 						skill.item_url || image_Header + skill.icon
 					).then(skillImageResult => ({
-						skillImage: skillImageResult.image,
+						skillImage: skillImageResult?.image,
 						type_text: skill.type_text || skill.remake,
 						level: skill.level
 					}));
@@ -1235,7 +1255,7 @@ async function drawCharacterImage(
 					)
 				);
 				const subAffixIcons = subAffixIconResults.map(
-					result => result.image
+					result => result?.image
 				);
 
 				// 處理主屬性圖標
@@ -1246,8 +1266,8 @@ async function drawCharacterImage(
 				const rarityIconResult = await loadImageAsync(
 					`./src/assets/image/icon/deco/Star${relic.rarity == 5 ? "5" : "4"}.png`
 				);
-				const mainAffixIcon = mainAffixIconResult.image;
-				const rarityIcon = rarityIconResult.image;
+				const mainAffixIcon = mainAffixIconResult?.image;
+				const rarityIcon = rarityIconResult?.image;
 
 				return {
 					relic,
@@ -1502,7 +1522,7 @@ async function drawAllCharactersImage(
 
 		// 背景
 		const bgResult = await loadImageAsync("./src/assets/image/warp/bg.jpg");
-		const bg = bgResult.image;
+		const bg = bgResult?.image;
 		if (bg) {
 			ctx.drawImage(bg, 0, 0, canvasWidth, canvasHeight);
 		}
@@ -1511,7 +1531,7 @@ async function drawAllCharactersImage(
 		const avatarResult = await loadImageAsync(
 			playerData.player.avatar.icon
 		);
-		const avatar = avatarResult.image;
+		const avatar = avatarResult?.image;
 		if (avatar) {
 			ctx.save();
 			ctx.beginPath();
@@ -1610,7 +1630,7 @@ async function drawAllCharactersImage(
 			const iconCenterX = x + 20 + 36;
 			const iconCenterY = y + cardHeight / 2;
 			const charIconResult = await loadImageAsync(char.icon);
-			const charIcon = charIconResult.image;
+			const charIcon = charIconResult?.image;
 			ctx.save();
 			ctx.beginPath();
 			ctx.arc(iconCenterX, iconCenterY, 36, 0, Math.PI * 2);
@@ -1634,7 +1654,7 @@ async function drawAllCharactersImage(
 			const elementIconResult = await loadImageAsync(
 				`./src/assets/image/element/${char.element.toLowerCase()}.png`
 			);
-			const elementIcon = elementIconResult.image;
+			const elementIcon = elementIconResult?.image;
 			let pathIconPath = null;
 			if (char.base_type) {
 				const pathName = pathMap[char.base_type] || "none";
@@ -1645,7 +1665,7 @@ async function drawAllCharactersImage(
 				pathIconPath = `./src/assets/image/icon/path/none.png`;
 			}
 			const pathIconResult = await loadImageAsync(pathIconPath);
-			const pathIcon = pathIconResult.image;
+			const pathIcon = pathIconResult?.image;
 			if (pathIcon) {
 				ctx.drawImage(pathIcon, x + 110, y + 12, 44, 44);
 			}
@@ -1674,7 +1694,7 @@ async function drawAllCharactersImage(
 			// 右側武器icon和等級
 			if (char.equip && char.equip.icon) {
 				const lcIconResult = await loadImageAsync(char.equip.icon);
-				const lcIcon = lcIconResult.image;
+				const lcIcon = lcIconResult?.image;
 				if (lcIcon) {
 					ctx.drawImage(
 						lcIcon,
