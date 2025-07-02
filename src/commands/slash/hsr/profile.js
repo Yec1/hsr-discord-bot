@@ -1,5 +1,9 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { failedReply, getUserUid } from "../../../utilities/utilities.js";
+import {
+	failedReply,
+	getUserCookie,
+	getUserUid
+} from "../../../utilities/utilities.js";
 import { handleProfileDraw } from "../../../utilities/hsr/profile.js";
 
 export default {
@@ -12,6 +16,18 @@ export default {
 		.setDescriptionLocalizations({
 			"zh-TW": "查詢玩家的個人簡介"
 		})
+		.addBooleanOption(option =>
+			option
+				.setName("allcharacters")
+				.setDescription("Show all characters (need bind account)")
+				.setNameLocalizations({
+					"zh-TW": "展示全部角色"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "展示全部角色 (需要綁定帳號)"
+				})
+				.setRequired(false)
+		)
 		.addStringOption(option =>
 			option
 				.setName("account")
@@ -60,6 +76,12 @@ export default {
 			interaction.options.getInteger("uid") ??
 			(await getUserUid(user.id, accountIndex));
 
+		const allCharacters =
+			interaction.options.getBoolean("allcharacters") ??
+			(uid && (await getUserCookie(user.id, accountIndex))
+				? true
+				: false);
+
 		if (!uid && user.id == interaction.user.id)
 			return failedReply(
 				interaction,
@@ -69,6 +91,13 @@ export default {
 
 		await interaction.deferReply();
 
-		handleProfileDraw(interaction, tr, user, uid);
+		handleProfileDraw(
+			interaction,
+			tr,
+			user,
+			uid,
+			allCharacters,
+			accountIndex
+		);
 	}
 };

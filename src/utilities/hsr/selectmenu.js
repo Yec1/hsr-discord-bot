@@ -89,4 +89,25 @@ async function getSelectMenu(interaction, tr, type) {
 	return selectMenus;
 }
 
-export { getSelectMenu };
+function createChunkedSelectMenus(options, placeholder, customIdPrefix) {
+	const chunkSize = 25;
+	const selectMenus = [];
+	for (let i = 0; i < options.length; i += chunkSize) {
+		const chunk = options.slice(i, i + chunkSize);
+		const menu = new StringSelectMenuBuilder()
+			.setPlaceholder(
+				placeholder +
+					(options.length > chunkSize
+						? ` (${i + 1}~${i + chunk.length})`
+						: "")
+			)
+			.setCustomId(`${customIdPrefix}-${Math.floor(i / chunkSize)}`)
+			.setMinValues(1)
+			.setMaxValues(1)
+			.addOptions(chunk);
+		selectMenus.push(menu);
+	}
+	return selectMenus;
+}
+
+export { getSelectMenu, createChunkedSelectMenus };

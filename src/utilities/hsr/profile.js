@@ -3,8 +3,11 @@ import {
 	requestPlayerData,
 	drawInQueueReply,
 	getRandomColor,
-	requestPlayerActivity
+	requestPlayerActivity,
+	getUserHSRData,
+	getUserGameInfo
 } from "../utilities.js";
+import { createChunkedSelectMenus } from "./selectmenu.js";
 import { join } from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import {
@@ -16,6 +19,7 @@ import {
 import { getRelicsScore } from "./relics.js";
 import emoji from "../../assets/emoji.js";
 import Queue from "queue";
+import fs from "fs";
 const db = client.db;
 
 const drawQueue = new Queue({ autostart: true });
@@ -23,24 +27,93 @@ const drawQueue = new Queue({ autostart: true });
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
 
-const loadImageAsync = async url => {
+const pathMap = {
+	1: "destruction", // 毀滅
+	2: "hunt", // 巡獵
+	3: "erudition", // 智識
+	4: "harmony", // 同諧
+	5: "nihility", // 虛無
+	6: "preservation", // 存護
+	7: "abundance", // 豐饒
+	8: "remembrance" // 記憶
+};
+
+export const propertyMap = {
+	1: "MaxHP",
+	2: "Attack",
+	3: "Defence",
+	4: "Speed",
+	5: "CriticalChance",
+	6: "CriticalDamage",
+	7: "HealRatio",
+	// 8: ""
+	9: "EnergyRecovery",
+	10: "StatusProbability",
+	11: "StatusResistance",
+	12: "PhysicalAddedRatio",
+	14: "FireAddedRatio",
+	16: "IceAddedRatio",
+	18: "ThunderAddedRatio",
+	20: "WindAddedRatio",
+	22: "QuantumAddedRatio",
+	24: "ImaginaryAddedRatio",
+	27: "MaxHP", // 小生命
+	29: "Attack", // 小攻擊
+	31: "Defence", // 小防禦
+	32: "MaxHP", // 大生命
+	33: "Attack", // 大攻擊
+	34: "Defence", // 大防禦
+	51: "Speed",
+	52: "CriticalChance",
+	53: "CriticalDamage",
+	54: "EnergyRecovery",
+	55: "HealRatio",
+	56: "StatusProbability",
+	57: "StatusResistance",
+	58: "BreakUp",
+	59: "BreakUp"
+};
+
+const loadImageAsync = async (url, fallbackUrl = null) => {
 	try {
 		if (!loadImageAsync.cache) loadImageAsync.cache = new Map();
 
 		if (loadImageAsync.cache.has(url)) {
-			return loadImageAsync.cache.get(url);
+			return {
+				image: loadImageAsync.cache.get(url),
+				usedFallback: false
+			};
 		}
 
 		const image = await loadImage(url);
 		loadImageAsync.cache.set(url, image);
-		return image;
+		return { image, usedFallback: false };
 	} catch {
+		// 如果有备选URL，尝试加载备选图片
+		if (fallbackUrl) {
+			try {
+				if (!loadImageAsync.cache.has(fallbackUrl)) {
+					const fallbackImage = await loadImage(fallbackUrl);
+					loadImageAsync.cache.set(fallbackUrl, fallbackImage);
+				}
+				return {
+					image: loadImageAsync.cache.get(fallbackUrl),
+					usedFallback: true
+				};
+			} catch {
+				// 备选图片也失败，使用默认图片
+			}
+		}
+
 		const defaultUrl = `${image_Header}icon/character/None.png`;
 		if (!loadImageAsync.cache.has(defaultUrl)) {
 			const defaultImage = await loadImage(defaultUrl);
 			loadImageAsync.cache.set(defaultUrl, defaultImage);
 		}
-		return loadImageAsync.cache.get(defaultUrl);
+		return {
+			image: loadImageAsync.cache.get(defaultUrl),
+			usedFallback: false
+		};
 	}
 };
 
@@ -59,6 +132,53 @@ GlobalFonts.registerFromPath(
 
 function containsChinese(text) {
 	return /[\u4e00-\u9fa5]/.test(text);
+}
+
+// 渲染屬性列表的輔助函數
+async function renderAttributesList(ctx, attributes, startX, startY, spacing) {
+	// 過濾掉 0/0%/0.0%/0.00%/0.0/0 的屬性
+	const filtered = attributes.filter(attribute => {
+		const v = attribute.display ?? attribute.value ?? attribute.final;
+		if (typeof v === "string") {
+			return !/^0(\.0+)?%?$/.test(v.trim());
+		} else if (typeof v === "number") {
+			return v !== 0;
+		}
+		return true;
+	});
+	for (let i = 0; i < filtered.length; i++) {
+		const attribute = filtered[i];
+		const y = startY + i * spacing;
+
+		// 載入並繪製屬性圖標
+		const attributeImageResult = await loadImageAsync(
+			`./src/assets/image/${attribute.icon}`
+		);
+		ctx.drawImage(attributeImageResult.image, startX, y, 48, 48);
+
+		// 繪製屬性名稱
+		ctx.font = "bold 24px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		ctx.textAlign = "left";
+		ctx.fillText(attribute.name, startX + 55, y + 33);
+
+		// 繪製屬性數值
+		ctx.font = "bold 24px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		ctx.textAlign = "right";
+		ctx.fillText(
+			`${attribute.display || attribute.value || attribute.final}`,
+			startX + 450,
+			y + 33
+		);
+	}
+}
+
+// 繪製分隔線的輔助函數
+function drawSeparatorLine(ctx, startX, endX, y) {
+	ctx.strokeStyle = "#fff";
+	ctx.beginPath();
+	ctx.moveTo(startX, y);
+	ctx.lineTo(endX, y);
+	ctx.stroke();
 }
 
 async function saveLeaderboard(playerData) {
@@ -115,7 +235,14 @@ async function saveLeaderboard(playerData) {
 	await db.set("LeaderBoard", leaderboard);
 }
 
-async function handleProfileDraw(interaction, tr, user, uid) {
+async function handleProfileDraw(
+	interaction,
+	tr,
+	user,
+	uid,
+	allCharacters = false,
+	accountIndex = 0
+) {
 	const drawTask = async () => {
 		try {
 			interaction.editReply({
@@ -131,40 +258,90 @@ async function handleProfileDraw(interaction, tr, user, uid) {
 			});
 
 			const requestStartTime = Date.now();
-			const { status, playerData } = await requestPlayerData(
-				uid,
-				interaction
-			);
-			const { activityStatus, playerActivity } =
-				await requestPlayerActivity(uid, interaction);
 
-			if (status !== 200) {
-				return interaction.editReply({
-					embeds: [
-						new EmbedBuilder()
-							.setTitle(
-								tr("profile_UidNotFound", { uid: `\`${uid}\`` })
-							)
-							.setColor("#E76161")
-							.setThumbnail(
-								"https://media.discordapp.net/attachments/1231256542419095623/1246728242052989053/Trailblazer_female.png"
-							)
-					],
-					fetchReply: true
-				});
+			// 如果目標玩家已經綁定帳號 使用hoyoapi 獲取資料
+			let playerData = null;
+			let playerActivity = null;
+			let characters = null;
+			if (allCharacters) {
+				const hsr = await getUserHSRData(
+					interaction,
+					tr,
+					user.id,
+					accountIndex
+				);
+
+				const data = await hsr.record.records();
+				const gameInfo = await getUserGameInfo(hsr.cookie);
+				playerData = {
+					player: {
+						nickname: gameInfo.nickname,
+						uid: gameInfo.uid,
+						level: gameInfo.level,
+						avatar: { icon: data.cur_head_icon_url }
+					}
+				};
+
+				characters = data.avatar_list;
+			} else {
+				const { status, playerData } = await requestPlayerData(
+					uid,
+					interaction
+				);
+				const { activityStatus, playerActivity } =
+					await requestPlayerActivity(uid, interaction);
+
+				if (status !== 200) {
+					return interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setTitle(
+									tr("profile_UidNotFound", {
+										uid: `\`${uid}\``
+									})
+								)
+								.setColor("#E76161")
+								.setThumbnail(
+									"https://media.discordapp.net/attachments/1231256542419095623/1246728242052989053/Trailblazer_female.png"
+								)
+						],
+						fetchReply: true
+					});
+				}
+
+				saveLeaderboard(playerData);
+				characters = playerData.characters;
+				playerActivity = playerActivity;
+				status = status;
+				playerData = playerData;
 			}
 
-			saveLeaderboard(playerData);
-
 			const requestEndTime = Date.now();
-			const characters = playerData.characters;
 			const drawStartTime = Date.now();
+			let imageBuffer = null;
+			if (allCharacters) {
+				// 預設按五星優先排序
+				const defaultSortedCharacters = characters.sort((a, b) => {
+					// 先按五星優先排序
+					if (a.rarity !== b.rarity) {
+						return b.rarity - a.rarity;
+					}
+					// 再按等級排序
+					return b.level - a.level;
+				});
 
-			const imageBuffer = await drawMainImage(
-				tr,
-				playerData,
-				playerActivity
-			);
+				imageBuffer = await drawAllCharactersImage(
+					tr,
+					playerData,
+					defaultSortedCharacters
+				);
+			} else {
+				imageBuffer = await drawMainImage(
+					tr,
+					playerData,
+					playerActivity
+				);
+			}
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 
 			const drawEndTime = Date.now();
@@ -172,16 +349,125 @@ async function handleProfileDraw(interaction, tr, user, uid) {
 				name: `MainPage_${playerData.player.uid}.png`
 			});
 
+			const selectMenus = createChunkedSelectMenus(
+				characters.map(character => ({
+					emoji: allCharacters
+						? emoji[character.element.toLowerCase()]
+						: emoji[character.element.id.toLowerCase()],
+					label: `${character.name}`,
+					value: `${playerData.player.uid}-${user.id}-${accountIndex}-${allCharacters}-${character.id}`
+				})),
+				tr("profile_SelectCharacter"),
+				"profile_SelectCharacter"
+			);
+
+			const filterOptions = [
+				{
+					label: tr("profile_FilterNone"),
+					value: "no_filter",
+					emoji: "❌"
+				},
+				// 排序
+				{
+					label: tr("profile_SortByLevel"),
+					value: "sort_level",
+					emoji: "🔢"
+				},
+				{
+					label: tr("profile_SortByEidolon"),
+					value: "sort_eidolon",
+					emoji: "⭐"
+				},
+				// 屬性
+				{
+					label: tr("element_physical"),
+					value: "physical",
+					emoji: emoji["physical"]
+				},
+				{ label: tr("element_ice"), value: "ice", emoji: emoji["ice"] },
+				{
+					label: tr("element_fire"),
+					value: "fire",
+					emoji: emoji["fire"]
+				},
+				{
+					label: tr("element_lightning"),
+					value: "lightning",
+					emoji: emoji["lightning"]
+				},
+				{
+					label: tr("element_wind"),
+					value: "wind",
+					emoji: emoji["wind"]
+				},
+				{
+					label: tr("element_quantum"),
+					value: "quantum",
+					emoji: emoji["quantum"]
+				},
+				{
+					label: tr("element_imaginary"),
+					value: "imaginary",
+					emoji: emoji["imaginary"]
+				},
+				// 命途
+				{
+					label: tr("path_destruction"),
+					value: "destruction",
+					emoji: emoji["destruction"]
+				},
+				{
+					label: tr("path_harmony"),
+					value: "harmony",
+					emoji: emoji["harmony"]
+				},
+				{
+					label: tr("path_erudition"),
+					value: "erudition",
+					emoji: emoji["erudition"]
+				},
+				{ label: tr("path_hunt"), value: "hunt", emoji: emoji["hunt"] },
+				{
+					label: tr("path_preservation"),
+					value: "preservation",
+					emoji: emoji["preservation"]
+				},
+				{
+					label: tr("path_nihility"),
+					value: "nihility",
+					emoji: emoji["nihility"]
+				},
+				{
+					label: tr("path_abundance"),
+					value: "abundance",
+					emoji: emoji["abundance"]
+				},
+				{
+					label: tr("path_remembrance"),
+					value: "remembrance",
+					emoji: emoji["remembrance"]
+				}
+			];
+
+			const filterMenu = new StringSelectMenuBuilder()
+				.setCustomId(`profile_Filter-${user.id}-${accountIndex}`)
+				.setPlaceholder(tr("profile_FilterPlaceholder"))
+				.setMinValues(1)
+				.setMaxValues(filterOptions.length)
+				.addOptions(filterOptions);
+
+			const components = [
+				...selectMenus.map(menu =>
+					new ActionRowBuilder().addComponents(menu)
+				),
+				allCharacters
+					? new ActionRowBuilder().addComponents(filterMenu)
+					: null
+			];
+
 			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
-						.setAuthor({
-							name: user.username,
-							iconURL: user.displayAvatarURL({
-								size: 4096,
-								dynamic: true
-							})
-						})
 						.setImage(`attachment://${image.name}`)
 						.setFooter({
 							text: tr("CostTime", {
@@ -196,29 +482,11 @@ async function handleProfileDraw(interaction, tr, user, uid) {
 							})
 						})
 				],
-				components: [
-					new ActionRowBuilder().addComponents(
-						new StringSelectMenuBuilder()
-							.setPlaceholder(tr("profile_SelectCharacter"))
-							.setCustomId("profile_SelectCharacter")
-							.setMinValues(1)
-							.setMaxValues(1)
-							.addOptions(
-								characters.map((character, i) => {
-									return {
-										emoji: emoji[
-											character.element.id.toLowerCase()
-										],
-										label: `${character.name}`,
-										value: `${playerData.player.uid}-${user.id}-${i}`
-									};
-								})
-							)
-					)
-				],
+				components: components,
 				files: [image]
 			});
 		} catch (error) {
+			console.error(error);
 			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -466,28 +734,74 @@ async function drawMainImage(tr, playerData, playerActivity) {
 	}
 }
 
-async function drawCharacterImage(tr, playerData, character) {
+async function drawCharacterImage(
+	tr,
+	playerData,
+	character,
+	isAllCharacter = false
+) {
 	try {
 		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
 
+		if (isAllCharacter) {
+		}
+
+		const characterElementIcon =
+			character.element.icon?.toLowerCase() ||
+			`element/${character.element}.png`;
+		const characterPathIcon =
+			character.path?.icon.toLowerCase() ||
+			`icon/path/${pathMap[character.base_type]}.png`;
+
 		const imagePaths = [
 			"./src/assets/image/warp/bg.jpg",
-			`./src/assets/image/${character.element.icon.toLowerCase()}`,
-			`./src/assets/image/${character.path.icon.toLowerCase()}`,
-			`./src/assets/image/icon/deco/Star${character.rarity == 5 ? "5" : "4"}.png`,
-			image_Header + character.portrait
+			`./src/assets/image/${characterElementIcon}`,
+			`./src/assets/image/${characterPathIcon}`,
+			`./src/assets/image/icon/deco/Star${character.rarity == 5 ? "5" : "4"}.png`
 		];
 
-		const relicImagePaths = character.relics.map(
-			relic => image_Header + relic.icon
+		const allRelics = [
+			...(character.relics || []),
+			...(character.ornaments || [])
+		];
+
+		const relicImagePaths = allRelics.map(relic =>
+			isAllCharacter ? relic.icon : image_Header + relic.icon
 		);
+
 		imagePaths.push(...relicImagePaths);
 
-		const [bg, element, path, star, characterImage, ...relicImages] =
-			await Promise.all(imagePaths.map(loadImageAsync));
+		// 加载基础图片
+		const imageResults = await Promise.all(imagePaths.map(loadImageAsync));
+		const [bg, element, path, star, ...relicImages] = imageResults.map(
+			result => result.image
+		);
+
+		// 单独处理角色图片，支持备选方案
+		const characterImageUrl = character?.portrait
+			? image_Header + character.portrait
+			: `${image_Header}/image/character_portrait/${character.id}.png`;
+		const characterFallbackUrl = character?.image || null;
+
+		const characterImageResult = await loadImageAsync(
+			characterImageUrl,
+			characterFallbackUrl
+		);
 
 		ctx.drawImage(bg, 0, 0, 1920, 1080);
+
+		if (characterImageResult.usedFallback) {
+			ctx.drawImage(
+				characterImageResult.image,
+				600,
+				-50,
+				characterImageResult.image.width / 1.5,
+				characterImageResult.image.height / 1.5
+			);
+		} else {
+			ctx.drawImage(characterImageResult.image, 475, 0, 768, 768);
+		}
 
 		const setupFont = (
 			size,
@@ -519,112 +833,306 @@ async function drawCharacterImage(tr, playerData, character) {
 
 		setupFont(minFontSize, true);
 		ctx.fillText(character.name, 120, 100);
-
 		ctx.drawImage(element, 50, 50, 64, 64);
-
 		ctx.drawImage(path, 50, 120, 64, 64);
 
 		setupFont(28, true);
-		ctx.fillText(character.path.name, 130, 165);
+		ctx.fillText(
+			character.path?.name || tr(`path_${pathMap[character.base_type]}`),
+			130,
+			165
+		);
 
 		ctx.drawImage(star, 50, 185, 160, 32);
 
-		setupFont(26, true);
 		ctx.textAlign = "center";
-		ctx.fillText(`${tr("Eidolon", { rank: character.rank })}`, 280, 255);
+
+		setupFont(26, true);
+		ctx.fillStyle = "#DCC491";
+		ctx.fillText(
+			`${tr("Eidolon", {
+				rank: character.rank
+			})}`,
+			210,
+			270
+		);
+		ctx.fillStyle = "white";
 
 		setupFont(28, true);
 		ctx.fillText(
-			`${tr("level")} ${character.level} / ${20 + character.promotion * 10}`,
-			280,
-			295
+			`${tr("level")} ${character.level}`,
+			210 +
+				ctx.measureText(
+					`${tr("Eidolon", {
+						rank: character.rank
+					})}`
+				).width +
+				20,
+			270
 		);
 
-		const allAttributes = [...character.attributes, ...character.additions];
-		const attributesWithAdditions = allAttributes
-			.filter(attribute => attribute.field)
-			.reduce((acc, attribute) => {
-				if (acc[attribute.field])
-					acc[attribute.field].value += attribute.value;
-				else acc[attribute.field] = { ...attribute };
+		let result = [];
+		if (character.attributes) {
+			// 合併基礎屬性和額外屬性
+			const allAttributes = [
+				...character.attributes,
+				...character.additions
+			];
 
-				if (attribute.value < 10 && attribute.field != "spd")
-					acc[attribute.field].display =
-						(acc[attribute.field].value * 100).toFixed(1) + "%";
-				else
-					acc[attribute.field].display =
-						`${Math.floor(acc[attribute.field].value)}`;
+			// 處理屬性數據，合併相同字段並格式化顯示值
+			const attributesWithAdditions = allAttributes
+				.filter(attribute => attribute.field)
+				.reduce((acc, attribute) => {
+					const field = attribute.field;
 
-				return acc;
-			}, {});
+					if (acc[field]) {
+						acc[field].value += attribute.value;
+					} else {
+						acc[field] = { ...attribute };
+					}
 
-		const result = Object.values(attributesWithAdditions);
-		for (let i = 0; i < result.length; i++) {
-			const attributeImage = await loadImageAsync(
-				`./src/assets/image/${result[i].icon}`
-			);
-			ctx.drawImage(attributeImage, 50, 300 + i * 45, 48, 48);
+					// 格式化顯示值：小於10且非速度屬性顯示百分比，其他顯示整數
+					const isPercentage =
+						attribute.value < 10 && field !== "spd";
+					acc[field].display = isPercentage
+						? `${(acc[field].value * 100).toFixed(1)}%`
+						: `${Math.floor(acc[field].value)}`;
 
-			setupFont(24, true);
-			ctx.textAlign = "left";
-			ctx.fillText(`${result[i].name}`, 105, 333 + i * 45);
+					return acc;
+				}, {});
 
-			setupFont(24, true);
-			ctx.textAlign = "right";
-			ctx.fillText(`${result[i].display}`, 500, 333 + i * 45);
+			result = Object.values(attributesWithAdditions);
+		} else {
+			result = character.properties.map(property => ({
+				name: tr(`property_${propertyMap[property.property_type]}`),
+				value: property.final,
+				icon: `icon/property/icon${propertyMap[property.property_type]}.png`
+			}));
 		}
 
-		ctx.strokeStyle = "#fff";
-		ctx.beginPath();
-		ctx.moveTo(50, 333 + result.length * 45 - 20);
-		ctx.lineTo(500, 333 + result.length * 45 - 20);
-		ctx.stroke();
+		// 屬性渲染前：
+		const filteredAttributes = result.filter(attribute => {
+			const v = attribute.display ?? attribute.value ?? attribute.final;
+			if (typeof v === "string") {
+				return !/^0(\.0+)?%?$/.test(v.trim());
+			} else if (typeof v === "number") {
+				return v !== 0;
+			}
+			return true;
+		});
+		// 上分隔線
+		const attrTopY = 315;
+		drawSeparatorLine(ctx, 50, 500, attrTopY);
+		// 屬性列表
+		await renderAttributesList(ctx, filteredAttributes, 50, 340, 45);
+		// 下分隔線動態位置
+		const attrBottomY = 373 + filteredAttributes.length * 45;
+		drawSeparatorLine(ctx, 50, 500, attrBottomY);
 
-		if (character.light_cone?.preview) {
-			const light_cone = await loadImageAsync(
-				image_Header + character.light_cone.preview
+		// relics 區塊對齊
+		const relics_left_x = 1170;
+		const relics_right_x = 1170 + 335 * 2 + 20; // 1860
+		const relics_width = relics_right_x - relics_left_x; // 690
+		const relics_top_y = 60;
+		const relics_height = 220;
+		const relics_padding = 20;
+		const relics_row_count = Math.ceil((allRelics.length || 0) / 2);
+		const relics_bottom_y =
+			relics_top_y + relics_row_count * (relics_height + relics_padding);
+		const light_cone_gap_top = 5; // 上方間隔
+
+		if (character.light_cone || character.equip) {
+			const light_cone_base_x = relics_left_x;
+			const light_cone_base_y = relics_bottom_y + light_cone_gap_top;
+			const light_cone_width = relics_width;
+			const light_cone_height = 280; // 保持原本高度
+			const radius = 10;
+
+			// 繪製 lightcone 背景
+			ctx.save();
+			ctx.beginPath();
+			ctx.moveTo(light_cone_base_x + radius, light_cone_base_y);
+			ctx.arcTo(
+				light_cone_base_x + light_cone_width,
+				light_cone_base_y,
+				light_cone_base_x + light_cone_width,
+				light_cone_base_y + light_cone_height,
+				radius
 			);
-			ctx.drawImage(light_cone, 45, result.length * 45 + 330, 256, 300);
-		}
+			ctx.arcTo(
+				light_cone_base_x + light_cone_width,
+				light_cone_base_y + light_cone_height,
+				light_cone_base_x,
+				light_cone_base_y + light_cone_height,
+				radius
+			);
+			ctx.arcTo(
+				light_cone_base_x,
+				light_cone_base_y + light_cone_height,
+				light_cone_base_x,
+				light_cone_base_y,
+				radius
+			);
+			ctx.arcTo(
+				light_cone_base_x,
+				light_cone_base_y,
+				light_cone_base_x + light_cone_width,
+				light_cone_base_y,
+				radius
+			);
+			ctx.closePath();
+			ctx.clip();
+			ctx.globalAlpha = 0.5;
+			ctx.fillStyle = "#000";
+			ctx.fillRect(
+				light_cone_base_x,
+				light_cone_base_y,
+				light_cone_width,
+				light_cone_height
+			);
+			ctx.restore();
+			ctx.globalAlpha = 1;
 
-		if (character.light_cone?.name) {
+			const light_coneResult = await loadImageAsync(
+				character.equip?.icon ||
+					`${image_Header}/icon/light_cone/${character.light_cone?.id}.png`
+			);
+			const light_cone = light_coneResult.image;
+			// 圖片靠左
+			ctx.drawImage(
+				light_cone,
+				light_cone_base_x + 50,
+				light_cone_base_y + 10,
+				128 * 1.25,
+				128 * 1.25
+			);
+
+			// 文字靠右區域內左側
 			ctx.textAlign = "left";
 			setupFont(28, true);
 			ctx.fillText(
-				`${character.light_cone.name}`,
-				300,
-				333 + result.length * 45 + 120
+				`${character.light_cone?.name || character.equip?.name}`,
+				light_cone_base_x + 30,
+				light_cone_base_y + 200
 			);
-			setupFont(22, true);
-			ctx.fillStyle = "#DCC491";
-			setupFont(22, true);
-			ctx.fillText(
-				`${tr("lightConeLevel_Format", { rank: character.light_cone.rank })}`,
-				300,
-				333 + result.length * 45 + 160
-			);
-			setupFont(22);
-			ctx.fillStyle = "white";
-			setupFont(22);
-			ctx.fillText(
-				`${tr("level")} ${character.light_cone.level} / ${20 + character.light_cone.promotion * 10}`,
-				300,
-				333 + result.length * 45 + 200
-			);
-		}
 
-		ctx.drawImage(characterImage, 500, 0, 768, 768);
+			setupFont(24, true);
+
+			ctx.fillStyle = "white";
+			ctx.fillText(
+				`${tr("level")} ${character.light_cone?.level || character.equip?.level} ${
+					character.light_cone?.promotion
+						? `/ ${20 + character.light_cone.promotion * 10}`
+						: ""
+				}`,
+				light_cone_base_x + 30,
+				light_cone_base_y + 240
+			);
+			ctx.fillStyle = "#DCC491";
+			ctx.fillText(
+				`${tr("lightConeLevel_Format", {
+					rank: character.light_cone?.rank || character.equip?.rank
+				})}`,
+				light_cone_base_x +
+					30 +
+					ctx.measureText(
+						`${tr("level")} ${character.light_cone?.level || character.equip?.level} ${
+							character.light_cone?.promotion
+								? `/ ${20 + character.light_cone.promotion * 10}`
+								: ""
+						}`
+					).width +
+					15,
+				light_cone_base_y + 240
+			);
+			ctx.fillStyle = "white";
+
+			const lightConeEffectData = await fetch(
+				image_Header + "index_min/cht/light_cone_ranks.json"
+			);
+			const lightConeEffect = await lightConeEffectData.json();
+			const currentLightConeEffect =
+				lightConeEffect[character.light_cone?.id] ||
+				lightConeEffect[character.equip?.id];
+
+			if (currentLightConeEffect) {
+				const rank =
+					character.light_cone?.rank || character.equip?.rank || 1;
+				const params = currentLightConeEffect.params[rank - 1];
+
+				if (params) {
+					// 創建帶有特殊標記的文本，用於後續顏色處理
+					let fixedEffectDesc = currentLightConeEffect.desc
+						.replace(/#(\d+)\[i\]/g, (match, p1) => {
+							const paramIndex = parseInt(p1) - 1;
+							const param = params[paramIndex];
+							if (param !== undefined) {
+								if (param < 1) {
+									const percentage = (param * 100).toFixed(1);
+									const displayValue = percentage.endsWith(
+										".0"
+									)
+										? percentage.slice(0, -2)
+										: percentage;
+									return `[GOLD]${displayValue}%[/GOLD]`;
+								} else {
+									return `[GOLD]${param}[/GOLD]`;
+								}
+							}
+							return match;
+						})
+						.replace(/#(\d+)\[f1\]/g, (match, p1) => {
+							const paramIndex = parseInt(p1) - 1;
+							const param = params[paramIndex];
+							if (param !== undefined) {
+								const percentage = (param * 100).toFixed(1);
+								const displayValue = percentage.endsWith(".0")
+									? percentage.slice(0, -2)
+									: percentage;
+								return `[GOLD]${displayValue}%[/GOLD]`;
+							}
+							return match;
+						});
+					// 修正 %% 問題
+					fixedEffectDesc = fixedEffectDesc.replace(
+						/\[\/GOLD\]%/g,
+						"[/GOLD]"
+					);
+
+					setupFont(22, true);
+					const maxWidth = light_cone_width - 285;
+					const lineHeight = 28;
+					const segments = parseSegments(fixedEffectDesc);
+					const lines = wrapSegments(segments, maxWidth, ctx);
+					const totalHeight = lines.length * lineHeight;
+					const blockHeight = light_cone_height - 20;
+					let currentY =
+						light_cone_base_y +
+						(blockHeight - totalHeight) / 2 +
+						35;
+					drawColoredTextLines(
+						lines,
+						light_cone_base_x + 268,
+						currentY,
+						lineHeight,
+						ctx,
+						light_cone_base_y + light_cone_height + 20
+					);
+				}
+			}
+		}
+		ctx.fillStyle = "white";
 
 		const skillPromises = character.skills
 			.map((skill, i) => {
 				if (i != 4 && i <= 5) {
-					return loadImageAsync(image_Header + skill.icon).then(
-						skillImage => ({
-							skillImage,
-							type_text: skill.type_text,
-							level: skill.level
-						})
-					);
+					return loadImageAsync(
+						skill.item_url || image_Header + skill.icon
+					).then(skillImageResult => ({
+						skillImage: skillImageResult.image,
+						type_text: skill.type_text || skill.remake,
+						level: skill.level
+					}));
 				}
 				return null;
 			})
@@ -638,11 +1146,21 @@ async function drawCharacterImage(tr, playerData, character) {
 			setupFont(18, true);
 			ctx.fillText(`${skill.type_text}`, 670 + index * 90, 870);
 			setupFont(16, true);
+			// 技能等級顏色判斷
+			let skillColor = "white";
+			if (character.rank >= 3 && (index === 0 || index === 2)) {
+				skillColor = "#DCC491";
+			}
+			if (character.rank >= 5 && (index === 1 || index === 3)) {
+				skillColor = "#DCC491";
+			}
+			ctx.fillStyle = skillColor;
 			ctx.fillText(
 				`${tr("level")} ${skill.level}`,
 				670 + index * 90,
 				890
 			);
+			ctx.fillStyle = "white";
 		});
 
 		ctx.strokeStyle = "#fff";
@@ -658,23 +1176,30 @@ async function drawCharacterImage(tr, playerData, character) {
 		ctx.fillStyle = "lightgray";
 		ctx.fillText(playerData.player.uid, 840, 1010);
 
-		const relics = character.relics;
 		const relicsScore = await getRelicsScore(character);
-
 		const relicRenderData = await Promise.all(
-			relics.map(async (relic, i) => {
-				const subAffixIcons = await Promise.all(
-					relic.sub_affix.map(subAff =>
-						loadImageAsync(`./src/assets/image/${subAff.icon}`)
+			allRelics.map(async (relic, i) => {
+				// 處理子屬性圖標
+				const subAffixIconResults = await Promise.all(
+					(relic.sub_affix || relic.properties || []).map(subAff =>
+						loadImageAsync(
+							`./src/assets/image/${subAff.icon || `icon/property/Icon${propertyMap[subAff.property_type]}.png`}`
+						)
 					)
 				);
-
-				const mainAffixIcon = await loadImageAsync(
-					`./src/assets/image/${relic.main_affix.icon}`
+				const subAffixIcons = subAffixIconResults.map(
+					result => result.image
 				);
-				const rarityIcon = await loadImageAsync(
+
+				// 處理主屬性圖標
+				const mainAffixIconResult = await loadImageAsync(
+					`./src/assets/image/${relic.main_affix?.icon || `icon/property/Icon${propertyMap[relic.main_property?.property_type]}.png`}`
+				);
+				const rarityIconResult = await loadImageAsync(
 					`./src/assets/image/icon/deco/Star${relic.rarity == 5 ? "5" : "4"}.png`
 				);
+				const mainAffixIcon = mainAffixIconResult.image;
+				const rarityIcon = rarityIconResult.image;
 
 				return {
 					relic,
@@ -726,7 +1251,7 @@ async function drawCharacterImage(tr, playerData, character) {
 			ctx.textAlign = "center";
 			ctx.fillText(`+${relic.level}`, x + 55, y + 150);
 
-			const mainAff = relic.main_affix.weight;
+			const mainAff = relic.main_affix?.weight || 0;
 			ctx.drawImage(icons.mainAffix, x + 100, y + 15, 40, 40);
 			ctx.fillStyle =
 				mainAff >= 0.75
@@ -737,12 +1262,17 @@ async function drawCharacterImage(tr, playerData, character) {
 			ctx.textAlign = "left";
 
 			let lineHeight = 24;
-			let text = `${relic.main_affix.name}`;
+			let text =
+				relic.main_affix?.name ||
+				tr(
+					`property_${propertyMap[relic.main_property?.property_type]}`
+				);
+			if (typeof text !== "string") text = "";
 
 			let lines, words;
 			let hasLineBreak = false;
 			if (containsChinese(text)) {
-				let maxCharsPerLine = 4;
+				let maxCharsPerLine = 5;
 				lines = Math.ceil(text.length / maxCharsPerLine);
 				words = Array.from(text);
 				for (let j = 0; j < lines; j++) {
@@ -803,65 +1333,78 @@ async function drawCharacterImage(tr, playerData, character) {
 
 			ctx.textAlign = "right";
 			setupFont(20, true);
-			ctx.fillText(`${relic.main_affix.display}`, x + 320, y + 43);
+			ctx.fillText(
+				`${relic.main_affix?.display || relic.main_affix?.value || relic.main_property?.value}`,
+				x + 320,
+				y + 43
+			);
 
 			let affixYStart = hasLineBreak ? 75 : 53;
 			const maxWidth = 100;
 			const initialFontSize = 18;
 
-			relic.sub_affix.forEach((subAffix, subIndex) => {
-				ctx.drawImage(
-					icons.subAffixes[subIndex],
-					x + 103,
-					y + affixYStart + subIndex * 32,
-					32,
-					32
-				);
+			(relic.sub_affix || relic.properties || []).forEach(
+				(subAffix, subIndex) => {
+					ctx.drawImage(
+						icons.subAffixes[subIndex],
+						x + 103,
+						y + affixYStart + subIndex * 32,
+						32,
+						32
+					);
 
-				let fontSize = initialFontSize;
-				setupFont(fontSize, true);
-
-				const weight = subAffix.weight;
-				const color =
-					weight >= 0.75
-						? "#F3B664"
-						: weight > 0
-							? "#FFFFFF"
-							: "#B6BBC4";
-				ctx.fillStyle = color;
-				ctx.textAlign = "left";
-
-				const text = subAffix.name;
-				let textWidth = ctx.measureText(text).width;
-
-				while (textWidth > maxWidth && fontSize > 16) {
-					fontSize -= 1;
+					let fontSize = initialFontSize;
 					setupFont(fontSize, true);
-					textWidth = ctx.measureText(text).width;
+
+					const weight = subAffix.weight || 0;
+					const color =
+						weight >= 0.75
+							? "#F3B664"
+							: weight > 0
+								? "#FFFFFF"
+								: "#B6BBC4";
+					ctx.fillStyle = color;
+					ctx.textAlign = "left";
+
+					const text =
+						subAffix.name ||
+						tr(`property_${propertyMap[subAffix.property_type]}`);
+					let textWidth = ctx.measureText(text).width;
+
+					while (textWidth > maxWidth && fontSize > 16) {
+						fontSize -= 1;
+						setupFont(fontSize, true);
+						textWidth = ctx.measureText(text).width;
+					}
+
+					ctx.fillText(
+						text,
+						x + 137,
+						y + affixYStart + 23 + subIndex * 32
+					);
+
+					ctx.textAlign = "right";
+					setupFont(20, true);
+					ctx.fillText(
+						`${subAffix.display || subAffix.value}`,
+						x + 320,
+						y + affixYStart + 25 + subIndex * 32
+					);
+
+					// 疊層顯示優化
+					const count = subAffix.count ?? subAffix.times - 1;
+					if (count >= 1) {
+						ctx.font =
+							"16px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+						ctx.textAlign = "center";
+						ctx.fillText(
+							`+${count}`,
+							x + 230,
+							y + affixYStart + 23 + subIndex * 32
+						);
+					}
 				}
-
-				ctx.fillText(
-					text,
-					x + 137,
-					y + affixYStart + 23 + subIndex * 32
-				);
-
-				ctx.textAlign = "right";
-				setupFont(20, true);
-				ctx.fillText(
-					`${subAffix.display}`,
-					x + 320,
-					y + affixYStart + 25 + subIndex * 32
-				);
-
-				setupFont(16, true);
-				ctx.textAlign = "center";
-				ctx.fillText(
-					">".repeat(subAffix.count - 1 || 0),
-					x + 237,
-					y + affixYStart + 25 + subIndex * 32
-				);
-			});
+			);
 
 			if (score) {
 				setupFont(22, true);
@@ -875,41 +1418,218 @@ async function drawCharacterImage(tr, playerData, character) {
 			}
 		});
 
+		return canvas.toBuffer("image/png");
+	} catch (error) {
+		console.error("Error generating image:", error);
+		return null;
+	}
+}
+
+async function drawAllCharactersImage(
+	tr,
+	playerData,
+	characters,
+	filterInfo = null
+) {
+	try {
+		const canvasWidth = 1920;
+		const cardsPerRow = 6;
+		const totalRows = Math.ceil(characters.length / cardsPerRow);
+		const cardHeight = 100;
+		const cardGap = 10;
+		const baseY = 230;
+		const canvasHeight = baseY + totalRows * (cardHeight + cardGap) + 40;
+		const canvas = createCanvas(canvasWidth, canvasHeight);
+		const ctx = canvas.getContext("2d");
+
+		// 背景
+		const bgResult = await loadImageAsync("./src/assets/image/warp/bg.jpg");
+		const bg = bgResult.image;
+		ctx.drawImage(bg, 0, 0, canvasWidth, canvasHeight);
+
+		// 左上角頭像
+		const avatarResult = await loadImageAsync(
+			playerData.player.avatar.icon
+		);
+		const avatar = avatarResult.image;
+		ctx.save();
+		ctx.beginPath();
+		ctx.arc(110, 110, 70, 0, Math.PI * 2);
+		ctx.closePath();
+		ctx.clip();
+		ctx.drawImage(avatar, 40, 40, 140, 140);
+		ctx.restore();
+
+		// 文字資訊
 		ctx.textAlign = "left";
 		ctx.fillStyle = "white";
-		setupFont(36, true);
+		ctx.font = "bold 40px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		ctx.fillText(playerData.player.nickname, 200, 90);
+		ctx.font = "bold 28px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		ctx.fillText(`UID ${playerData.player.uid}`, 200, 135);
+		ctx.fillText(
+			`${tr("profile_TrailblazeLevel")} ${playerData.player.level}  ${tr("profile_CharactersCount")} ${characters.length}`,
+			200,
+			175
+		);
 
-		const centerX = 1480;
+		// 分隔線
+		ctx.strokeStyle = "rgba(255,255,255,0.5)";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(40, 200);
+		ctx.lineTo(700, 200);
+		ctx.stroke();
 
-		if (relicsScore) {
-			const scoreText = tr("RelicGrade", {
-				grade: `${relicsScore.totalScore}`
-			});
+		// 顯示篩選和排序狀態
+		if (
+			filterInfo &&
+			(filterInfo.filters.length > 0 || filterInfo.sortType)
+		) {
+			ctx.textAlign = "left";
+			ctx.fillStyle = "rgba(255,255,255,0.8)";
+			ctx.font = "bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
 
-			const scoreWidth = ctx.measureText(scoreText).width;
+			let statusText = "※ ";
+			if (filterInfo.sortType) {
+				if (filterInfo.sortType === "sort_level") {
+					statusText += tr("profile_SortByLevel");
+				} else if (filterInfo.sortType === "sort_eidolon") {
+					statusText += tr("profile_SortByEidolon");
+				}
+			}
 
-			const startX =
-				centerX -
-				(scoreWidth +
-					ctx.measureText(relicsScore.totalGrade.grade).width) /
-					2;
+			if (filterInfo.filters.length > 0) {
+				if (statusText) statusText += " | ";
+				const filterLabelMap = {
+					physical: tr("element_physical"),
+					ice: tr("element_ice"),
+					fire: tr("element_fire"),
+					lightning: tr("element_lightning"),
+					wind: tr("element_wind"),
+					quantum: tr("element_quantum"),
+					imaginary: tr("element_imaginary"),
+					destruction: tr("path_destruction"),
+					harmony: tr("path_harmony"),
+					erudition: tr("path_erudition"),
+					hunt: tr("path_hunt"),
+					preservation: tr("path_preservation"),
+					nihility: tr("path_nihility"),
+					abundance: tr("path_abundance"),
+					remembrance: tr("path_remembrance")
+				};
+				statusText += filterInfo.filters
+					.map(f => filterLabelMap[f] || f)
+					.join(" / ");
+			}
 
-			ctx.fillText(scoreText, startX, 830);
+			ctx.fillText(statusText, 720, 205);
+		}
 
-			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
-			ctx.fillText(
-				relicsScore.totalGrade.grade,
-				startX + scoreWidth + 10,
-				830
+		// 角色卡片區域
+		const cardWidth = 300;
+		const baseX = 20;
+
+		for (let i = 0; i < characters.length; i++) {
+			const char = characters[i];
+			const col = i % cardsPerRow;
+			const row = Math.floor(i / cardsPerRow);
+			const x = baseX + col * (cardWidth + cardGap);
+			const y = baseY + row * (cardHeight + cardGap);
+
+			// 卡片底色
+			ctx.save();
+			ctx.globalAlpha = 0.4;
+			ctx.fillStyle = "#222";
+			ctx.fillRect(x, y, cardWidth, cardHeight);
+			ctx.restore();
+
+			// 角色頭像（圓形）
+			const iconCenterX = x + 20 + 36;
+			const iconCenterY = y + cardHeight / 2;
+			const charIconResult = await loadImageAsync(char.icon);
+			const charIcon = charIconResult.image;
+			ctx.save();
+			ctx.beginPath();
+			ctx.arc(iconCenterX, iconCenterY, 36, 0, Math.PI * 2);
+			ctx.closePath();
+			ctx.clip();
+			const scale = Math.max((2 * 36) / 168, (2 * 36) / 188);
+			const drawW = 168 * scale;
+			const drawH = 188 * scale;
+			ctx.drawImage(
+				charIcon,
+				iconCenterX - drawW / 2,
+				iconCenterY - drawH / 2,
+				drawW,
+				drawH
 			);
-		} else {
-			ctx.textAlign = "center";
-			ctx.fillText(tr("RelicNoScore"), centerX, 830);
+			ctx.restore();
+
+			// 中間上方：命途icon、屬性icon（加大尺寸）
+			const elementIconResult = await loadImageAsync(
+				`./src/assets/image/element/${char.element.toLowerCase()}.png`
+			);
+			const elementIcon = elementIconResult.image;
+			let pathIconPath = null;
+			if (char.base_type) {
+				const pathName = pathMap[char.base_type] || "none";
+				pathIconPath = `./src/assets/image/icon/path/${pathName}.png`;
+			} else if (char.path) {
+				pathIconPath = `./src/assets/image/icon/path/${char.path.toLowerCase()}.png`;
+			} else {
+				pathIconPath = `./src/assets/image/icon/path/none.png`;
+			}
+			const pathIconResult = await loadImageAsync(pathIconPath);
+			const pathIcon = pathIconResult.image;
+			ctx.drawImage(pathIcon, x + 110, y + 12, 44, 44);
+			ctx.drawImage(elementIcon, x + 164, y + 12, 44, 44);
+
+			// 中間下方：等級、命座（下移，增加間隔）
+			ctx.font = "bold 22px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+			ctx.fillStyle = "#fff";
+			ctx.textAlign = "left";
+			ctx.fillText(`Lv.${char.level}`, x + 110, y + 85);
+			ctx.fillStyle = "#DCC491";
+			ctx.fillText(`E${char.rank ?? 0}`, x + 175, y + 85);
+
+			// 右側分隔線
+			ctx.save();
+			ctx.strokeStyle = "rgba(255,255,255,0.3)";
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.moveTo(x + cardWidth - 70, y + 10);
+			ctx.lineTo(x + cardWidth - 70, y + cardHeight - 10);
+			ctx.stroke();
+			ctx.restore();
+
+			// 右側武器icon和等級
+			if (char.equip && char.equip.icon) {
+				const lcIconResult = await loadImageAsync(char.equip.icon);
+				const lcIcon = lcIconResult.image;
+				ctx.drawImage(
+					lcIcon,
+					x + cardWidth - 62.5,
+					y + 12.5,
+					57.5,
+					57.5
+				);
+				ctx.font =
+					"bold 18px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+				ctx.fillStyle = "#fff";
+				ctx.textAlign = "center";
+				ctx.fillText(
+					`Lv.${char.equip.level ?? ""}`,
+					x + cardWidth - 35,
+					y + 85
+				);
+			}
 		}
 
 		return canvas.toBuffer("image/png");
 	} catch (error) {
-		console.error("Error generating image:", error);
+		console.error("Error generating all characters image:", error);
+		return null;
 	}
 }
 
@@ -919,9 +1639,156 @@ function clearImageCache() {
 	}
 }
 
+function parseSegments(text) {
+	const result = [];
+	let lastIndex = 0;
+	let regex = /\[GOLD\](.*?)\[\/GOLD\]/g;
+	let match;
+	while ((match = regex.exec(text)) !== null) {
+		if (match.index > lastIndex) {
+			result.push({
+				text: text.slice(lastIndex, match.index),
+				color: "white"
+			});
+		}
+		result.push({ text: match[1], color: "#DCC491" });
+		lastIndex = regex.lastIndex;
+	}
+	if (lastIndex < text.length) {
+		result.push({ text: text.slice(lastIndex), color: "white" });
+	}
+	return result;
+}
+
+function wrapSegments(segments, maxWidth, ctx) {
+	const lines = [];
+	let currentLine = [];
+	let currentLineWidth = 0;
+	for (const seg of segments) {
+		let segText = seg.text;
+		let segColor = seg.color;
+		while (segText.length > 0) {
+			let fitLength = segText.length;
+			let subText = segText;
+			// 若本段加上去會超過寬度，則嘗試裁切
+			while (
+				ctx.measureText(subText).width + currentLineWidth > maxWidth &&
+				fitLength > 1
+			) {
+				fitLength--;
+				subText = segText.slice(0, fitLength);
+			}
+			if (
+				ctx.measureText(subText).width + currentLineWidth > maxWidth &&
+				currentLine.length > 0
+			) {
+				// 當前行已滿，換行
+				lines.push(currentLine);
+				currentLine = [];
+				currentLineWidth = 0;
+				continue;
+			}
+			currentLine.push({ text: subText, color: segColor });
+			currentLineWidth += ctx.measureText(subText).width;
+			segText = segText.slice(fitLength);
+			if (segText.length > 0) {
+				// 剩下的內容換行
+				lines.push(currentLine);
+				currentLine = [];
+				currentLineWidth = 0;
+			}
+		}
+	}
+	if (currentLine.length > 0) lines.push(currentLine);
+	return lines;
+}
+
+function drawColoredTextLines(lines, x, y, lineHeight, ctx, maxY) {
+	for (let i = 0; i < lines.length; i++) {
+		if (typeof maxY === "number" && y + lineHeight > maxY) {
+			// 超出高度，最後一行加 ...
+			const lastLine = lines[i - 1];
+			if (lastLine) {
+				// 在最後一個 segment 後加 ...
+				if (lastLine.length > 0) {
+					lastLine[lastLine.length - 1].text += "...";
+				} else {
+					lastLine.push({ text: "...", color: "white" });
+				}
+				// 重繪最後一行
+				let currentX = x;
+				for (const seg of lastLine) {
+					ctx.fillStyle = seg.color;
+					ctx.fillText(seg.text, currentX, y - lineHeight);
+					currentX += ctx.measureText(seg.text).width;
+				}
+			}
+			break;
+		}
+		let currentX = x;
+		for (const seg of lines[i]) {
+			ctx.fillStyle = seg.color;
+			ctx.fillText(seg.text, currentX, y);
+			currentX += ctx.measureText(seg.text).width;
+		}
+		y += lineHeight;
+	}
+}
+
+// 新增：获取角色立绘的函数
+async function getCharacterPortrait(character, type = "portrait") {
+	const characterId = character.id;
+
+	// 定义不同的立绘类型和URL模板
+	const portraitTypes = {
+		// 标准肖像（方形）
+		portrait: [
+			`${image_Header}/image/character_portrait/${characterId}.png`,
+			`${image_Header}/icon/avatar/${characterId}.png`
+		],
+		// 高清立绘（完整角色）
+		full: [
+			`${image_Header}/image/character_full/${characterId}.png`,
+			`${image_Header}/image/character_splash/${characterId}.png`,
+			`${image_Header}/image/character_portrait/${characterId}.png`
+		],
+		// 背景立绘（带背景）
+		splash: [
+			`${image_Header}/image/character_splash/${characterId}.png`,
+			`${image_Header}/image/character_full/${characterId}.png`,
+			`${image_Header}/image/character_portrait/${characterId}.png`
+		],
+		// 图标
+		icon: [
+			`${image_Header}/icon/avatar/${characterId}.png`,
+			`${image_Header}/image/character_portrait/${characterId}.png`
+		]
+	};
+
+	// 获取指定类型的URL列表
+	const urls = portraitTypes[type] || portraitTypes.portrait;
+
+	// 尝试加载每个URL，直到成功
+	for (const url of urls) {
+		try {
+			const result = await loadImageAsync(url);
+			if (result.image) {
+				return result;
+			}
+		} catch (error) {
+			console.log(`Failed to load ${url}: ${error.message}`);
+			continue;
+		}
+	}
+
+	// 如果都失败了，返回默认图片
+	return await loadImageAsync(`${image_Header}icon/character/None.png`);
+}
+
 export {
 	handleProfileDraw,
 	drawMainImage,
 	drawCharacterImage,
+	drawAllCharactersImage,
 	clearImageCache
 };

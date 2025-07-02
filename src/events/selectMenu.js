@@ -12,7 +12,26 @@ import {
 import axios from "axios";
 import emoji from "../assets/emoji.js";
 import { drawFloorImage } from "../utilities/hsr/forgottenhall.js";
-import { drawMainImage, drawCharacterImage } from "../utilities/hsr/profile.js";
+import { createChunkedSelectMenus } from "../utilities/hsr/selectmenu.js";
+import {
+	drawMainImage,
+	drawCharacterImage,
+	drawAllCharactersImage
+} from "../utilities/hsr/profile.js";
+
+function getPathNameByBaseType(baseType) {
+	const pathMap = {
+		1: "destruction",
+		2: "hunt",
+		3: "erudition",
+		4: "harmony",
+		5: "nihility",
+		6: "preservation",
+		7: "abundance",
+		8: "remembrance"
+	};
+	return pathMap[baseType] || "";
+}
 import {
 	getRandomColor,
 	drawInQueueReply,
@@ -22,7 +41,9 @@ import {
 	getNewsList,
 	getPostFull,
 	parsePostContent,
-	requestPlayerActivity
+	requestPlayerActivity,
+	getUserCookie,
+	getUserGameInfo
 } from "../utilities/utilities.js";
 import { getSelectMenu } from "../utilities/hsr/selectmenu.js";
 import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
@@ -50,9 +71,364 @@ client.on(Events.InteractionCreate, async interaction => {
 		handleAccountAction(interaction, tr, customId, values[0]);
 	if (customId == "forgottenHall_Floor")
 		handleForgottenHall(interaction, tr, values[0]);
-	if (customId == "profile_SelectCharacter")
+	if (customId.startsWith("profile_SelectCharacter"))
 		handleSelectCharacter(interaction, tr, values[0]);
+	if (customId.startsWith("profile_Filter")) {
+		const [_, userId, accountIndex] = customId.split("-");
+		handleProfileFilter(interaction, tr, userId, accountIndex, values);
+	}
 });
+
+function filterAndSortCharacters(characters, selected) {
+	// 如果沒有選擇任何篩選條件，返回所有角色
+	if (selected.length === 0) {
+		return characters;
+	}
+
+	// 分離屬性和命途選項
+	const elementFilters = selected.filter(sel =>
+		[
+			"physical",
+			"ice",
+			"fire",
+			"lightning",
+			"wind",
+			"quantum",
+			"imaginary"
+		].includes(sel)
+	);
+	const pathFilters = selected.filter(sel =>
+		[
+			"destruction",
+			"harmony",
+			"erudition",
+			"hunt",
+			"preservation",
+			"nihility",
+			"abundance",
+			"remembrance"
+		].includes(sel)
+	);
+
+	let result = [];
+
+	// 如果同時選擇了屬性和命途，找同時符合的角色
+	if (elementFilters.length > 0 && pathFilters.length > 0) {
+		for (const element of elementFilters) {
+			for (const path of pathFilters) {
+				result = result.concat(
+					characters.filter(
+						c =>
+							c.element === element &&
+							getPathNameByBaseType(c.base_type) === path
+					)
+				);
+			}
+		}
+	} else {
+		// 只選擇了屬性
+		if (elementFilters.length > 0) {
+			for (const element of elementFilters) {
+				result = result.concat(
+					characters.filter(c => c.element === element)
+				);
+			}
+		}
+
+		// 只選擇了命途
+		if (pathFilters.length > 0) {
+			for (const path of pathFilters) {
+				result = result.concat(
+					characters.filter(
+						c => getPathNameByBaseType(c.base_type) === path
+					)
+				);
+			}
+		}
+	}
+
+	// 去重
+	return result.filter(
+		(c, i, arr) => arr.findIndex(cc => cc.id === c.id) === i
+	);
+}
+
+async function handleProfileFilter(
+	interaction,
+	tr,
+	userId,
+	accountIndex,
+	selected
+) {
+	try {
+		const requestStartTime = Date.now();
+		// 取得原始角色資料
+		const hsr = await getUserHSRData(interaction, tr, userId, accountIndex);
+		if (!hsr) {
+			return interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#E76161")
+						.setTitle(tr("DrawError"))
+						.setDescription("無法取得角色資料")
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+				],
+				fetchReply: true
+			});
+		}
+
+		const data = await hsr.record.records();
+		const userCookie = await getUserCookie(userId, accountIndex);
+		const gameInfo = await getUserGameInfo(userCookie);
+		const playerData = {
+			player: {
+				nickname: gameInfo.nickname,
+				uid: gameInfo.uid,
+				level: gameInfo.level,
+				avatar: { icon: data.cur_head_icon_url }
+			}
+		};
+
+		const allCharacters = data.avatar_list;
+
+		// 判斷是否有排序選項
+		let sortType = null;
+		let filterSelected = selected.filter(v => {
+			if (v === "sort_level" || v === "sort_eidolon") {
+				sortType = v;
+				return false;
+			}
+			return true;
+		});
+
+		// "無篩選" 選項，若選擇則重置為預設
+		if (filterSelected.includes("no_filter")) {
+			filterSelected = [];
+		}
+
+		// 排序與篩選
+		let sortedCharacters = filterAndSortCharacters(
+			allCharacters,
+			filterSelected
+		);
+
+		// 排序
+		if (sortType === "sort_level") {
+			sortedCharacters = sortedCharacters.sort((a, b) => {
+				// 先按五星優先排序
+				if (a.rarity !== b.rarity) {
+					return b.rarity - a.rarity;
+				}
+				// 再按等級排序
+				return b.level - a.level;
+			});
+		} else if (sortType === "sort_eidolon") {
+			sortedCharacters = sortedCharacters.sort((a, b) => {
+				// 先按五星優先排序
+				if (a.rarity !== b.rarity) {
+					return b.rarity - a.rarity;
+				}
+				// 再按命座排序
+				return (b.rank ?? 0) - (a.rank ?? 0);
+			});
+		} else {
+			// 如果沒有選擇排序，預設按五星優先排序
+			sortedCharacters = sortedCharacters.sort((a, b) => {
+				// 先按五星優先排序
+				if (a.rarity !== b.rarity) {
+					return b.rarity - a.rarity;
+				}
+				// 再按等級排序
+				return b.level - a.level;
+			});
+		}
+
+		const requestEndTime = Date.now();
+		const drawStartTime = Date.now();
+
+		// 準備篩選信息
+		const filterInfo = {
+			sortType: sortType,
+			filters: filterSelected
+		};
+
+		// 重新繪圖
+		const imageBuffer = await drawAllCharactersImage(
+			tr,
+			playerData,
+			sortedCharacters,
+			filterInfo
+		);
+
+		if (!imageBuffer) {
+			return interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#E76161")
+						.setTitle(tr("DrawError"))
+						.setDescription("無法生成圖片")
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+				],
+				fetchReply: true
+			});
+		}
+
+		const drawEndTime = Date.now();
+		const image = new AttachmentBuilder(imageBuffer, {
+			name: `AllCharacters_${playerData.player.uid}.png`
+		});
+
+		const selectMenus = createChunkedSelectMenus(
+			sortedCharacters.map((character, i) => ({
+				emoji: allCharacters
+					? emoji[character.element.toLowerCase()]
+					: emoji[character.element.id.toLowerCase()],
+				label: `${character.name}`,
+				value: `${playerData.player.uid}-${userId}-${i}`
+			})),
+			tr("profile_SelectCharacter"),
+			"profile_SelectCharacter"
+		);
+
+		// 篩選選單，第一個選項為「無篩選」
+		const filterOptions = [
+			{
+				label: tr("profile_FilterNone"),
+				value: "no_filter",
+				emoji: "❌"
+			},
+			{
+				label: tr("profile_SortByLevel"),
+				value: "sort_level",
+				emoji: "🔢"
+			},
+			{
+				label: tr("profile_SortByEidolon"),
+				value: "sort_eidolon",
+				emoji: "⭐"
+			},
+			{
+				label: tr("element_physical"),
+				value: "physical",
+				emoji: emoji.physical
+			},
+			{ label: tr("element_ice"), value: "ice", emoji: emoji.ice },
+			{
+				label: tr("element_fire"),
+				value: "fire",
+				emoji: emoji.fire
+			},
+			{
+				label: tr("element_lightning"),
+				value: "lightning",
+				emoji: emoji.lightning
+			},
+			{
+				label: tr("element_wind"),
+				value: "wind",
+				emoji: emoji.wind
+			},
+			{
+				label: tr("element_quantum"),
+				value: "quantum",
+				emoji: emoji.quantum
+			},
+			{
+				label: tr("element_imaginary"),
+				value: "imaginary",
+				emoji: emoji.imaginary
+			},
+			{
+				label: tr("path_destruction"),
+				value: "destruction",
+				emoji: emoji.destruction
+			},
+			{
+				label: tr("path_harmony"),
+				value: "harmony",
+				emoji: emoji.harmony
+			},
+			{
+				label: tr("path_erudition"),
+				value: "erudition",
+				emoji: emoji.erudition
+			},
+			{ label: tr("path_hunt"), value: "hunt", emoji: emoji.hunt },
+			{
+				label: tr("path_preservation"),
+				value: "preservation",
+				emoji: emoji.preservation
+			},
+			{
+				label: tr("path_nihility"),
+				value: "nihility",
+				emoji: emoji.nihility
+			},
+			{
+				label: tr("path_abundance"),
+				value: "abundance",
+				emoji: emoji.abundance
+			},
+			{
+				label: tr("path_remembrance"),
+				value: "remembrance",
+				emoji: emoji.remembrance
+			}
+		];
+
+		const filterMenu = new StringSelectMenuBuilder()
+			.setCustomId(`profile_Filter-${userId}-${accountIndex}`)
+			.setPlaceholder(tr("profile_FilterPlaceholder"))
+			.setMinValues(1)
+			.setMaxValues(filterOptions.length)
+			.addOptions(filterOptions);
+
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setImage(`attachment://${image.name}`)
+					.setFooter({
+						text: tr("CostTime", {
+							requestTime: (
+								(requestEndTime - requestStartTime) /
+								1000
+							).toFixed(2),
+							drawTime: (
+								(drawEndTime - drawStartTime) /
+								1000
+							).toFixed(2)
+						})
+					})
+			],
+			components: [
+				...selectMenus.map(menu =>
+					new ActionRowBuilder().addComponents(menu)
+				),
+				new ActionRowBuilder().addComponents(filterMenu)
+			],
+			files: [image],
+			fetchReply: true
+		});
+	} catch (error) {
+		console.error("handleProfileFilter error:", error);
+		interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setColor("#E76161")
+					.setTitle(tr("DrawError"))
+					.setDescription(`\`${error}\``)
+					.setThumbnail(
+						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+					)
+			],
+			fetchReply: true
+		});
+	}
+}
 
 async function handleNews(interaction, tr, value) {
 	if (interaction.customId == "news_type") {
@@ -740,22 +1116,84 @@ async function handleSelectCharacter(interaction, tr, value) {
 			});
 
 			const requestStartTime = Date.now();
-			const [uid, userId, i] = value.split("-");
-			const { _, playerData } = await requestPlayerData(uid, interaction);
-			const { __, playerActivity } = await requestPlayerActivity(
-				uid,
-				interaction
+			let [uid, userId, accountIndex, allCharacters, characterId] =
+				value.split("-");
+			allCharacters = allCharacters == "true" ? true : false;
+			let playerData = null;
+			let playerActivity = null;
+			let characters = null;
+
+			if (allCharacters) {
+				const hsr = await getUserHSRData(
+					interaction,
+					tr,
+					userId,
+					accountIndex
+				);
+				characters = await hsr.record.characters();
+				const data = await hsr.record.records();
+				const gameInfo = await getUserGameInfo(hsr.cookie);
+
+				playerData = {
+					player: {
+						nickname: gameInfo.nickname,
+						uid: gameInfo.uid,
+						level: gameInfo.level,
+						avatar: { icon: data.cur_head_icon_url }
+					}
+				};
+			} else {
+				const { status, playerData } = await requestPlayerData(
+					uid,
+					interaction
+				);
+				const { status: activityStatus, playerActivity } =
+					await requestPlayerActivity(uid, interaction);
+
+				if (status !== 200 || !playerData) {
+					return interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setColor("#E76161")
+								.setTitle(
+									tr("profile_UidNotFound", {
+										uid: `\`${uid}\``
+									})
+								)
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+								)
+						],
+						fetchReply: true
+					});
+				}
+
+				characters = playerData.characters;
+				playerActivity = playerActivity;
+			}
+
+			const character = characters.find(
+				character => character.id == characterId
 			);
+
 			const requestEndTime = Date.now();
-			const characters =
-				// (await loadCharacters(playerData.player.uid)) ||
-				playerData.characters;
 
 			const drawStartTime = Date.now();
 			const imageBuffer =
-				i == "main"
-					? await drawMainImage(tr, playerData, playerActivity)
-					: await drawCharacterImage(tr, playerData, characters[i]);
+				characterId == "main"
+					? allCharacters
+						? await drawAllCharactersImage(
+								tr,
+								playerData,
+								characters
+							)
+						: await drawMainImage(tr, playerData, playerActivity)
+					: await drawCharacterImage(
+							tr,
+							playerData,
+							character,
+							allCharacters
+						);
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 			const drawEndTime = Date.now();
 
@@ -763,16 +1201,36 @@ async function handleSelectCharacter(interaction, tr, value) {
 				name: `CharacterPage_${playerData.player.uid}.png`
 			});
 
+			const selectMenus = createChunkedSelectMenus(
+				characterId === "main"
+					? characters.map(character => ({
+							emoji: allCharacters
+								? emoji[character.element.toLowerCase()]
+								: emoji[character.element.id.toLowerCase()],
+							label: `${character.name}`,
+							value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
+						}))
+					: [
+							{
+								emoji: emoji.avatarIcon,
+								label: tr("MainPage"),
+								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-main`
+							},
+							...characters.map(character => ({
+								emoji: allCharacters
+									? emoji[character.element.toLowerCase()]
+									: emoji[character.element.id.toLowerCase()],
+								label: character.name,
+								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
+							}))
+						],
+				tr("profile_SelectCharacter"),
+				"profile_SelectCharacter"
+			);
+
 			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
-						.setAuthor({
-							name: interaction.user.username,
-							iconURL: interaction.user.displayAvatarURL({
-								size: 4096,
-								dynamic: true
-							})
-						})
 						.setImage(`attachment://${image.name}`)
 						.setFooter({
 							text: tr("CostTime", {
@@ -788,43 +1246,14 @@ async function handleSelectCharacter(interaction, tr, value) {
 						})
 				],
 				components: [
-					new ActionRowBuilder().addComponents(
-						new StringSelectMenuBuilder()
-							.setPlaceholder(tr("profile_SelectCharacter"))
-							.setCustomId("profile_SelectCharacter")
-							.setMinValues(1)
-							.setMaxValues(1)
-							.addOptions(
-								i === "main"
-									? characters.map((character, index) => ({
-											emoji: emoji[
-												character.element.id.toLowerCase()
-											],
-											label: character.name,
-											value: `${playerData.player.uid}-${userId}-${index}`
-										}))
-									: [
-											{
-												emoji: emoji.avatarIcon,
-												label: tr("MainPage"),
-												value: `${playerData.player.uid}-${userId}-main`
-											},
-											...characters.map(
-												(character, index) => ({
-													emoji: emoji[
-														character.element.id.toLowerCase()
-													],
-													label: character.name,
-													value: `${playerData.player.uid}-${userId}-${index}`
-												})
-											)
-										]
-							)
+					...selectMenus.map(menu =>
+						new ActionRowBuilder().addComponents(menu)
 					)
 				],
 				files: [image]
 			});
 		} catch (error) {
+			console.log(error);
 			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()

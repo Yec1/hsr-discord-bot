@@ -43,7 +43,8 @@ const versionChoices = [
 	{ value: "3.2.1", name: "Castorice", localName: "遐蝶" },
 	{ value: "3.2.2", name: "Anaxa", localName: "那刻夏" },
 	{ value: "3.3.1", name: "Hyacine", localName: "風堇" },
-	{ value: "3.3.2", name: "Cipher", localName: "賽飛兒" }
+	{ value: "3.3.2", name: "Cipher", localName: "賽飛兒" },
+	{ value: "3.4.1", name: "Phainon", localName: "白厄" }
 ];
 
 export const createChoiceOption = ({ value, name, localName }) => ({
@@ -455,7 +456,7 @@ global.replyOrfollowUp = async function (interaction, ...args) {
 	return await interaction.reply(...args);
 };
 
-export async function getUserGameUid(cookie, gameName = "Honkai: Star Rail") {
+export async function getUserGameInfo(cookie, gameName = "Honkai: Star Rail") {
 	const hoyolab = new Hoyolab({
 		cookie
 	});
@@ -465,6 +466,7 @@ export async function getUserGameUid(cookie, gameName = "Honkai: Star Rail") {
 
 	return {
 		uid: filteredData[0].game_role_id,
-		nickname: filteredData[0].nickname
+		nickname: filteredData[0].nickname,
+		level: filteredData[0].level
 	};
 }

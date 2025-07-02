@@ -213,7 +213,27 @@ const langs = {
 	redeem_NoCookie: "CookieToken or AccountMid has not been set yet",
 	autoRedeem_Off: "Auto-redeem is turned off",
 	autoRedeem_On: "Automatic redemption is turned on",
-	autoRedeem_Tag: "Mention when redeeming: <z>"
+	autoRedeem_Tag: "Mention when redeeming: <z>",
+
+	element_physical: "Physical",
+	element_ice: "Ice",
+	element_fire: "Fire",
+	element_lightning: "Lightning",
+	element_wind: "Wind",
+	element_quantum: "Quantum",
+	element_imaginary: "Imaginary",
+	path_destruction: "Destruction",
+	path_harmony: "Harmony",
+	path_erudition: "Erudition",
+	path_hunt: "Hunt",
+	path_preservation: "Preservation",
+	path_nihility: "Nihility",
+	path_abundance: "Abundance",
+	path_remembrance: "Remembrance",
+	profile_FilterPlaceholder: "Please select element/path to sort or filter",
+	profile_SortByLevel: "Sort by Level",
+	profile_SortByEidolon: "Sort by Eidolon",
+	profile_FilterNone: "No Filter"
 };
 
 export default langs;

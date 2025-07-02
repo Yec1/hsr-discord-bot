@@ -205,7 +205,27 @@ const langs = {
 	redeem_NoCookie: "尚未设定 CookieToken 或 AccountMid",
 	autoRedeem_Off: "已关闭自动兑换",
 	autoRedeem_On: "已开启自动兑换",
-	autoRedeem_Tag: "兑换时提及：<z>"
+	autoRedeem_Tag: "兑换时提及：<z>",
+
+	element_physical: "物理",
+	element_ice: "冰",
+	element_fire: "火",
+	element_lightning: "雷",
+	element_wind: "风",
+	element_quantum: "量子",
+	element_imaginary: "虚数",
+	path_destruction: "毁灭",
+	path_harmony: "同谐",
+	path_erudition: "智识",
+	path_hunt: "巡猎",
+	path_preservation: "存护",
+	path_nihility: "虚无",
+	path_abundance: "丰饶",
+	path_remembrance: "记忆",
+	profile_FilterPlaceholder: "请选择属性/命途进行排序或筛选",
+	profile_SortByLevel: "依等级排序",
+	profile_SortByEidolon: "依命座排序",
+	profile_FilterNone: "无筛选"
 };
 
 export default langs;

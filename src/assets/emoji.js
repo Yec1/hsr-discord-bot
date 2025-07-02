@@ -44,25 +44,14 @@ export default {
 	crown: "<:crown:1148245594410848256>",
 	avatarIcon: "<:AvatarIcon:1149937538182684743>",
 
-	Rogue: "<:Hunt:1121276976414609489>",
-	"The Hunt": "<:Hunt:1121276976414609489>",
+	destruction: "<:destruction:1389813405279326239>",
+	erudition: "<:erudition:1389813406982471753>",
+	remembrance: "<:remembrance:1389813419271782460>",
+	preservation: "<:preservation:1389813416650211389>",
+	harmony: "<:harmony:1389813408739627068>",
+	hunt: "<:hunt:1389813410656550982>",
+	nihility: "<:nihility:1389813413194104882>",
+	abundance: "<:abundance:1389813403081642127>",
 
-	Shaman: "<:Harmony:1121276974174842962>",
-	Harmony: "<:Harmony:1121276974174842962>",
-
-	Priest: "<:Abundance:1121276966868365382>",
-	Abundance: "<:Abundance:1121276966868365382>",
-
-	Warrior: "<:Destruction:1121276969594671144>",
-	Destruction: "<:Destruction:1121276969594671144>",
-
-	Mage: "<:Erudition:1121276971511468135>",
-	Erudition: "<:Erudition:1121276971511468135>",
-
-	Warlock: "<:Nihility:1121276961554174054>",
-	Nihility: "<:Nihility:1121276961554174054>",
-
-	Knight: "<:Preservation:1121276965207416882>",
-	Preservation: "<:Preservation:1121276965207416882>",
 	link: "<:link:1256225760474038316>"
 };

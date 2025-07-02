@@ -90,10 +90,13 @@ const allChars = [
 	"anaxa",
 	"castorice",
 	"cipher",
-	"hyacine"
+	"hyacine",
+	"phainon"
 ];
 
 const allWeapons = [
+	"the-storys-next-page",
+	"thus-burns-the-dawn",
 	"long-may-rainbows-adorn-the-sky",
 	"lies-dance-on-the-breeze",
 	"make-farewells-more-beautiful",
@@ -223,6 +226,8 @@ const BGM = {
 };
 
 const allVers = [
+	// '3.4.2',
+	"3.4.1",
 	"3.3.2",
 	"3.3.1",
 	"3.2.2",
@@ -289,7 +294,11 @@ const colourMap = {
 	// bright purple: the herta 3.0.1
 	9: "#7855cd",
 	// gold
-	10: "#b38a5a"
+	10: "#b38a5a",
+	// pink
+	11: "#cd6485",
+	// muted blue
+	12: "#5155a5"
 };
 
 export {

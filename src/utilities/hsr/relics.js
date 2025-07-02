@@ -1,9 +1,33 @@
 import axios from "axios";
+import { propertyMap } from "../hsr/profile.js";
 // import { lazy } from "discord.js";
 
 // this lazy() can be changed to getting the scores on web, etc
 // as long it is a function
 // import scoreJson from "../assets/score.json" assert { type: "json" };
+
+const propertyTranslate = {
+	12: "PhysicalAddedRatio",
+	14: "FireAddedRatio",
+	16: "IceAddedRatio",
+	18: "ThunderAddedRatio",
+	20: "WindAddedRatio",
+	22: "QuantumAddedRatio",
+	24: "ImaginaryAddedRatio",
+	27: "HPDelta", // 小生命
+	29: "AttackDelta", // 小攻擊
+	31: "DefenceDelta", // 小防禦
+	32: "HPAddedRatio", // 大生命
+	33: "AttackAddedRatio", // 大攻擊
+	34: "DefenceAddedRatio", // 大防禦
+	51: "SpeedDelta",
+	52: "CriticalChanceBase",
+	53: "CriticalDamageBase",
+	54: "SPRatioBase",
+	56: "StatusProbabilityBase",
+	57: "StatusResistanceBase",
+	59: "BreakDamageAddedRatioBase"
+};
 
 async function getRelicsScore(character) {
 	const responses = await axios.get(
@@ -15,8 +39,14 @@ async function getRelicsScore(character) {
 
 	let totalScoreN = 0;
 
-	for (let i = 0; i < character.relics.length; i++) {
-		const relic = character.relics[i];
+	// 合併 relics 和 ornaments
+	const allRelics = [
+		...(character.relics || []),
+		...(character.ornaments || [])
+	];
+
+	for (let i = 0; i < allRelics.length; i++) {
+		const relic = allRelics[i];
 		const mainScore = calculateMainAffixScore(relic, charScore, i + 1);
 		const subScore = calculateSubScore(relic, charScore);
 
@@ -25,30 +55,80 @@ async function getRelicsScore(character) {
 		relic.scoreN = (relicScoreN * 100).toFixed(1);
 		relic.grade = calculateGrade(relic.scoreN);
 	}
+
 	const totalGrade = calculateGrade(
-		((totalScoreN * 100) / character.relics.length).toFixed(1)
+		((totalScoreN * 100) / allRelics.length).toFixed(1)
 	);
+
+	// 將計算結果存儲到 character 對象中
+	character.relics = allRelics;
 	character.relics.totalScore = (totalScoreN * 100).toFixed(1);
 	character.relics.totalGrade = totalGrade;
+
 	return character.relics;
 }
 
 function calculateMainAffixScore(relic, weights, index) {
-	const { main_affix: mainAffix } = relic;
-	const weight = weights.main[index.toString()][mainAffix.type] || 0;
+	const mainAffix = relic.main_affix || relic.main_property;
+	if (!mainAffix) return 0;
+
+	const affixType = mainAffix.type || mainAffix.property_type;
+	const calAffixType = propertyTranslate[affixType];
+	const weight = weights.main[index.toString()][calAffixType] || 0;
 	const level = Number(relic.level) || 0;
 	const score = ((level + 1) / 16) * weight;
+
+	// 為兼容性，將計算結果添加到 mainAffix 對象
 	mainAffix.weight = weight;
+
+	// 如果原始對象沒有 main_affix，創建一個兼容的結構
+	if (!relic.main_affix) {
+		relic.main_affix = {
+			...mainAffix,
+			type: affixType,
+			// 為顯示添加必要的字段
+			name: mainAffix.name || propertyMap[affixType],
+			display: mainAffix.value || mainAffix.display || "0",
+			icon:
+				mainAffix.icon ||
+				`icon/property/Icon${propertyMap[affixType]}.png`
+		};
+	}
+
 	return score;
 }
 
 function calculateSubScore(relic, weights) {
+	const subAffixes = relic.sub_affix || relic.properties || [];
+
 	return (
-		relic.sub_affix.reduce((subScore, sub) => {
-			const count = Number(sub.count) || 0;
-			const step = Number(sub.step) || 0;
-			const subWeight = weights.weight[sub.type] || 0;
+		subAffixes.reduce((subScore, sub) => {
+			const count = Number(sub.count || sub.times - 1 || 0);
+			const step = Number(sub.step || 0);
+
+			const subType = sub.type || sub.property_type;
+			const calSubType = propertyTranslate[subType];
+			const subWeight = weights.weight[calSubType] || 0;
+
 			sub.weight = subWeight;
+
+			if (!relic.sub_affix) {
+				relic.sub_affix = [];
+			}
+			const existingSub = relic.sub_affix.find(s => s.type === subType);
+			if (!existingSub) {
+				relic.sub_affix.push({
+					...sub,
+					type: subType,
+					count: count,
+					name: sub.name || propertyMap[subType],
+					display: sub.value || sub.display || "0",
+					icon:
+						sub.icon ||
+						`icon/property/Icon${propertyMap[subType]}.png`
+				});
+			}
+
 			return subScore + (count + step * 0.1) * subWeight;
 		}, 0) / (weights.max || 1)
 	);

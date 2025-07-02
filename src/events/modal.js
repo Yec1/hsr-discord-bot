@@ -5,7 +5,7 @@ import { HonkaiStarRail } from "hoyoapi";
 import {
 	getUserLang,
 	requestPlayerData,
-	getUserGameUid
+	getUserGameInfo
 } from "../utilities/utilities.js";
 import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
 import loginAccount from "../utilities/hsr/login.js";
@@ -76,7 +76,7 @@ async function handleAccountLogin(interaction, tr, fields) {
 			});
 		}
 
-		const { uid, nickname } = await getUserGameUid(cookie);
+		const { uid, nickname } = await getUserGameInfo(cookie);
 
 		// 清除過期標記
 		await db.delete(`${uid}.cookieExpired`);
