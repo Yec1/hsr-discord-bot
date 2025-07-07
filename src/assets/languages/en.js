@@ -235,7 +235,38 @@ const langs = {
 	profile_FilterPlaceholder: "Please select element/path to sort or filter",
 	profile_SortByLevel: "Sort by Level",
 	profile_SortByEidolon: "Sort by Eidolon",
-	profile_FilterNone: "No Filter"
+	profile_FilterNone: "No Filter",
+
+	property_MaxHP: "HP",
+	property_Attack: "Attack",
+	property_Defence: "Defense",
+	property_Speed: "Speed",
+	property_CriticalChance: "Critical Rate",
+	property_CriticalDamage: "Critical Damage",
+	property_HealRatio: "Healing Bonus",
+	property_EnergyRecovery: "Energy Regeneration Efficiency",
+	property_PhysicalAddedRatio: "Physical DMG Bonus",
+	property_IceAddedRatio: "Ice DMG Bonus",
+	property_FireAddedRatio: "Fire DMG Bonus",
+	property_ThunderAddedRatio: "Lightning DMG Bonus",
+	property_WindAddedRatio: "Wind DMG Bonus",
+	property_ImaginaryAddedRatio: "Imaginary DMG Bonus",
+	property_QuantumAddedRatio: "Quantum DMG Bonus",
+	property_StatusProbability: "Effect Hit Rate",
+	property_StatusResistance: "Effect RES",
+	property_BreakUp: "Break Effect",
+
+	// Error Messages
+	error_APIMaintenance:
+		"API seems to be under maintenance, please try again later",
+	error_RequestTimeout: "Request timeout, please try again later",
+	error_NetworkError:
+		"Network connection error, please check your network connection",
+	error_ServerError: "Server error, please try again later",
+	error_NotFound: "Data not found, please check if the UID is correct",
+	error_InvalidUID: "Invalid UID, please check the UID format",
+	error_RateLimit: "Too many requests, please try again later",
+	error_RequestFailed: "Request failed, please try again later"
 };
 
 export default langs;

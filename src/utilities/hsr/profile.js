@@ -5,7 +5,8 @@ import {
 	getRandomColor,
 	requestPlayerActivity,
 	getUserHSRData,
-	getUserGameInfo
+	getUserGameInfo,
+	getFriendlyErrorMessage
 } from "../utilities.js";
 import { createChunkedSelectMenus } from "./selectmenu.js";
 import { join } from "path";
@@ -325,7 +326,22 @@ async function handleProfileDraw(
 					}
 				};
 
-				characters = data.avatar_list;
+				// 獲取完整的角色數據，包括 relics 和 ornaments
+				characters = await hsr.record.characters();
+
+				// 為 saveLeaderboard 準備完整的 playerData
+				const fullPlayerData = {
+					player: {
+						nickname: gameInfo.nickname,
+						uid: gameInfo.uid,
+						level: gameInfo.level,
+						avatar: { icon: data.cur_head_icon_url }
+					},
+					characters: characters
+				};
+
+				// 計算並保存 relic score
+				await saveLeaderboard(fullPlayerData);
 			} else {
 				const {
 					status: reqPlayerDataStatus,
@@ -336,18 +352,42 @@ async function handleProfileDraw(
 					playerActivity: reqPlayerActivity
 				} = await requestPlayerActivity(uid, interaction);
 
-				if (reqPlayerDataStatus !== 200) {
+				if (reqPlayerDataStatus == 400) {
+					const friendlyDetail = getFriendlyErrorMessage(
+						reqPlayerData.detail,
+						tr
+					);
+					const friendlyMessage = getFriendlyErrorMessage(
+						reqPlayerData.message,
+						tr
+					);
+
 					return interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
+								.setColor("#E76161")
+								.setTitle(friendlyDetail)
+								.setDescription(`\`${friendlyMessage}\``)
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+								)
+						],
+						fetchReply: true
+					});
+				}
+
+				if (reqPlayerDataStatus !== 200 || !reqPlayerData) {
+					return interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setColor("#E76161")
 								.setTitle(
 									tr("profile_UidNotFound", {
 										uid: `\`${uid}\``
 									})
 								)
-								.setColor("#E76161")
 								.setThumbnail(
-									"https://media.discordapp.net/attachments/1231256542419095623/1246728242052989053/Trailblazer_female.png"
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 								)
 						],
 						fetchReply: true
@@ -504,9 +544,9 @@ async function handleProfileDraw(
 				...selectMenus.map(menu =>
 					new ActionRowBuilder().addComponents(menu)
 				),
-				allCharacters
-					? new ActionRowBuilder().addComponents(filterMenu)
-					: null
+				...(allCharacters
+					? [new ActionRowBuilder().addComponents(filterMenu)]
+					: [])
 			];
 
 			interaction.editReply({
@@ -1085,11 +1125,7 @@ async function drawCharacterImage(
 
 			ctx.fillStyle = "white";
 			ctx.fillText(
-				`${tr("level")} ${character.light_cone?.level || character.equip?.level} ${
-					character.light_cone?.promotion
-						? `/ ${20 + character.light_cone.promotion * 10}`
-						: ""
-				}`,
+				`${tr("level")} ${character.light_cone?.level || character.equip?.level}`,
 				light_cone_base_x + 30,
 				light_cone_base_y + 240
 			);
@@ -1101,11 +1137,7 @@ async function drawCharacterImage(
 				light_cone_base_x +
 					30 +
 					ctx.measureText(
-						`${tr("level")} ${character.light_cone?.level || character.equip?.level} ${
-							character.light_cone?.promotion
-								? `/ ${20 + character.light_cone.promotion * 10}`
-								: ""
-						}`
+						`${tr("level")} ${character.light_cone?.level || character.equip?.level}`
 					).width +
 					15,
 				light_cone_base_y + 240
@@ -1244,6 +1276,37 @@ async function drawCharacterImage(
 		ctx.fillText(playerData.player.uid, 840, 1010);
 
 		const relicsScore = await getRelicsScore(character);
+
+		// 顯示總分
+		const centerX = 840;
+		ctx.textAlign = "center";
+		ctx.fillStyle = "white";
+
+		if (relicsScore) {
+			const scoreText = tr("RelicGrade", {
+				grade: `${relicsScore.totalScore}`
+			});
+
+			const scoreWidth = ctx.measureText(scoreText).width;
+
+			const startX =
+				centerX -
+				(scoreWidth +
+					ctx.measureText(relicsScore.totalGrade.grade).width) /
+					2;
+
+			ctx.fillText(scoreText, startX, 830);
+
+			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
+			ctx.fillText(
+				relicsScore.totalGrade.grade,
+				startX + scoreWidth + 10,
+				830
+			);
+		} else {
+			ctx.textAlign = "center";
+			ctx.fillText(tr("RelicNoScore"), centerX, 830);
+		}
 		const relicRenderData = await Promise.all(
 			allRelics.map(async (relic, i) => {
 				// 處理子屬性圖標

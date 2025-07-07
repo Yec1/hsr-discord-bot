@@ -245,7 +245,17 @@ const langs = {
 	property_QuantumAddedRatio: "量子屬性傷害加成",
 	property_StatusProbability: "效果命中",
 	property_StatusResistance: "效果抗性",
-	property_BreakUp: "擊破特攻"
+	property_BreakUp: "擊破特攻",
+
+	// Error Messages
+	error_APIMaintenance: "目前API似乎維護中，請稍後再試",
+	error_RequestTimeout: "請求超時，請稍後再試",
+	error_NetworkError: "網路連線錯誤，請檢查網路連線",
+	error_ServerError: "伺服器錯誤，請稍後再試",
+	error_NotFound: "找不到資料，請檢查UID是否正確",
+	error_InvalidUID: "無效的UID，請檢查UID格式",
+	error_RateLimit: "請求過於頻繁，請稍後再試",
+	error_RequestFailed: "請求失敗，請稍後再試"
 };
 
 export default langs;

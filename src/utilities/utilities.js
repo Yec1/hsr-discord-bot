@@ -144,11 +144,47 @@ export async function parsePostContent(content) {
 }
 
 export async function getRedeemCodes() {
-	const res = await axios
-		.get("https://hoyo-codes.seria.moe/codes?game=hkrpg")
-		.then(response => response.data);
+	// 檢查快取是否存在且未過期
+	const cacheKey = "redeemCodesCache";
+	const cachedData = await db.get(cacheKey);
+	const currentTime = Date.now();
+	const oneDayInMs = 24 * 60 * 60 * 1000; // 24小時的毫秒數
 
-	return res.codes;
+	// 如果快取存在且未過期，直接返回快取的數據
+	if (cachedData && currentTime - cachedData.timestamp < oneDayInMs) {
+		const remainingTime = Math.floor(
+			(oneDayInMs - (currentTime - cachedData.timestamp)) /
+				(1000 * 60 * 60)
+		); // 剩餘小時數
+		console.log(`[快取] 使用快取的兌換碼數據，剩餘 ${remainingTime} 小時`);
+		return cachedData.codes;
+	}
+
+	// 如果快取不存在或已過期，重新獲取數據
+	console.log("[快取] 快取已過期或不存在，重新獲取兌換碼數據...");
+	try {
+		const res = await axios
+			.get("https://hoyo-codes.seria.moe/codes?game=hkrpg")
+			.then(response => response.data);
+
+		// 將新數據存入快取
+		await db.set(cacheKey, {
+			codes: res.codes,
+			timestamp: currentTime
+		});
+
+		console.log(`[快取] 成功獲取並快取 ${res.codes.length} 個兌換碼`);
+		return res.codes;
+	} catch (error) {
+		console.error("[快取] API請求失敗:", error.message);
+		// 如果API請求失敗但有快取數據，返回快取數據
+		if (cachedData) {
+			console.log("[快取] 使用過期的快取數據作為備用");
+			return cachedData.codes;
+		}
+		// 如果沒有快取數據且API請求失敗，拋出錯誤
+		throw error;
+	}
 }
 
 export function secondsToHms(d, tr) {
@@ -179,13 +215,20 @@ export async function requestPlayerData(uid, interaction) {
 		langParam = interaction.locale === "zh-TW" ? "?lang=cht" : "?lang=en";
 	}
 
-	const response = await axios
-		.get(`https://api.mihomo.me/sr_info_parsed/${uid}${langParam}`)
-		.catch(err => {
-			return { status: 400, data: null };
-		});
-
-	return { status: response.status, playerData: response.data };
+	try {
+		const response = await axios.get(
+			`https://api.mihomo.me/sr_info_parsed/${uid}${langParam}`
+		);
+		return { status: response.status, playerData: response.data };
+	} catch (err) {
+		return {
+			status: 400,
+			playerData: {
+				detail: err.response?.data?.detail,
+				message: err.message
+			}
+		};
+	}
 }
 
 export async function requestPlayerActivity(uid, interaction) {
@@ -199,13 +242,20 @@ export async function requestPlayerActivity(uid, interaction) {
 		langParam = interaction.locale === "zh-TW" ? "?lang=cht" : "?lang=en";
 	}
 
-	const response = await axios
-		.get(`https://api.mihomo.me/sr_activity/${uid}${langParam}`)
-		.catch(err => {
-			return { status: 400, data: null };
-		});
-
-	return { status: response.status, playerActivity: response.data };
+	try {
+		const response = await axios.get(
+			`https://api.mihomo.me/sr_activity/${uid}${langParam}`
+		);
+		return { status: response.status, playerActivity: response.data };
+	} catch (err) {
+		return {
+			status: 400,
+			playerActivity: {
+				detail: err.response?.data?.detail,
+				message: err.message
+			}
+		};
+	}
 }
 
 export async function drawInQueueReply(interaction, title = "") {
@@ -462,5 +512,82 @@ export async function getUserGameInfo(cookie, gameName = "Honkai: Star Rail") {
 		uid: filteredData[0].game_role_id,
 		nickname: filteredData[0].nickname,
 		level: filteredData[0].level
+	};
+}
+
+// 快取管理函數
+export async function clearRedeemCodesCache() {
+	const cacheKey = "redeemCodesCache";
+	await db.delete(cacheKey);
+	console.log("[快取] 兌換碼快取已清除");
+}
+
+// 錯誤信息處理函數
+export function getFriendlyErrorMessage(originalMessage, tr) {
+	if (!originalMessage) return tr("error_RequestFailed");
+
+	const lowerMessage = originalMessage.toLowerCase();
+
+	// 精確匹配
+	const exactMatches = [
+		"Queue timeout, please refer to https://discord.gg/pkdTJ9svEh for more infomation",
+		"Queue timeout"
+	];
+
+	if (exactMatches.some(match => originalMessage.includes(match))) {
+		return tr("error_APIMaintenance");
+	}
+
+	// 模糊匹配映射表
+	const errorPatterns = [
+		{ pattern: "timeout", key: "error_RequestTimeout" },
+		{ pattern: "network error", key: "error_NetworkError" },
+		{ pattern: "server error", key: "error_ServerError" },
+		{ pattern: "not found", key: "error_NotFound" },
+		{ pattern: "invalid uid", key: "error_InvalidUID" },
+		{ pattern: "rate limit", key: "error_RateLimit" }
+	];
+
+	// 查找匹配的錯誤模式
+	const matchedPattern = errorPatterns.find(({ pattern }) =>
+		lowerMessage.includes(pattern)
+	);
+
+	if (matchedPattern) {
+		return tr(matchedPattern.key);
+	}
+
+	// 如果都沒有匹配到，返回原始信息
+	return originalMessage;
+}
+
+export async function getRedeemCodesCacheStatus() {
+	const cacheKey = "redeemCodesCache";
+	const cachedData = await db.get(cacheKey);
+	const currentTime = Date.now();
+	const oneDayInMs = 24 * 60 * 60 * 1000;
+
+	if (!cachedData) {
+		return {
+			exists: false,
+			message: "快取不存在"
+		};
+	}
+
+	const timeDiff = currentTime - cachedData.timestamp;
+	const isExpired = timeDiff >= oneDayInMs;
+	const remainingHours = Math.floor(
+		(oneDayInMs - timeDiff) / (1000 * 60 * 60)
+	);
+
+	return {
+		exists: true,
+		isExpired,
+		remainingHours: isExpired ? 0 : remainingHours,
+		codesCount: cachedData.codes.length,
+		lastUpdated: new Date(cachedData.timestamp).toLocaleString("zh-TW"),
+		message: isExpired
+			? "快取已過期"
+			: `快取有效，剩餘 ${remainingHours} 小時，包含 ${cachedData.codes.length} 個兌換碼`
 	};
 }

@@ -227,7 +227,36 @@ const langs = {
 	profile_FilterPlaceholder: "请选择属性/命途进行排序或筛选",
 	profile_SortByLevel: "依等级排序",
 	profile_SortByEidolon: "依命座排序",
-	profile_FilterNone: "无筛选"
+	profile_FilterNone: "无筛选",
+
+	property_MaxHP: "生命值",
+	property_Attack: "攻击力",
+	property_Defence: "防御力",
+	property_Speed: "速度",
+	property_CriticalChance: "暴击率",
+	property_CriticalDamage: "暴击伤害",
+	property_HealRatio: "治疗量加成",
+	property_EnergyRecovery: "能量恢复效率",
+	property_PhysicalAddedRatio: "物理属性伤害加成",
+	property_IceAddedRatio: "冰属性伤害加成",
+	property_FireAddedRatio: "火属性伤害加成",
+	property_ThunderAddedRatio: "雷属性伤害加成",
+	property_WindAddedRatio: "风属性伤害加成",
+	property_ImaginaryAddedRatio: "虚数属性伤害加成",
+	property_QuantumAddedRatio: "量子属性伤害加成",
+	property_StatusProbability: "效果命中",
+	property_StatusResistance: "效果抗性",
+	property_BreakUp: "击破特攻",
+
+	// Error Messages
+	error_APIMaintenance: "目前API似乎维护中，请稍后再试",
+	error_RequestTimeout: "请求超时，请稍后再试",
+	error_NetworkError: "网络连接错误，请检查网络连接",
+	error_ServerError: "服务器错误，请稍后再试",
+	error_NotFound: "找不到资料，请检查UID是否正确",
+	error_InvalidUID: "无效的UID，请检查UID格式",
+	error_RateLimit: "请求过于频繁，请稍后再试",
+	error_RequestFailed: "请求失败，请稍后再试"
 };
 
 export default langs;

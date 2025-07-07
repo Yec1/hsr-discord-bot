@@ -43,7 +43,8 @@ import {
 	parsePostContent,
 	requestPlayerActivity,
 	getUserCookie,
-	getUserGameInfo
+	getUserGameInfo,
+	getFriendlyErrorMessage
 } from "../utilities/utilities.js";
 import { getSelectMenu } from "../utilities/hsr/selectmenu.js";
 import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
@@ -1119,8 +1120,10 @@ async function handleSelectCharacter(interaction, tr, value) {
 			let [uid, userId, accountIndex, allCharacters, characterId] =
 				value.split("-");
 			allCharacters = allCharacters == "true" ? true : false;
+
 			let playerData = null;
 			let playerActivity = null;
+			let character = null;
 			let characters = null;
 
 			if (allCharacters) {
@@ -1160,6 +1163,25 @@ async function handleSelectCharacter(interaction, tr, value) {
 						avatar: { icon: data.cur_head_icon_url }
 					}
 				};
+
+				if (!characters || characters.length === 0) {
+					return interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setColor("#E76161")
+								.setTitle(tr("DrawError"))
+								.setDescription("無法取得角色資料")
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+								)
+						],
+						fetchReply: true
+					});
+				}
+
+				character = characters.find(
+					character => character.id == characterId
+				);
 			} else {
 				const {
 					status: reqPlayerDataStatus,
@@ -1169,6 +1191,30 @@ async function handleSelectCharacter(interaction, tr, value) {
 					status: reqPlayerActivityStatus,
 					playerActivity: reqPlayerActivity
 				} = await requestPlayerActivity(uid, interaction);
+
+				if (reqPlayerDataStatus == 400) {
+					const friendlyDetail = getFriendlyErrorMessage(
+						reqPlayerData.detail,
+						tr
+					);
+					const friendlyMessage = getFriendlyErrorMessage(
+						reqPlayerData.message,
+						tr
+					);
+
+					return interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setColor("#E76161")
+								.setTitle(friendlyDetail)
+								.setDescription(`\`${friendlyMessage}\``)
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+								)
+						],
+						fetchReply: true
+					});
+				}
 
 				if (reqPlayerDataStatus !== 200 || !reqPlayerData) {
 					return interaction.editReply({
@@ -1188,18 +1234,24 @@ async function handleSelectCharacter(interaction, tr, value) {
 					});
 				}
 
-				characters = reqPlayerData.avatar_list;
+				playerData = reqPlayerData;
+				characters = reqPlayerData.characters;
+				character = characters.find(
+					character => character.id == characterId
+				);
 				playerActivity = reqPlayerActivity;
 			}
 
-			// 檢查 characters 是否為空或未定義
-			if (!characters || characters.length === 0) {
+			const requestEndTime = Date.now();
+
+			// 檢查 playerData 是否為 null
+			if (!playerData) {
 				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setColor("#E76161")
 							.setTitle(tr("DrawError"))
-							.setDescription("無法取得角色資料")
+							.setDescription("無法取得玩家資料")
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 							)
@@ -1208,11 +1260,21 @@ async function handleSelectCharacter(interaction, tr, value) {
 				});
 			}
 
-			const character = characters.find(
-				character => character.id == characterId
-			);
-
-			const requestEndTime = Date.now();
+			// 檢查 character 是否為 null（當選擇特定角色時）
+			if (characterId !== "main" && !character) {
+				return interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setColor("#E76161")
+							.setTitle(tr("DrawError"))
+							.setDescription("無法找到指定角色")
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+					],
+					fetchReply: true
+				});
+			}
 
 			const drawStartTime = Date.now();
 			const imageBuffer =
