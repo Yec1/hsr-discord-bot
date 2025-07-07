@@ -1278,7 +1278,8 @@ async function drawCharacterImage(
 		const relicsScore = await getRelicsScore(character);
 
 		// 顯示總分
-		const centerX = 840;
+		const centerX = 420;
+		ctx.font = "bold 32px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
 		ctx.textAlign = "center";
 		ctx.fillStyle = "white";
 
@@ -1295,18 +1296,19 @@ async function drawCharacterImage(
 					ctx.measureText(relicsScore.totalGrade.grade).width) /
 					2;
 
-			ctx.fillText(scoreText, startX, 830);
+			ctx.fillText(scoreText, startX, attrBottomY + 50);
 
 			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
 			ctx.fillText(
 				relicsScore.totalGrade.grade,
-				startX + scoreWidth + 10,
-				830
+				startX + scoreWidth - 130,
+				attrBottomY + 50
 			);
 		} else {
 			ctx.textAlign = "center";
 			ctx.fillText(tr("RelicNoScore"), centerX, 830);
 		}
+
 		const relicRenderData = await Promise.all(
 			allRelics.map(async (relic, i) => {
 				// 處理子屬性圖標
