@@ -24,6 +24,7 @@ const propertyTranslate = {
 	52: "CriticalChanceBase",
 	53: "CriticalDamageBase",
 	54: "SPRatioBase",
+	55: "HealRatioBase",
 	56: "StatusProbabilityBase",
 	57: "StatusResistanceBase",
 	59: "BreakDamageAddedRatioBase"

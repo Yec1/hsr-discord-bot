@@ -330,7 +330,7 @@ export const propertyMap = {
 	52: "CriticalChance",
 	53: "CriticalDamage",
 	54: "EnergyRecovery",
-	55: "HealRatio",
+	55: "HealRatioBase",
 	56: "StatusProbability",
 	57: "StatusResistance",
 	58: "BreakUp",

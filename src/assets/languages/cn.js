@@ -236,6 +236,7 @@ const langs = {
 	property_CriticalChance: "暴击率",
 	property_CriticalDamage: "暴击伤害",
 	property_HealRatio: "治疗量加成",
+	property_HealRatioBase: "治疗量加成",
 	property_EnergyRecovery: "能量恢复效率",
 	property_PhysicalAddedRatio: "物理属性伤害加成",
 	property_IceAddedRatio: "冰属性伤害加成",
