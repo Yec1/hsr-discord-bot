@@ -994,9 +994,8 @@ async function drawCharacterImage(
 						acc[field] = { ...attribute };
 					}
 
-					// 格式化顯示值：小於10且非速度屬性顯示百分比，其他顯示整數
-					const isPercentage =
-						attribute.value < 10 && field !== "spd";
+					// 格式化顯示值：小於1且非速度屬性顯示百分比，其他顯示整數
+					const isPercentage = attribute.value < 1 && field !== "spd";
 					acc[field].display = isPercentage
 						? `${(acc[field].value * 100).toFixed(1)}%`
 						: `${Math.floor(acc[field].value)}`;
@@ -1164,6 +1163,7 @@ async function drawCharacterImage(
 							const paramIndex = parseInt(p1) - 1;
 							const param = params[paramIndex];
 							if (param !== undefined) {
+								// [i] 格式：如果参数小于1，显示为百分比；否则显示为整数
 								if (param < 1) {
 									const percentage = (param * 100).toFixed(1);
 									const displayValue = percentage.endsWith(
@@ -1182,11 +1182,20 @@ async function drawCharacterImage(
 							const paramIndex = parseInt(p1) - 1;
 							const param = params[paramIndex];
 							if (param !== undefined) {
-								const percentage = (param * 100).toFixed(1);
-								const displayValue = percentage.endsWith(".0")
-									? percentage.slice(0, -2)
-									: percentage;
-								return `[GOLD]${displayValue}%[/GOLD]`;
+								// [f1] 格式：总是显示为百分比，但需要检查参数是否已经是百分比格式
+								if (param >= 1) {
+									// 如果参数大于等于1，说明已经是百分比格式，直接显示
+									return `[GOLD]${param}%[/GOLD]`;
+								} else {
+									// 如果参数小于1，转换为百分比
+									const percentage = (param * 100).toFixed(1);
+									const displayValue = percentage.endsWith(
+										".0"
+									)
+										? percentage.slice(0, -2)
+										: percentage;
+									return `[GOLD]${displayValue}%[/GOLD]`;
+								}
 							}
 							return match;
 						});
