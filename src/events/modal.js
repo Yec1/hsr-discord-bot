@@ -48,19 +48,6 @@ async function handleAccountLogin(interaction, tr, fields) {
 				]
 			});
 		}
-		const existedAccounts =
-			(await db.get(`${interaction.user.id}.account`)) || [];
-		if (existedAccounts.length >= 5) {
-			return interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle(tr("account_LimitExceeded"))
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-				]
-			});
-		}
 
 		const { cookie, error } = (await loginAccount(email, password)) || "";
 		if (error || !cookie) {
@@ -77,38 +64,67 @@ async function handleAccountLogin(interaction, tr, fields) {
 		}
 
 		const { uid, nickname } = await getUserGameInfo(cookie);
+		const existedAccounts =
+			(await db.get(`${interaction.user.id}.account`)) || [];
 
 		// 清除過期標記
 		await db.delete(`${uid}.cookieExpired`);
 
-		interaction.editReply({
-			embeds: [
-				new EmbedBuilder()
-					.setColor("#F6F1F1")
-					.setThumbnail(
-						"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
-					)
-					.setTitle(tr("account_LoginSuccess"))
-			]
-		});
+		// 檢查是否已經綁定過這個UID
+		const existingAccountIndex = existedAccounts.findIndex(
+			account => account.uid == uid
+		);
 
-		if (existedAccounts.some(account => account.uid == uid)) {
-			existedAccounts.map(async account => {
-				if (account.uid == uid) {
-					account.cookie = cookie;
-					account.nickname = nickname;
+		if (existingAccountIndex !== -1) {
+			// 如果已經綁定過，直接更新該帳號的Cookie
+			existedAccounts[existingAccountIndex].cookie = cookie;
+			existedAccounts[existingAccountIndex].nickname = nickname;
 
-					await db.set(
-						`${interaction.user.id}.account`,
-						existedAccounts
-					);
-				}
+			await db.set(`${interaction.user.id}.account`, existedAccounts);
+
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#F6F1F1")
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+						)
+						.setTitle(tr("account_LoginSuccess"))
+						.setDescription(
+							tr("account_LoginSuccessDesc", { z: `${uid}` })
+						)
+				]
 			});
 		} else {
+			// 如果是新帳號，檢查數量限制
+			if (existedAccounts.length >= 5) {
+				return interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setTitle(tr("account_LimitExceeded"))
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+					]
+				});
+			}
+
+			// 添加新帳號
 			await db.push(`${interaction.user.id}.account`, {
 				uid: uid,
 				cookie: cookie,
 				nickname: nickname
+			});
+
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#F6F1F1")
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+						)
+						.setTitle(tr("account_LoginSuccess"))
+				]
 			});
 		}
 	} catch (error) {

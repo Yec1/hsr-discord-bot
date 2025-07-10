@@ -88,6 +88,7 @@ const langs = {
 	account_LoginFailed: "登入失敗",
 	account_LoginFailedDesc: "請確認帳號密碼是否正確",
 	account_LoginSuccess: "帳號登入成功，並且已設定 Cookie",
+	account_LoginSuccessDesc: "已更新帳號 <z> 的 Cookie",
 	account_Linked: "已綁定",
 	account_NotLinked: "未綁定",
 	account_ListOfAccount: "<Username> 已設定的帳號",

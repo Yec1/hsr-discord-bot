@@ -255,16 +255,18 @@ export default {
 				code => !userRedeemedCodes.includes(code.code)
 			);
 
+			// 檢查是否需要更新Cookie（無論是否有未兌換的禮包碼）
+			const lastCookieRefresh =
+				(await db.get(`${uid}.lastCookieRefresh`)) || 0;
+			const currentTime = Date.now();
+			const oneDayInMs = 24 * 60 * 60 * 1000; // 24小时的毫秒数
+			const shouldRefreshCookie =
+				currentTime - lastCookieRefresh >= oneDayInMs;
+
 			if (!noRedeemedCodes || noRedeemedCodes.length === 0) {
 				try {
-					// 获取上次刷新Cookie的时间
-					const lastCookieRefresh =
-						(await db.get(`${uid}.lastCookieRefresh`)) || 0;
-					const currentTime = Date.now();
-					const oneDayInMs = 24 * 60 * 60 * 1000; // 24小时的毫秒数
-
 					// 如果距离上次刷新已经过了24小时，则刷新Cookie
-					if (currentTime - lastCookieRefresh >= oneDayInMs) {
+					if (shouldRefreshCookie) {
 						await updateCookie(
 							targetUser.id,
 							accountIndex,
@@ -344,17 +346,19 @@ export default {
 				});
 			}
 
-			if (results.success.length > 0) {
-				try {
+			// 更新Cookie的邏輯：無論是否有成功兌換，都定期更新Cookie
+			try {
+				if (results.success.length > 0 || shouldRefreshCookie) {
 					await updateCookie(targetUser.id, accountIndex, hsr.cookie);
+					await db.set(`${uid}.lastCookieRefresh`, currentTime);
 					new Logger("Redeem").info(
 						`使用者 ${targetUser.id} 的帳號 #${accountIndex} 成功兌換 ${results.success.length} 個禮包碼並更新 Cookie`
 					);
-				} catch (e) {
-					new Logger("Redeem").error(
-						`使用者 ${targetUser.id} 的帳號 #${accountIndex} 更新 Cookie 失敗: ${e.message}`
-					);
 				}
+			} catch (e) {
+				new Logger("Redeem").error(
+					`使用者 ${targetUser.id} 的帳號 #${accountIndex} 更新 Cookie 失敗: ${e.message}`
+				);
 			}
 
 			interaction.editReply({
@@ -432,6 +436,22 @@ export default {
 						userRedeemedCodes.push(code);
 					userRedeemedCodes = Array.from(new Set(userRedeemedCodes));
 					await db.set(`${uid}.redeemedCodes`, userRedeemedCodes);
+
+					// 成功兌換時更新Cookie
+					try {
+						await updateCookie(
+							targetUser.id,
+							accountIndex,
+							hsr.cookie
+						);
+						new Logger("Redeem").info(
+							`使用者 ${targetUser.id} 的帳號 #${accountIndex} 成功兌換禮包碼 ${code} 並更新 Cookie`
+						);
+					} catch (e) {
+						new Logger("Redeem").error(
+							`使用者 ${targetUser.id} 的帳號 #${accountIndex} 更新 Cookie 失敗: ${e.message}`
+						);
+					}
 
 					interaction.editReply({
 						embeds: [

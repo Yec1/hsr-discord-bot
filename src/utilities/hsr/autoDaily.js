@@ -33,18 +33,37 @@ class AutoDailySignSystem {
 		this.client = client;
 		this.db = client.db;
 		this.webhook = new WebhookClient({ url: webhookUrl });
-		this.logger = new Logger("AutoDailySign");
-		this.stats = { total: 0, success: 0, failed: 0, signed: 0 };
+		this.logger = new Logger("自動簽到");
+		this.stats = { total: 0, success: 0, failed: 0, signed: 0, skipped: 0 };
 	}
 
 	async initialize() {
 		if (!this.webhook?.url) {
-			throw new Error("Invalid webhook configuration");
+			throw new Error("無效的 webhook 配置");
 		}
 	}
 
 	getLanguage(locale) {
 		return LANGUAGE_MAPPING[locale] || LANGUAGE_MAPPING.default;
+	}
+
+	// 檢查是否為可跳過的錯誤
+	isSkippableError(errorMessage) {
+		const skipPatterns = [
+			"尚未登入",
+			"Not logged in",
+			"未登入",
+			"登入失敗",
+			"Login failed",
+			"Cookie 已過期",
+			"Cookie expired",
+			"無效的 Cookie",
+			"Invalid cookie"
+		];
+
+		return skipPatterns.some(pattern =>
+			errorMessage.toLowerCase().includes(pattern.toLowerCase())
+		);
 	}
 
 	async processDailySign(userId, dailyData) {
@@ -68,7 +87,13 @@ class AutoDailySignSystem {
 				const cookie = await getUserCookie(userId, accountIndex);
 				const uid = await getUserUid(userId, accountIndex);
 
-				if (!cookie || !uid) continue;
+				if (!cookie || !uid) {
+					this.logger.info(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] 缺少 Cookie 或 UID，跳過處理`
+					);
+					this.stats.skipped++;
+					continue;
+				}
 
 				await this.performSignIn(
 					{ cookie, uid },
@@ -76,18 +101,36 @@ class AutoDailySignSystem {
 					userId,
 					channelId,
 					tag,
-					tr
+					tr,
+					accountIndex
 				);
 			} catch (error) {
-				this.logger.error(
-					`Sign-in failed for user ${userId} account ${accountIndex}: ${error.message}`
-				);
-				this.stats.failed++;
+				const errorMessage = error.message;
+
+				if (this.isSkippableError(errorMessage)) {
+					this.logger.info(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] 跳過處理: ${errorMessage}`
+					);
+					this.stats.skipped++;
+				} else {
+					this.logger.error(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] 簽到失敗: ${errorMessage}`
+					);
+					this.stats.failed++;
+				}
 			}
 		}
 	}
 
-	async performSignIn(account, userLang, userId, channelId, tag, tr) {
+	async performSignIn(
+		account,
+		userLang,
+		userId,
+		channelId,
+		tag,
+		tr,
+		accountIndex
+	) {
 		this.stats.total++;
 
 		const hsr = new HonkaiStarRail({
@@ -108,6 +151,9 @@ class AutoDailySignSystem {
 
 			if (result.code === -5003 || result.info.is_sign === true) {
 				this.stats.signed++;
+				this.logger.info(
+					`[用戶 ${userId}] [帳號 #${accountIndex}] 已經簽到過了`
+				);
 				return;
 			}
 
@@ -118,6 +164,10 @@ class AutoDailySignSystem {
 				rewards.awards[info.total_sign_day + 1] || rewards.awards[1];
 
 			this.stats.success++;
+			this.logger.success(
+				`[用戶 ${userId}] [帳號 #${accountIndex}] 簽到成功`
+			);
+
 			await this.sendSuccessMessage(channelId, {
 				content: tag,
 				embeds: [
@@ -165,7 +215,13 @@ class AutoDailySignSystem {
 				]
 			});
 		} catch (error) {
-			throw new Error(`API Error: ${error.message}`);
+			const errorMessage = error.message;
+
+			if (this.isSkippableError(errorMessage)) {
+				throw new Error(errorMessage); // 重新拋出，讓上層處理
+			} else {
+				throw new Error(`API 錯誤: ${errorMessage}`);
+			}
 		}
 	}
 
@@ -185,7 +241,7 @@ class AutoDailySignSystem {
 			);
 		} catch (error) {
 			this.logger.error(
-				`Failed to send message to channel ${channelId}: ${error.message}`
+				`發送訊息至頻道 ${channelId} 時發生錯誤: ${error.message}`
 			);
 		}
 	}
@@ -198,14 +254,14 @@ class AutoDailySignSystem {
 			this.stats.total > 0 ? duration / this.stats.total : 0;
 
 		this.logger.success(
-			`Completed ${currentHour}:00 auto sign-in: ${this.stats.total} total, ` +
-				`${this.stats.success} successful, ${this.stats.signed} already signed, ` +
-				`${this.stats.failed} failed`
+			`已完成 ${currentHour}:00 自動簽到: ${this.stats.total} 總數, ` +
+				`${this.stats.success} 成功, ${this.stats.signed} 已簽到, ` +
+				`${this.stats.skipped} 跳過, ${this.stats.failed} 失敗`
 		);
 
 		const statsEmbed = new EmbedBuilder()
 			.setColor("#F2BE22")
-			.setTitle(`${currentHour}:00 Auto Sign-in Stats`)
+			.setTitle(`${currentHour}:00 自動簽到統計`)
 			.setTimestamp()
 			.addFields(this.buildStatsFields(duration, averageTime));
 
@@ -215,32 +271,37 @@ class AutoDailySignSystem {
 	buildStatsFields(duration, averageTime) {
 		return [
 			{
-				name: `Total Users: \`${this.stats.total}\``,
+				name: `總數: \`${this.stats.total}\``,
 				value: "\u200b",
 				inline: false
 			},
 			{
-				name: `Successful: \`${this.stats.success}\``,
+				name: `成功: \`${this.stats.success}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `Already Signed: \`${this.stats.signed}\``,
+				name: `已簽到: \`${this.stats.signed}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `Failed: \`${this.stats.failed}\``,
+				name: `跳過: \`${this.stats.skipped}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `Total Duration: \`${duration.toFixed(3)}\` seconds`,
+				name: `失敗: \`${this.stats.failed}\``,
 				value: "\u200b",
 				inline: true
 			},
 			{
-				name: `Average Time: \`${averageTime.toFixed(3)}\` seconds`,
+				name: `總時間: \`${duration.toFixed(3)}\` 秒`,
+				value: "\u200b",
+				inline: true
+			},
+			{
+				name: `平均時間: \`${averageTime.toFixed(3)}\` 秒`,
 				value: "\u200b",
 				inline: true
 			}
@@ -262,7 +323,7 @@ export default async function autoDailySign() {
 	});
 
 	const startTime = Date.now();
-	system.logger.success(`Starting ${currentHour}:00 auto sign-in`);
+	system.logger.success(`開始 ${currentHour}:00 自動簽到`);
 
 	for (const userId of Object.keys(dailyData)) {
 		const scheduledTime = dailyData[userId]?.time || "13";
@@ -272,7 +333,7 @@ export default async function autoDailySign() {
 				await system.processDailySign(userId, dailyData);
 			} catch (error) {
 				system.logger.error(
-					`Error processing user ${userId}: ${error.message}`
+					`處理用戶 ${userId} 時發生錯誤: ${error.message}`
 				);
 			}
 		}

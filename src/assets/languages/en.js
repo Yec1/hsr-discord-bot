@@ -90,6 +90,7 @@ const langs = {
 	account_LoginFailedDesc:
 		"Please check if the account and password are correct",
 	account_LoginSuccess: "Account login successful, and Cookie has been set",
+	account_LoginSuccessDesc: "Updated Cookie for <z>",
 	account_Linked: "Linked",
 	account_NotLinked: "Not Linked",
 	account_ListOfAccount: "Accounts set by <Username>",

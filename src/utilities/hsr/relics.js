@@ -103,7 +103,7 @@ function calculateMainAffixScore(relic, weights, index) {
 			propertyName: propertyMap[affixType],
 			display: mainAffix.value || mainAffix.display || "0",
 			icon:
-				mainAffix.icon ||
+				mainAffix.icon?.replace(/^Icon/, "icon") ||
 				`icon/property/icon${propertyMap[affixType]}.png`
 		};
 	}
@@ -117,7 +117,7 @@ function calculateSubScore(relic, weights) {
 	// SRS 标准：副词条归一化得分计算
 	// 原始得分 = Σ(基础值次数 + 提升值次数 * 0.1) * 权重
 	let rawScore = subAffixes.reduce((subScore, sub) => {
-		const count = Number(sub.count || sub.times - 1 || 0);
+		const count = Number(sub.count - 1 || sub.times - 1 || 0);
 		const step = Number(sub.step || 0);
 
 		const subType = sub.type || sub.property_type;
@@ -139,7 +139,8 @@ function calculateSubScore(relic, weights) {
 				propertyName: propertyMap[subType],
 				display: sub.value || sub.display || "0",
 				icon:
-					sub.icon || `icon/property/icon${propertyMap[subType]}.png`
+					sub.icon?.replace(/^Icon/, "icon") ||
+					`icon/property/icon${propertyMap[subType]}.png`
 			});
 		}
 

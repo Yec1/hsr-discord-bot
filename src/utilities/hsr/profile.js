@@ -90,6 +90,7 @@ const loadImageAsync = async (url, fallbackUrl = null) => {
 		loadImageAsync.cache.set(url, image);
 		return { image, usedFallback: false };
 	} catch (error) {
+		console.log(error);
 		console.warn(`Failed to load image: ${url}`, error.message);
 
 		// 如果有备选URL，尝试加载备选图片
@@ -177,7 +178,7 @@ async function renderAttributesList(ctx, attributes, startX, startY, spacing) {
 
 		// 載入並繪製屬性圖標
 		const attributeImageResult = await loadImageAsync(
-			`./src/assets/image/${attribute.icon}`
+			`./src/assets/image/${attribute.icon.replace("Icon", "icon")}`
 		);
 		if (attributeImageResult && attributeImageResult.image) {
 			ctx.drawImage(attributeImageResult.image, startX, y, 48, 48);
@@ -1005,11 +1006,14 @@ async function drawCharacterImage(
 
 			result = Object.values(attributesWithAdditions);
 		} else {
-			result = character.properties.map(property => ({
-				name: tr(`property_${propertyMap[property.property_type]}`),
-				value: property.final,
-				icon: `icon/property/icon${propertyMap[property.property_type]}.png`
-			}));
+			result = character.properties.map(property => {
+				const iconFile = `icon/property/icon${propertyMap[property.property_type]}.png`;
+				return {
+					name: tr(`property_${propertyMap[property.property_type]}`),
+					value: property.final,
+					icon: iconFile
+				};
+			});
 		}
 
 		// 屬性渲染前：
@@ -1324,7 +1328,7 @@ async function drawCharacterImage(
 				const subAffixIconResults = await Promise.all(
 					(relic.sub_affix || relic.properties || []).map(subAff =>
 						loadImageAsync(
-							`./src/assets/image/${subAff.icon || `icon/property/icon${propertyMap[subAff.property_type]}.png`}`
+							`./src/assets/image/${subAff.icon?.replace("Icon", "icon") || `icon/property/icon${propertyMap[subAff.property_type]}.png`}`
 						)
 					)
 				);
@@ -1334,7 +1338,7 @@ async function drawCharacterImage(
 
 				// 處理主屬性圖標
 				const mainAffixIconResult = await loadImageAsync(
-					`./src/assets/image/${relic.main_affix?.icon || `icon/property/icon${propertyMap[relic.main_property?.property_type]}.png`}`
+					`./src/assets/image/${relic.main_affix?.icon?.replace("Icon", "icon").replace("Base", "") || `icon/property/icon${propertyMap[relic.main_property?.property_type]}.png`}`
 				);
 
 				const rarityIconResult = await loadImageAsync(
@@ -1544,7 +1548,9 @@ async function drawCharacterImage(
 					);
 
 					// 疊層顯示優化
-					const count = subAffix.count ?? subAffix.times - 1;
+					const count = Number(
+						subAffix.count - 1 || subAffix.times - 1 || 0
+					);
 					if (count >= 1) {
 						ctx.font =
 							"16px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";

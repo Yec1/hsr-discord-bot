@@ -88,6 +88,7 @@ const langs = {
 	account_LoginFailed: "登入失败",
 	account_LoginFailedDesc: "请确认帐号密码是否正确",
 	account_LoginSuccess: "帐号登入成功，并且已设定 Cookie",
+	account_LoginSuccessDesc: "已更新帐号 <z> 的 Cookie",
 	account_Linked: "已绑定",
 	account_NotLinked: "未绑定",
 	account_ListOfAccount: "<Username> 已设定的帐号",

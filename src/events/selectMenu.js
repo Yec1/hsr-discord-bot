@@ -62,7 +62,15 @@ client.on(Events.InteractionCreate, async interaction => {
 	const userLocale = await getUserLang(interaction.user.id);
 	const tr = i18nMixin(userLocale || toI18nLang(locale) || "en");
 
-	if (!customId.startsWith("account"))
+	if (
+		!customId.startsWith("account") &&
+		!customId.startsWith("leaderboard") &&
+		!customId.startsWith("profile_SelectCharacter") &&
+		!customId.startsWith("profile_Filter") &&
+		!customId.startsWith("news") &&
+		!customId.startsWith("guide") &&
+		customId !== "forgottenHall_Floor"
+	)
 		await interaction.update({ fetchReply: true }).catch(() => {});
 	if (customId.startsWith("guide")) handleGuide(interaction, tr, values[0]);
 	if (customId.startsWith("news")) handleNews(interaction, tr, values[0]);
@@ -161,6 +169,19 @@ async function handleProfileFilter(
 	accountIndex,
 	selected
 ) {
+	await interaction.update({
+		embeds: [
+			new EmbedBuilder()
+				.setTitle(tr("Searching"))
+				.setColor(getRandomColor())
+				.setThumbnail(
+					"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
+				)
+		],
+		components: [],
+		fetchReply: true
+	});
+
 	try {
 		const requestStartTime = Date.now();
 		// 取得原始角色資料
@@ -432,6 +453,19 @@ async function handleProfileFilter(
 }
 
 async function handleNews(interaction, tr, value) {
+	await interaction.update({
+		embeds: [
+			new EmbedBuilder()
+				.setTitle(tr("Searching"))
+				.setColor(getRandomColor())
+				.setThumbnail(
+					"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
+				)
+		],
+		components: [],
+		fetchReply: true
+	});
+
 	if (interaction.customId == "news_type") {
 		const type = value;
 		const newsData = await getNewsList(
@@ -543,7 +577,7 @@ async function handleNews(interaction, tr, value) {
 }
 
 async function handleGuide(interaction, tr, value) {
-	interaction.editReply({
+	await interaction.update({
 		embeds: [
 			new EmbedBuilder()
 				.setTitle(tr("Searching"))
@@ -608,7 +642,7 @@ async function handleGuide(interaction, tr, value) {
 }
 
 async function handleLeaderboard(interaction, tr, value) {
-	interaction.editReply({
+	await interaction.update({
 		embeds: [
 			new EmbedBuilder()
 				.setTitle(tr("Searching"))
@@ -937,25 +971,25 @@ async function handleAccountAction(interaction, tr, customId, value) {
 }
 
 async function handleForgottenHall(interaction, tr, value) {
+	await interaction.update({
+		embeds: [
+			new EmbedBuilder()
+				.setTitle(tr("Searching"))
+				.setColor(getRandomColor())
+				.setThumbnail(
+					"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
+				)
+		],
+		components: [],
+		fetchReply: true
+	});
+
 	const drawTask = async () => {
 		try {
 			const [userId, mode, time, i] = value.split("-");
 
 			const hsr = await getUserHSRData(interaction, tr, userId);
 			if (!hsr) return;
-
-			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle(tr("Searching"))
-						.setColor(getRandomColor())
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
-						)
-				],
-				components: [],
-				fetchReply: true
-			});
 
 			const requestStartTime = Date.now();
 			const res = await hsr.record.forgottenHall(
@@ -1101,21 +1135,21 @@ async function handleForgottenHall(interaction, tr, value) {
 }
 
 async function handleSelectCharacter(interaction, tr, value) {
+	await interaction.update({
+		embeds: [
+			new EmbedBuilder()
+				.setTitle(tr("Searching"))
+				.setColor(getRandomColor())
+				.setThumbnail(
+					"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
+				)
+		],
+		components: [],
+		fetchReply: true
+	});
+
 	const drawTask = async () => {
 		try {
-			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle(tr("Searching"))
-						.setColor(getRandomColor())
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
-						)
-				],
-				components: [],
-				fetchReply: true
-			});
-
 			const requestStartTime = Date.now();
 			let [uid, userId, accountIndex, allCharacters, characterId] =
 				value.split("-");
