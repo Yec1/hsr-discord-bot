@@ -17,11 +17,11 @@ GlobalFonts.registerFromPath(
 	"URW DIN Arabic"
 );
 GlobalFonts.registerFromPath(
-	join(".", "src", ".", "assets", "zh-tw.ttf"),
+	join(".", "src", ".", "assets", "RPG_CN.ttf"),
 	"Hanyi"
 );
 GlobalFonts.registerFromPath(
-	join(".", "src", ".", "assets", "zh-tw.ttf"),
+	join(".", "src", ".", "assets", "RPG_CN.ttf"),
 	"PingFang"
 );
 
@@ -196,7 +196,7 @@ async function handleForgottenHallDraw(interaction, tr, user, mode, time, hsr) {
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 				],
-				fetchReply: true
+				withResponse: true
 			});
 		}
 	};
@@ -280,7 +280,7 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 				: mode == 2
 					? "rgb(14, 21, 39,.4)"
 					: "rgba(58,8,18,.4)";
-		const borderColor = "hsla(0,0%,100%,.4)";
+		const borderColor = "rgba(255,255,255,.4)";
 		const borderWidth = 1;
 
 		ctx.font = "bold 38px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
@@ -493,7 +493,7 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 		);
 
 		ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "hsla(0,0%,100%,.7)";
+		ctx.fillStyle = "rgba(255,255,255,.7)";
 		ctx.textAlign = "left";
 
 		if (mode == 2) {
@@ -518,7 +518,7 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 				forgottenHallUseRoundY + 1.5
 			);
 
-			ctx.fillStyle = "hsla(0,0%,100%,.7)";
+			ctx.fillStyle = "rgba(255,255,255,.7)";
 			ctx.fillText(
 				`${tr("TotalScore")}`,
 				forgottenHallUseRoundX +
@@ -541,7 +541,7 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 				forgottenHallUseRoundY + 1.5
 			);
 		} else if (mode == 3) {
-			ctx.fillStyle = "hsla(0,0%,100%,.7)";
+			ctx.fillStyle = "rgba(255,255,255,.7)";
 			ctx.fillText(`${tr("TotalScore")}`, 200, 515 + 65);
 
 			ctx.fillStyle = "rgb(249, 200, 126)";
@@ -596,7 +596,7 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 
 			if (mode == 2 || mode == 3) {
 				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
-				ctx.fillStyle = "hsla(0,0%,100%,.7)";
+				ctx.fillStyle = "rgba(255,255,255,.7)";
 				ctx.textAlign = "left";
 				ctx.fillText(
 					`${tr("Score")}`,
@@ -626,7 +626,7 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 			} else {
 				const time = node.challenge_time;
 				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
-				ctx.fillStyle = "hsla(0,0%,100%,.7)";
+				ctx.fillStyle = "rgba(255,255,255,.7)";
 				ctx.textAlign = "left";
 				ctx.fillText(
 					`${time.year}/${time.month}/${time.day} ${time.hour}:${time.minute}`,
@@ -665,7 +665,7 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 					avatarHeight
 				);
 
-				ctx.fillStyle = "hsla(0,0%,0%,.9)";
+				ctx.fillStyle = "rgba(0,0,0,.7)";
 				ctx.fillRect(
 					avatarX,
 					avatarY + avatarHeight - 3 - 31,
@@ -769,7 +769,7 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 		const endTime = res?.end_time ?? res.groups[0].end_time;
 		const schedule_id = res?.schedule_id ?? res.groups[0].schedule_id;
 		ctx.font = "bold 26px 'PingFang', URW DIN Arabic, Arial, sans-serif' ";
-		ctx.fillStyle = "hsla(0,0%,50%,.7)";
+		ctx.fillStyle = "rgba(128,128,128,.7)";
 		ctx.textAlign = "left";
 		ctx.fillText(
 			`#${schedule_id} ${tr("forgottenHall_TimeFooter")}: ${

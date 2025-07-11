@@ -148,7 +148,7 @@ GlobalFonts.registerFromPath(
 	"URW DIN Arabic"
 );
 GlobalFonts.registerFromPath(
-	join(".", "src", ".", "assets", "YaHei.ttf"),
+	join(".", "src", ".", "assets", "RPG_CN.ttf"),
 	"YaHei"
 );
 GlobalFonts.registerFromPath(
@@ -185,19 +185,48 @@ async function renderAttributesList(ctx, attributes, startX, startY, spacing) {
 		}
 
 		// 繪製屬性名稱
-		ctx.font = "bold 24px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		setupFont(ctx, 24, true);
 		ctx.textAlign = "left";
-		ctx.fillText(attribute.name, startX + 55, y + 33);
+		ctx.fillStyle = "white";
+		ctx.fillText(attribute.name, startX + 55, y + 34);
 
-		// 繪製屬性數值
-		ctx.font = "bold 24px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		// base/add 顯示
+		if (
+			attribute.base !== undefined &&
+			attribute.add !== undefined &&
+			attribute.add !== 0 &&
+			attribute.add !== "0.0%"
+		) {
+			setupFont(ctx, 16, true);
+			ctx.textAlign = "right";
+			ctx.fillText(`${attribute.base}`, startX + 350, y + 22);
+			ctx.fillStyle = "#B0CFFF"; // 藍色
+			ctx.fillText(
+				`${attribute.add > 0 ? "+" : ""}${attribute.add}`,
+				startX + 350,
+				y + 42
+			);
+		}
+
+		// final 顯示在右側
+		setupFont(ctx, 24, true);
 		ctx.textAlign = "right";
+		ctx.fillStyle = "white";
 		ctx.fillText(
 			`${attribute.display || attribute.value || attribute.final}`,
 			startX + 450,
 			y + 33
 		);
 	}
+}
+
+function setupFont(
+	ctx,
+	size,
+	isBold = false,
+	fontFamily = "'YaHei', 'URW DIN Arabic', Arial, sans-serif'"
+) {
+	ctx.font = `${isBold ? "bold " : ""}${size}px ${fontFamily}`;
 }
 
 // 繪製分隔線的輔助函數
@@ -282,7 +311,7 @@ async function handleProfileDraw(
 							"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
 						)
 				],
-				fetchReply: true
+				withResponse: true
 			});
 
 			const requestStartTime = Date.now();
@@ -312,7 +341,7 @@ async function handleProfileDraw(
 									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 								)
 						],
-						fetchReply: true
+						withResponse: true
 					});
 				}
 
@@ -373,7 +402,7 @@ async function handleProfileDraw(
 									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 								)
 						],
-						fetchReply: true
+						withResponse: true
 					});
 				}
 
@@ -391,7 +420,7 @@ async function handleProfileDraw(
 									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 								)
 						],
-						fetchReply: true
+						withResponse: true
 					});
 				}
 
@@ -582,7 +611,7 @@ async function handleProfileDraw(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 				],
-				fetchReply: true
+				withResponse: true
 			});
 		}
 	};
@@ -873,9 +902,12 @@ async function drawCharacterImage(
 		);
 
 		// 单独处理角色图片，支持备选方案
-		const characterImageUrl = character?.portrait
-			? image_Header + character.portrait
-			: `${image_Header}/image/character_portrait/${character.id}.png`;
+		const isSkinImage = character?.image?.includes("skin");
+		const characterImageUrl = isSkinImage
+			? character?.image
+			: character?.portrait
+				? image_Header + character.portrait
+				: `${image_Header}/image/character_portrait/${character.id}.png`;
 		const characterFallbackUrl = character?.image || null;
 
 		const characterImageResult = await loadImageAsync(
@@ -896,18 +928,18 @@ async function drawCharacterImage(
 					characterImageResult.image.width / 1.5,
 					characterImageResult.image.height / 1.5
 				);
+			} else if (isSkinImage) {
+				ctx.drawImage(
+					characterImageResult.image,
+					600,
+					-50,
+					characterImageResult.image.width / 1.5,
+					characterImageResult.image.height / 1.5
+				);
 			} else {
 				ctx.drawImage(characterImageResult.image, 475, 0, 768, 768);
 			}
 		}
-
-		const setupFont = (
-			size,
-			isBold = false,
-			fontFamily = "'YaHei', 'URW DIN Arabic', Arial, sans-serif'"
-		) => {
-			ctx.font = `${isBold ? "bold " : ""}${size}px ${fontFamily}`;
-		};
 
 		const maxWidth = 200;
 		let minFontSize = 30;
@@ -919,7 +951,7 @@ async function drawCharacterImage(
 
 		while (maxFontSize - minFontSize > 1) {
 			fontSize = Math.floor((minFontSize + maxFontSize) / 2);
-			setupFont(fontSize, true);
+			setupFont(ctx, fontSize, true);
 			const textWidth = ctx.measureText(character.name).width;
 
 			if (textWidth > maxWidth) {
@@ -929,7 +961,7 @@ async function drawCharacterImage(
 			}
 		}
 
-		setupFont(minFontSize, true);
+		setupFont(ctx, minFontSize, true);
 		ctx.fillText(character.name, 120, 100);
 		if (element) {
 			ctx.drawImage(element, 50, 50, 64, 64);
@@ -938,7 +970,7 @@ async function drawCharacterImage(
 			ctx.drawImage(path, 50, 120, 64, 64);
 		}
 
-		setupFont(28, true);
+		setupFont(ctx, 28, true);
 		ctx.fillText(
 			character.path?.name || tr(`path_${pathMap[character.base_type]}`),
 			130,
@@ -951,7 +983,7 @@ async function drawCharacterImage(
 
 		ctx.textAlign = "center";
 
-		setupFont(26, true);
+		setupFont(ctx, 26, true);
 		ctx.fillStyle = "#DCC491";
 		ctx.fillText(
 			`${tr("Eidolon", {
@@ -962,7 +994,7 @@ async function drawCharacterImage(
 		);
 		ctx.fillStyle = "white";
 
-		setupFont(28, true);
+		setupFont(ctx, 28, true);
 		ctx.fillText(
 			`${tr("level")} ${character.level}`,
 			210 +
@@ -984,6 +1016,14 @@ async function drawCharacterImage(
 			];
 
 			// 處理屬性數據，合併相同字段並格式化顯示值
+			const percentFields = [
+				"crit_rate",
+				"crit_dmg",
+				"heal_ratio",
+				"status_prob",
+				"status_res",
+				"energy_recovery"
+			];
 			const attributesWithAdditions = allAttributes
 				.filter(attribute => attribute.field)
 				.reduce((acc, attribute) => {
@@ -995,11 +1035,18 @@ async function drawCharacterImage(
 						acc[field] = { ...attribute };
 					}
 
-					// 格式化顯示值：小於1且非速度屬性顯示百分比，其他顯示整數
-					const isPercentage = attribute.value < 1 && field !== "spd";
-					acc[field].display = isPercentage
-						? `${(acc[field].value * 100).toFixed(1)}%`
-						: `${Math.floor(acc[field].value)}`;
+					// 修正百分比屬性顯示
+					const isPercentField = percentFields.includes(field);
+					if (isPercentField) {
+						acc[field].display =
+							`${(acc[field].value * 100).toFixed(1)}%`;
+					} else {
+						const isPercentage =
+							attribute.value < 1 && field !== "spd";
+						acc[field].display = isPercentage
+							? `${(acc[field].value * 100).toFixed(1)}%`
+							: `${Math.floor(acc[field].value)}`;
+					}
 
 					return acc;
 				}, {});
@@ -1010,7 +1057,9 @@ async function drawCharacterImage(
 				const iconFile = `icon/property/icon${propertyMap[property.property_type]}.png`;
 				return {
 					name: tr(`property_${propertyMap[property.property_type]}`),
-					value: property.final,
+					base: property.base,
+					add: property.add,
+					final: property.final,
 					icon: iconFile
 				};
 			});
@@ -1036,8 +1085,8 @@ async function drawCharacterImage(
 		drawSeparatorLine(ctx, 50, 500, attrBottomY);
 
 		// relics 區塊對齊
-		const relics_left_x = 1170;
-		const relics_right_x = 1170 + 335 * 2 + 20; // 1860
+		const relics_left_x = 1210;
+		const relics_right_x = 1210 + 335 * 2 + 20; // 1860
 		const relics_width = relics_right_x - relics_left_x; // 690
 		const relics_top_y = 60;
 		const relics_height = 220;
@@ -1117,14 +1166,14 @@ async function drawCharacterImage(
 
 			// 文字靠右區域內左側
 			ctx.textAlign = "left";
-			setupFont(28, true);
+			setupFont(ctx, 28, true);
 			ctx.fillText(
 				`${character.light_cone?.name || character.equip?.name}`,
 				light_cone_base_x + 30,
 				light_cone_base_y + 200
 			);
 
-			setupFont(24, true);
+			setupFont(ctx, 24, true);
 
 			ctx.fillStyle = "white";
 			ctx.fillText(
@@ -1161,13 +1210,11 @@ async function drawCharacterImage(
 				const params = currentLightConeEffect.params[rank - 1];
 
 				if (params) {
-					// 創建帶有特殊標記的文本，用於後續顏色處理
 					let fixedEffectDesc = currentLightConeEffect.desc
 						.replace(/#(\d+)\[i\]/g, (match, p1) => {
 							const paramIndex = parseInt(p1) - 1;
 							const param = params[paramIndex];
 							if (param !== undefined) {
-								// [i] 格式：如果参数小于1，显示为百分比；否则显示为整数
 								if (param < 1) {
 									const percentage = (param * 100).toFixed(1);
 									const displayValue = percentage.endsWith(
@@ -1186,12 +1233,9 @@ async function drawCharacterImage(
 							const paramIndex = parseInt(p1) - 1;
 							const param = params[paramIndex];
 							if (param !== undefined) {
-								// [f1] 格式：总是显示为百分比，但需要检查参数是否已经是百分比格式
 								if (param >= 1) {
-									// 如果参数大于等于1，说明已经是百分比格式，直接显示
 									return `[GOLD]${param}%[/GOLD]`;
 								} else {
-									// 如果参数小于1，转换为百分比
 									const percentage = (param * 100).toFixed(1);
 									const displayValue = percentage.endsWith(
 										".0"
@@ -1203,13 +1247,12 @@ async function drawCharacterImage(
 							}
 							return match;
 						});
-					// 修正 %% 問題
 					fixedEffectDesc = fixedEffectDesc.replace(
 						/\[\/GOLD\]%/g,
 						"[/GOLD]"
 					);
 
-					setupFont(22, true);
+					setupFont(ctx, 22, true);
 					const maxWidth = light_cone_width - 285;
 					const lineHeight = 28;
 					const segments = parseSegments(fixedEffectDesc);
@@ -1233,9 +1276,18 @@ async function drawCharacterImage(
 		}
 		ctx.fillStyle = "white";
 
+		const hasServantSkills =
+			character.servant_detail?.servant_skills?.length > 0;
+		const servantSkillsCount = hasServantSkills
+			? character.servant_detail.servant_skills.length
+			: 0;
+		const baseSkillX = hasServantSkills
+			? 650 - servantSkillsCount * 45
+			: 650;
+
 		const skillPromises = character.skills
 			.map((skill, i) => {
-				if (i != 4 && i <= 5) {
+				if (skill.point_type == 2) {
 					return loadImageAsync(
 						skill.item_url || image_Header + skill.icon
 					).then(skillImageResult => ({
@@ -1252,41 +1304,101 @@ async function drawCharacterImage(
 
 		skills.forEach((skill, index) => {
 			if (skill.skillImage) {
-				ctx.drawImage(skill.skillImage, 630 + index * 90, 760, 80, 80);
+				ctx.drawImage(
+					skill.skillImage,
+					baseSkillX + index * 90,
+					760,
+					80,
+					80
+				);
 			}
 			ctx.textAlign = "center";
-			setupFont(18, true);
-			ctx.fillText(`${skill.type_text}`, 670 + index * 90, 870);
-			setupFont(16, true);
-			// 技能等級顏色判斷
+			setupFont(ctx, 18, true);
+			ctx.fillText(
+				`${skill.type_text}`,
+				baseSkillX + 40 + index * 90,
+				870
+			);
+			setupFont(ctx, 16, true);
 			let skillColor = "white";
-			if (character.rank >= 3 && (index === 0 || index === 2)) {
+			if (character.rank >= 3 && (index === 0 || index === 2))
 				skillColor = "#DCC491";
-			}
-			if (character.rank >= 5 && (index === 1 || index === 3)) {
+			if (character.rank >= 5 && (index === 1 || index === 3))
 				skillColor = "#DCC491";
-			}
 			ctx.fillStyle = skillColor;
 			ctx.fillText(
 				`${tr("level")} ${skill.level}`,
-				670 + index * 90,
+				baseSkillX + 40 + index * 90,
 				890
 			);
 			ctx.fillStyle = "white";
 		});
 
+		if (hasServantSkills) {
+			const servantSkillPromises =
+				character.servant_detail.servant_skills.map(servantSkill => {
+					return loadImageAsync(
+						servantSkill.item_url ||
+							image_Header + servantSkill.icon
+					).then(skillImageResult => ({
+						skillImage: skillImageResult?.image,
+						type_text: servantSkill.remake,
+						level: servantSkill.level
+					}));
+				});
+
+			const servantSkills = await Promise.all(servantSkillPromises);
+
+			servantSkills.forEach((servantSkill, index) => {
+				const servantSkillX =
+					650 + (skills.length - 1) * 90 + index * 90;
+
+				if (servantSkill.skillImage) {
+					ctx.drawImage(
+						servantSkill.skillImage,
+						servantSkillX,
+						760,
+						80,
+						80
+					);
+				}
+				ctx.textAlign = "center";
+				setupFont(ctx, 18, true);
+				ctx.fillText(
+					`${servantSkill.type_text}`,
+					servantSkillX + 40,
+					870
+				);
+				setupFont(ctx, 16, true);
+				let skillColor = "white";
+				if (character.rank >= 3 && index === 1) skillColor = "#DCC491";
+				if (character.rank >= 5 && index === 0) skillColor = "#DCC491";
+				ctx.fillStyle = skillColor;
+				ctx.fillText(
+					`${tr("level")} ${servantSkill.level}`,
+					servantSkillX + 40,
+					890
+				);
+				ctx.fillStyle = "white";
+			});
+		}
+
 		ctx.strokeStyle = "#fff";
 		ctx.beginPath();
-		ctx.moveTo(650, 920);
-		ctx.lineTo(1030, 920);
+		ctx.moveTo(hasServantSkills ? 680 : 670, 920);
+		ctx.lineTo(hasServantSkills ? 1070 : 1050, 920);
 		ctx.stroke();
 
-		setupFont(32, true);
-		ctx.fillText(playerData.player.nickname, 840, 970);
+		setupFont(ctx, 32, true);
+		ctx.fillText(
+			playerData.player.nickname,
+			hasServantSkills ? 870 : 850,
+			970
+		);
 
-		setupFont(26);
+		setupFont(ctx, 26);
 		ctx.fillStyle = "lightgray";
-		ctx.fillText(playerData.player.uid, 840, 1010);
+		ctx.fillText(playerData.player.uid, hasServantSkills ? 870 : 850, 1010);
 
 		const relicsScore = await getRelicsScore(character);
 
@@ -1314,7 +1426,7 @@ async function drawCharacterImage(
 			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
 			ctx.fillText(
 				relicsScore.totalGrade.grade,
-				startX + scoreWidth - 130,
+				startX + scoreWidth - 140,
 				attrBottomY + 50
 			);
 		} else {
@@ -1371,7 +1483,7 @@ async function drawCharacterImage(
 
 			let row = Math.floor(i / 2);
 			let column = i % 2;
-			let x = 1170 + column * (width + padding);
+			let x = 1210 + column * (width + padding);
 			let y = 60 + row * (height + padding);
 
 			ctx.save();
@@ -1396,7 +1508,7 @@ async function drawCharacterImage(
 				ctx.drawImage(icons.rarity, x + 15, y + 115, 83.78, 16.75);
 			}
 
-			setupFont(20, true);
+			setupFont(ctx, 20, true);
 			ctx.fillStyle = "white";
 			ctx.textAlign = "center";
 			ctx.fillText(`+${relic.level}`, x + 55, y + 150);
@@ -1413,7 +1525,6 @@ async function drawCharacterImage(
 						: "#B6BBC4";
 			ctx.textAlign = "left";
 
-			let lineHeight = 24;
 			let text =
 				relic.main_affix?.name ||
 				tr(
@@ -1421,79 +1532,35 @@ async function drawCharacterImage(
 				);
 			if (typeof text !== "string") text = "";
 
-			let lines, words;
-			let hasLineBreak = false;
-			if (containsChinese(text)) {
-				let maxCharsPerLine = 5;
-				lines = Math.ceil(text.length / maxCharsPerLine);
-				words = Array.from(text);
-				for (let j = 0; j < lines; j++) {
-					let lineText = words
-						.slice(j * maxCharsPerLine, (j + 1) * maxCharsPerLine)
-						.join("");
-					ctx.fillText(lineText, x + 140, y + 41 + j * lineHeight);
-					if (j > 0) hasLineBreak = true;
+			// 動態調整字體大小以適應寬度
+			const relicTextMaxWidth = 115; // 可用寬度
+			let fontSize = 22;
+			let minFontSize = 12;
+
+			// 找到合適的字體大小
+			while (fontSize > minFontSize) {
+				setupFont(ctx, fontSize, true);
+				const textWidth = ctx.measureText(text).width;
+				if (textWidth <= relicTextMaxWidth) {
+					break;
 				}
-			} else {
-				words = text.split(" ");
-				let lineText = "";
-				let lineCount = 0;
-				let wordCount = 0;
-				for (let i = 0; i < words.length; i++) {
-					if (words[i].length > 8) {
-						if (lineText) {
-							ctx.fillText(
-								lineText,
-								x + 140,
-								y + 41 + lineCount * lineHeight
-							);
-							lineCount++;
-						}
-						ctx.fillText(
-							words[i],
-							x + 140,
-							y + 41 + lineCount * lineHeight
-						);
-						lineCount++;
-						lineText = "";
-						wordCount = 0;
-					} else if (
-						wordCount < 2 &&
-						lineText.length + words[i].length <= 8
-					) {
-						lineText += (wordCount > 0 ? " " : "") + words[i];
-						wordCount++;
-					} else {
-						ctx.fillText(
-							lineText,
-							x + 140,
-							y + 41 + lineCount * lineHeight
-						);
-						lineCount++;
-						lineText = words[i];
-						wordCount = 1;
-					}
-					if (lineCount > 0) hasLineBreak = true;
-				}
-				if (lineText)
-					ctx.fillText(
-						lineText,
-						x + 140,
-						y + 41 + lineCount * lineHeight
-					);
+				fontSize--;
 			}
 
+			// 使用最終確定的字體大小繪製文字
+			setupFont(ctx, fontSize, true);
+			ctx.fillText(text, x + 140, y + 43);
+
 			ctx.textAlign = "right";
-			setupFont(20, true);
+			setupFont(ctx, 20, true);
 			ctx.fillText(
 				`${relic.main_affix?.display || relic.main_affix?.value || relic.main_property?.value}`,
 				x + 320,
 				y + 43
 			);
 
-			let affixYStart = hasLineBreak ? 75 : 53;
+			let affixYStart = 58;
 			const maxWidth = 100;
-			const initialFontSize = 18;
 
 			(relic.sub_affix || relic.properties || []).forEach(
 				(subAffix, subIndex) => {
@@ -1501,14 +1568,14 @@ async function drawCharacterImage(
 						ctx.drawImage(
 							icons.subAffixes[subIndex],
 							x + 103,
-							y + affixYStart + subIndex * 32,
+							y + affixYStart + subIndex * 34,
 							32,
 							32
 						);
 					}
 
-					let fontSize = initialFontSize;
-					setupFont(fontSize, true);
+					let fontSize = 18;
+					setupFont(ctx, fontSize, true);
 
 					const weight = subAffix.weight || 0;
 					const color =
@@ -1529,22 +1596,22 @@ async function drawCharacterImage(
 
 					while (textWidth > maxWidth && fontSize > 16) {
 						fontSize -= 1;
-						setupFont(fontSize, true);
+						setupFont(ctx, fontSize, true);
 						textWidth = ctx.measureText(text).width;
 					}
 
 					ctx.fillText(
 						text,
 						x + 137,
-						y + affixYStart + 23 + subIndex * 32
+						y + affixYStart + 23 + subIndex * 34
 					);
 
 					ctx.textAlign = "right";
-					setupFont(20, true);
+					setupFont(ctx, 18, true);
 					ctx.fillText(
 						`${subAffix.display || subAffix.value}`,
 						x + 320,
-						y + affixYStart + 25 + subIndex * 32
+						y + affixYStart + 25 + subIndex * 34
 					);
 
 					// 疊層顯示優化
@@ -1558,14 +1625,14 @@ async function drawCharacterImage(
 						ctx.fillText(
 							`+${count}`,
 							x + 230,
-							y + affixYStart + 23 + subIndex * 32
+							y + affixYStart + 23 + subIndex * 34
 						);
 					}
 				}
 			);
 
 			if (score) {
-				setupFont(22, true);
+				setupFont(ctx, 22, true);
 				ctx.fillStyle = `${score.grade.color}`;
 				ctx.textAlign = "center";
 				ctx.fillText(

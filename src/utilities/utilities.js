@@ -267,7 +267,7 @@ export async function drawInQueueReply(interaction, title = "") {
 					"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
 				)
 		],
-		fetchReply: true
+		withResponse: true
 	});
 }
 
@@ -302,7 +302,7 @@ export async function failedReply(interaction, title = "", description = "") {
 	replyOrfollowUp(interaction, {
 		embeds: [embed],
 		ephemeral: true,
-		fetchReply: true
+		withResponse: true
 	});
 }
 

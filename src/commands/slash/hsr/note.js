@@ -79,7 +79,7 @@ export default {
 						)
 				],
 				components: [],
-				fetchReply: true
+				withResponse: true
 			});
 
 			handleNoteDraw(interaction, tr, hsr);

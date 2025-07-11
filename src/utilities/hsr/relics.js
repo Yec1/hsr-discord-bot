@@ -52,7 +52,7 @@ async function getRelicsScore(character, scoreType = "SRS-N") {
 		const subScore = calculateSubScore(relic, charScore);
 
 		// SRS-N: 主词条和副词条各占 50% 的分数
-		let relicScoreN = mainScore * 0.5 + subScore * 0.5;
+		let relicScoreN = mainScore * 0.4 + subScore * 0.6;
 
 		// SRS-M: 将 SRS-N 的结果开平方根
 		if (scoreType === "SRS-M") {
@@ -117,7 +117,7 @@ function calculateSubScore(relic, weights) {
 	// SRS 标准：副词条归一化得分计算
 	// 原始得分 = Σ(基础值次数 + 提升值次数 * 0.1) * 权重
 	let rawScore = subAffixes.reduce((subScore, sub) => {
-		const count = Number(sub.count - 1 || sub.times - 1 || 0);
+		const count = Number(sub.count || sub.times || 0);
 		const step = Number(sub.step || 0);
 
 		const subType = sub.type || sub.property_type;
@@ -154,13 +154,13 @@ function calculateSubScore(relic, weights) {
 
 const grades = {
 	D: { threshold: 0, color: "#9DB2BF" },
-	C: { threshold: 30, color: "#9DB2BF" },
-	B: { threshold: 45, color: "#78C1F3" },
-	A: { threshold: 55, color: "#525FE1" },
-	S: { threshold: 65, color: "#F29727" },
-	SS: { threshold: 75, color: "#F29727" },
-	SSS: { threshold: 80, color: "#F24C3D" },
-	ACE: { threshold: 85, color: "#F24C3D" }
+	C: { threshold: 40, color: "#9DB2BF" },
+	B: { threshold: 50, color: "#78C1F3" },
+	A: { threshold: 60, color: "#525FE1" },
+	S: { threshold: 70, color: "#F29727" },
+	SS: { threshold: 80, color: "#F29727" },
+	SSS: { threshold: 85, color: "#F24C3D" },
+	ACE: { threshold: 90, color: "#F24C3D" }
 };
 const sortedGrades = Object.keys(grades).sort(
 	(a, b) => grades[a].threshold - grades[b].threshold

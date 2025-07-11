@@ -13,11 +13,11 @@ GlobalFonts.registerFromPath(
 	"URW DIN Arabic"
 );
 GlobalFonts.registerFromPath(
-	join(".", "src", ".", "assets", "zh-tw.ttf"),
+	join(".", "src", ".", "assets", "RPG_CN.ttf"),
 	"Hanyi"
 );
 GlobalFonts.registerFromPath(
-	join(".", "src", ".", "assets", "zh-tw.ttf"),
+	join(".", "src", ".", "assets", "RPG_CN.ttf"),
 	"PingFang"
 );
 
@@ -82,7 +82,7 @@ async function handleNoteDraw(interaction, tr, hsr) {
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 				],
-				fetchReply: true
+				withResponse: true
 			});
 		}
 	};

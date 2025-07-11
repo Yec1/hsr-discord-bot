@@ -72,15 +72,15 @@ export default {
 	async execute(client, interaction, args, tr) {
 		const user = interaction.options.getUser("user") || interaction.user;
 		const accountIndex = interaction.options.getString("account") || 0;
-		const uid =
-			interaction.options.getInteger("uid") ??
-			(await getUserUid(user.id, accountIndex));
+		const isSearchUid = interaction.options.getInteger("uid") ?? false;
+		const uid = isSearchUid || (await getUserUid(user.id, accountIndex));
 
-		const allCharacters =
-			interaction.options.getBoolean("allcharacters") ??
-			(uid && (await getUserCookie(user.id, accountIndex))
-				? true
-				: false);
+		const allCharacters = isSearchUid
+			? false
+			: (interaction.options.getBoolean("allcharacters") ??
+				(uid && (await getUserCookie(user.id, accountIndex))
+					? true
+					: false));
 
 		if (!uid && user.id == interaction.user.id)
 			return failedReply(

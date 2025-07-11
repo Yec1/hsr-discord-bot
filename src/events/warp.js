@@ -157,7 +157,7 @@ client.on(Events.InteractionCreate, async interaction => {
 							"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
 						)
 				],
-				fetchReply: true
+				withResponse: true
 			});
 			const warpResults = await warpLog(url, interaction, tr);
 
@@ -247,7 +247,7 @@ client.on(Events.InteractionCreate, async interaction => {
 										"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 									)
 							],
-							fetchReply: true
+							withResponse: true
 						});
 					}
 				};
@@ -292,7 +292,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			collector.on("collect", async interaction => {
 				const type = interaction.values[0];
 				await interaction
-					.deferUpdate({ fetchReply: true })
+					.deferUpdate({ withResponse: true })
 					.catch(() => {});
 				interaction.editReply({
 					embeds: [

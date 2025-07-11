@@ -22,7 +22,7 @@ GlobalFonts.registerFromPath(
 	"URW DIN Arabic"
 );
 GlobalFonts.registerFromPath(
-	join(".", "src", ".", "assets", "zh-tw.ttf"),
+	join(".", "src", ".", "assets", "RPG_CN.ttf"),
 	"Hanyi"
 );
 

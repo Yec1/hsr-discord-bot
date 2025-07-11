@@ -35,7 +35,7 @@ export default {
 						"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
 					)
 			],
-			fetchReply: true
+			withResponse: true
 		});
 
 		const selectMenus = await getSelectMenu(interaction, tr, "guide");

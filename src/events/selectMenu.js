@@ -71,7 +71,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		!customId.startsWith("guide") &&
 		customId !== "forgottenHall_Floor"
 	)
-		await interaction.update({ fetchReply: true }).catch(() => {});
+		await interaction.update({ withResponse: true }).catch(() => {});
 	if (customId.startsWith("guide")) handleGuide(interaction, tr, values[0]);
 	if (customId.startsWith("news")) handleNews(interaction, tr, values[0]);
 	if (customId.startsWith("leaderboard"))
@@ -179,7 +179,7 @@ async function handleProfileFilter(
 				)
 		],
 		components: [],
-		fetchReply: true
+		withResponse: true
 	});
 
 	try {
@@ -197,7 +197,7 @@ async function handleProfileFilter(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 				],
-				fetchReply: true
+				withResponse: true
 			});
 		}
 
@@ -295,7 +295,7 @@ async function handleProfileFilter(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 				],
-				fetchReply: true
+				withResponse: true
 			});
 		}
 
@@ -433,7 +433,7 @@ async function handleProfileFilter(
 				new ActionRowBuilder().addComponents(filterMenu)
 			],
 			files: [image],
-			fetchReply: true
+			withResponse: true
 		});
 	} catch (error) {
 		console.error("handleProfileFilter error:", error);
@@ -447,7 +447,7 @@ async function handleProfileFilter(
 						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 					)
 			],
-			fetchReply: true
+			withResponse: true
 		});
 	}
 }
@@ -463,7 +463,7 @@ async function handleNews(interaction, tr, value) {
 				)
 		],
 		components: [],
-		fetchReply: true
+		withResponse: true
 	});
 
 	if (interaction.customId == "news_type") {
@@ -531,7 +531,7 @@ async function handleNews(interaction, tr, value) {
 						)
 				)
 			],
-			fetchReply: true
+			withResponse: true
 		});
 	} else if (interaction.customId == "news_post") {
 		const postId = value;
@@ -571,7 +571,7 @@ async function handleNews(interaction, tr, value) {
 					})
 					.setImage(image_list[0]?.url ?? cover_list[0]?.url)
 			],
-			fetchReply: true
+			withResponse: true
 		});
 	}
 }
@@ -587,7 +587,7 @@ async function handleGuide(interaction, tr, value) {
 				)
 		],
 		components: [],
-		fetchReply: true
+		withResponse: true
 	});
 
 	const id = value;
@@ -652,7 +652,7 @@ async function handleLeaderboard(interaction, tr, value) {
 				)
 		],
 		components: [],
-		fetchReply: true
+		withResponse: true
 	});
 
 	const id = value;
@@ -736,7 +736,7 @@ async function handleAccountAction(interaction, tr, customId, value) {
 		});
 
 	if (customId == "account_EditAccountSelect") {
-		await interaction.update({ fetchReply: true }).catch(() => {});
+		await interaction.update({ withResponse: true }).catch(() => {});
 		const accountIndex = value;
 		interaction.editReply({
 			components: [
@@ -758,7 +758,7 @@ async function handleAccountAction(interaction, tr, customId, value) {
 						)
 				)
 			],
-			fetchReply: true,
+			withResponse: true,
 			ephemeral: true
 		});
 		return;
@@ -866,7 +866,7 @@ async function handleAccountAction(interaction, tr, customId, value) {
 			);
 		}
 	} else if (interaction.customId == "account_DeleteAccountSelect") {
-		await interaction.update({ fetchReply: true }).catch(() => {});
+		await interaction.update({ withResponse: true }).catch(() => {});
 		const accountIndex = value;
 		const accounts = (await db.get(`${interaction.user.id}.account`)) ?? "";
 		const uid = accounts[accountIndex].uid;
@@ -981,7 +981,7 @@ async function handleForgottenHall(interaction, tr, value) {
 				)
 		],
 		components: [],
-		fetchReply: true
+		withResponse: true
 	});
 
 	const drawTask = async () => {
@@ -1119,7 +1119,7 @@ async function handleForgottenHall(interaction, tr, value) {
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 				],
-				fetchReply: true
+				withResponse: true
 			});
 		}
 	};
@@ -1145,7 +1145,7 @@ async function handleSelectCharacter(interaction, tr, value) {
 				)
 		],
 		components: [],
-		fetchReply: true
+		withResponse: true
 	});
 
 	const drawTask = async () => {
@@ -1181,7 +1181,7 @@ async function handleSelectCharacter(interaction, tr, value) {
 									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 								)
 						],
-						fetchReply: true
+						withResponse: true
 					});
 				}
 
@@ -1209,7 +1209,7 @@ async function handleSelectCharacter(interaction, tr, value) {
 									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 								)
 						],
-						fetchReply: true
+						withResponse: true
 					});
 				}
 
@@ -1246,7 +1246,7 @@ async function handleSelectCharacter(interaction, tr, value) {
 									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 								)
 						],
-						fetchReply: true
+						withResponse: true
 					});
 				}
 
@@ -1264,7 +1264,7 @@ async function handleSelectCharacter(interaction, tr, value) {
 									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 								)
 						],
-						fetchReply: true
+						withResponse: true
 					});
 				}
 
@@ -1290,7 +1290,7 @@ async function handleSelectCharacter(interaction, tr, value) {
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 							)
 					],
-					fetchReply: true
+					withResponse: true
 				});
 			}
 
@@ -1306,7 +1306,7 @@ async function handleSelectCharacter(interaction, tr, value) {
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 							)
 					],
-					fetchReply: true
+					withResponse: true
 				});
 			}
 
@@ -1396,7 +1396,7 @@ async function handleSelectCharacter(interaction, tr, value) {
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
 				],
-				fetchReply: true
+				withResponse: true
 			});
 		}
 	};

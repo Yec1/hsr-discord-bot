@@ -141,7 +141,7 @@ export default {
 						"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
 					)
 			],
-			fetchReply: true
+			withResponse: true
 		});
 
 		handleForgottenHallDraw(interaction, tr, targetUser, mode, time, hsr);

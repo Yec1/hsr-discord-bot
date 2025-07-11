@@ -74,7 +74,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			// 	(await db.get(`${interaction.user.id}.premium`)) != true &&
 			// 	Math.floor(Math.random() * 100) < 10
 			// ) {
-			// 	await interaction.fetchReply().catch(() => {});
+			// 	await interaction.withResponse().catch(() => {});
 			// 	interaction.followUp({
 			// 		embeds: [
 			// 			new EmbedBuilder()
