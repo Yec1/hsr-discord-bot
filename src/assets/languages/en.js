@@ -168,6 +168,8 @@ const langs = {
 	autoDaily_Time: "Auto Check-in Time: <time>",
 	autoDaily_Tag: "Tag on Check-in: <z>",
 
+	warp_TypeCollaborationCharacter: "Collaboration Character Warp",
+	warp_TypeCollaborationLightcone: "Collaboration Light Cone Warp",
 	warp_TypeCharacter: "Limited Character Warp",
 	warp_TypeLightcone: "Limited Light Cone Warp",
 	warp_TypeRegular: "Standard Warp",

@@ -163,6 +163,8 @@ const langs = {
 	autoDaily_Time: "自动签到时间：<time>",
 	autoDaily_Tag: "签到时提及：<z>",
 
+	warp_TypeCollaborationCharacter: "合作角色跃迁",
+	warp_TypeCollaborationLightcone: "合作光锥跃迁",
 	warp_TypeCharacter: "限定角色跃迁",
 	warp_TypeLightcone: "限定光锥跃迁",
 	warp_TypeRegular: "常驻跃迁",

@@ -217,6 +217,25 @@ client.on(Events.InteractionCreate, async interaction => {
 										.addOptions(
 											new StringSelectMenuOptionBuilder()
 												.setLabel(
+													tr(
+														"warp_TypeCollaborationCharacter"
+													)
+												)
+												.setValue(
+													"collaboration_character"
+												),
+
+											new StringSelectMenuOptionBuilder()
+												.setLabel(
+													tr(
+														"warp_TypeCollaborationLightcone"
+													)
+												)
+												.setValue(
+													"collaboration_light_cone"
+												),
+											new StringSelectMenuOptionBuilder()
+												.setLabel(
 													tr("warp_TypeCharacter")
 												)
 												.setValue("character"),
@@ -271,6 +290,16 @@ client.on(Events.InteractionCreate, async interaction => {
 							.setPlaceholder(tr("warp_SelectMenuTitle"))
 							.addOptions(
 								new StringSelectMenuOptionBuilder()
+									.setLabel(
+										tr("warp_TypeCollaborationCharacter")
+									)
+									.setValue("collaboration_character"),
+								new StringSelectMenuOptionBuilder()
+									.setLabel(
+										tr("warp_TypeCollaborationLightcone")
+									)
+									.setValue("collaboration_light_cone"),
+								new StringSelectMenuOptionBuilder()
 									.setLabel(tr("warp_TypeCharacter"))
 									.setValue("character"),
 								new StringSelectMenuOptionBuilder()
@@ -306,6 +335,24 @@ client.on(Events.InteractionCreate, async interaction => {
 					components: []
 				});
 				switch (type) {
+					case "collaboration_character":
+						handleDrawRequest(
+							interaction,
+							tr,
+							warpResults.collaboration_character,
+							tr("warp_TypeCollaborationCharacter"),
+							type
+						);
+						break;
+					case "collaboration_light_cone":
+						handleDrawRequest(
+							interaction,
+							tr,
+							warpResults.collaboration_light_cone,
+							tr("warp_TypeCollaborationLightcone"),
+							type
+						);
+						break;
 					case "character":
 						handleDrawRequest(
 							interaction,

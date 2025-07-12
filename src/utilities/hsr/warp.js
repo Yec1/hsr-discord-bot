@@ -14,7 +14,6 @@ import {
 import { getRandomColor } from "../utilities.js";
 import trans from "../../assets/translations.json" with { type: "json" };
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
-import fs from "fs/promises";
 const db = client.db;
 
 GlobalFonts.registerFromPath(
@@ -52,17 +51,20 @@ async function fetchWarpData(query, id, endId) {
 	query.set("gacha_type", id);
 	query.set("end_id", endId);
 
+	let gachaURLPath = "getGachaLog";
+	if (id === 21 || id === 22) {
+		gachaURLPath = "getLdGachaLog";
+	}
+
+	const url = `https://public-operation-hkrpg-sg.hoyoverse.com/common/gacha_record/api/${gachaURLPath}?${query}`;
+
 	return axios
-		.get(
-			"https://public-operation-hkrpg-sg.hoyoverse.com/common/gacha_record/api/getGachaLog?" +
-				query,
-			{
-				headers: {
-					"User-Agent":
-						"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-				}
+		.get(url, {
+			headers: {
+				"User-Agent":
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 			}
-		)
+		})
 		.then(response => response.data);
 }
 
@@ -70,7 +72,9 @@ async function warpLog(input, interaction, tr) {
 	const type = {
 		character: tr("warp_TypeCharacter"),
 		light_cone: tr("warp_TypeLightcone"),
-		regular: tr("warp_TypeRegular")
+		regular: tr("warp_TypeRegular"),
+		collaboration_character: tr("warp_TypeCollaborationCharacter"),
+		collaboration_light_cone: tr("warp_TypeCollaborationLightcone")
 	};
 
 	const takumiQuery = new URLSearchParams({
@@ -89,7 +93,13 @@ async function warpLog(input, interaction, tr) {
 	const authkey = queryParams.get("authkey");
 	let region = queryParams.get("region");
 	const lastId = queryParams.get("end_id");
-	const gachaTypes = { character: 11, light_cone: 12, regular: 1 };
+	const gachaTypes = {
+		collaboration_character: 21,
+		collaboration_light_cone: 22,
+		character: 11,
+		light_cone: 12,
+		regular: 1
+	};
 
 	if (authkey) {
 		const query = takumiQuery;
@@ -156,7 +166,19 @@ async function warpLog(input, interaction, tr) {
 		const list = {
 			character: { total: 0, average: 0, pity: 0, data: [] },
 			light_cone: { total: 0, average: 0, pity: 0, data: [] },
-			regular: { total: 0, average: 0, pity: 0, data: [] }
+			regular: { total: 0, average: 0, pity: 0, data: [] },
+			collaboration_character: {
+				total: 0,
+				average: 0,
+				pity: 0,
+				data: []
+			},
+			collaboration_light_cone: {
+				total: 0,
+				average: 0,
+				pity: 0,
+				data: []
+			}
 		};
 
 		for (const warp of warps) {
@@ -194,11 +216,9 @@ async function warpLog(input, interaction, tr) {
 		}
 
 		try {
-			// 保存抽卡历史记录
 			await saveWarpHistory(interaction.user.id, list);
 		} catch (error) {
 			console.error("保存抽卡历史记录失败:", error);
-			// 不中断主流程，继续返回结果
 		}
 
 		return list;
@@ -693,9 +713,7 @@ async function warpLogImage(tr, datas, title) {
 		// 預加載所有圖像資源，避免渲染過程中的等待
 		const imagePromises = [
 			// 背景和UI元素
-			loadImageAsync("./src/assets/image/warp/warpbg.jpg").catch(
-				() => null
-			),
+			loadImageAsync("./src/assets/image/warp/bg.jpg").catch(() => null),
 			loadImageAsync(image_Header + "icon/sign/DrawcardIcon.png"),
 			loadImageAsync(image_Header + "icon/deco/StarBig.png"),
 			loadImageAsync(image_Header + "icon/item/102.png"),
