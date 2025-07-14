@@ -47,11 +47,14 @@ async function loginAccount(account, password) {
 			body: JSON.stringify(payload)
 		});
 
+		console.log(response);
+
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 
 		const responseData = await response.json();
+		console.log(responseData);
 		if (responseData.retcode !== 0) {
 			throw new Error(`Failed to login: ${responseData.message}`);
 		}

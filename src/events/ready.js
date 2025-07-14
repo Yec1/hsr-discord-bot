@@ -3,6 +3,7 @@ import { Events, ActivityType } from "discord.js";
 import Logger from "../utilities/core/logger.js";
 import autoDailySign from "../utilities/hsr/autoDaily.js";
 import autoRedeem from "../utilities/hsr/autoRedeem.js";
+import { setupLeaderboardMaintenance } from "../utilities/hsr/profile.js";
 import schedule from "node-schedule";
 
 async function updatePresence() {
@@ -27,14 +28,17 @@ client.on(Events.ClientReady, async () => {
 	if (client.cluster.id == 0) {
 		autoDailySign();
 		autoRedeem();
-	}
+		setupLeaderboardMaintenance();
 
-	schedule.scheduleJob("0 * * * *", function () {
-		if (client.cluster.id == 0) {
+		schedule.scheduleJob("0 * * * *", function () {
 			autoDailySign();
 			autoRedeem();
-		}
-	});
+		});
+
+		schedule.scheduleJob("0 2 * * *", function () {
+			setupLeaderboardMaintenance();
+		});
+	}
 
 	setInterval(updatePresence, 10000);
 });

@@ -118,7 +118,10 @@ function calculateSubScore(relic, weights) {
 	// 原始得分 = Σ(基础值次数 + 提升值次数 * 0.1) * 权重
 	let rawScore = subAffixes.reduce((subScore, sub) => {
 		const count = Number(sub.count || sub.times || 0);
-		const step = Number(sub.step || 0);
+
+		let step = 0;
+		if (sub.step !== undefined) step = Number(sub.step || 0);
+		else step = Math.max(0, count - 1);
 
 		const subType = sub.type || sub.property_type;
 		const calSubType = propertyTranslate[subType] || subType;
@@ -135,6 +138,7 @@ function calculateSubScore(relic, weights) {
 				...sub,
 				type: subType,
 				count: count,
+				step: step, // 添加step字段以保持一致性
 				name: sub.name,
 				propertyName: propertyMap[subType],
 				display: sub.value || sub.display || "0",

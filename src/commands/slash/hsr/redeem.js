@@ -267,10 +267,16 @@ export default {
 				try {
 					// 如果距离上次刷新已经过了24小时，则刷新Cookie
 					if (shouldRefreshCookie) {
+						// 從數據庫獲取正確的 cookie 字符串
+						const userAccount = await db.get(
+							`${targetUser.id}.account`
+						);
+						const accountCookie = userAccount[accountIndex].cookie;
+
 						await updateCookie(
 							targetUser.id,
 							accountIndex,
-							hsr.cookie
+							accountCookie
 						);
 						await db.set(`${uid}.lastCookieRefresh`, currentTime);
 						new Logger("Redeem").success(
@@ -349,7 +355,17 @@ export default {
 			// 更新Cookie的邏輯：無論是否有成功兌換，都定期更新Cookie
 			try {
 				if (results.success.length > 0 || shouldRefreshCookie) {
-					await updateCookie(targetUser.id, accountIndex, hsr.cookie);
+					// 從數據庫獲取正確的 cookie 字符串
+					const userAccount = await db.get(
+						`${targetUser.id}.account`
+					);
+					const accountCookie = userAccount[accountIndex].cookie;
+
+					await updateCookie(
+						targetUser.id,
+						accountIndex,
+						accountCookie
+					);
 					await db.set(`${uid}.lastCookieRefresh`, currentTime);
 					new Logger("Redeem").info(
 						`使用者 ${targetUser.id} 的帳號 #${accountIndex} 成功兌換 ${results.success.length} 個禮包碼並更新 Cookie`
@@ -439,10 +455,16 @@ export default {
 
 					// 成功兌換時更新Cookie
 					try {
+						// 從數據庫獲取正確的 cookie 字符串
+						const userAccount = await db.get(
+							`${targetUser.id}.account`
+						);
+						const accountCookie = userAccount[accountIndex].cookie;
+
 						await updateCookie(
 							targetUser.id,
 							accountIndex,
-							hsr.cookie
+							accountCookie
 						);
 						new Logger("Redeem").info(
 							`使用者 ${targetUser.id} 的帳號 #${accountIndex} 成功兌換禮包碼 ${code} 並更新 Cookie`

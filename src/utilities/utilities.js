@@ -204,6 +204,24 @@ export function secondsToHms(d, tr) {
 	return hDisplay + mDisplay + sDisplay;
 }
 
+export async function requestPlayerDataEnka(uid) {
+	const baseUrl = "https://enka.network/api/hsr/uid/";
+
+	try {
+		const response = await axios.get(baseUrl + uid);
+		console.log(response.data);
+		return { status: response.status, playerData: response.data };
+	} catch (err) {
+		return {
+			status: 400,
+			playerData: {
+				detail: err.response?.data?.detail,
+				message: err.message
+			}
+		};
+	}
+}
+
 export async function requestPlayerData(uid, interaction) {
 	const userLocaleKey = `${interaction?.user.id}.locale`;
 	let langParam = "?lang=en";
@@ -419,6 +437,13 @@ export function checkAccount(interaction, tr, userId, data) {
 }
 
 export async function updateCookie(userId, accountIndex, cookieObj) {
+	// 檢查 cookieObj 是否為有效的字符串
+	if (!cookieObj || typeof cookieObj !== "string") {
+		throw new Error(
+			`Invalid cookie object: expected string, got ${typeof cookieObj}`
+		);
+	}
+
 	const webAPI =
 		"https://webapi-os.account.hoyoverse.com/Api/fetch_cookie_accountinfo";
 	const parsedCookie = Object.fromEntries(

@@ -689,13 +689,14 @@ async function drawFloorImage(tr, uid, res, mode, floor) {
 				ctx.fillStyle = "rgba(0,0,0,.4)";
 				ctx.fill();
 
-				if (!elementIcons.has(character.element)) {
+				const elementId = character.element || "physical";
+				if (!elementIcons.has(elementId)) {
 					const elementImage = await getCachedImage(
-						`./src/assets/image/element/${character.element}.png`
+						`./src/assets/image/element/${elementId}.png`
 					);
-					elementIcons.set(character.element, elementImage);
+					elementIcons.set(elementId, elementImage);
 				}
-				const elementImage = elementIcons.get(character.element);
+				const elementImage = elementIcons.get(elementId);
 				ctx.drawImage(elementImage, avatarX + 16, avatarY + 11, 27, 27);
 
 				if (character.rank != 0) {

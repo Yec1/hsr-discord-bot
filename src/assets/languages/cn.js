@@ -144,6 +144,8 @@ const langs = {
 	leaderboard_Title: "<z> 遗器评分排行榜",
 	leaderboard_CharacterRange: "（第 <s> - <e> 位）",
 	leaderboard_Score: "**<z>** 分",
+	leaderboard_NoData: "暂无数据",
+	leaderboard_NoDataDesc: "目前 <character> 的遗器评分排行榜为空，请稍后再试",
 
 	guide_Character: "查看指南",
 	guide_NonImage: "目前没有 `<z>` 的指南图片",
@@ -253,6 +255,7 @@ const langs = {
 	property_BreakUp: "击破特攻",
 
 	// Error Messages
+	Error: "错误",
 	error_APIMaintenance: "目前API似乎维护中，请稍后再试",
 	error_RequestTimeout: "请求超时，请稍后再试",
 	error_NetworkError: "网络连接错误，请检查网络连接",

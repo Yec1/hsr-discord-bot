@@ -149,6 +149,9 @@ const langs = {
 	leaderboard_Title: "<z> Relic Rating Leaderboard",
 	leaderboard_CharacterRange: "(Rank <s> - <e>)",
 	leaderboard_Score: "**<z>** Points",
+	leaderboard_NoData: "No Data",
+	leaderboard_NoDataDesc:
+		"No data for <character> yet, please try again later",
 
 	guide_Character: "View Guide",
 	guide_NonImage: "No guide image for `<z>` currently",
@@ -261,6 +264,7 @@ const langs = {
 	property_BreakUp: "Break Effect",
 
 	// Error Messages
+	Error: "Error",
 	error_APIMaintenance:
 		"API seems to be under maintenance, please try again later",
 	error_RequestTimeout: "Request timeout, please try again later",

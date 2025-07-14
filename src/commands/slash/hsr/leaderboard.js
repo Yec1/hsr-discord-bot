@@ -46,9 +46,6 @@ export default {
 					embeds: [
 						new EmbedBuilder()
 							.setTitle(tr("leaderboard_NoData") || "No Data")
-							.setDescription(
-								tr("leaderboard_NoDataDesc") || "No Data"
-							)
 							.setColor("#E76161")
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -68,8 +65,7 @@ export default {
 				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
-							.setTitle(tr("leaderboard_NoData"))
-							.setDescription(tr("leaderboard_NoDataDesc"))
+							.setTitle(tr("leaderboard_NoData") || "No Data")
 							.setColor("#E76161")
 							.setThumbnail(
 								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
@@ -90,7 +86,7 @@ export default {
 			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
-						.setTitle(tr("Error"))
+						.setTitle("Error")
 						.setDescription(`\`${error.message || error}\``)
 						.setColor("#E76161")
 						.setThumbnail(

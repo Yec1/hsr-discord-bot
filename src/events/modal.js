@@ -4,7 +4,7 @@ import { Events, EmbedBuilder } from "discord.js";
 import { HonkaiStarRail } from "@yeci226/hoyoapi";
 import {
 	getUserLang,
-	requestPlayerData,
+	requestPlayerDataEnka,
 	getUserGameInfo
 } from "../utilities/utilities.js";
 import { i18nMixin, toI18nLang } from "../utilities/core/i18n.js";
@@ -144,8 +144,8 @@ async function handleAccountEdit(interaction, tr, customId, fields) {
 	await interaction.deferReply({ ephemeral: true });
 	const accountIndex = customId.split("-")[1];
 	const uid = fields.getTextInputValue("uid");
-	const data = await requestPlayerData(uid, interaction);
-	if (!data.playerData?.player.uid)
+	const data = await requestPlayerDataEnka(uid);
+	if (!data.playerData?.detailInfo?.uid)
 		return interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
@@ -191,8 +191,8 @@ async function handleUidSet(interaction, tr, fields) {
 	await interaction.deferReply({ ephemeral: true });
 	const uid = fields.getTextInputValue("account_SetUserIDModalField");
 	try {
-		const data = await requestPlayerData(uid, interaction);
-		if (!data.playerData?.player.uid)
+		const data = await requestPlayerDataEnka(uid);
+		if (!data.playerData?.detailInfo?.uid)
 			return interaction.editReply({
 				embeds: [
 					new EmbedBuilder()

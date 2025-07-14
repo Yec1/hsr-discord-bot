@@ -204,6 +204,14 @@ class AutoRedeemSystem {
 			try {
 				// 如果距离上次刷新已经过了24小时，则刷新Cookie
 				if (shouldRefreshCookie) {
+					// 確保 account.cookie 是字符串類型
+					if (!account.cookie || typeof account.cookie !== "string") {
+						this.logger.error(
+							`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 格式無效: ${typeof account.cookie}`
+						);
+						return;
+					}
+
 					await updateCookie(userId, accountIndex, account.cookie);
 					await this.db.set(
 						`${account.uid}.lastCookieRefresh`,
@@ -296,6 +304,14 @@ class AutoRedeemSystem {
 		// 更新Cookie的邏輯：無論是否有成功兌換，都定期更新Cookie
 		try {
 			if (hasSuccessfulRedeem || shouldRefreshCookie) {
+				// 確保 account.cookie 是字符串類型
+				if (!account.cookie || typeof account.cookie !== "string") {
+					this.logger.error(
+						`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 格式無效: ${typeof account.cookie}`
+					);
+					return;
+				}
+
 				await updateCookie(userId, accountIndex, account.cookie);
 				await this.db.set(
 					`${account.uid}.lastCookieRefresh`,

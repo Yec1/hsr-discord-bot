@@ -35,8 +35,15 @@ async function getSelectMenu(interaction, tr, type) {
 	});
 
 	const allCharacterOptions = sortedCharacters.map(character => {
+		const elementId =
+			character.element?.id || character.element || "physical";
+		const elementKey =
+			elementId && typeof elementId === "string"
+				? elementId.toLowerCase()
+				: "physical";
+
 		return {
-			emoji: emoji[character.element.id.toLowerCase()],
+			emoji: emoji[elementKey] || emoji.physical, // 如果找不到对应的emoji，使用物理属性作为默认值
 			label: `${
 				localeJson[character.id]?.name == "{NICKNAME}"
 					? tr("MainCharacter")

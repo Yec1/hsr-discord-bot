@@ -15,7 +15,12 @@ export function i18nMixin(lang) {
 
 	return function i18n(string, options, ...args) {
 		let str = langs[lang][string] ?? langs.en[string];
-		if (str === undefined) return;
+		if (str === undefined) {
+			console.warn(
+				`[i18n] Translation key "${string}" not found for language "${lang}"`
+			);
+			return string; // 返回原始鍵名作為備用
+		}
 
 		if (typeof str === "function") return str(options, ...args);
 		if (typeof str !== "string") return str;

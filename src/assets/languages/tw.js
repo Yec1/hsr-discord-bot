@@ -144,6 +144,8 @@ const langs = {
 	leaderboard_Title: "<z> 遺器評分排行榜",
 	leaderboard_CharacterRange: "（第 <s> - <e> 位）",
 	leaderboard_Score: "**<z>** 分",
+	leaderboard_NoData: "暫無資料",
+	leaderboard_NoDataDesc: "目前 <character> 的遺器評分排行榜為空，請稍後再試",
 
 	guide_Character: "查看指南",
 	guide_NonImage: "目前沒有 `<z>` 的指南圖片",
@@ -252,6 +254,7 @@ const langs = {
 	property_BreakUp: "擊破特攻",
 
 	// Error Messages
+	Error: "錯誤",
 	error_APIMaintenance: "目前API似乎維護中，請稍後再試",
 	error_RequestTimeout: "請求超時，請稍後再試",
 	error_NetworkError: "網路連線錯誤，請檢查網路連線",

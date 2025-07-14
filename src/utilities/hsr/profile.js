@@ -240,56 +240,259 @@ function drawSeparatorLine(ctx, startX, endX, y) {
 
 async function saveLeaderboard(playerData) {
 	const leaderboard = (await db.get("LeaderBoard")) || {};
+	const playerUid = playerData.player.uid;
+	const playerNickname = playerData.player.nickname;
+	console.log(playerData.player);
+	const playerAvatar = playerData.player.avatar.icon;
+	const currentTimestamp = Date.now();
+
+	// 批量處理所有角色，提高效率
+	const characterUpdates = [];
 
 	for (let i = 0; i < playerData.characters.length; i++) {
 		const character = playerData.characters[i];
 		const relicScore = await getRelicsScore(character);
+
+		if (!relicScore) continue; // 跳過沒有評分的角色
+
 		const leaderboardData = leaderboard[character.id] || {};
 
-		const playerEntry = {
-			uid: playerData.player.uid,
-			nickname: playerData.player.nickname,
-			avatar: playerData.player.avatar.icon,
-			score: relicScore?.totalScore || 0
-		};
-
+		// 初始化角色數據（如果不存在）
 		if (!leaderboardData.id) {
 			leaderboardData.id = character.id;
 			leaderboardData.icon = character.icon;
 			leaderboardData.element = {
-				id: character.element.id,
-				color: character.element.color
+				id: character.element?.id || character.element || "physical",
+				color:
+					character.element?.color ||
+					character.elementColor ||
+					"#8B7355"
 			};
 			leaderboardData.score = [];
+			leaderboardData.lastUpdated = currentTimestamp;
 		}
 
+		// 創建玩家記錄
+		const playerEntry = {
+			uid: playerUid,
+			nickname: playerNickname,
+			avatar: playerAvatar,
+			score: parseFloat(relicScore.totalScore) || 0,
+			lastUpdated: currentTimestamp,
+			characterLevel: character.level || 0,
+			characterRank: character.rank || 0
+		};
+
+		// 查找現有記錄
 		const existingEntryIndex = leaderboardData.score.findIndex(
-			entry => entry.uid === playerEntry.uid
+			entry => entry.uid === playerUid
 		);
 
+		// 更新或添加記錄
 		if (existingEntryIndex !== -1) {
-			if (
-				playerEntry.score >
-				leaderboardData.score[existingEntryIndex].score
-			) {
-				leaderboardData.score[existingEntryIndex].score =
-					playerEntry.score;
+			const existingEntry = leaderboardData.score[existingEntryIndex];
+
+			// 只有當新分數更高時才更新
+			if (playerEntry.score > existingEntry.score) {
+				leaderboardData.score[existingEntryIndex] = {
+					...existingEntry,
+					...playerEntry,
+					previousScore: existingEntry.score,
+					scoreImproved: true
+				};
+			} else {
+				// 更新其他信息但不改變分數
+				leaderboardData.score[existingEntryIndex] = {
+					...existingEntry,
+					nickname: playerNickname,
+					avatar: playerAvatar,
+					lastUpdated: currentTimestamp,
+					characterLevel: character.level || 0,
+					characterRank: character.rank || 0
+				};
 			}
-			leaderboardData.score[existingEntryIndex].nickname =
-				playerEntry.nickname;
-			leaderboardData.score[existingEntryIndex].avatar =
-				playerEntry.avatar;
 		} else {
 			leaderboardData.score.push(playerEntry);
 		}
 
+		// 排序並限制前10名
 		leaderboardData.score.sort((a, b) => b.score - a.score);
 		leaderboardData.score.splice(10);
 
+		// 更新角色統計信息
+		leaderboardData.stats = {
+			totalParticipants: leaderboardData.score.length,
+			averageScore:
+				leaderboardData.score.length > 0
+					? (
+							leaderboardData.score.reduce(
+								(sum, entry) => sum + entry.score,
+								0
+							) / leaderboardData.score.length
+						).toFixed(1)
+					: 0,
+			highestScore:
+				leaderboardData.score.length > 0
+					? leaderboardData.score[0].score
+					: 0,
+			lastUpdated: currentTimestamp
+		};
+
 		leaderboard[character.id] = leaderboardData;
+		characterUpdates.push(character.id);
 	}
 
+	// 批量保存到數據庫
 	await db.set("LeaderBoard", leaderboard);
+
+	// 記錄更新日誌
+	console.log(
+		`[Leaderboard] Updated ${characterUpdates.length} characters for player ${playerUid} (${playerNickname})`
+	);
+
+	return {
+		updatedCharacters: characterUpdates,
+		totalScore: characterUpdates.length
+	};
+}
+
+/**
+ * 清理和維護排行榜數據
+ * @param {number} daysToKeep - 保留多少天內的數據
+ * @param {number} maxEntriesPerCharacter - 每個角色最多保留多少條記錄
+ */
+async function maintainLeaderboard(
+	daysToKeep = 30,
+	maxEntriesPerCharacter = 10
+) {
+	try {
+		const leaderboard = (await db.get("LeaderBoard")) || {};
+		const currentTime = Date.now();
+		const cutoffTime = currentTime - daysToKeep * 24 * 60 * 60 * 1000;
+
+		let cleanedCharacters = 0;
+		let removedEntries = 0;
+
+		for (const [characterId, characterData] of Object.entries(
+			leaderboard
+		)) {
+			if (!characterData.score || !Array.isArray(characterData.score)) {
+				continue;
+			}
+
+			const originalLength = characterData.score.length;
+
+			// 過濾掉過期的記錄
+			characterData.score = characterData.score.filter(entry => {
+				const entryTime = entry.lastUpdated || 0;
+				return entryTime > cutoffTime;
+			});
+
+			// 限制每個角色的記錄數量
+			if (characterData.score.length > maxEntriesPerCharacter) {
+				characterData.score = characterData.score
+					.sort((a, b) => b.score - a.score)
+					.slice(0, maxEntriesPerCharacter);
+			}
+
+			// 重新排序
+			characterData.score.sort((a, b) => b.score - a.score);
+
+			// 更新統計信息
+			characterData.stats = {
+				totalParticipants: characterData.score.length,
+				averageScore:
+					characterData.score.length > 0
+						? (
+								characterData.score.reduce(
+									(sum, entry) => sum + entry.score,
+									0
+								) / characterData.score.length
+							).toFixed(1)
+						: 0,
+				highestScore:
+					characterData.score.length > 0
+						? characterData.score[0].score
+						: 0,
+				lastUpdated: currentTime
+			};
+
+			// 如果沒有有效記錄，刪除整個角色
+			if (characterData.score.length === 0) {
+				delete leaderboard[characterId];
+				cleanedCharacters++;
+			} else {
+				removedEntries += originalLength - characterData.score.length;
+			}
+		}
+
+		// 保存清理後的數據
+		await db.set("LeaderBoard", leaderboard);
+
+		console.log(
+			`[Leaderboard Maintenance] Cleaned ${cleanedCharacters} characters, removed ${removedEntries} expired entries`
+		);
+
+		return {
+			cleanedCharacters,
+			removedEntries,
+			totalCharacters: Object.keys(leaderboard).length
+		};
+	} catch (error) {
+		console.error("[Leaderboard Maintenance] Error:", error);
+		throw error;
+	}
+}
+
+/**
+ * 獲取排行榜統計信息
+ */
+async function getLeaderboardStats() {
+	try {
+		const leaderboard = (await db.get("LeaderBoard")) || {};
+		const stats = {
+			totalCharacters: Object.keys(leaderboard).length,
+			totalParticipants: 0,
+			recentUpdates: 0,
+			topScores: []
+		};
+
+		const currentTime = Date.now();
+		const oneDayAgo = currentTime - 24 * 60 * 60 * 1000;
+
+		for (const [characterId, characterData] of Object.entries(
+			leaderboard
+		)) {
+			if (characterData.score && Array.isArray(characterData.score)) {
+				stats.totalParticipants += characterData.score.length;
+
+				// 統計最近24小時的更新
+				const recentUpdates = characterData.score.filter(
+					entry => (entry.lastUpdated || 0) > oneDayAgo
+				).length;
+				stats.recentUpdates += recentUpdates;
+
+				// 收集最高分
+				if (characterData.score.length > 0) {
+					stats.topScores.push({
+						characterId,
+						characterName: characterData.id,
+						highestScore: characterData.score[0].score,
+						participantCount: characterData.score.length
+					});
+				}
+			}
+		}
+
+		// 按最高分排序
+		stats.topScores.sort((a, b) => b.highestScore - a.highestScore);
+		stats.topScores = stats.topScores.slice(0, 10);
+
+		return stats;
+	} catch (error) {
+		console.error("[Leaderboard Stats] Error:", error);
+		return null;
+	}
 }
 
 async function handleProfileDraw(
@@ -464,13 +667,31 @@ async function handleProfileDraw(
 			});
 
 			const selectMenus = createChunkedSelectMenus(
-				characters.map(character => ({
-					emoji: allCharacters
-						? emoji[character.element.toLowerCase()]
-						: emoji[character.element.id.toLowerCase()],
-					label: `${character.name}`,
-					value: `${playerData.player.uid}-${user.id}-${accountIndex}-${allCharacters}-${character.id}`
-				})),
+				characters.map(character => {
+					// 安全地获取元素ID
+					let elementId;
+					if (allCharacters) {
+						// 对于 allCharacters 模式，element 可能是字符串
+						elementId =
+							typeof character.element === "string"
+								? character.element
+								: character.element?.id || "physical";
+					} else {
+						elementId = character.element?.id || "physical";
+					}
+
+					// 确保 elementId 是有效的字符串
+					const elementKey =
+						elementId && typeof elementId === "string"
+							? elementId.toLowerCase()
+							: "physical";
+
+					return {
+						emoji: emoji[elementKey] || emoji.physical,
+						label: `${character.name}`,
+						value: `${playerData.player.uid}-${user.id}-${accountIndex}-${allCharacters}-${character.id}`
+					};
+				}),
 				tr("profile_SelectCharacter"),
 				"profile_SelectCharacter"
 			);
@@ -871,8 +1092,8 @@ async function drawCharacterImage(
 		}
 
 		const characterElementIcon =
-			character.element.icon?.toLowerCase() ||
-			`element/${character.element}.png`;
+			character.element?.icon?.toLowerCase() ||
+			`element/${character.element?.id || "physical"}.png`;
 		const characterPathIcon =
 			character.path?.icon.toLowerCase() ||
 			`icon/path/${pathMap[character.base_type]}.png`;
@@ -1426,9 +1647,21 @@ async function drawCharacterImage(
 			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
 			ctx.fillText(
 				relicsScore.totalGrade.grade,
-				startX + scoreWidth - 140,
+				startX + scoreWidth - 130,
 				attrBottomY + 50
 			);
+
+			if (isAllCharacter) {
+				ctx.textAlign = "center";
+				ctx.fillStyle = "lightgray";
+				ctx.font =
+					"bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+				ctx.fillText(
+					`※ 可能較低於UID查詢角色評分`,
+					startX,
+					attrBottomY + 80
+				);
+			}
 		} else {
 			ctx.textAlign = "center";
 			ctx.fillText(tr("RelicNoScore"), centerX, 830);
@@ -1977,5 +2210,67 @@ export {
 	drawMainImage,
 	drawCharacterImage,
 	drawAllCharactersImage,
-	clearImageCache
+	clearImageCache,
+	saveLeaderboard,
+	getLeaderboardStats,
+	setupLeaderboardMaintenance,
+	getOptimizedLeaderboard
 };
+
+async function setupLeaderboardMaintenance() {
+	try {
+		console.log("[Leaderboard] Starting scheduled maintenance...");
+		const result = await maintainLeaderboard(30, 10);
+		console.log(
+			`[Leaderboard] Scheduled maintenance completed: ${result.cleanedCharacters} characters cleaned, ${result.removedEntries} entries removed`
+		);
+	} catch (error) {
+		console.error("[Leaderboard] Scheduled maintenance failed:", error);
+	}
+
+	console.log(`[Leaderboard] Maintenance scheduled every 24 hours`);
+}
+
+/**
+ * 優化的排行榜數據獲取函數
+ * @param {string} characterId - 角色ID
+ * @param {number} limit - 限制返回的記錄數量
+ */
+async function getOptimizedLeaderboard(characterId, limit = 10) {
+	try {
+		const leaderboard = (await db.get("LeaderBoard")) || {};
+		const characterData = leaderboard[characterId];
+
+		if (
+			!characterData ||
+			!characterData.score ||
+			characterData.score.length === 0
+		) {
+			return null;
+		}
+
+		// 只返回需要的數據，減少內存使用
+		const optimizedScores = characterData.score
+			.slice(0, limit)
+			.map(entry => ({
+				uid: entry.uid,
+				nickname: entry.nickname,
+				avatar: entry.avatar,
+				score: entry.score,
+				characterLevel: entry.characterLevel,
+				characterRank: entry.characterRank,
+				lastUpdated: entry.lastUpdated
+			}));
+
+		return {
+			id: characterData.id,
+			icon: characterData.icon,
+			element: characterData.element,
+			score: optimizedScores,
+			stats: characterData.stats
+		};
+	} catch (error) {
+		console.error("[Optimized Leaderboard] Error:", error);
+		return null;
+	}
+}

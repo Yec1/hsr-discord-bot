@@ -305,13 +305,19 @@ async function handleProfileFilter(
 		});
 
 		const selectMenus = createChunkedSelectMenus(
-			sortedCharacters.map((character, i) => ({
-				emoji: allCharacters
-					? emoji[character.element.toLowerCase()]
-					: emoji[character.element.id.toLowerCase()],
-				label: `${character.name}`,
-				value: `${playerData.player.uid}-${userId}-${i}`
-			})),
+			sortedCharacters.map((character, i) => {
+				// 安全地获取元素ID
+				const elementId = allCharacters
+					? character.element
+					: character.element?.id || "physical";
+				const elementKey = elementId.toLowerCase();
+
+				return {
+					emoji: emoji[elementKey] || emoji.physical,
+					label: `${character.name}`,
+					value: `${playerData.player.uid}-${userId}-${i}`
+				};
+			}),
 			tr("profile_SelectCharacter"),
 			"profile_SelectCharacter"
 		);
@@ -696,7 +702,9 @@ async function handleLeaderboard(interaction, tr, value) {
 			new EmbedBuilder()
 				.setColor(leaderboardData.element.color)
 				.setAuthor({
-					iconURL: `${image_Header}/${leaderboardData.score[0].avatar}`,
+					iconURL: firstPlace.avatar.startsWith("http")
+						? firstPlace.avatar
+						: `${image_Header}/${firstPlace.avatar}`,
 					name: `${tr("leaderboard_Title", {
 						z: `${
 							localeJson[leaderboardData.id].name == "{NICKNAME}"
@@ -705,7 +713,11 @@ async function handleLeaderboard(interaction, tr, value) {
 						}`
 					})}`
 				})
-				.setThumbnail(`${image_Header}/${leaderboardData.icon}`)
+				.setThumbnail(
+					leaderboardData.icon.startsWith("http")
+						? leaderboardData.icon
+						: `${image_Header}/${leaderboardData.icon}`
+				)
 				.setTitle(embedTitle)
 				.addFields({
 					name: `\u200b`,
@@ -1335,26 +1347,38 @@ async function handleSelectCharacter(interaction, tr, value) {
 
 			const selectMenus = createChunkedSelectMenus(
 				characterId === "main"
-					? characters.map(character => ({
-							emoji: allCharacters
-								? emoji[character.element.toLowerCase()]
-								: emoji[character.element.id.toLowerCase()],
-							label: `${character.name}`,
-							value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
-						}))
+					? characters.map(character => {
+							// 安全地获取元素ID
+							const elementId = allCharacters
+								? character.element
+								: character.element?.id || "physical";
+							const elementKey = elementId.toLowerCase();
+
+							return {
+								emoji: emoji[elementKey] || emoji.physical,
+								label: `${character.name}`,
+								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
+							};
+						})
 					: [
 							{
 								emoji: emoji.avatarIcon,
 								label: tr("MainPage"),
 								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-main`
 							},
-							...characters.map(character => ({
-								emoji: allCharacters
-									? emoji[character.element.toLowerCase()]
-									: emoji[character.element.id.toLowerCase()],
-								label: character.name,
-								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
-							}))
+							...characters.map(character => {
+								// 安全地获取元素ID
+								const elementId = allCharacters
+									? character.element
+									: character.element?.id || "physical";
+								const elementKey = elementId.toLowerCase();
+
+								return {
+									emoji: emoji[elementKey] || emoji.physical,
+									label: character.name,
+									value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
+								};
+							})
 						],
 				tr("profile_SelectCharacter"),
 				"profile_SelectCharacter"
