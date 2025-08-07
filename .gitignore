@@ -18,3 +18,7 @@ yarn-error.log
 env.development
 env.production
 *.tmp
+
+# config
+config.json
+dist/

@@ -1,0 +1,406 @@
+[
+  {
+    "name": "Cipher",
+    "path": "Nihility",
+    "element": "Quantum",
+    "rarity": 5
+  },
+  {
+    "name": "Phainon",
+    "path": "Destruction",
+    "element": "Physical",
+    "rarity": 5
+  },
+  {
+    "name": "Hyacine",
+    "path": "Remembrance",
+    "element": "Wind",
+    "rarity": 5
+  },
+  {
+    "name": "Anaxa",
+    "path": "Erudition",
+    "element": "Wind",
+    "rarity": 5
+  },
+  {
+    "name": "Castorice",
+    "path": "Remembrance",
+    "element": "Quantum",
+    "rarity": 5
+  },
+  {
+    "name": "Aglaea",
+    "path": "Remembrance",
+    "element": "Lightning",
+    "rarity": 5
+  },
+  {
+    "name": "Mydei",
+    "path": "Destruction",
+    "element": "Imaginary",
+    "rarity": 5
+  },
+  {
+    "name": "Tribbie",
+    "path": "Harmony",
+    "element": "Quantum",
+    "rarity": 5
+  },
+  {
+    "name": "The Herta",
+    "path": "Erudition",
+    "element": "Ice",
+    "rarity": 5
+  },
+  {
+    "name": "Sunday",
+    "path": "Harmony",
+    "element": "Imaginary",
+    "rarity": 5
+  },
+  {
+    "name": "Fugue",
+    "path": "Nihility",
+    "element": "Fire",
+    "rarity": 5
+  },
+  {
+    "name": "Rappa",
+    "path": "Erudition",
+    "element": "Imaginary",
+    "rarity": 5
+  },
+  {
+    "name": "Feixiao",
+    "path": "The Hunt",
+    "element": "Wind",
+    "rarity": 5
+  },
+  {
+    "name": "Lingsha",
+    "path": "Abundance",
+    "element": "Fire",
+    "rarity": 5
+  },
+  {
+    "name": "Moze",
+    "path": "The Hunt",
+    "element": "Lightning",
+    "rarity": 4
+  },
+  {
+    "name": "Aventurine",
+    "path": "Preservation",
+    "element": "Imaginary",
+    "rarity": 5
+  },
+  {
+    "name": "Jiaoqiu",
+    "path": "Nihility",
+    "element": "Fire",
+    "rarity": 5
+  },
+  {
+    "name": "Yunli",
+    "path": "Destruction",
+    "element": "Physical",
+    "rarity": 5
+  },
+  {
+    "name": "Boothill",
+    "path": "The Hunt",
+    "element": "Physical",
+    "rarity": 5
+  },
+  {
+    "name": "Firefly",
+    "path": "Destruction",
+    "element": "Fire",
+    "rarity": 5
+  },
+  {
+    "name": "Jade",
+    "path": "Erudition",
+    "element": "Quantum",
+    "rarity": 5
+  },
+  {
+    "name": "Robin",
+    "path": "Harmony",
+    "element": "Physical",
+    "rarity": 5
+  },
+  {
+    "name": "Gallagher",
+    "path": "Abundance",
+    "element": "Fire",
+    "rarity": 4
+  },
+  {
+    "name": "Acheron",
+    "path": "Nihility",
+    "element": "Lightning",
+    "rarity": 5
+  },
+  {
+    "name": "Sparkle",
+    "path": "Harmony",
+    "element": "Quantum",
+    "rarity": 5
+  },
+  {
+    "name": "Black Swan",
+    "path": "Nihility",
+    "element": "Wind",
+    "rarity": 5
+  },
+  {
+    "name": "Misha",
+    "path": "Destruction",
+    "element": "Ice",
+    "rarity": 4
+  },
+  {
+    "name": "Topaz and Numby",
+    "path": "The Hunt",
+    "element": "Fire",
+    "rarity": 5
+  },
+  {
+    "name": "Guinaifen",
+    "path": "The Hunt",
+    "element": "Fire",
+    "rarity": 4
+  },
+  {
+    "name": "Dr. Ratio",
+    "path": "The Hunt",
+    "element": "Imaginary",
+    "rarity": 5
+  },
+  {
+    "name": "Ruan Mei",
+    "path": "Harmony",
+    "element": "Ice",
+    "rarity": 5
+  },
+  {
+    "name": "Xueyi",
+    "path": "Destruction",
+    "element": "Quantum",
+    "rarity": 4
+  },
+  {
+    "name": "Huohuo",
+    "path": "Abundance",
+    "element": "Wind",
+    "rarity": 5
+  },
+  {
+    "name": "Hanya",
+    "path": "Harmony",
+    "element": "Physical",
+    "rarity": 4
+  },
+  {
+    "name": "Argenti",
+    "path": "Erudition",
+    "element": "Physical",
+    "rarity": 5
+  },
+  {
+    "name": "Fu Xuan",
+    "path": "Preservation",
+    "element": "Quantum",
+    "rarity": 5
+  },
+  {
+    "name": "Lynx",
+    "path": "Abundance",
+    "element": "Quantum",
+    "rarity": 4
+  },
+  {
+    "name": "Jingliu",
+    "path": "Destruction",
+    "element": "Ice",
+    "rarity": 5
+  },
+  {
+    "name": "Imbibitor Lunae",
+    "path": "Destruction",
+    "element": "Imaginary",
+    "rarity": 5
+  },
+  {
+    "name": "Luka",
+    "path": "Nihility",
+    "element": "Physical",
+    "rarity": 4
+  },
+  {
+    "name": "Yukong",
+    "path": "Harmony",
+    "element": "Imaginary",
+    "rarity": 4
+  },
+  {
+    "name": "Arlan",
+    "path": "Destruction",
+    "element": "Lightning",
+    "rarity": 4
+  },
+  {
+    "name": "Asta",
+    "path": "Harmony",
+    "element": "Fire",
+    "rarity": 4
+  },
+  {
+    "name": "Bailu",
+    "path": "Abundance",
+    "element": "Lightning",
+    "rarity": 5
+  },
+  {
+    "name": "Bronya",
+    "path": "Harmony",
+    "element": "Wind",
+    "rarity": 5
+  },
+  {
+    "name": "Clara",
+    "path": "Destruction",
+    "element": "Physical",
+    "rarity": 5
+  },
+  {
+    "id": "dan-heng",
+    "name": "Dan Heng",
+    "path": "The Hunt",
+    "element": "Wind",
+    "rarity": 4
+  },
+  {
+    "name": "Gepard",
+    "path": "Preservation",
+    "element": "Ice",
+    "rarity": 5
+  },
+  {
+    "name": "Herta",
+    "path": "Erudition",
+    "element": "Ice",
+    "rarity": 4
+  },
+  {
+    "name": "Himeko",
+    "path": "Erudition",
+    "element": "Fire",
+    "rarity": 5
+  },
+  {
+    "name": "Hook",
+    "path": "Destruction",
+    "element": "Fire",
+    "rarity": 4
+  },
+  {
+    "id": "march-7th",
+    "name": "March 7th",
+    "path": "Preservation",
+    "element": "Ice",
+    "rarity": 4
+  },
+  {
+    "name": "Natasha",
+    "path": "Abundance",
+    "element": "Physical",
+    "rarity": 4
+  },
+  {
+    "name": "Pela",
+    "path": "Nihility",
+    "element": "Ice",
+    "rarity": 4
+  },
+  {
+    "name": "Qingque",
+    "path": "Erudition",
+    "element": "Quantum",
+    "rarity": 4
+  },
+  {
+    "name": "Sampo",
+    "path": "Nihility",
+    "element": "Wind",
+    "rarity": 4
+  },
+  {
+    "name": "Seele",
+    "path": "The Hunt",
+    "element": "Quantum",
+    "rarity": 5
+  },
+  {
+    "name": "Serval",
+    "path": "Erudition",
+    "element": "Lightning",
+    "rarity": 4
+  },
+  {
+    "name": "Sushang",
+    "path": "The Hunt",
+    "element": "Physical",
+    "rarity": 4
+  },
+  {
+    "name": "Tingyun",
+    "path": "Harmony",
+    "element": "Lightning",
+    "rarity": 4
+  },
+  {
+    "name": "Welt",
+    "path": "Nihility",
+    "element": "Imaginary",
+    "rarity": 5
+  },
+  {
+    "name": "Yanqing",
+    "path": "The Hunt",
+    "element": "Ice",
+    "rarity": 5
+  },
+  {
+    "name": "Jing Yuan",
+    "path": "Erudition",
+    "element": "Lightning",
+    "rarity": 5
+  },
+  {
+    "name": "Silver Wolf",
+    "path": "Nihility",
+    "element": "Quantum",
+    "rarity": 5
+  },
+  {
+    "name": "Blade",
+    "path": "Destruction",
+    "element": "Wind",
+    "rarity": 5
+  },
+  {
+    "name": "Kafka",
+    "path": "Nihility",
+    "element": "Lightning",
+    "rarity": 5
+  },
+  {
+    "name": "Luocha",
+    "path": "Abundance",
+    "element": "Imaginary",
+    "rarity": 5
+  }
+]
