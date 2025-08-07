@@ -14,8 +14,15 @@ interface JSONFileConfig {
 export class JSONManager {
 	private static instance: JSONManager;
 	private cache = new Map<string, any>();
+	private lastUpdateTime = new Map<string, number>();
+	private updateInterval = 24 * 60 * 60 * 1000; // 24小時的毫秒數
+	private isUpdating = new Set<string>(); // 防止重複更新
+	private updateTimer: NodeJS.Timeout | null = null;
 
-	private constructor() {}
+	private constructor() {
+		// 啟動定時檢查更新
+		this.startPeriodicUpdate();
+	}
 
 	static getInstance(): JSONManager {
 		if (!JSONManager.instance) {
@@ -36,6 +43,20 @@ export class JSONManager {
 			return this.cache.get(cacheKey);
 		}
 
+		// 防止重複加載
+		if (this.isUpdating.has(cacheKey)) {
+			console.log(
+				`[JSON] ${config.fileName} is being loaded, waiting...`
+			);
+			// 等待加載完成
+			while (this.isUpdating.has(cacheKey)) {
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+			return this.cache.get(cacheKey);
+		}
+
+		this.isUpdating.add(cacheKey);
+
 		try {
 			// 首先尝试从本地加载
 			if (existsSync(config.localPath)) {
@@ -45,6 +66,7 @@ export class JSONManager {
 				const localData = readFileSync(config.localPath, "utf-8");
 				const parsedData = JSON.parse(localData);
 				this.cache.set(cacheKey, parsedData);
+				this.lastUpdateTime.set(cacheKey, Date.now());
 				console.log(
 					`[JSON] ✓ Successfully loaded ${config.fileName} from local`
 				);
@@ -61,6 +83,7 @@ export class JSONManager {
 				// 保存到本地
 				await this.saveLocalJSON(config.localPath, remoteData);
 				this.cache.set(cacheKey, remoteData);
+				this.lastUpdateTime.set(cacheKey, Date.now());
 				console.log(
 					`[JSON] ✓ Successfully downloaded and saved ${config.fileName} to local`
 				);
@@ -93,6 +116,7 @@ export class JSONManager {
 					if (remoteData) {
 						await this.saveLocalJSON(config.localPath, remoteData);
 						this.cache.set(cacheKey, remoteData);
+						this.lastUpdateTime.set(cacheKey, Date.now());
 						console.log(
 							`[JSON] ✓ Successfully re-downloaded and saved ${config.fileName}`
 						);
@@ -105,6 +129,8 @@ export class JSONManager {
 					);
 				}
 			}
+		} finally {
+			this.isUpdating.delete(cacheKey);
 		}
 
 		return null;
@@ -116,11 +142,15 @@ export class JSONManager {
 	private async downloadJSON(url: string): Promise<any> {
 		try {
 			const response = await axios.get(url, {
-				timeout: 10000,
+				timeout: 15000, // 增加超時時間
 				headers: {
 					"User-Agent":
-						"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-				}
+						"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+					Accept: "application/json",
+					"Accept-Encoding": "gzip, deflate, br"
+				},
+				maxRedirects: 5,
+				validateStatus: status => status < 400
 			});
 			return response.data;
 		} catch (error) {
@@ -170,6 +200,168 @@ export class JSONManager {
 	 */
 	setCacheData(key: string, data: any): void {
 		this.cache.set(key, data);
+	}
+
+	/**
+	 * 啟動定時檢查更新
+	 */
+	private startPeriodicUpdate(): void {
+		// 每24小時檢查一次更新
+		this.updateTimer = setInterval(async () => {
+			console.log("[JSON] 開始定時檢查JSON文件更新...");
+			await this.checkAllFilesUpdate();
+		}, this.updateInterval);
+
+		// 立即執行一次檢查
+		setTimeout(async () => {
+			console.log("[JSON] 首次檢查JSON文件更新...");
+			await this.checkAllFilesUpdate();
+		}, 5000); // 5秒後開始首次檢查
+	}
+
+	/**
+	 * 檢查所有文件的更新
+	 */
+	private async checkAllFilesUpdate(): Promise<void> {
+		const configs = Object.values(JSON_CONFIGS);
+
+		for (const config of configs) {
+			try {
+				await this.checkFileUpdate(config);
+			} catch (error) {
+				console.error(
+					`[JSON] 檢查文件更新失敗 ${config.fileName}:`,
+					error
+				);
+			}
+		}
+	}
+
+	/**
+	 * 檢查單個文件的更新
+	 */
+	private async checkFileUpdate(config: JSONFileConfig): Promise<void> {
+		const now = Date.now();
+		const lastUpdate = this.lastUpdateTime.get(config.fileName) || 0;
+
+		// 檢查是否需要更新（距離上次更新超過24小時）
+		if (now - lastUpdate < this.updateInterval) {
+			console.log(
+				`[JSON] ${config.fileName} 距離上次更新未滿24小時，跳過檢查`
+			);
+			return;
+		}
+
+		// 防止重複更新
+		if (this.isUpdating.has(config.fileName)) {
+			console.log(`[JSON] ${config.fileName} 正在更新中，跳過檢查`);
+			return;
+		}
+
+		this.isUpdating.add(config.fileName);
+
+		try {
+			console.log(`[JSON] 檢查 ${config.fileName} 是否有更新...`);
+
+			// 下載遠程文件進行比較
+			const remoteData = await this.downloadJSON(config.remoteUrl);
+			if (!remoteData) {
+				console.warn(`[JSON] 無法下載 ${config.fileName} 的遠程數據`);
+				return;
+			}
+
+			// 獲取本地數據
+			let localData = null;
+			if (existsSync(config.localPath)) {
+				try {
+					const localContent = readFileSync(
+						config.localPath,
+						"utf-8"
+					);
+					localData = JSON.parse(localContent);
+				} catch (error) {
+					console.warn(
+						`[JSON] 讀取本地文件失敗 ${config.fileName}:`,
+						error
+					);
+				}
+			}
+
+			// 比較數據是否有更新（使用更高效的比較方法）
+			const hasUpdate = this.hasDataChanged(localData, remoteData);
+
+			if (hasUpdate) {
+				console.log(
+					`[JSON] 發現 ${config.fileName} 有更新，正在下載...`
+				);
+				await this.saveLocalJSON(config.localPath, remoteData);
+				this.cache.set(config.fileName, remoteData);
+				this.lastUpdateTime.set(config.fileName, now);
+				console.log(`[JSON] ✓ ${config.fileName} 更新完成`);
+			} else {
+				console.log(`[JSON] ${config.fileName} 已是最新版本`);
+				this.lastUpdateTime.set(config.fileName, now);
+			}
+		} catch (error) {
+			console.error(
+				`[JSON] 檢查 ${config.fileName} 更新時發生錯誤:`,
+				error
+			);
+		} finally {
+			this.isUpdating.delete(config.fileName);
+		}
+	}
+
+	/**
+	 * 手動觸發更新檢查
+	 */
+	async forceUpdateCheck(): Promise<void> {
+		console.log("[JSON] 手動觸發更新檢查...");
+		await this.checkAllFilesUpdate();
+	}
+
+	/**
+	 * 獲取文件最後更新時間
+	 */
+	getLastUpdateTime(fileName: string): number | undefined {
+		return this.lastUpdateTime.get(fileName);
+	}
+
+	/**
+	 * 高效比較數據是否有變化
+	 */
+	private hasDataChanged(localData: any, remoteData: any): boolean {
+		if (!localData) return true;
+
+		// 對於大型數據，先比較關鍵字段
+		if (typeof localData === "object" && typeof remoteData === "object") {
+			// 比較對象的鍵數量
+			const localKeys = Object.keys(localData);
+			const remoteKeys = Object.keys(remoteData);
+
+			if (localKeys.length !== remoteKeys.length) return true;
+
+			// 對於數組，比較長度
+			if (Array.isArray(localData) && Array.isArray(remoteData)) {
+				if (localData.length !== remoteData.length) return true;
+			}
+		}
+
+		// 最後進行完整比較
+		return JSON.stringify(remoteData) !== JSON.stringify(localData);
+	}
+
+	/**
+	 * 清理資源
+	 */
+	destroy(): void {
+		if (this.updateTimer) {
+			clearInterval(this.updateTimer);
+			this.updateTimer = null;
+		}
+		this.cache.clear();
+		this.lastUpdateTime.clear();
+		this.isUpdating.clear();
 	}
 }
 

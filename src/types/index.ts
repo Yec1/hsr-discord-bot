@@ -19,24 +19,24 @@ export type MessageCommandType = {
 
 	/**
 	 * @param message - 消息
-	 * @param _args - ?�數
+	 * @param _args - ?�數
 	 * @returns
 	 */
-	execute: (message: Message, ..._args: string[]) => Promise<any>;
+	execute: (message: Message, args: string[]) => Promise<any>;
 };
 
 export type SlashCommandType = {
 	data: any;
 
 	/**
-	 * @param interaction - 互�?實�?
-	 * @param _args - ?�數
+	 * @param interaction - 互�?實�?
+	 * @param _args - ?�數
 	 * @returns
 	 */
 	execute: (interaction: any, ..._args: string[]) => Promise<any>;
 };
 
-// Discord.js ?��?类�?
+// Discord.js ?��?类�?
 declare module "discord.js" {
 	interface Client {
 		db: QuickDB;
@@ -48,14 +48,14 @@ declare module "discord.js" {
 	}
 }
 
-// ?�本?�择类�?
+// ?�本?�择类�?
 export interface VersionChoice {
 	value: string;
 	name: string;
 	localName: string;
 }
 
-// ?�闻类�?
+// ?�闻类�?
 export interface NewsItem {
 	post: {
 		post_id: string;
@@ -129,7 +129,7 @@ export interface NewsItem {
 	is_overseas_only: boolean;
 }
 
-// ?�户?�据类�?
+// ?�户?�据类�?
 export interface UserData {
 	uid: string;
 	nickname: string;
@@ -160,7 +160,7 @@ export interface UserData {
 	};
 }
 
-// 跃�??�据类�?
+// 跃�??�据类�?
 export interface WarpData {
 	gacha_id: string;
 	gacha_type: string;
@@ -181,7 +181,7 @@ export interface WarpResults {
 	regular: WarpData[];
 }
 
-// 模�??�设置类??
+// 模�??�设置类??
 export interface SimulatorSettings {
 	pityFive: number;
 	soft: number;
@@ -191,7 +191,7 @@ export interface SimulatorSettings {
 	guaranteeFive?: boolean;
 }
 
-// ?�令类�?
+// ?�令类�?
 export interface Command {
 	name: string;
 	description?: string;
@@ -207,13 +207,13 @@ export interface MessageCommandInterface {
 	execute: (message: Message, args: string[]) => Promise<void>;
 }
 
-// 翻�??�数类�?
+// 翻�??�数类�?
 export type TranslationFunction = (
 	key: string,
 	params?: Record<string, any>
 ) => string;
 
-// 工具?�数类�?
+// 工具?�数类�?
 export interface UtilityFunctions {
 	getRandomColor: () => string;
 	getUserLang: (userId: string) => Promise<string>;

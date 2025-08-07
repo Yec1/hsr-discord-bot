@@ -1,4 +1,4 @@
-import { client } from "@/index.js";
+import { client, commands } from "@/index.js";
 import { Events, Message } from "discord.js";
 
 const userIds: string[] = ["283946584461410305", "878830839822176287"];
@@ -19,9 +19,9 @@ client.on(Events.MessageCreate, async (message: Message) => {
 		.split(/ +/g);
 
 	const command =
-		client.commands.message.get(cmd?.toLowerCase() || "") ||
-		client.commands.message.find((c: any) =>
-			c.alias?.includes(cmd?.toLowerCase())
+		commands.message.get(cmd?.toLowerCase() || "") ||
+		commands.message.find((c: any) =>
+			c.aliases?.includes(cmd?.toLowerCase())
 		);
 
 	if (command) await command.execute(message, args);

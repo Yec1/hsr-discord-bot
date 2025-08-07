@@ -1,5 +1,4 @@
 import { Message, EmbedBuilder } from "discord.js";
-import type { TranslationFunction } from "@/types/index.js";
 import { client, database } from "@/index.js";
 import emoji from "@/assets/emoji.js";
 
@@ -25,15 +24,10 @@ export default {
 	name: "detail",
 	/**
 	 *
-	 * @param {Client} client
 	 * @param {Message} message
 	 * @param {String[]} args
 	 */
-	execute: async (
-		message: Message,
-		args: string[],
-		tr: TranslationFunction
-	) => {
+	execute: async (message: Message, args: string[]) => {
 		const id = args[0];
 		const data = (await database.get(`${id}`)) as UserData;
 
