@@ -1,5 +1,6 @@
 import { client, commands } from "@/index.js";
 import { Events, Message } from "discord.js";
+import type { MessageCommandType } from "@/types/index.js";
 
 const userIds: string[] = ["283946584461410305", "878830839822176287"];
 
@@ -20,9 +21,11 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 	const command =
 		commands.message.get(cmd?.toLowerCase() || "") ||
-		commands.message.find((c: any) =>
-			c.aliases?.includes(cmd?.toLowerCase())
+		commands.message.find((c: MessageCommandType) =>
+			c.aliases?.includes(cmd?.toLowerCase() || "")
 		);
 
-	if (command) await command.execute(message, args);
+	if (command) {
+		await (command as any).execute(message, args);
+	}
 });

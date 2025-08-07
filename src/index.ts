@@ -56,7 +56,10 @@ const database = new QuickDB();
 /**
  * @description 指令集合
  */
-const commands = {
+const commands: {
+	slash: Collection<string, SlashCommandType>;
+	message: Collection<string, MessageCommandType>;
+} = {
 	slash: new Collection<string, SlashCommandType>(),
 	message: new Collection<string, MessageCommandType>()
 };
@@ -67,7 +70,7 @@ const commands = {
  * @returns 訊息指令
  */
 async function getMessageCommands(paths: string[]) {
-	const result: any[] = [];
+	const result: MessageCommandType[] = [];
 
 	for (let path of paths) {
 		const fileUrl = `file://${path}`;
@@ -76,9 +79,9 @@ async function getMessageCommands(paths: string[]) {
 		const folder = splitted[splitted.length - 2];
 
 		if (file.name) {
-			const properties = { folder, ...file };
+			const properties: MessageCommandType = { folder, ...file };
 			commands.message.set(file.name, properties);
-			result.push(file);
+			result.push(properties);
 		}
 	}
 
