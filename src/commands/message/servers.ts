@@ -1,5 +1,5 @@
-import { Message, EmbedBuilder } from "discord.js";
-import { client } from "@/index.js";
+import { Message, EmbedBuilder, Guild } from "discord.js";
+import { cluster } from "@/index.js";
 
 export default {
 	name: "servers",
@@ -10,13 +10,24 @@ export default {
 	 */
 	execute: async (message: Message, args: string[]) => {
 		try {
-			// 獲取所有機器人所在的伺服器
-			const guilds = client.guilds.cache;
+			// 獲取所有 clusters 的伺服器資料
+			const allGuildsData = await cluster.broadcastEval((c: any) =>
+				c.guilds.cache.map((guild: Guild) => ({
+					id: guild.id,
+					name: guild.name,
+					memberCount: guild.memberCount,
+					ownerId: guild.ownerId,
+					iconURL: guild.iconURL()
+				}))
+			);
+
+			// 合併所有 clusters 的伺服器資料
+			const allGuilds = allGuildsData.flat();
 
 			// 按成員數量排序，取前20名
-			const topServers = guilds
+			const topServers = allGuilds
 				.sort((a, b) => b.memberCount - a.memberCount)
-				.first(20);
+				.slice(0, 20);
 
 			if (topServers.length === 0) {
 				return message.reply({
@@ -30,7 +41,7 @@ export default {
 				.setColor("#FF6B6B")
 				.setTimestamp()
 				.setFooter({
-					text: `總伺服器數量: ${guilds.size} | 總成員數量: ${guilds.reduce((acc, guild) => acc + guild.memberCount, 0).toLocaleString()}`
+					text: `總伺服器數量: ${allGuilds.length} | 總成員數量: ${allGuilds.reduce((acc, guild) => acc + guild.memberCount, 0).toLocaleString()}`
 				});
 
 			// 添加伺服器資訊
@@ -50,8 +61,8 @@ export default {
 
 			// 如果有伺服器圖標，設置為嵌入的縮圖
 			const firstServer = topServers[0];
-			if (firstServer?.iconURL()) {
-				embed.setThumbnail(firstServer.iconURL()!);
+			if (firstServer?.iconURL) {
+				embed.setThumbnail(firstServer.iconURL);
 			}
 
 			return message.reply({

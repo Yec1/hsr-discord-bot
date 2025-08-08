@@ -148,6 +148,7 @@ interface Skill {
 	point_type: number;
 	item_url?: string;
 	icon: string;
+	type?: string;
 	type_text?: string;
 	remake?: string;
 	level: number;
@@ -1361,22 +1362,14 @@ async function handleProfileDraw(
 			];
 
 			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setImage(`attachment://${image.name}`)
-						.setFooter({
-							text: tr("CostTime", {
-								requestTime: (
-									(requestEndTime - requestStartTime) /
-									1000
-								).toFixed(2),
-								drawTime: (
-									(drawEndTime - drawStartTime) /
-									1000
-								).toFixed(2)
-							})
-						})
-				],
+				contents: tr("CostTime", {
+					requestTime: (
+						(requestEndTime - requestStartTime) /
+						1000
+					).toFixed(2),
+					drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
+				}),
+				embeds: [],
 				components: components,
 				files: [image]
 			});
@@ -1416,58 +1409,43 @@ async function drawMainImage(
 		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
 
-		// 优化图片加载：使用优化的加载函数
 		const imageUrls = [
 			"./src/assets/image/warp/bg.jpg",
 			`${image_Header}/${playerData.player.avatar.icon}`
 		];
 
-		// 限制角色图片数量以提高性能
 		const visibleCharacters = playerData.characters.slice(
 			0,
-			Math.min(playerData.characters.length, 6) // 减少到6个
+			Math.min(playerData.characters.length, 8)
 		);
 		imageUrls.push(
 			...visibleCharacters.map(char => `${image_Header}/${char.preview}`)
 		);
 
-		// 限制活动图片数量
-		const visibleActivities = playerActivity?.info?.slice(0, 3) || []; // 减少到3个
+		const visibleActivities = playerActivity?.info?.slice(0, 5) || [];
 		imageUrls.push(
 			...visibleActivities.map(
 				activity => `${image_Header}/${activity.content.icon}`
 			)
 		);
 
-		// 使用优化的图片加载函数
-		const imagePromises = imageUrls.map(url =>
-			loadImageOptimized(url).catch(() => null)
+		const allImages = await Promise.all(
+			imageUrls.map(url => loadImageAsync(url))
 		);
 
-		const allImages = await Promise.all(imagePromises);
-
-		const bg = allImages[0];
-		const avatar = allImages[1];
+		const bg = allImages[0]?.image;
+		const avatar = allImages[1]?.image;
 		const charImages = allImages
 			.slice(2, 2 + visibleCharacters.length)
-			.filter(Boolean); // 过滤掉 null 值
+			.map(img => img?.image);
 		const playerActivityIcons = allImages
 			.slice(2 + visibleCharacters.length)
-			.filter(Boolean); // 过滤掉 null 值
+			.map(img => img?.image);
 
-		// 绘制背景
 		if (bg) {
 			ctx.drawImage(bg, 0, 0, 1920, 1080);
-		} else {
-			// 创建简单的背景
-			ctx.fillStyle = "#1a1a2e";
-			ctx.fillRect(0, 0, 1920, 1080);
 		}
 
-		// 优化绘制性能：设置合成模式
-		ctx.globalCompositeOperation = "source-over";
-
-		// 绘制头像
 		if (avatar) {
 			ctx.drawImage(avatar, 896, 70, 128, 128);
 		}
@@ -1480,7 +1458,6 @@ async function drawMainImage(
 			ctx.font = `${isBold ? "bold " : ""}${size}px 'URW DIN Arabic', Arial, sans-serif`;
 		};
 
-		// 绘制玩家信息
 		setupMainFont(40, true);
 		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
@@ -1506,11 +1483,11 @@ async function drawMainImage(
 			},
 			{
 				labelText: tr("profile_CharactersCount"),
-				valueText: `${playerData.player.space_info?.avatar_count || 0}`
+				valueText: `${playerData.player.space_info?.avatar_count}`
 			},
 			{
 				labelText: tr("profile_AchievementsCount"),
-				valueText: `${playerData.player.space_info?.achievement_count || 0}`
+				valueText: `${playerData.player.space_info?.achievement_count}`
 			}
 		];
 
@@ -1524,67 +1501,141 @@ async function drawMainImage(
 				const centerX = (xRange.start + xRange.end) / 2;
 				return [
 					{
-						labelX: centerX - 100,
-						valueX: centerX + 100,
-						y: 400
+						labelX: centerX,
+						labelY: 355,
+						valueX: centerX,
+						valueY: 400
 					}
 				];
 			}
 
-			const spacing = (xRange.end - xRange.start) / (count - 1);
-			return statsData.map((_, index) => ({
-				labelX: xRange.start + index * spacing - 100,
-				valueX: xRange.start + index * spacing + 100,
-				y: 400
-			}));
+			const totalWidth = xRange.end - xRange.start;
+			const spacing = totalWidth / (count - 1);
+
+			return statsData.map((stat, index) => {
+				const x = xRange.start + spacing * index;
+				return {
+					...stat,
+					labelX: x,
+					labelY: 355,
+					valueX: x,
+					valueY: 400
+				};
+			});
 		}
 
-		const positions = calculatePositions(profileStatsData, xRange);
-
-		// 批量绘制统计信息
-		setupMainFont(20);
+		const profileStats = calculatePositions(profileStatsData, xRange);
 		ctx.fillStyle = "white";
-		ctx.textAlign = "center";
 
-		for (let i = 0; i < profileStatsData.length; i++) {
-			const data = profileStatsData[i];
-			const pos = positions[i];
+		profileStats.forEach(stat => {
+			setupMainFont(30, true);
+			ctx.fillText(stat.labelText, stat.labelX, stat.labelY);
+		});
 
-			if (data && pos) {
-				ctx.fillText(data.labelText, pos.labelX, pos.y);
-				ctx.fillText(data.valueText, pos.valueX, pos.y);
+		profileStats.forEach(stat => {
+			setupNumberFont(32);
+			ctx.fillText(stat.valueText, stat.valueX, stat.valueY);
+		});
+
+		ctx.strokeStyle = "#fff";
+		ctx.beginPath();
+		ctx.moveTo(560, 435);
+		ctx.lineTo(1360, 435);
+		ctx.stroke();
+
+		const width =
+			(920 + (playerData.characters.length - 4) * 230) /
+			playerData.characters.length;
+
+		const characterRenderData = visibleCharacters.map((char, i) => {
+			const x =
+				520 - (playerData.characters.length - 4) * 115 + i * width;
+			const y = 716;
+			return { char, x, y, image: charImages[i] };
+		});
+
+		characterRenderData.forEach(data => {
+			if (data.image) {
+				ctx.drawImage(data.image, data.x, 460, 187, 256);
 			}
-		}
+		});
 
-		// 绘制角色图片（优化布局）
-		const charSpacing = 200;
-		const startX = 100;
-		const charY = 500;
+		ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+		characterRenderData.forEach(data => {
+			const { x, y } = data;
+			ctx.beginPath();
+			ctx.moveTo(x, y);
+			ctx.lineTo(x, y + 56);
+			ctx.quadraticCurveTo(x, y + 76, x + 20, y + 76);
+			ctx.lineTo(x + 167, y + 76);
+			ctx.quadraticCurveTo(x + 187, y + 76, x + 187, y + 56);
+			ctx.lineTo(x + 187, y);
+			ctx.closePath();
+			ctx.fill();
+		});
 
-		for (let i = 0; i < Math.min(charImages.length, 6); i++) {
-			const charImage = charImages[i];
-			if (charImage) {
-				const x = startX + i * charSpacing;
-				ctx.drawImage(charImage, x, charY, 150, 150);
+		setupMainFont(28, true);
+		characterRenderData.forEach(data => {
+			const { char, x, y } = data;
+			ctx.fillStyle = (char as any).pos <= 2 ? "#FFD89C" : "white";
+			ctx.fillText(char.name, x + 93, y + 35);
+		});
+
+		setupMainFont(20);
+		characterRenderData.forEach(data => {
+			const { char, x, y } = data;
+			ctx.fillText(
+				tr("level_Format", { level: char.level }),
+				x + 93,
+				y + 65
+			);
+		});
+
+		// Line2
+		ctx.strokeStyle = "#fff";
+		ctx.beginPath();
+		ctx.moveTo(560, 817);
+		ctx.lineTo(1360, 817);
+		ctx.stroke();
+
+		// Records
+		ctx.font = "bold 30px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+		ctx.fillStyle = "white";
+		ctx.fillText(tr("profile_Records"), 960, 860);
+
+		const records: any[] = [];
+		const chaosRecords = playerActivity?.info || [];
+
+		records?.forEach((record, index) => {
+			ctx.font = "24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+			ctx.textAlign = "left";
+			ctx.fillText(record.label, 720, 900 + index * 40);
+			ctx.font = "bold 24px 'URW DIN Arabic', Arial, sans-serif'";
+			ctx.textAlign = "right";
+			ctx.fillText(record.value, 1200, 900 + index * 40);
+		});
+
+		const iconPositions = chaosRecords?.map(record => {
+			const recordTextWidth = ctx.measureText(record.text).width;
+			return 980 - recordTextWidth / 2;
+		});
+
+		const minIconX = Math.min(...iconPositions);
+
+		chaosRecords?.forEach((record, index) => {
+			ctx.textAlign = "center";
+			ctx.font = "bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+			ctx.fillText(record.text, 980, 910 + index * 40);
+
+			const recordIcon = playerActivityIcons[index];
+			if (recordIcon) {
+				ctx.drawImage(recordIcon, minIconX, 880 + index * 40, 40, 40);
 			}
-		}
-
-		// 绘制活动图标（简化布局）
-		const activitySpacing = 120;
-		const activityStartX = 100;
-		const activityY = 700;
-
-		for (let i = 0; i < Math.min(playerActivityIcons.length, 3); i++) {
-			const activityIcon = playerActivityIcons[i];
-			if (activityIcon) {
-				const x = activityStartX + i * activitySpacing;
-				ctx.drawImage(activityIcon, x, activityY, 80, 80);
-			}
-		}
+		});
 
 		return canvas.toBuffer("image/png");
 	} catch (error) {
-		console.error("Error in drawMainImage:", error);
+		console.error(`MainPage Error: ${error}`);
 		return null;
 	}
 }
@@ -1929,7 +1980,7 @@ async function drawCharacterImage(
 
 			const light_coneResult = await loadImageAsync(
 				character.equip?.icon ||
-					`${image_Header}/image/light_cone_preview/${character.light_cone?.id}.png`
+					`${image_Header}/icon/light_cone/${character.light_cone?.id}.png`
 			);
 			const light_cone = light_coneResult?.image;
 			// 圖片靠左
@@ -2071,22 +2122,121 @@ async function drawCharacterImage(
 		const servantSkillsCount = hasServantSkills
 			? character.servant_detail?.servant_skills?.length || 0
 			: 0;
-		const baseSkillX = hasServantSkills
-			? 650 - servantSkillsCount * 45
-			: 650;
 
-		const skillPromises = (character.skills || [])
-			.map((skill, i) => {
-				if (skill.point_type == 2) {
-					return loadImageAsync(
-						skill.item_url || image_Header + "/" + skill.icon
-					).then(skillImageResult => ({
-						skillImage: skillImageResult?.image,
-						type_text: skill.type_text || skill.remake,
-						level: skill.level
-					}));
+		const allSkills = character.skills || [];
+
+		// 過濾主要技能（普攻、戰技、終結技、天賦、秘技）- 最多5個
+		const basicSkills = allSkills
+			.filter(skill => {
+				// point_type 2 是主要技能（戰鬥技能）
+				if (skill.point_type === 2) {
+					return true;
 				}
-				return null;
+
+				// 對於沒有 point_type 的舊格式，檢查基本技能類型
+				if (
+					!skill.point_type &&
+					skill.icon &&
+					(skill.type_text || skill.remake)
+				) {
+					const skillType = skill.type || "";
+					const skillTypeText = skill.type_text || "";
+
+					// 排除憶靈技能
+					if (
+						skillType === "MemospriteSkill" ||
+						skillTypeText === "憶靈技" ||
+						skillType === "MemospriteTalent" ||
+						skillTypeText === "憶靈天賦"
+					) {
+						return false;
+					}
+
+					// 其他基本技能
+					return true;
+				}
+
+				return false;
+			})
+			.slice(0, 5); // 最多只取前5個主要技能
+
+		// 過濾憶靈技能 - 第一個憶靈技和第一個憶靈天賦
+		let foundMemospriteSkill = false;
+		let foundMemospriteTalent = false;
+
+		const memospriteSkills = allSkills.filter(skill => {
+			if (!skill.icon || (!skill.type_text && !skill.remake)) {
+				return false;
+			}
+
+			const skillType = skill.type || "";
+			const skillTypeText = skill.type_text || "";
+
+			// 憶靈技：只顯示第一個
+			if (skillType === "MemospriteSkill" || skillTypeText === "憶靈技") {
+				if (!foundMemospriteSkill) {
+					foundMemospriteSkill = true;
+					return true;
+				}
+				return false;
+			}
+
+			// 憶靈天賦：只顯示第一個
+			if (
+				skillType === "MemospriteTalent" ||
+				skillTypeText === "憶靈天賦"
+			) {
+				if (!foundMemospriteTalent) {
+					foundMemospriteTalent = true;
+					return true;
+				}
+				return false;
+			}
+
+			return false;
+		});
+
+		// 合併技能列表：主要技能 + 憶靈技能
+		const mainSkills = [...basicSkills, ...memospriteSkills];
+
+		// 計算憶靈技能數量來調整技能排版
+		const memospriteSkillsCount = mainSkills.filter(skill => {
+			const skillType = skill.type || "";
+			const skillTypeText = skill.type_text || "";
+			return (
+				skillType === "MemospriteSkill" ||
+				skillTypeText === "憶靈技" ||
+				skillType === "MemospriteTalent" ||
+				skillTypeText === "憶靈天賦"
+			);
+		}).length;
+
+		// 總的額外技能數量
+		const totalExtraSkillsCount =
+			servantSkillsCount + memospriteSkillsCount;
+		const baseSkillX =
+			totalExtraSkillsCount > 0 ? 650 - totalExtraSkillsCount * 45 : 650;
+
+		const skillPromises = mainSkills
+			.map((skill, i) => {
+				// 處理圖片 URL
+				const imageUrl =
+					skill.item_url ||
+					(skill.icon
+						? skill.icon.startsWith("http")
+							? skill.icon
+							: `${image_Header}/${skill.icon}`
+						: null);
+
+				if (!imageUrl) {
+					return null;
+				}
+
+				return loadImageAsync(imageUrl).then(skillImageResult => ({
+					skillImage: skillImageResult?.image,
+					type_text: skill.type_text || skill.remake || "技能",
+					level: skill.level || 1
+				}));
 			})
 			.filter(Boolean);
 
@@ -2111,10 +2261,41 @@ async function drawCharacterImage(
 			);
 			setupFont(ctx, 16, true);
 			let skillColor = "white";
-			if (character.rank >= 3 && (index === 0 || index === 2))
-				skillColor = "#DCC491";
-			if (character.rank >= 5 && (index === 1 || index === 3))
-				skillColor = "#DCC491";
+
+			// 檢查是否為憶靈技能
+			const currentSkill = skills[index];
+			const isMemosspriteSkill =
+				currentSkill &&
+				((currentSkill.type_text &&
+					(currentSkill.type_text === "憶靈技" ||
+						currentSkill.type_text === "憶靈天賦")) ||
+					(skill?.type_text &&
+						(skill.type_text === "憶靈技" ||
+							skill.type_text === "憶靈天賦")));
+
+			if (isMemosspriteSkill) {
+				// 憶靈技能使用和 servantSkill 相同的顏色邏輯
+				const memospriteIndex =
+					skills
+						.slice(0, index + 1)
+						.filter(
+							s =>
+								s?.type_text === "憶靈技" ||
+								s?.type_text === "憶靈天賦"
+						).length - 1;
+
+				if (character.rank >= 3 && memospriteIndex === 1)
+					skillColor = "#DCC491";
+				if (character.rank >= 5 && memospriteIndex === 0)
+					skillColor = "#DCC491";
+			} else {
+				// 主要技能的顏色邏輯
+				if (character.rank >= 3 && (index === 0 || index === 2))
+					skillColor = "#DCC491";
+				if (character.rank >= 5 && (index === 1 || index === 3))
+					skillColor = "#DCC491";
+			}
+
 			ctx.fillStyle = skillColor;
 			ctx.fillText(
 				`${tr("level")} ${skill?.level || 0}`,
