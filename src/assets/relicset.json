@@ -1,0 +1,1243 @@
+{
+  "101": {
+    "icon": "SpriteOutput/ItemIcon/71000.png",
+    "en": "Passerby of Wandering Cloud",
+    "set": {
+      "2": {
+        "en": "Increases Outgoing Healing by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226
+        ],
+        "kr": "치유량 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "治疗量提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "治癒量+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "At the start of the battle, immediately regenerates 1 Skill Point.",
+        "ParamList": [],
+        "kr": "전투 시작 시 즉시 아군의 전투 스킬 포인트를 1pt 회복한다",
+        "cn": "在战斗开始时，立即为我方恢复1个战技点。",
+        "jp": "戦闘開始時、SPを1回復する。"
+      }
+    },
+    "kr": "흔적을 남기지 않은 과객",
+    "cn": "云无留迹的过客",
+    "jp": "流雲無痕の過客"
+  },
+  "102": {
+    "icon": "SpriteOutput/ItemIcon/71001.png",
+    "en": "Musketeer of Wild Wheat",
+    "set": {
+      "2": {
+        "en": "Increases ATK by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871
+        ],
+        "kr": "공격력 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "攻击力提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "攻撃力+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "The wearer's SPD increases by <unbreak>#1[i]%</unbreak> and DMG dealt by Basic ATK increases by <unbreak>#2[i]%</unbreak>.",
+        "ParamList": [
+          0.060000000055879354,
+          0.10000000009313226
+        ],
+        "kr": "장착한 캐릭터의 속도가 <unbreak>#1[i]%</unbreak> 증가한다. 일반 공격이 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
+        "cn": "使装备者的速度提高<unbreak>#1[i]%</unbreak>，普攻造成的伤害提高<unbreak>#2[i]%</unbreak>。",
+        "jp": "装備キャラの速度+<unbreak>#1[i]%</unbreak>、通常攻撃によるダメージ+<unbreak>#2[i]%</unbreak>。"
+      }
+    },
+    "kr": "들이삭과 동행하는 거너",
+    "cn": "野穗伴行的快枪手",
+    "jp": "草の穂ガンマン"
+  },
+  "103": {
+    "icon": "SpriteOutput/ItemIcon/71002.png",
+    "en": "Knight of Purity Palace",
+    "set": {
+      "2": {
+        "en": "Increases DEF by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.1500000001396984
+        ],
+        "kr": "방어력 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "防御力提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "防御力+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "Increases the max DMG that can be absorbed by the Shield created by the wearer by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.20000000018626451
+        ],
+        "kr": "장착한 캐릭터가 제공하는 실드량이 <unbreak>#1[i]%</unbreak> 증가한다",
+        "cn": "使装备者提供的护盾量提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "装備キャラが付与するバリアの耐久値+<unbreak>#1[i]%</unbreak>。"
+      }
+    },
+    "kr": "정토 교황의 팔라딘",
+    "cn": "净庭教宗的圣骑士",
+    "jp": "純庭教会の聖騎士"
+  },
+  "104": {
+    "icon": "SpriteOutput/ItemIcon/71003.png",
+    "en": "Hunter of Glacial Forest",
+    "set": {
+      "2": {
+        "en": "Increases Ice DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226
+        ],
+        "kr": "얼음 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "冰属性伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "氷属性ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "After the wearer uses their Ultimate, their CRIT DMG increases by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s).",
+        "ParamList": [
+          0.25000000023283064,
+          2
+        ],
+        "kr": "장착한 캐릭터는 필살기 발동 시 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#2[i]</unbreak>턴",
+        "cn": "当装备者施放终结技时，暴击伤害提高<unbreak>#1[i]%</unbreak>，持续<unbreak>#2[i]</unbreak>回合。",
+        "jp": "装備キャラが必殺技を発動した時、会心ダメージ+<unbreak>#1[i]%</unbreak>、<unbreak>#2[i]</unbreak>ターン継続。"
+      }
+    },
+    "kr": "혹한 밀림의 사냥꾼",
+    "cn": "密林卧雪的猎人",
+    "jp": "雪の密林の狩人"
+  },
+  "105": {
+    "icon": "SpriteOutput/ItemIcon/71004.png",
+    "en": "Champion of Streetwise Boxing",
+    "set": {
+      "2": {
+        "en": "Increases Physical DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226
+        ],
+        "kr": "물리 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "物理属性伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "物理属性ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "After the wearer attacks or is hit, their ATK increases by <unbreak>#1[i]%</unbreak> for the rest of the battle. This effect can stack up to <unbreak>#2[i]</unbreak> time(s).",
+        "ParamList": [
+          0.05000000004656613,
+          5
+        ],
+        "kr": "장착한 캐릭터는 공격 발동 혹은 피격 후 해당 전투에서 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 최대 중첩수: <unbreak>#2[i]</unbreak>스택",
+        "cn": "当装备者施放攻击或受到攻击后，其在本场战斗中攻击力提高<unbreak>#1[i]%</unbreak>，最多叠加<unbreak>#2[i]</unbreak>层。",
+        "jp": "装備キャラが攻撃を行う、または攻撃を受けた後、今回の戦闘中の攻撃力+<unbreak>#1[i]%</unbreak>、最大で<unbreak>#2[i]</unbreak>層累積できる。"
+      }
+    },
+    "kr": "스트리트 격투왕",
+    "cn": "街头出身的拳王",
+    "jp": "成り上がりチャンピオン"
+  },
+  "106": {
+    "icon": "SpriteOutput/ItemIcon/71005.png",
+    "en": "Guard of Wuthering Snow",
+    "set": {
+      "2": {
+        "en": "Reduces DMG taken by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.0800000000745058
+        ],
+        "kr": "받는 피해 <unbreak>#1[i]%</unbreak> 감소",
+        "cn": "受到伤害降低<unbreak>#1[i]%</unbreak>。",
+        "jp": "受けるダメージ-<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "At the beginning of the turn, if the wearer's HP percentage is equal to or less than <unbreak>#1[i]%</unbreak>, restores HP equal to <unbreak>#2[i]%</unbreak> of their Max HP and regenerates <unbreak>#3[i]</unbreak> Energy.",
+        "ParamList": [
+          0.5000000004656613,
+          0.0800000000745058,
+          5
+        ],
+        "kr": "턴 시작 시 장착한 캐릭터의 현재 HP 백분율이 <unbreak>#1[i]%</unbreak> 이하일 경우, 자신 HP 최대치 <unbreak>#2[i]%</unbreak>만큼의 HP를 회복하고 에너지를 <unbreak>#3[i]</unbreak>pt 회복한다",
+        "cn": "回合开始时，如果装备者当前生命值百分比小于等于<unbreak>#1[i]%</unbreak>，则回复等同于自身生命上限<unbreak>#2[i]%</unbreak>的生命值，并恢复<unbreak>#3[i]</unbreak>点能量。",
+        "jp": "ターンが回ってきた時、装備キャラの残りHPが<unbreak>#1[i]%</unbreak>以下の場合、HPを最大HP<unbreak>#2[i]%</unbreak>分回復し、EPを<unbreak>#3[i]</unbreak>回復する。"
+      }
+    },
+    "kr": "눈보라에 맞서는 철위대",
+    "cn": "戍卫风雪的铁卫",
+    "jp": "吹雪と対峙する兵士"
+  },
+  "107": {
+    "icon": "SpriteOutput/ItemIcon/71006.png",
+    "en": "Firesmith of Lava-Forging",
+    "set": {
+      "2": {
+        "en": "Increases Fire DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226
+        ],
+        "kr": "화염 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "火属性伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "炎属性ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "Increases DMG by the wearer's Skill by <unbreak>#1[i]%</unbreak>. After unleashing Ultimate, increases the wearer's Fire DMG by <unbreak>#2[i]%</unbreak> for the next attack.",
+        "ParamList": [
+          0.12000000011175871,
+          0.12000000011175871
+        ],
+        "kr": "장착한 캐릭터의 전투 스킬이 가하는 피해가 <unbreak>#1[i]%</unbreak> 증가하고, 필살기 발동 후 다음번 공격이 가하는 화염 속성 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
+        "cn": "使装备者战技造成的伤害提高<unbreak>#1[i]%</unbreak>，并使施放终结技后的下一次攻击造成的火属性伤害提高<unbreak>#2[i]%</unbreak>。",
+        "jp": "装備キャラの戦闘スキルによるダメージ+<unbreak>#1[i]%</unbreak>。必殺技を発動した後、次の攻撃の炎属性ダメージ+<unbreak>#2[i]%</unbreak>。"
+      }
+    },
+    "kr": "용암 단조의 화장(火匠)",
+    "cn": "熔岩锻铸的火匠",
+    "jp": "溶岩で鍛造する火匠"
+  },
+  "108": {
+    "icon": "SpriteOutput/ItemIcon/71007.png",
+    "en": "Genius of Brilliant Stars",
+    "set": {
+      "2": {
+        "en": "Increases Quantum DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226
+        ],
+        "kr": "양자 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "量子属性伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "量子属性ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When the wearer deals DMG to the target enemy, ignores <unbreak>#1[i]%</unbreak> DEF. If the target enemy has Quantum Weakness, the wearer additionally ignores <unbreak>#2[i]%</unbreak> DEF.",
+        "ParamList": [
+          0.10000000009313226,
+          0.10000000009313226
+        ],
+        "kr": "장착한 캐릭터는 적에게 피해를 줄 때 <unbreak>#1[i]%</unbreak>의 방어력을 무시한다. 목표가 양자 속성 약점을 보유할 경우, 추가로 <unbreak>#2[i]%</unbreak>의 방어력을 무시한다",
+        "cn": "当装备者对敌方目标造成伤害时，无视其<unbreak>#1[i]%</unbreak>的防御力。若目标拥有量子属性弱点，额外无视其<unbreak>#2[i]%</unbreak>的防御力。",
+        "jp": "装備キャラが敵にダメージを与えた時、敵の防御力を<unbreak>#1[i]%</unbreak>無視する。敵に量子属性の弱点がある場合、さらに防御力を<unbreak>#2[i]%</unbreak>無視する。"
+      }
+    },
+    "kr": "별처럼 빛나는 천재",
+    "cn": "繁星璀璨的天才",
+    "jp": "星の如く輝く天才"
+  },
+  "109": {
+    "icon": "SpriteOutput/ItemIcon/71008.png",
+    "en": "Band of Sizzling Thunder",
+    "set": {
+      "2": {
+        "en": "Increases Lightning DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226
+        ],
+        "kr": "번개 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "雷属性伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "雷属性ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When the wearer uses their Skill, increases the wearer's ATK by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s).",
+        "ParamList": [
+          0.20000000018626451,
+          1
+        ],
+        "kr": "장착한 캐릭터는 전투 스킬 발동 시 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#2[i]</unbreak>턴",
+        "cn": "当装备者施放战技时，使装备者的攻击力提高<unbreak>#1[i]%</unbreak>，持续<unbreak>#2[i]</unbreak>回合。",
+        "jp": "装備キャラが戦闘スキルを発動した時、装備キャラの攻撃力+<unbreak>#1[i]%</unbreak>、<unbreak>#2[i]</unbreak>ターン継続。"
+      }
+    },
+    "kr": "뇌전을 울리는 밴드",
+    "cn": "激奏雷电的乐队",
+    "jp": "雷鳴轟くバンド"
+  },
+  "110": {
+    "icon": "SpriteOutput/ItemIcon/71009.png",
+    "en": "Eagle of Twilight Line",
+    "set": {
+      "2": {
+        "en": "Increases Wind DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226
+        ],
+        "kr": "바람 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "风属性伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "風属性ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "After the wearer uses their Ultimate, their action is Advanced Forward by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.25000000023283064
+        ],
+        "kr": "장착한 캐릭터는 필살기 발동 후 행동 게이지가 <unbreak>#1[i]%</unbreak> 증가한다",
+        "cn": "当装备者施放终结技后，使其行动提前<unbreak>#1[i]%</unbreak>。",
+        "jp": "装備キャラが必殺技を発動した後、行動順が<unbreak>#1[i]%</unbreak>早まる。"
+      }
+    },
+    "kr": "밤낮의 경계를 나는 매",
+    "cn": "晨昏交界的翔鹰",
+    "jp": "昼夜の狭間を翔ける鷹"
+  },
+  "111": {
+    "icon": "SpriteOutput/ItemIcon/71010.png",
+    "en": "Thief of Shooting Meteor",
+    "set": {
+      "2": {
+        "en": "Increases Break Effect by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.1600000001490116
+        ],
+        "kr": "격파 특수효과 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "击破特攻提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "撃破特効+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "Increases the wearer's Break Effect by <unbreak>#1[i]%</unbreak>. After the wearer inflicts Weakness Break on an enemy, regenerates <unbreak>#2[i]</unbreak> Energy.",
+        "ParamList": [
+          0.1600000001490116,
+          3
+        ],
+        "kr": "장착한 캐릭터의 격파 특수효과가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터는 적의 약점을 격파한 후 에너지를 <unbreak>#2[i]</unbreak>pt 회복한다",
+        "cn": "使装备者的击破特攻提高<unbreak>#1[i]%</unbreak>。当装备者击破敌方目标弱点后，恢复<unbreak>#2[i]</unbreak>点能量。",
+        "jp": "装備キャラの撃破特効+<unbreak>#1[i]%</unbreak>。装備キャラが敵を弱点撃破した後、EPを<unbreak>#2[i]</unbreak>回復する。"
+      }
+    },
+    "kr": "유성을 쫓는 괴도",
+    "cn": "流星追迹的怪盗",
+    "jp": "流星の跡を追う怪盗"
+  },
+  "112": {
+    "icon": "SpriteOutput/ItemIcon/71011.png",
+    "en": "Wastelander of Banditry Desert",
+    "set": {
+      "2": {
+        "en": "Increases Imaginary DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226
+        ],
+        "kr": "허수 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "虚数属性伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "虚数属性ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When dealing DMG to debuffed enemy targets, the wearer has their CRIT Rate increased by <unbreak>#1[i]%</unbreak>. And when they deal DMG to Imprisoned enemy targets, their CRIT DMG increases by <unbreak>#2[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226,
+          0.20000000018626451
+        ],
+        "kr": "장착한 캐릭터가 디버프 효과에 빠진 적에게 피해를 가할 시 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 속박 상태에 빠진 적에게 피해를 가할 시 치명타 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
+        "cn": "装备者对陷入负面效果的敌方目标造成伤害时暴击率提高<unbreak>#1[i]%</unbreak>，对陷入禁锢状态的敌方目标造成伤害时暴击伤害提高<unbreak>#2[i]%</unbreak>。",
+        "jp": "デバフ状態の敵にダメージを与える時、装備キャラの会心率+<unbreak>#1[i]%</unbreak>。禁錮状態の敵にダメージを与える時、会心ダメージ+<unbreak>#2[i]%</unbreak>。"
+      }
+    },
+    "kr": "황무지의 도적, 황야인",
+    "cn": "盗匪荒漠的废土客",
+    "jp": "荒地で盗みを働く廃土客"
+  },
+  "113": {
+    "icon": "SpriteOutput/ItemIcon/71020.png",
+    "en": "Longevous Disciple",
+    "set": {
+      "2": {
+        "en": "Increases Max HP by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871
+        ],
+        "kr": "HP 최대치 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "生命上限提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "最大HP+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When the wearer is hit or has their HP consumed by an ally or themselves, their CRIT Rate increases by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s) and up to <unbreak>#3[i]</unbreak> stacks.",
+        "ParamList": [
+          0.0800000000745058,
+          2,
+          2
+        ],
+        "kr": "장착한 캐릭터가 피격되거나 아군에 의해 HP가 소모되면 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#2[i]</unbreak>턴. 해당 효과 최대 중첩수: <unbreak>#3[i]</unbreak>스택",
+        "cn": "当装备者受到攻击或被我方目标消耗生命值后，暴击率提高<unbreak>#1[i]%</unbreak>，持续<unbreak>#2[i]</unbreak>回合，该效果最多叠加<unbreak>#3[i]</unbreak>层。",
+        "jp": "装備キャラが攻撃を受ける、または味方によってHPを消費させられた後、会心率+<unbreak>#1[i]%</unbreak>、<unbreak>#2[i]</unbreak>ターン継続。この効果は最大で<unbreak>#3[i]</unbreak>層累積できる。"
+      }
+    },
+    "kr": "장수를 원하는 제자",
+    "cn": "宝命长存的莳者",
+    "jp": "宝命長存の蒔者"
+  },
+  "114": {
+    "icon": "SpriteOutput/ItemIcon/71021.png",
+    "en": "Messenger Traversing Hackerspace",
+    "set": {
+      "2": {
+        "en": "Increases SPD by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.060000000055879354
+        ],
+        "kr": "속도 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "速度提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "速度+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When the wearer uses their Ultimate on an ally, SPD for all allies increases by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s). This effect cannot be stacked.",
+        "ParamList": [
+          0.12000000011175871,
+          1
+        ],
+        "kr": "장착한 캐릭터가 아군에게 필살기 발동 시 모든 아군의 속도가 <unbreak>#1[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#2[i]</unbreak>턴. 해당 효과는 중첩되지 않는다",
+        "cn": "当装备者对我方目标施放终结技时，我方全体速度提高<unbreak>#1[i]%</unbreak>，持续<unbreak>#2[i]</unbreak>回合，该效果无法叠加。",
+        "jp": "装備キャラが味方に対して必殺技を発動した時、味方全体の速度+<unbreak>#1[i]%</unbreak>、<unbreak>#2[i]</unbreak>ターン継続。この効果は累積できない。"
+      }
+    },
+    "kr": "가상공간을 누비는 메신저",
+    "cn": "骇域漫游的信使",
+    "jp": "仮想空間を漫遊するメッセンジャー"
+  },
+  "115": {
+    "icon": "SpriteOutput/ItemIcon/71024.png",
+    "en": "The Ashblazing Grand Duke",
+    "set": {
+      "2": {
+        "en": "Increases the DMG dealt by Follow-up ATK by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.20000000018626451
+        ],
+        "kr": "추가 공격으로 가하는 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "追加攻击造成的伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "追加攻撃ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When the wearer uses a Follow-up ATK, increases the wearer's ATK by <unbreak>#1[i]%</unbreak> for every time the Follow-up ATK deals DMG. This effect can stack up to <unbreak>#2[i]</unbreak> time(s) and lasts for <unbreak>#3[i]</unbreak> turn(s). This effect is removed the next time the wearer uses a Follow-up ATK.",
+        "ParamList": [
+          0.060000000055879354,
+          8,
+          3
+        ],
+        "kr": "장착한 캐릭터가 추가 공격을 가할 시, 추가 공격이 가한 피해 횟수에 따라 피해를 가할 때마다 장착한 캐릭터의 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 최대 중첩수: <unbreak>#2[i]</unbreak>회. 지속 시간: <unbreak>#3[i]</unbreak>턴. 해당 효과는 장착한 캐릭터가 다음 추가 공격 발동 시 해제된다",
+        "cn": "装备者施放追加攻击时，根据追加攻击造成伤害的次数，每次造成伤害时使装备者的攻击力提高<unbreak>#1[i]%</unbreak>，最多叠加<unbreak>#2[i]</unbreak>次，持续<unbreak>#3[i]</unbreak>回合。该效果在装备者下一次施放追加攻击时移除。",
+        "jp": "装備キャラが追加攻撃を行った時、追加攻撃のヒット数に応じて、ダメージを与えるたびに装備キャラの攻撃力+<unbreak>#1[i]%</unbreak>、最大<unbreak>#2[i]</unbreak>回まで累積でき、<unbreak>#3[i]</unbreak>ターン継続。この効果は、装備キャラが次の追加攻撃を行った時に解除される。"
+      }
+    },
+    "kr": "재와 뼈마저 불사르는 대공",
+    "cn": "毁烬焚骨的大公",
+    "jp": "灰燼を燃やし尽くす大公"
+  },
+  "116": {
+    "icon": "SpriteOutput/ItemIcon/71025.png",
+    "en": "Prisoner in Deep Confinement",
+    "set": {
+      "2": {
+        "en": "Increases ATK by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871
+        ],
+        "kr": "공격력 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "攻击力提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "攻撃力+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "For every DoT the enemy target is afflicted with, the wearer will ignore <unbreak>#1[i]%</unbreak> of its DEF when dealing DMG to it. This effect is valid for a max of <unbreak>#2[i]</unbreak> DoTs.",
+        "ParamList": [
+          0.060000000055879354,
+          3
+        ],
+        "kr": "장착한 캐릭터가 적에게 피해를 가할 시 적이 받는 지속 피해 효과 1개마다 대상의 방어력을 <unbreak>#1[i]%</unbreak> 무시한다. 지속 피해 효과는 최대 <unbreak>#2[i]</unbreak>개까지 계산한다",
+        "cn": "敌方目标每承受1个持续伤害效果，装备者对其造成伤害时就无视其<unbreak>#1[i]%</unbreak>的防御力，最多计入<unbreak>#2[i]</unbreak>个持续伤害效果。",
+        "jp": "敵に付与された持続ダメージ系デバフが1つにつき、装備キャラがその敵にダメージを与える時に防御力を<unbreak>#1[i]%</unbreak>無視する。持続ダメージ系デバフは最大で<unbreak>#2[i]</unbreak>つまでカウントされる。"
+      }
+    },
+    "kr": "깊은 감옥에 수감된 죄수",
+    "cn": "幽锁深牢的系囚",
+    "jp": "深い牢獄の囚人"
+  },
+  "117": {
+    "icon": "SpriteOutput/ItemIcon/71028.png",
+    "en": "Pioneer Diver of Dead Waters",
+    "set": {
+      "2": {
+        "en": "Increases DMG dealt to enemies with debuffs by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871
+        ],
+        "kr": "디버프 상태의 영향을 받은 적에게 가하는 피해가 <unbreak>#1[i]%</unbreak> 증가한다",
+        "cn": "对受负面状态影响的敌人造成的伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "デバフの影響を受けている敵への与ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "Increases CRIT Rate by <unbreak>#1[i]%</unbreak>. The wearer deals <unbreak>#2[i]%</unbreak>/<unbreak>#3[i]%</unbreak> increased CRIT DMG to enemies with at least <unbreak>#4[i]</unbreak>/<unbreak>#5[i]</unbreak> debuffs. After the wearer inflicts a debuff on enemy targets, the aforementioned effects increase by <unbreak>100%</unbreak>, lasting for <unbreak>#6[i]</unbreak> turn(s).",
+        "ParamList": [
+          0.0400000000372529,
+          0.0800000000745058,
+          0.12000000011175871,
+          2,
+          3,
+          1
+        ],
+        "kr": "치명타 확률이 <unbreak>#1[i]%</unbreak> 증가하고 장착한 캐릭터가 <unbreak>#4[i]</unbreak>/<unbreak>#5[i]</unbreak>개 이상의 디버프 효과에 빠진 적에게 가하는 치명타 피해가 <unbreak>#2[i]%</unbreak>/<unbreak>#3[i]%</unbreak> 증가한다. 장착한 캐릭터가 적에게 디버프 효과 부여 시 상기 효과가 <unbreak>100%</unbreak> 증가한다, 지속 시간: <unbreak>#6[i]</unbreak>턴",
+        "cn": "暴击率提高<unbreak>#1[i]%</unbreak>，装备者对陷入不少于<unbreak>#4[i]</unbreak>/<unbreak>#5[i]</unbreak>个负面效果的敌方目标造成的暴击伤害提高<unbreak>#2[i]%</unbreak>/<unbreak>#3[i]%</unbreak>。装备者对敌方目标施加负面效果后，上述效果提高<unbreak>100%</unbreak>，持续<unbreak>#6[i]</unbreak>回合。",
+        "jp": "会心率+<unbreak>#1[i]%</unbreak>。デバフを<unbreak>#4[i]</unbreak>/<unbreak>#5[i]</unbreak>つ以上付与されている敵に対する、装備キャラの会心ダメージ+<unbreak>#2[i]%</unbreak>/<unbreak>#3[i]%</unbreak>。装備キャラが敵にデバフを付与した後、上記の効果が2倍になる、<unbreak>#6[i]</unbreak>ターン継続。"
+      }
+    },
+    "kr": "사수에 잠수한 선구자",
+    "cn": "死水深潜的先驱",
+    "jp": "死水に潜る先駆者"
+  },
+  "118": {
+    "icon": "SpriteOutput/ItemIcon/71029.png",
+    "en": "Watchmaker, Master of Dream Machinations",
+    "set": {
+      "2": {
+        "en": "Increases Break Effect by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.1600000001490116
+        ],
+        "kr": "격파 특수효과 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "击破特攻提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "撃破特効+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When the wearer uses their Ultimate on an ally, all allies' Break Effect increases by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s). This effect cannot be stacked.",
+        "ParamList": [
+          0.3000000002793968,
+          2
+        ],
+        "kr": "장착한 캐릭터가 아군에게 필살기 발동 시, 모든 아군의 격파 특수효과가 <unbreak>#1[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#2[i]</unbreak>턴. 해당 효과는 중첩할 수 없다",
+        "cn": "当装备者对我方目标施放终结技时，我方全体击破特攻提高<unbreak>#1[i]%</unbreak>，持续<unbreak>#2[i]</unbreak>回合，该效果无法叠加。",
+        "jp": "装備キャラが味方に対して必殺技を発動する時、味方全体の撃破特効+<unbreak>#1[i]%</unbreak>、<unbreak>#2[i]</unbreak>ターン継続。この効果は累積できない。"
+      }
+    },
+    "kr": "꿈을 조작하는 시계공",
+    "cn": "机心戏梦的钟表匠",
+    "jp": "夢を弄ぶ時計屋"
+  },
+  "119": {
+    "icon": "SpriteOutput/ItemIcon/71032.png",
+    "en": "Iron Cavalry Against the Scourge",
+    "set": {
+      "2": {
+        "en": "Increases Break Effect by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.1600000001490116
+        ],
+        "kr": "격파 특수효과 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "击破特攻提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "撃破特効+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "If the wearer's Break Effect is <unbreak>#1[i]%</unbreak> or higher, the Break DMG dealt to the enemy target ignores <unbreak>#3[i]%</unbreak> of their DEF. If the wearer's Break Effect is <unbreak>#2[i]%</unbreak> or higher, the Super Break DMG dealt to the enemy target additionally ignores <unbreak>#4[i]%</unbreak> of their DEF.",
+        "ParamList": [
+          1.5000000004656613,
+          2.5000000004656613,
+          0.10000000009313226,
+          0.1500000001396984
+        ],
+        "kr": "장착한 캐릭터의 격파 특수효과가 <unbreak>#1[i]%</unbreak> 이상이면 적에게 가하는 격파 피해가 해당 적의 방어력을 <unbreak>#3[i]%</unbreak> 무시한다. 장착한 캐릭터의 격파 특수효과가 <unbreak>#2[i]%</unbreak> 이상이면 적에게 가하는 슈퍼 격파 피해가 적의 방어력을 <unbreak>#4[i]%</unbreak> 추가로 무시한다",
+        "cn": "当装备者的击破特攻大于等于<unbreak>#1[i]%</unbreak>时，对敌方目标造成的击破伤害无视其<unbreak>#3[i]%</unbreak>的防御力。当装备者的击破特攻大于等于<unbreak>#2[i]%</unbreak>时，对敌方目标造成的超击破伤害额外无视其<unbreak>#4[i]%</unbreak>的防御力。",
+        "jp": "装備キャラの撃破特効が<unbreak>#1[i]%</unbreak>以上の時、敵に与える弱点撃破ダメージが防御力を<unbreak>#3[i]%</unbreak>無視する。装備キャラの撃破特効が<unbreak>#2[i]%</unbreak>以上の時、さらに敵に与える超撃破ダメージが防御力を<unbreak>#4[i]%</unbreak>無視する。"
+      }
+    },
+    "kr": "곤충 재앙을 잠재우는 철기군",
+    "cn": "荡除蠹灾的铁骑",
+    "jp": "蝗害を一掃せし鉄騎"
+  },
+  "120": {
+    "icon": "SpriteOutput/ItemIcon/71033.png",
+    "en": "The Wind-Soaring Valorous",
+    "set": {
+      "2": {
+        "en": "Increases ATK by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871
+        ],
+        "kr": "공격력 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "攻击力提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "攻撃力+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. After the wearer uses a Follow-up ATK, increases DMG dealt by Ultimate by <unbreak>#2[i]%</unbreak>, lasting for <unbreak>#3[i]</unbreak> turn(s).",
+        "ParamList": [
+          0.060000000055879354,
+          0.3600000003352761,
+          1
+        ],
+        "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가하고, 장착한 캐릭터가 추가 공격 발동 시 필살기가 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#3[i]</unbreak>턴",
+        "cn": "使装备者的暴击率提高<unbreak>#1[i]%</unbreak>，装备者施放追加攻击时，使终结技造成的伤害提高<unbreak>#2[i]%</unbreak>，持续<unbreak>#3[i]</unbreak>回合。",
+        "jp": "装備キャラの会心率+<unbreak>#1[i]%</unbreak>。装備キャラが追加攻撃を行う時、必殺技によるダメージ+<unbreak>#2[i]%</unbreak>、<unbreak>#3[i]</unbreak>ターン継続。"
+      }
+    },
+    "kr": "바람과 구름을 가르는 용맹함",
+    "cn": "风举云飞的勇烈",
+    "jp": "風雲を薙ぎ払う勇烈"
+  },
+  "121": {
+    "icon": "SpriteOutput/ItemIcon/71038.png",
+    "en": "Sacerdos' Relived Ordeal",
+    "set": {
+      "2": {
+        "en": "Increases SPD by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.060000000055879354
+        ],
+        "kr": "속도 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "速度提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "速度+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When using Skill or Ultimate on one ally target, increases the ability target's CRIT DMG by <unbreak>#1[i]%</unbreak>, lasting for <unbreak>#2[i]</unbreak> turn(s). This effect can stack up to <unbreak>#3[i]</unbreak> time(s).",
+        "ParamList": [
+          0.18000000016763806,
+          2,
+          2
+        ],
+        "kr": "단일 아군에게 전투 스킬 또는 필살기 발동 시, 스킬 목표의 치명타 피해를 <unbreak>#1[i]%</unbreak> 증가시킨다, 지속 시간: <unbreak>#2[i]</unbreak>턴, 해당 효과 최대 중첩수: <unbreak>#3[i]</unbreak>회",
+        "cn": "对我方单体目标施放战技或终结技时，使技能目标的暴击伤害提高<unbreak>#1[i]%</unbreak>，持续<unbreak>#2[i]</unbreak>回合，该效果最多叠加<unbreak>#3[i]</unbreak>次。",
+        "jp": "味方単体に対して戦闘スキルまたは必殺技を発動する時、スキルターゲットの会心ダメージ+<unbreak>#1[i]%</unbreak>、<unbreak>#2[i]</unbreak>ターン継続。この効果は最大で<unbreak>#3[i]</unbreak>層累積できる。"
+      }
+    },
+    "kr": "고행의 길에 다시 오른 사제",
+    "cn": "重循苦旅的司铎",
+    "jp": "再び苦難の道を歩む司祭"
+  },
+  "122": {
+    "icon": "SpriteOutput/ItemIcon/71039.png",
+    "en": "Scholar Lost in Erudition",
+    "set": {
+      "2": {
+        "en": "Increases CRIT Rate by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.0800000000745058
+        ],
+        "kr": "치명타 확률 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "暴击率提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "会心率+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "Increases DMG dealt by Skill and Ultimate by <unbreak>#1[i]%</unbreak>. After using Ultimate, additionally increases the DMG dealt by the next Skill by <unbreak>#2[i]%</unbreak>.",
+        "ParamList": [
+          0.20000000018626451,
+          0.25000000023283064
+        ],
+        "kr": "전투 스킬과 필살기로 가하는 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 필살기 발동 후, 다음번 전투 스킬 발동 시 가하는 피해가 추가로 <unbreak>#2[i]%</unbreak> 증가한다",
+        "cn": "战技和终结技造成的伤害提高<unbreak>#1[i]%</unbreak>，施放终结技后，下一次施放战技时造成的伤害额外提高<unbreak>#2[i]%</unbreak>。",
+        "jp": "戦闘スキルおよび必殺技によるダメージ+<unbreak>#1[i]%</unbreak>。必殺技を発動した後、次に戦闘スキルを発動する時、与ダメージがさらに+<unbreak>#2[i]%</unbreak>。"
+      }
+    },
+    "kr": "지식의 바다에 빠진 학자",
+    "cn": "识海迷坠的学者",
+    "jp": "知識の海に溺れる学者"
+  },
+  "123": {
+    "icon": "SpriteOutput/ItemIcon/71040.png",
+    "en": "Hero of Triumphant Song",
+    "set": {
+      "2": {
+        "en": "Increases ATK by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871
+        ],
+        "kr": "공격력 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "攻击力提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "攻撃力+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "While the wearer's memosprite is on the field, increases the wearer's SPD by <unbreak>#1[i]%</unbreak>. When the wearer's memosprite attacks, increases the wearer's and memosprite's CRIT DMG by <unbreak>#2[i]%</unbreak>, lasting for <unbreak>#3[i]</unbreak> turn(s).",
+        "ParamList": [
+          0.060000000055879354,
+          0.3000000002793968,
+          2
+        ],
+        "kr": "장착한 캐릭터의 기억 정령이 필드에 있을 시 장착한 캐릭터의 속도가 <unbreak>#1[i]%</unbreak> 증가하고, 장착한 캐릭터의 기억 정령이 공격 시 장착한 캐릭터와 기억 정령의 치명타 피해가 <unbreak>#2[i]%</unbreak> 증가한다, 지속 시간: <unbreak>#3[i]</unbreak>턴",
+        "cn": "装备者的忆灵在场时，装备者的速度提高<unbreak>#1[i]%</unbreak>，装备者的忆灵攻击时，装备者和忆灵的暴击伤害提高<unbreak>#2[i]%</unbreak>，持续<unbreak>#3[i]</unbreak>回合。",
+        "jp": "装備キャラの記憶の精霊がフィールドにいる時、装備キャラの速度+<unbreak>#1[i]%</unbreak>。装備キャラの記憶の精霊が攻撃を行う時、装備キャラおよびその記憶の精霊の会心ダメージ+<unbreak>#2[i]%</unbreak>、<unbreak>#3[i]</unbreak>ターン継続。"
+      }
+    },
+    "kr": "개선가를 울리는 영웅",
+    "cn": "凯歌祝捷的英豪",
+    "jp": "凱歌を揚げる英雄"
+  },
+  "124": {
+    "icon": "SpriteOutput/ItemIcon/71041.png",
+    "en": "Poet of Mourning Collapse",
+    "set": {
+      "2": {
+        "en": "Increases Quantum DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226
+        ],
+        "kr": "양자 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "量子属性伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "量子属性ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "Decreases the wearer's SPD by <unbreak>#6[i]%</unbreak>. Before entering battle, if the wearer's SPD is lower than <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>, increases the wearer's CRIT Rate by <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>. This effect applies to the wearer's memosprite at the same time.",
+        "ParamList": [
+          -0.07999999984167516,
+          110,
+          95,
+          0.20000000018626451,
+          0.3200000002980232,
+          0.0800000000745058
+        ],
+        "kr": "장착한 캐릭터의 속도가 <unbreak>#6[i]%</unbreak> 감소한다. 전투 진입 전 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> 미만이면, 장착한 캐릭터의 치명타 확률이 <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> 증가한다. 해당 효과는 장착한 캐릭터의 기억 정령에게도 동시에 적용된다",
+        "cn": "使装备者的速度降低<unbreak>#6[i]%</unbreak>。进入战斗前，若装备者的速度小于<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>，使装备者的暴击率提高<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。该效果同时对装备者的忆灵生效。",
+        "jp": "装備キャラの速度-<unbreak>#6[i]%</unbreak>。戦闘に入る前、装備キャラの速度が<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>を下回る時、装備キャラの会心率+<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。この効果は装備キャラの記憶の精霊にも有効。"
+      }
+    },
+    "kr": "망국을 애도하는 시인",
+    "cn": "哀歌覆国的诗人",
+    "jp": "亡国の悲哀を詠う詩人"
+  },
+  "125": {
+    "icon": "SpriteOutput/ItemIcon/71044.png",
+    "en": "Warrior Goddess of Sun and Thunder",
+    "set": {
+      "2": {
+        "en": "Increases SPD by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.060000000055879354
+        ],
+        "kr": "속도 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "速度提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "速度+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When the wearer or their memosprite provides healing to ally targets other than themselves, the wearer gains \"Gentle Rain,\" which lasts for <unbreak>#3[i]</unbreak> turn(s) and can only trigger once per turn. While the wearer has \"Gentle Rain,\" SPD increases by <unbreak>#1[i]%</unbreak> and all allies' CRIT DMG increases by <unbreak>#2[i]%</unbreak>. This effect cannot stack.",
+        "ParamList": [
+          0.060000000055879354,
+          0.1500000001396984,
+          2
+        ],
+        "kr": "장착한 캐릭터와 해당 캐릭터의 기억 정령이 장착한 캐릭터와 해당 캐릭터의 기억 정령을 제외한 아군에게 치유를 제공하면 장착한 캐릭터가 [단비]를 획득하며, 턴마다 최대 1회 발동한다, 지속 시간: <unbreak>#3[i]</unbreak>턴. 장착한 캐릭터가 [단비] 보유 시 속도가 <unbreak>#1[i]%</unbreak> 증가하고, 모든 아군의 치명타 피해가 <unbreak>#2[i]%</unbreak> 증가하며, 해당 효과는 중첩할 수 없다",
+        "cn": "当装备者及其忆灵为装备者及其忆灵以外的我方目标提供治疗后，使装备者获得【甘霖】，每回合最多触发1次，持续<unbreak>#3[i]</unbreak>回合。装备者持有【甘霖】时，速度提高<unbreak>#1[i]%</unbreak>，我方全体暴击伤害提高<unbreak>#2[i]%</unbreak>，该效果无法叠加。",
+        "jp": "装備キャラまたは記憶の精霊が、装備キャラおよびその記憶の精霊以外の味方を治癒した後、装備キャラは「慈雨」を獲得する。この効果は1ターンに最大1回まで発動でき、<unbreak>#3[i]</unbreak>ターン継続する。また、装備キャラが「慈雨」を持っている場合、速度+<unbreak>#1[i]%</unbreak>、味方全体の会心ダメージ+<unbreak>#2[i]%</unbreak>、この効果は累積できない。"
+      }
+    },
+    "kr": "태양과 번개의 여전사",
+    "cn": "烈阳惊雷的女武神",
+    "jp": "烈陽と雷鳴の武神"
+  },
+  "126": {
+    "icon": "SpriteOutput/ItemIcon/71045.png",
+    "en": "Wavestrider Captain",
+    "set": {
+      "2": {
+        "en": "Increases CRIT DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.1600000001490116
+        ],
+        "kr": "치명타 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "暴击伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "会心ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "When the wearer becomes the target of another ally target's ability, gains 1 stack of \"Help,\" stacking up to <unbreak>#1[i]</unbreak> time(s). If there are <unbreak>#1[i]</unbreak> stack(s) of \"Help\" when the wearer uses their Ultimate, consumes all \"Help\" to increase the wearer's ATK by <unbreak>#2[i]%</unbreak> for <unbreak>#3[i]</unbreak> turn(s).",
+        "ParamList": [
+          2,
+          0.48000000044703484,
+          1
+        ],
+        "kr": "장착한 캐릭터가 다른 아군의 스킬 목표가 되면 [조력]을 1스택 획득한다, 최대 중첩수: <unbreak>#1[i]</unbreak>스택. 필살기 발동 시 [조력]을 <unbreak>#1[i]</unbreak>스택 보유하면, 모든 [조력]을 소모해 장착한 캐릭터의 공격력을 <unbreak>#2[i]%</unbreak> 증가시킨다, 지속 시간: <unbreak>#3[i]</unbreak>턴",
+        "cn": "装备者成为其他我方目标的技能目标时，获得1层【助力】，最多叠加<unbreak>#1[i]</unbreak>层。施放终结技时，若持有<unbreak>#1[i]</unbreak>层【助力】，消耗所有【助力】，使装备者攻击力提高<unbreak>#2[i]%</unbreak>，持续<unbreak>#3[i]</unbreak>回合。",
+        "jp": "装備キャラが他の味方のスキルターゲットになった時、「助力」を1層獲得し、最大で<unbreak>#1[i]</unbreak>層累積できる。必殺技を発動する時、「助力」を<unbreak>#1[i]</unbreak>層所持している場合、すべての「助力」を消費し、装備キャラの攻撃力+<unbreak>#2[i]%</unbreak>、<unbreak>#3[i]</unbreak>ターン継続。"
+      }
+    },
+    "kr": "거친 파도를 헤치는 선장",
+    "cn": "恶海逐波的船长",
+    "jp": "荒海を越える船長"
+  },
+  "127": {
+    "icon": "SpriteOutput/ItemIcon/71048.png",
+    "en": "World-Remaking Deliverer",
+    "set": {
+      "2": {
+        "en": "Increases CRIT Rate by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.0800000000745058
+        ],
+        "kr": "치명타 확률 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "暴击率提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "会心率+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "After the wearer uses Basic ATK or Skill, if the wearer's memosprite is on the field, increases Max HP of the wearer and their memosprite by <unbreak>#1[i]%</unbreak>, and increases all allies' DMG by <unbreak>#2[i]%</unbreak> until the wearer's next Basic ATK or Skill.",
+        "ParamList": [
+          0.24000000022351742,
+          0.0800000000745058
+        ],
+        "kr": "장착한 캐릭터가 일반 공격 또는 전투 스킬 발동 후, 장착한 캐릭터의 기억 정령이 필드에 있으면, 장착한 캐릭터와 해당 캐릭터의 기억 정령의 HP 최대치가 <unbreak>#1[i]%</unbreak> 증가하고, 모든 아군이 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가하며, 해당 효과는 장착한 캐릭터가 다음 일반 공격 또는 전투 스킬을 발동한 후까지 지속된다",
+        "cn": "装备者施放普攻或战技后，若装备者的忆灵在场，使装备者及其忆灵生命上限提高<unbreak>#1[i]%</unbreak>，我方全体造成的伤害提高<unbreak>#2[i]%</unbreak>，持续至装备者下次施放普攻或战技后。",
+        "jp": "装備キャラが通常攻撃または戦闘スキルを発動した後、装備キャラの記憶の精霊がフィールド上にいる場合、装備キャラとその記憶の精霊の最大HP+<unbreak>#1[i]%</unbreak>、味方全体の与ダメージ+<unbreak>#2[i]%</unbreak>、装備キャラが次に通常攻撃または戦闘スキルを発動した後まで継続。"
+      }
+    },
+    "kr": "천지를 재창조한 구세주",
+    "cn": "再创天地的救世主",
+    "jp": "天地再創の救世主"
+  },
+  "128": {
+    "icon": "SpriteOutput/ItemIcon/71049.png",
+    "en": "Self-Enshrouded Recluse",
+    "set": {
+      "2": {
+        "en": "Increases CRIT DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.1600000001490116
+        ],
+        "kr": "치명타 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "暴击伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "会心ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "Increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak>. When any ally target consumes Skill Points for the first time in a turn, recovers 1 Skill Point. This effect triggers up to <unbreak>#1[i]</unbreak> time(s) per battle, and <unbreak>#2[i]</unbreak> trigger count(s) will be restored at the start of each subsequent wave. Only 1 Skill Point Recovery effect can be active in the same team.",
+        "ParamList": [
+          1,
+          1,
+          0.1600000001490116
+        ],
+        "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가하고, 임의의 아군이 턴마다 처음으로 전투 스킬 포인트 소모 후 전투 스킬 포인트를 1pt 회복한다. 해당 효과는 전투당 최대 <unbreak>#1[i]</unbreak>회 발동하며, 이후 웨이브가 시작될 때마다 발동 가능 횟수가 <unbreak>#2[i]</unbreak>회 회복된다. 전투 스킬 포인트 회복 효과는 같은 파티 내에서 최대 1개만 적용된다",
+        "cn": "使装备者的暴击伤害提高<unbreak>#3[i]%</unbreak>，任意我方目标在每回合内首次消耗战技点后，恢复1点战技点，该效果每场战斗最多触发<unbreak>#1[i]</unbreak>次，后续每个波次开始后恢复<unbreak>#2[i]</unbreak>次可触发次数。恢复战技点的效果在同一队伍中最多生效1个。",
+        "jp": "装備キャラの会心ダメージ+<unbreak>#3[i]%</unbreak>。任意の味方キャラが1ターン内に初回SPを消費した時、SPを1回復する。この効果は1回の戦闘で最大<unbreak>#1[i]</unbreak>回まで発動できる。その後、各ウェーブ開始時に、発動可能回数が<unbreak>#2[i]</unbreak>回回復する。SP回復効果は同じチームでは重ねがけできない。"
+      }
+    },
+    "kr": "별빛에 숨은 은둔자",
+    "cn": "自匿星芒的隐士",
+    "jp": "星の光を隠した隠者"
+  },
+  "301": {
+    "icon": "SpriteOutput/ItemIcon/71012.png",
+    "en": "Space Sealing Station",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's ATK by <unbreak>#1[i]%</unbreak>. When the wearer's SPD reaches <unbreak>#2[i]</unbreak> or higher, the wearer's ATK increases by an extra <unbreak>#3[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871,
+          120,
+          0.12000000011175871
+        ],
+        "kr": "장착한 캐릭터의 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak> 이상일 경우 공격력이 추가로 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的攻击力提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>时，攻击力额外提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラの攻撃力+<unbreak>#1[i]%</unbreak>。装備キャラの速度が<unbreak>#2[i]</unbreak>以上の場合、さらに攻撃力+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "우주 봉인 정거장",
+    "cn": "太空封印站",
+    "jp": "宇宙封印ステーション"
+  },
+  "302": {
+    "icon": "SpriteOutput/ItemIcon/71013.png",
+    "en": "Fleet of the Ageless",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's Max HP by <unbreak>#1[i]%</unbreak>. When the wearer's SPD reaches <unbreak>#2[i]</unbreak> or higher, all allies' ATK increases by <unbreak>#3[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871,
+          120,
+          0.0800000000745058
+        ],
+        "kr": "장착한 캐릭터의 HP 최대치가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak> 이상일 경우 모든 아군의 공격력이 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的生命上限提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>时，我方全体攻击力提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラの最大HP+<unbreak>#1[i]%</unbreak>。装備キャラの速度が<unbreak>#2[i]</unbreak>以上の場合、味方全体の攻撃力+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "불로인의 선주",
+    "cn": "不老者的仙舟",
+    "jp": "老いぬ者の仙舟"
+  },
+  "303": {
+    "icon": "SpriteOutput/ItemIcon/71014.png",
+    "en": "Pan-Cosmic Commercial Enterprise",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's Effect Hit Rate by <unbreak>#1[i]%</unbreak>. Meanwhile, the wearer's ATK increases by an amount that is equal to <unbreak>#2[i]%</unbreak> of the current Effect Hit Rate, up to a maximum increase of <unbreak>#3[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226,
+          0.25000000023283064,
+          0.25000000023283064
+        ],
+        "kr": "장착한 캐릭터의 효과 명중이 <unbreak>#1[i]%</unbreak> 증가한다. 동시에 장착한 캐릭터의 현재 효과 명중 <unbreak>#2[i]%</unbreak>만큼의 공격력이 증가하며 최대 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的效果命中提高<unbreak>#1[i]%</unbreak>。同时提高装备者等同于当前效果命中<unbreak>#2[i]%</unbreak>的攻击力，最多提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラの効果命中+<unbreak>#1[i]%</unbreak>。装備キャラの攻撃力が、現在の効果命中<unbreak>#2[i]%</unbreak>分アップ、最大で+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "범은하 상사",
+    "cn": "泛银河商业公司",
+    "jp": "汎銀河商事会社"
+  },
+  "304": {
+    "icon": "SpriteOutput/ItemIcon/71015.png",
+    "en": "Belobog of the Architects",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's DEF by <unbreak>#1[i]%</unbreak>. When the wearer's Effect Hit Rate is <unbreak>#2[i]%</unbreak> or higher, the wearer gains an extra <unbreak>#3[i]%</unbreak> DEF.",
+        "ParamList": [
+          0.1500000001396984,
+          0.5000000004656613,
+          0.1500000001396984
+        ],
+        "kr": "장착한 캐릭터의 방어력이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 효과 명중이 <unbreak>#2[i]%</unbreak> 이상일 경우 방어력이 추가로 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的防御力提高<unbreak>#1[i]%</unbreak>。当装备者的效果命中大于等于<unbreak>#2[i]%</unbreak>时，防御力额外提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラの防御力+<unbreak>#1[i]%</unbreak>。装備キャラの効果命中が<unbreak>#2[i]%</unbreak>以上の場合、さらに防御力+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "축성가의 벨로보그",
+    "cn": "筑城者的贝洛伯格",
+    "jp": "建創者のベロブルグ"
+  },
+  "305": {
+    "icon": "SpriteOutput/ItemIcon/71016.png",
+    "en": "Celestial Differentiator",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's CRIT DMG by <unbreak>#1[i]%</unbreak>. When the wearer's current CRIT DMG reaches <unbreak>#2[i]%</unbreak> or higher, after entering battle, the wearer's CRIT Rate increases by <unbreak>#3[i]%</unbreak> until the end of their first attack.",
+        "ParamList": [
+          0.1600000001490116,
+          1.2000000001862645,
+          0.6000000005587935
+        ],
+        "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 치명타 피해가 <unbreak>#2[i]%</unbreak> 이상일 경우, 전투 진입 후 장착한 캐릭터의 치명타 확률이 <unbreak>#3[i]%</unbreak> 증가한다. 첫 공격 발동 후까지 지속하고 종료된다",
+        "cn": "使装备者的暴击伤害提高<unbreak>#1[i]%</unbreak>。当装备者的暴击伤害大于等于<unbreak>#2[i]%</unbreak>时，进入战斗后装备者的暴击率提高<unbreak>#3[i]%</unbreak>，持续到施放首次攻击后结束。",
+        "jp": "装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>。装備キャラの会心ダメージが<unbreak>#2[i]%</unbreak>以上の場合、戦闘に入った後、装備キャラの会心率+<unbreak>#3[i]%</unbreak>、初回の攻撃が終了するまで継続。"
+      }
+    },
+    "kr": "천체 차분기관",
+    "cn": "星体差分机",
+    "jp": "天体階差機関"
+  },
+  "306": {
+    "icon": "SpriteOutput/ItemIcon/71017.png",
+    "en": "Inert Salsotto",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. When the wearer's current CRIT Rate reaches <unbreak>#2[i]%</unbreak> or higher, the DMG dealt by the wearer's Ultimate and Follow-up ATK increases by <unbreak>#3[i]%</unbreak>.",
+        "ParamList": [
+          0.0800000000745058,
+          0.5000000004656613,
+          0.1500000001396984
+        ],
+        "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 치명타 확률이 <unbreak>#2[i]%</unbreak> 이상일 경우, 필살기와 추가 공격이 가하는 피해가 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的暴击率提高<unbreak>#1[i]%</unbreak>。当装备者当前暴击率大于等于<unbreak>#2[i]%</unbreak>时，终结技和追加攻击造成的伤害提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラの会心率+<unbreak>#1[i]%</unbreak>。装備キャラの会心率が<unbreak>#2[i]%</unbreak>以上の場合、追加攻撃ダメージと必殺技によるダメージ+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "회전을 멈춘 살소토",
+    "cn": "停转的萨尔索图",
+    "jp": "自転が止まったサルソット"
+  },
+  "307": {
+    "icon": "SpriteOutput/ItemIcon/71018.png",
+    "en": "Talia: Kingdom of Banditry",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's Break Effect by <unbreak>#1[i]%</unbreak>. When the wearer's SPD reaches <unbreak>#2[i]</unbreak> or higher, the wearer's Break Effect increases by an extra <unbreak>#3[i]%</unbreak>.",
+        "ParamList": [
+          0.1600000001490116,
+          145,
+          0.20000000018626451
+        ],
+        "kr": "장착한 캐릭터의 격파 특수효과가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak> 이상일 경우 격파 특수효과가 추가로 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的击破特攻提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>时，击破特攻额外提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラの撃破特効+<unbreak>#1[i]%</unbreak>。装備キャラの速度が<unbreak>#2[i]</unbreak>以上の場合、さらに撃破特効+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "도적국 탈리아",
+    "cn": "盗贼公国塔利亚",
+    "jp": "盗賊公国タリア"
+  },
+  "308": {
+    "icon": "SpriteOutput/ItemIcon/71019.png",
+    "en": "Sprightly Vonwacq",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's Energy Regeneration Rate by <unbreak>#1[i]%</unbreak>. When the wearer's SPD reaches <unbreak>#2[i]</unbreak> or higher, the wearer's action is Advanced Forward by <unbreak>#3[i]%</unbreak> immediately upon entering battle.",
+        "ParamList": [
+          0.05000000004656613,
+          120,
+          0.40000000037252903
+        ],
+        "kr": "장착한 캐릭터의 에너지 회복효율이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak> 이상일 경우 전투 진입 시 즉시 행동 게이지가 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的能量恢复效率提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>时，进入战斗时立刻使行动提前<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラのEP回復効率+<unbreak>#1[i]%</unbreak>。装備キャラの速度が<unbreak>#2[i]</unbreak>以上の場合、戦闘に入る時、行動順が<unbreak>#3[i]%</unbreak>早まる。"
+      }
+    },
+    "kr": "생명의 바커 공",
+    "cn": "生命的翁瓦克",
+    "jp": "生命のウェンワーク"
+  },
+  "309": {
+    "icon": "SpriteOutput/ItemIcon/71022.png",
+    "en": "Rutilant Arena",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. When the wearer's current CRIT Rate reaches <unbreak>#2[i]%</unbreak> or higher, DMG dealt by Basic ATK and Skill increases by <unbreak>#3[i]%</unbreak>.",
+        "ParamList": [
+          0.0800000000745058,
+          0.7000000006519258,
+          0.20000000018626451
+        ],
+        "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 치명타 확률이 <unbreak>#2[i]%</unbreak> 이상일 경우, 일반 공격과 전투 스킬이 가하는 피해가 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的暴击率提高<unbreak>#1[i]%</unbreak>。当装备者的当前暴击率大于等于<unbreak>#2[i]%</unbreak>时，普攻和战技造成的伤害提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラの会心率+<unbreak>#1[i]%</unbreak>。装備キャラの会心率が<unbreak>#2[i]%</unbreak>以上の時、通常攻撃と戦闘スキルによるダメージ+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "뭇별 경기장",
+    "cn": "繁星竞技场",
+    "jp": "星々の競技場"
+  },
+  "310": {
+    "icon": "SpriteOutput/ItemIcon/71023.png",
+    "en": "Broken Keel",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's Effect RES by <unbreak>#1[i]%</unbreak>. When the wearer's Effect RES is at <unbreak>#2[i]%</unbreak> or higher, all allies' CRIT DMG increases by <unbreak>#3[i]%</unbreak>.",
+        "ParamList": [
+          0.10000000009313226,
+          0.3000000002793968,
+          0.10000000009313226
+        ],
+        "kr": "장착한 캐릭터의 효과 저항이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 효과 저항이 <unbreak>#2[i]%</unbreak> 이상일 경우 모든 아군의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的效果抵抗提高<unbreak>#1[i]%</unbreak>。当装备者的效果抵抗大于等于<unbreak>#2[i]%</unbreak>时，我方全体暴击伤害提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラの効果抵抗+<unbreak>#1[i]%</unbreak>。装備キャラの効果抵抗が<unbreak>#2[i]%</unbreak>以上の時、味方全体の会心ダメージ+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "부러진 용골",
+    "cn": "折断的龙骨",
+    "jp": "折れた竜骨"
+  },
+  "311": {
+    "icon": "SpriteOutput/ItemIcon/71026.png",
+    "en": "Firmament Frontline: Glamoth",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's ATK by <unbreak>#1[i]%</unbreak>. When the wearer's SPD is equal to or higher than <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>, the wearer deals <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> more DMG.",
+        "ParamList": [
+          0.12000000011175871,
+          135,
+          160,
+          0.12000000011175871,
+          0.18000000016763806
+        ],
+        "kr": "장착한 캐릭터의 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> 이상일 경우, 장착한 캐릭터가 가하는 피해가 <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> 증가한다",
+        "cn": "使装备者的攻击力提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>时，使装备者造成的伤害提高<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。",
+        "jp": "装備キャラの攻撃力+<unbreak>#1[i]%</unbreak>。装備キャラの速度が<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>以上の時、装備キャラの与ダメージ+<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。"
+      }
+    },
+    "kr": "창공 전선 그라모스",
+    "cn": "苍穹战线格拉默",
+    "jp": "蒼穹戦線グラモス"
+  },
+  "312": {
+    "icon": "SpriteOutput/ItemIcon/71027.png",
+    "en": "Penacony, Land of the Dreams",
+    "set": {
+      "2": {
+        "en": "Increases wearer's Energy Regeneration Rate by <unbreak>#1[i]%</unbreak>. Increases DMG by <unbreak>#2[i]%</unbreak> for all other allies that are of the same Type as the wearer.",
+        "ParamList": [
+          0.05000000004656613,
+          0.10000000009313226
+        ],
+        "kr": "장착한 캐릭터의 에너지 회복효율이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터와 같은 속성의 파티 내 다른 아군 캐릭터가 주는 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
+        "cn": "使装备者的能量恢复效率提高<unbreak>#1[i]%</unbreak>。使队伍中与装备者属性相同的我方其他角色造成的伤害提高<unbreak>#2[i]%</unbreak>。",
+        "jp": "装備キャラのEP回復効率+<unbreak>#1[i]%</unbreak>。パーティ中の装備キャラと同じ属性の味方の与ダメージ+<unbreak>#2[i]%</unbreak>。"
+      }
+    },
+    "kr": "꿈의 땅 페나코니",
+    "cn": "梦想之地匹诺康尼",
+    "jp": "夢の地ピノコニー"
+  },
+  "313": {
+    "icon": "SpriteOutput/ItemIcon/71030.png",
+    "en": "Sigonia, the Unclaimed Desolation",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's CRIT Rate by <unbreak>#3[i]%</unbreak>. When an enemy target gets defeated, the wearer's CRIT DMG increases by <unbreak>#1[i]%</unbreak>, stacking up to <unbreak>#2[i]</unbreak> time(s).",
+        "ParamList": [
+          0.0400000000372529,
+          10,
+          0.0400000000372529
+        ],
+        "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#3[i]%</unbreak> 증가한다. 적이 처치될 시 장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 최대 중첩수: <unbreak>#2[i]</unbreak>",
+        "cn": "使装备者的暴击率提高<unbreak>#3[i]%</unbreak>。当敌方目标被消灭时，装备者暴击伤害提高<unbreak>#1[i]%</unbreak>，最多叠加<unbreak>#2[i]</unbreak>层。",
+        "jp": "装備キャラの会心率+<unbreak>#3[i]%</unbreak>。敵が倒された時、装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>、最大で<unbreak>#2[i]</unbreak>回累積できる。"
+      }
+    },
+    "kr": "주인 없는 황폐한 별 츠가냐",
+    "cn": "无主荒星茨冈尼亚",
+    "jp": "荒涼の惑星ツガンニヤ"
+  },
+  "314": {
+    "icon": "SpriteOutput/ItemIcon/71031.png",
+    "en": "Izumo Gensei and Takama Divine Realm",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's ATK by <unbreak>#1[i]%</unbreak>. When entering battle, if at least one teammate follows the same Path as the wearer, then the wearer's CRIT Rate increases by <unbreak>#2[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871,
+          0.12000000011175871
+        ],
+        "kr": "장착한 캐릭터의 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 전투 진입 시 장착한 캐릭터와 운명의 길이 같은 동료가 최소 1명 존재할 경우, 장착한 캐릭터의 치명타 확률이 <unbreak>#2[i]%</unbreak> 증가한다",
+        "cn": "使装备者的攻击力提高<unbreak>#1[i]%</unbreak>。进入战斗时，若至少存在一名与装备者命途相同的队友，装备者的暴击率提高<unbreak>#2[i]%</unbreak>。",
+        "jp": "装備キャラの攻撃力+<unbreak>#1[i]%</unbreak>。戦闘に入る時、装備キャラと同じ運命のキャラが他に存在する場合、装備キャラの会心率+<unbreak>#2[i]%</unbreak>。"
+      }
+    },
+    "kr": "이즈모 현세와 타카마 신국",
+    "cn": "出云显世与高天神国",
+    "jp": "顕世の出雲と高天の神国"
+  },
+  "315": {
+    "icon": "SpriteOutput/ItemIcon/71034.png",
+    "en": "Duran, Dynasty of Running Wolves",
+    "set": {
+      "2": {
+        "en": "When an ally uses a Follow-up ATK, the wearer gains 1 stack of Merit, stacking up to <unbreak>#1[i]</unbreak> time(s). Each stack of Merit increases the DMG dealt by the wearer's Follow-up ATKs by <unbreak>#2[i]%</unbreak>. When there are <unbreak>#1[i]</unbreak> stacks, additionally increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak>.",
+        "ParamList": [
+          5,
+          0.05000000004656613,
+          0.25000000023283064
+        ],
+        "kr": "아군 캐릭터가 추가 공격을 발동하면 장착한 캐릭터는 [공훈]을 1스택 획득한다, 최대 중첩수: <unbreak>#1[i]</unbreak>스택. [공훈] 스택당 장착한 캐릭터의 추가 공격으로 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가하고, <unbreak>#1[i]</unbreak>스택까지 중첩 시 장착한 캐릭터의 치명타 피해가 추가로 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "我方角色施放追加攻击时，装备者获得一层【功勋】，最多叠加<unbreak>#1[i]</unbreak>层，每层【功勋】使装备者追加攻击造成的伤害提高<unbreak>#2[i]%</unbreak>，叠满<unbreak>#1[i]</unbreak>层时，额外使装备者的暴击伤害提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "味方が追加攻撃を行う時、装備キャラは「勲功」を1層獲得する、最大で<unbreak>#1[i]</unbreak>層累積できる。「勲功」1層につき、装備キャラの追加攻撃ダメージ+<unbreak>#2[i]%</unbreak>。「勲功」が<unbreak>#1[i]</unbreak>層に達する時、さらに装備キャラの会心ダメージ+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "질주하는 늑대의 도람 왕조",
+    "cn": "奔狼的都蓝王朝",
+    "jp": "奔狼の都藍王朝"
+  },
+  "316": {
+    "icon": "SpriteOutput/ItemIcon/71035.png",
+    "en": "Forge of the Kalpagni Lantern",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's SPD by <unbreak>#1[i]%</unbreak>. When the wearer hits an enemy target that has Fire Weakness, the wearer's Break Effect increases by <unbreak>#2[i]%</unbreak>, lasting for <unbreak>#3[i]</unbreak> turn(s).",
+        "ParamList": [
+          0.060000000055879354,
+          0.40000000037252903,
+          1
+        ],
+        "kr": "장착한 캐릭터의 속도가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터가 화염 속성 약점을 보유한 적을 명중하면 격파 특수효과가 <unbreak>#2[i]%</unbreak> 증가한다, 지속 시간: <unbreak>#3[i]</unbreak>턴",
+        "cn": "使装备者的速度提高<unbreak>#1[i]%</unbreak>。当装备者击中拥有火属性弱点的敌方目标时，击破特攻提高<unbreak>#2[i]%</unbreak>，持续<unbreak>#3[i]</unbreak>回合。",
+        "jp": "装備キャラの速度+<unbreak>#1[i]%</unbreak>。装備キャラの攻撃が炎属性弱点を持つ敵に命中する時、撃破特効+<unbreak>#2[i]%</unbreak>、<unbreak>#3[i]</unbreak>ターン継続。"
+      }
+    },
+    "kr": "겁화 연등의 연마궁",
+    "cn": "劫火莲灯铸炼宫",
+    "jp": "劫火と蓮灯の鋳煉宮"
+  },
+  "317": {
+    "icon": "SpriteOutput/ItemIcon/71036.png",
+    "en": "Lushaka, the Sunken Seas",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's Energy Regeneration Rate by <unbreak>#1[i]%</unbreak>. If the wearer is not the first character in the team lineup, then increases the ATK of the first character in the team lineup by <unbreak>#2[i]%</unbreak>.",
+        "ParamList": [
+          0.05000000004656613,
+          0.12000000011175871
+        ],
+        "kr": "장착한 캐릭터의 에너지 회복효율이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터가 파티 편성의 첫 번째 캐릭터가 아닐 경우, 파티 편성의 첫 번째 캐릭터의 공격력이 <unbreak>#2[i]%</unbreak> 증가한다",
+        "cn": "使装备者的能量恢复效率提高<unbreak>#1[i]%</unbreak>，如果装备者不是编队中的第一位角色，使编队中的第一位角色攻击力提高<unbreak>#2[i]%</unbreak>。",
+        "jp": "装備キャラのEP回復効率+<unbreak>#1[i]%</unbreak>。装備キャラがパーティの1枠目のキャラでない場合、1枠目のキャラの攻撃力+<unbreak>#2[i]%</unbreak>。"
+      }
+    },
+    "kr": "바다에 잠긴 루샤카",
+    "cn": "沉陆海域露莎卡",
+    "jp": "海に沈んだルサカ"
+  },
+  "318": {
+    "icon": "SpriteOutput/ItemIcon/71037.png",
+    "en": "The Wondrous BananAmusement Park",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's CRIT DMG by <unbreak>#1[i]%</unbreak>. When a target summoned by the wearer is on the field, CRIT DMG additionally increases by <unbreak>#2[i]%</unbreak>.",
+        "ParamList": [
+          0.1600000001490116,
+          0.3200000002980232
+        ],
+        "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터가 소환한 목표가 있을 시, 치명타 피해가 추가로 <unbreak>#2[i]%</unbreak> 증가한다",
+        "cn": "使装备者的暴击伤害提高<unbreak>#1[i]%</unbreak>，当存在装备者召唤的目标时，暴击伤害额外提高<unbreak>#2[i]%</unbreak>。",
+        "jp": "装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>。装備キャラが召喚したターゲットがフィールド上にいる場合、さらに会心ダメージ+<unbreak>#2[i]%</unbreak>。"
+      }
+    },
+    "kr": "기묘한 나나 낙원",
+    "cn": "奇想蕉乐园",
+    "jp": "奇想天外のバナダイス"
+  },
+  "319": {
+    "icon": "SpriteOutput/ItemIcon/71042.png",
+    "en": "Bone Collection's Serene Demesne",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's Max HP by <unbreak>#1[i]%</unbreak>. When the wearer's Max HP is <unbreak>#2[i]</unbreak> or higher, increases the wearer's and their memosprite's CRIT DMG by <unbreak>#3[i]%</unbreak>.",
+        "ParamList": [
+          0.12000000011175871,
+          5000,
+          0.2800000002607703
+        ],
+        "kr": "장착한 캐릭터의 HP 최대치가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 HP 최대치가 <unbreak>#2[i]</unbreak>pt 이상일 경우, 장착한 캐릭터와 해당 캐릭터의 기억 정령의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가한다",
+        "cn": "使装备者的生命上限提高<unbreak>#1[i]%</unbreak>。当装备者的生命上限大于等于<unbreak>#2[i]</unbreak>点时，使装备者及其忆灵的暴击伤害提高<unbreak>#3[i]%</unbreak>。",
+        "jp": "装備キャラの最大HP+<unbreak>#1[i]%</unbreak>。装備キャラの最大HPが<unbreak>#2[i]</unbreak>以上の時、装備キャラおよびその記憶の精霊の会心ダメージ+<unbreak>#3[i]%</unbreak>。"
+      }
+    },
+    "kr": "고요한 습골지",
+    "cn": "谧宁拾骨地",
+    "jp": "静謐な拾骨地"
+  },
+  "320": {
+    "icon": "SpriteOutput/ItemIcon/71043.png",
+    "en": "Giant Tree of Rapt Brooding",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's SPD by <unbreak>#1[i]%</unbreak>. When the wearer's SPD is <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> or higher, the wearer and their memosprite's Outgoing Healing increases by <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>.",
+        "ParamList": [
+          0.060000000055879354,
+          135,
+          180,
+          0.12000000011175871,
+          0.20000000018626451
+        ],
+        "kr": "장착한 캐릭터의 속도가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> 이상일 경우, 장착한 캐릭터와 해당 캐릭터의 기억 정령의 치유량이 <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> 증가한다",
+        "cn": "使装备者的速度提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>时，使装备者及其忆灵的治疗量提高<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。",
+        "jp": "装備キャラの速度+<unbreak>#1[i]%</unbreak>。装備キャラの速度が<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>以上の時、装備キャラ及びその記憶の精霊の治癒量+<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。"
+      }
+    },
+    "kr": "사색하는 거목",
+    "cn": "渊思寂虑的巨树",
+    "jp": "深慮に浸る巨樹"
+  },
+  "321": {
+    "icon": "SpriteOutput/ItemIcon/71046.png",
+    "en": "Arcadia of Woven Dreams",
+    "set": {
+      "2": {
+        "en": "When the number of ally targets on the field is not equal to 4, for every 1 additional/missing ally target, increases the DMG dealt by the wearer and their memosprite by <unbreak>#1[i]%</unbreak>/<unbreak>#2[i]%</unbreak>, stacking up to <unbreak>#3[i]</unbreak>/<unbreak>#4[i]</unbreak> time(s).",
+        "ParamList": [
+          0.09000000008381903,
+          0.12000000011175871,
+          4,
+          3
+        ],
+        "kr": "파티 내 현재 필드에 있는 아군의 수가 4명이 아닐 경우, 아군 수가 1명 많을/적을 때마다 장착한 캐릭터와 해당 캐릭터의 기억 정령이 가하는 피해가 <unbreak>#1[i]%</unbreak>/<unbreak>#2[i]%</unbreak> 증가한다, 최대 중첩수: <unbreak>#3[i]</unbreak>/<unbreak>#4[i]</unbreak>스택",
+        "cn": "队伍中当前在场的我方目标数量不等于4时，每多/少1名我方目标，使装备者及其忆灵造成的伤害提高<unbreak>#1[i]%</unbreak>/<unbreak>#2[i]%</unbreak>，最多叠加<unbreak>#3[i]</unbreak>/<unbreak>#4[i]</unbreak>层。",
+        "jp": "フィールド上にいる現在の味方の数が4ではない時、1名超過/不足するごとに、装備キャラおよびその記憶の精霊の与ダメージ+<unbreak>#1[i]%</unbreak>/<unbreak>#2[i]%</unbreak>、最大で<unbreak>#3[i]</unbreak>/<unbreak>#4[i]</unbreak>層累積できる。"
+      }
+    },
+    "kr": "꿈을 엮는 요정의 낙원",
+    "cn": "妖精织梦的乐园",
+    "jp": "夢を紡ぐ妖精の楽園"
+  },
+  "322": {
+    "icon": "SpriteOutput/ItemIcon/71047.png",
+    "en": "Revelry by the Sea",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's ATK by <unbreak>#1[i]%</unbreak>. When the wearer's ATK is higher than or equal to <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>, increases the DoT DMG dealt by <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> respectively.",
+        "ParamList": [
+          0.12000000011175871,
+          2400,
+          3600,
+          0.12000000011175871,
+          0.24000000022351742
+        ],
+        "kr": "장착한 캐릭터의 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 공격력이 <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> 이상일 시 가하는 지속 피해가 추가로 <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> 증가한다",
+        "cn": "使装备者的攻击力提高<unbreak>#1[i]%</unbreak>。当装备者的攻击力大于等于<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>时，使造成的持续伤害额外提高<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。",
+        "jp": "装備キャラの攻撃力+<unbreak>#1[i]%</unbreak>。装備キャラの攻撃力が<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>以上の場合、与える持続ダメージがさらに+<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。"
+      }
+    },
+    "kr": "즐거움에 취한 바다의 일각",
+    "cn": "沉欢醉饮的海隅",
+    "jp": "酩酊の海域"
+  }
+}

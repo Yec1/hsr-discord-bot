@@ -208,28 +208,14 @@ async function handleForgottenHallDraw(
 
 			const commonParams = { s: `${floor.star_num}` };
 			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setAuthor({
-							name: user.username,
-							iconURL: user.displayAvatarURL({
-								size: 4096
-							})
-						})
-						.setImage(`attachment://${image.name}`)
-						.setFooter({
-							text: tr("CostTime", {
-								requestTime: (
-									(requestEndTime - requestStartTime) /
-									1000
-								).toFixed(2),
-								drawTime: (
-									(drawEndTime - drawStartTime) /
-									1000
-								).toFixed(2)
-							})
-						})
-				],
+				content: `-# ${tr("CostTime", {
+					requestTime: (
+						(requestEndTime - requestStartTime) /
+						1000
+					).toFixed(2),
+					drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
+				})}`,
+				embeds: [],
 				files: [image],
 				components: [
 					(new ActionRowBuilder() as any).addComponents(

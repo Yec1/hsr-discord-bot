@@ -1,0 +1,1325 @@
+{
+  "20000": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Rogue",
+    "en": "Arrows",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"The hunter's eyes are the clearest when they pull back the bowstring with the arrow nocked.\"</i>",
+    "kr": "화살촉",
+    "cn": "锋镝",
+    "jp": "{RUBY_B#や}矢{RUBY_E#}じり"
+  },
+  "20001": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Priest",
+    "en": "Cornucopia",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"Life is the existence of order beyond a certain threshold. Its birth is the final answer to the silent universe, declaring the end to the era of old chaos.\"</i>",
+    "kr": "풍작",
+    "cn": "物穰",
+    "jp": "{RUBY_B#ぶつじょう}物穣{RUBY_E#}"
+  },
+  "20002": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Warrior",
+    "en": "Collapsing Sky",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"The death of all things is as natural as their birth. Time erodes everything, turning all tangible entities to dust.\"</i>",
+    "kr": "천경",
+    "cn": "天倾",
+    "jp": "{RUBY_B#てんけい}天傾{RUBY_E#}"
+  },
+  "20003": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Knight",
+    "en": "Amber",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"Only those who aren't affected by time can survive in time.\"</i>",
+    "kr": "앰버",
+    "cn": "琥珀",
+    "jp": "{RUBY_B#こはく}琥珀{RUBY_E#}"
+  },
+  "20004": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Warlock",
+    "en": "Void",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"He stared into the void, hanging high like the dark sun at the end of all matter, or a mouth that answered all questions. It said: ███ █ ███ ██ The answer couldn't be expressed in any human language, but could be understood by all.\"</i>",
+    "kr": "그윽",
+    "cn": "幽邃",
+    "jp": "{RUBY_B#ゆうすい}幽邃{RUBY_E#}"
+  },
+  "20005": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Shaman",
+    "en": "Chorus",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"Fingers clutch to make a fist, strength is built via numbers. I give myself for something higher — the concept of us.\"</i>",
+    "kr": "합창",
+    "cn": "齐颂",
+    "jp": "{RUBY_B#せいしょう}斉頌{RUBY_E#}"
+  },
+  "20006": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Mage",
+    "en": "Data Bank",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"Human extinction is inevitable, but the library will live on: Lonely, immobile, and hidden from the public. Its vast collection is useless, yet pure from corruption.\"</i>",
+    "kr": "아카이브",
+    "cn": "智库",
+    "jp": "アーカイブ"
+  },
+  "20007": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Rogue",
+    "en": "Darting Arrow",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"The battle has begun. Arrows are thirsty for blood.\"</i>",
+    "kr": "시위를 떠난 화살",
+    "cn": "离弦",
+    "jp": "{RUBY_B#りげん}離弦{RUBY_E#}"
+  },
+  "20008": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Priest",
+    "en": "Fine Fruit",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"Everything tastes sweet for those desperate for water.\"</i>",
+    "kr": "알찬 열매",
+    "cn": "嘉果",
+    "jp": "{RUBY_B#かか}嘉果{RUBY_E#}"
+  },
+  "20009": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Warrior",
+    "en": "Shattered Home",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"Absolute control comes from the ability to inflict total destruction.\"</i>",
+    "kr": "무너진 행복",
+    "cn": "乐圮",
+    "jp": "{RUBY_B#らくかい}楽壊{RUBY_E#}"
+  },
+  "20010": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Knight",
+    "en": "Defense",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"If you ever doubt these walls will lead us to victory, just look at these brave souls standing atop them.\"</i>",
+    "kr": "수비",
+    "cn": "戍御",
+    "jp": "{RUBY_B#ぼうえい}防衛{RUBY_E#}"
+  },
+  "20011": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Warlock",
+    "en": "Loop",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"Those running away from the past think no one understands their despair. When they finally take a breather, they'll find their future selves staring right at them with bloodshot eyes.\"</i>",
+    "kr": "심연의 고리",
+    "cn": "渊环",
+    "jp": "{RUBY_B#えんかん}淵環{RUBY_E#}"
+  },
+  "20012": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Shaman",
+    "en": "Meshing Cogs",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"Harmony is achieved when everyone does their bit amidst the clunking of machines.\"</i>",
+    "kr": "맞물린 톱니",
+    "cn": "轮契",
+    "jp": "{RUBY_B#りんけい}輪契{RUBY_E#}"
+  },
+  "20013": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Mage",
+    "en": "Passkey",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"Knowledge is locked behind a gate, the key to which is hidden from those seeking answers from others, while made obvious for those determined to find it on their own.\"</i>",
+    "kr": "영험한 열쇠",
+    "cn": "灵钥",
+    "jp": "{RUBY_B#れいけん}霊鍵{RUBY_E#}"
+  },
+  "20014": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Rogue",
+    "en": "Adversarial",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"Freedom fighters will never die, as their stories will forever be told.\"</i>",
+    "kr": "대립",
+    "cn": "相抗",
+    "jp": "{RUBY_B#そうこう}相抗{RUBY_E#}"
+  },
+  "20015": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Priest",
+    "en": "Multiplication",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"When life has lost its meaning, please continue to bestow life upon it.\"</i>",
+    "kr": "증식",
+    "cn": "蕃息",
+    "jp": "{RUBY_B#はんしょく}蕃殖{RUBY_E#}"
+  },
+  "20016": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Warrior",
+    "en": "Mutual Demise",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"How does one make perfect the past of a planet? Now — immediately — rend the planet asunder.\"</i>",
+    "kr": "전멸",
+    "cn": "俱殁",
+    "jp": "{RUBY_B#くぼつ}倶歿{RUBY_E#}"
+  },
+  "20017": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Knight",
+    "en": "Pioneering",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate.\\n\\n<i>\"We will no longer fight alone. The IPC will stand alongside everyone in assistance.\"</i>",
+    "kr": "강토 개척",
+    "cn": "开疆",
+    "jp": "{RUBY_B#しんてんち}新天地{RUBY_E#}"
+  },
+  "20018": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Warlock",
+    "en": "Hidden Shadow",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"The Nihility might find us, but there is a non-zero chance that they might not.\"</i>",
+    "kr": "숨은 그림자",
+    "cn": "匿影",
+    "jp": "{RUBY_B#とくえい}匿影{RUBY_E#}"
+  },
+  "20019": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Shaman",
+    "en": "Mediation",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"What can be more joyous than purging disharmony?\"</i>",
+    "kr": "어울림",
+    "cn": "调和",
+    "jp": "{RUBY_B#どうちょう}同調{RUBY_E#}"
+  },
+  "20020": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Mage",
+    "en": "Sagacity",
+    "desc": "A drop of strength condensed from time itself. All the seemingly insignificant moments come together to form the magnificent choir of fate. \\n\\n<i>\"Should Wise Ones be unable to abandon their identity as humans, they shall be abandoned by wisdom.\"</i>",
+    "kr": "식견",
+    "cn": "睿见",
+    "jp": "{RUBY_B#けんしき}見識{RUBY_E#}"
+  },
+  "20021": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Memory",
+    "en": "Shadowburn",
+    "desc": "The delicate power distilled from time itself. It's all the seemingly insignificant moments that weave together a magnificent destiny. \\n\\n<i>\"People always attempt to erase unpleasant pasts. Such is the nature of memory.\"</i>",
+    "kr": "불타는 그림자",
+    "cn": "焚影",
+    "jp": "{RUBY_B#も}燃{RUBY_E#}ゆる{RUBY_B#かげ}影{RUBY_E#}"
+  },
+  "20022": {
+    "rank": "CombatPowerLightconeRarity3",
+    "baseType": "Memory",
+    "en": "Reminiscence",
+    "desc": "The delicate power distilled from time itself. It's all the seemingly insignificant moments that weave together a magnificent destiny. \\n\\n<i>\"In the fleeting sweet dream, it was as if the old soul had returned to the colorful waters of childhood.\"</i>",
+    "kr": "추억 회상",
+    "cn": "溯忆",
+    "jp": "{RUBY_B#たど}辿{RUBY_E#}る{RUBY_B#きおく}記憶{RUBY_E#}"
+  },
+  "21000": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Priest",
+    "en": "Post-Op Conversation",
+    "desc": "<i>\"You're awake... Thank you.\"\\n\"You... saved my life, Natasha. The one who should be saying thanks... is me.\"\\n\"No, I should be thanking you... for holding on until I finished the surgery.\"</i>\\n\\nThe doctor and patient smiled wearily at each other and said nothing more.",
+    "kr": "수술 후의 대화",
+    "cn": "一场术后对话",
+    "jp": "{RUBY_B#しゅじゅつご}手術後{RUBY_E#}の{RUBY_B#かいわ}会話{RUBY_E#}"
+  },
+  "21001": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warlock",
+    "en": "Good Night and Sleep Well",
+    "desc": "The dim light outlines the dust tracks,\\nAs a young girl mumbles sweetly in her sleep.\\nA silent figure appears behind her.\\n<i>\"Well, well, well, you're cuter without those glasses — I knew it.\"</i>\\nThe guitarist stares at her sleeping face, muttering to herself:\\n<i>\"Good night, the genius girl that worries a lot.\"</i>",
+    "kr": "밤 인사와 잠든 얼굴",
+    "cn": "晚安与睡颜",
+    "jp": "おやすみなさいと{RUBY_B#ねがお}寝顔{RUBY_E#}"
+  },
+  "21002": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Knight",
+    "en": "Day One of My New Life",
+    "desc": "<i>\"So happy I got to see Pom-Pom in new clothes today! I like it~\"\\n\"Today's my birthday! I'm still as cute as ever.\"\\n\"Today, I finally finally finally have a junior! Isn't that right, {NICKNAME}?\"</i>\\n\\nWe click the shutter many times without thinking.\\nDo we do that to capture the happiness at that moment?\\nOr to capture ourselves at that moment?",
+    "kr": "여생의 첫날",
+    "cn": "余生的第一天",
+    "jp": "{RUBY_B#よせい}余生{RUBY_E#}の{RUBY_B#しょにち}初日{RUBY_E#}"
+  },
+  "21003": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Rogue",
+    "en": "Only Silence Remains",
+    "desc": "<i>\"Shouldn't we get off? It's our stop.\"</i>\\nA chuckle came from above. His eyes moved, but he didn't look up.\\n\\n<i>\"To be clear, March always says you're expressionless, but I don't agree.\"\\n\"The train's data bank show traces of an update, but the results weren't saved.\"\\n\"So... which entry were you having trouble with?\"</i>\\n\\nHe grasped his pen tighter as he looked at the bloody scene drawn in the notebook from memory.\\n\\n<i>\"I see. It was the one about you...\"</i>",
+    "kr": "침묵만이",
+    "cn": "唯有沉默",
+    "jp": "{RUBY_B#ちんもく}沈黙{RUBY_E#}のみ"
+  },
+  "21004": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "Memories of the Past",
+    "desc": "An old photo lies on the far end of the table in the guardian's residence.\\nShe would always subconsciously move her eyes away whenever she happened to see it.\\nThe memories of the past had already become distant, but the dreams of today still linger.",
+    "kr": "기억 속 모습",
+    "cn": "记忆中的模样",
+    "jp": "{RUBY_B#きおく}記憶{RUBY_E#}の{RUBY_B#なか}中{RUBY_E#}の{RUBY_B#すがた}姿{RUBY_E#}"
+  },
+  "21005": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warrior",
+    "en": "The Moles Welcome You",
+    "desc": "<i>\"Moles, moles,\"\\n\"Leaving our holes,\"\\n\"Smart moles fear naught foes,\"\\n\"Moles, moles,\"\\n\"Bite your toes!\"</i>",
+    "kr": "두더지파가 환영해",
+    "cn": "鼹鼠党欢迎你",
+    "jp": "モグラ{RUBY_B#とう}党{RUBY_E#}へようこそ"
+  },
+  "21006": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Mage",
+    "en": "The Birth of the Self",
+    "desc": "In the beginning, it had the exact same pose as the previous portrait.\\nLooking at the face identical to hers, she was convinced that this was not her.\\n\\n<i>\"Impossible. How can two portraits be exactly the same?\"</i>\\n\\nShe tweaked its joints, opened its eyes, and made its fingers softer.\\nShe looked happy when all the changes were done.\\n\\n<i>\"Completely different from yesterday. This is more like who I am today.\"</i>",
+    "kr": "「나」의 탄생",
+    "cn": "「我」的诞生",
+    "jp": "「{RUBY_B#わたし}私{RUBY_E#}」の{RUBY_B#たんじょう}誕生{RUBY_E#}"
+  },
+  "21007": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Priest",
+    "en": "Shared Feeling",
+    "desc": "When the doctor found the wounded girl, she was clinging to a machine that had stopped working, with all sorts of parts filling her pocket.\\nShe took the girl back to her clinic and treated the wounds.\\nDrops of sweat slowly rolled down the girl's cheek, but she remained silent and her hands didn't stop fiddling the machine.\\nTo the doctor, the way the girl was attached to the machine was very much like how she was attached to her patients who needed help.\\nSo the doctor did not try to comfort the girl nor did she nag her about being more careful; but rather, she sat down with her to give her a moment of peace.",
+    "kr": "같은 심정",
+    "cn": "同一种心情",
+    "jp": "{RUBY_B#おな}同{RUBY_E#}じ{RUBY_B#きも}気持{RUBY_E#}ち"
+  },
+  "21008": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warlock",
+    "en": "Eyes of the Prey",
+    "desc": "In reality, most prey don't realize when danger is encroaching.\\nThis one's no exception.\\nThe sniper's scope slowly centers on a man throwing banknotes stack after stack, who seems completely oblivious to his impending demise.\\n<i>\"So that's what greed looks like. That amount is equal to several of my contracts already... No wonder someone wants him dead.\"</i>\\n\\nAs if these thoughts were broadcasted out loud, the man in the scope turns his head, looking straight into the eyes of the sniper. \\n<i>\"I've been waiting for you. Would this much be enough for you to hear me out?\"</i>",
+    "kr": "사냥감의 시선",
+    "cn": "猎物的视线",
+    "jp": "{RUBY_B#えもの}獲物{RUBY_E#}の{RUBY_B#しせん}視線{RUBY_E#}"
+  },
+  "21009": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Knight",
+    "en": "Landau's Choice",
+    "desc": "<i>\"Did you not hear me? Don't go there ever again! What could you possibly be learning from those commoners!\"\\n\"But I've never heard any of the stories they tell about Belobog before...\"</i>\\n\\nShe pulled her brother behind her, denying him the chance to talk back.\\n<i>\"You are both Landaus! One day, you'll face hard choices. Especially you, Serval.\"</i>\\n\\nShe knew that her brother did nothing wrong, but she couldn't think of a rebuttal.\\nShe went to bed angry after the argument, vowing to herself:\\n<i>\"I will be a grown-up one day. And when that day comes, I will make choices...\"\\n\"My own choices...\"</i>",
+    "kr": "랜도의 선택",
+    "cn": "朗道的选择",
+    "jp": "ランドゥーの{RUBY_B#せんたく}選択{RUBY_E#}"
+  },
+  "21010": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Rogue",
+    "en": "Swordplay",
+    "desc": "Looking rather skeptical, the girl thrust the small sword at her imaginary enemy in an attempt to convince herself that this thing was useful.\\nHow can something so feeble compete with my two-handed sword? Do enemies even notice when they get stabbed?\\n\\nThe owner of the sword did not seem to care about its size.\\nAfter all, enemies are defeated by strategy, not swords.\\nIt doesn't matter whether the sword is heavy or light, as long as you use the pointy end.",
+    "kr": "논검",
+    "cn": "论剑",
+    "jp": "{RUBY_B#ろんけん}論剣{RUBY_E#}"
+  },
+  "21011": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "Planetary Rendezvous",
+    "desc": "She had no idea what to expect when she first started out on this journey.\\nAll she knew was that she could at long last be rid of the judgmental eyes and petty bickering of her family.\\nShe felt she finally understood what the poet was trying to say.\\n<i>\"One day, we would grow wings and forget what it was like to walk.\"</i>\\n\\nThe light in her eyes became the glittering stars.",
+    "kr": "행성과의 만남",
+    "cn": "与行星相会",
+    "jp": "{RUBY_B#わくせい}惑星{RUBY_E#}との{RUBY_B#であ}出会{RUBY_E#}い"
+  },
+  "21012": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warrior",
+    "en": "A Secret Vow",
+    "desc": "The boy would always make sure that his gloves and elbow guards were in good shape before leaving.\\nHe treasured his gloves more than anything because they were tight enough to hide secrets.\\nWith this layer of protection, no one could see the bandages on his hand and the wound beneath them.\\nHe would be treated as if he was normal, and he would be greeted just like everyone else.\\n\\nThat was all he asked for.",
+    "kr": "비밀 맹세",
+    "cn": "秘密誓心",
+    "jp": "{RUBY_B#ひみつ}秘密{RUBY_E#}の{RUBY_B#ちか}誓{RUBY_E#}い"
+  },
+  "21013": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Mage",
+    "en": "Make the World Clamor",
+    "desc": "She stood on the stage, waving at her audience, encouraging them to make their voice heard.\\nSongs, shouts, or laments — anything that makes a sound.\\nVoice your thoughts, so others can come to help.\\n\\n<i>\"Don't make your heart as cold as this concrete jungle.\"</i>\\n\\n— Make the world clamor.",
+    "kr": "세상을 진정시키지 마",
+    "cn": "别让世界静下来",
+    "jp": "この{RUBY_B#せかい}世界{RUBY_E#}に{RUBY_B#けんそう}喧噪{RUBY_E#}を"
+  },
+  "21014": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Priest",
+    "en": "Perfect Timing",
+    "desc": "On a bustling street, he walks and walks. The sunlight closely follows his footsteps.\\nHe makes a stop and picks up an umbrella to shade himself from the sun\\n...and from that prying gaze.",
+    "kr": "알맞은 타이밍",
+    "cn": "此时恰好",
+    "jp": "{RUBY_B#いま}今{RUBY_E#}が{RUBY_B#ちょうど}丁度{RUBY_E#}"
+  },
+  "21015": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warlock",
+    "en": "Resolution Shines As Pearls of Sweat",
+    "desc": "The limelight cast on the boxing ring is bright, but no brighter than all those beads of sweat running down his back.\\n\\nHe has long been determined to use his two fists to protect those he cherishes the most.\\nAfter all, they are the ones who ignited his determination in the first place.\\nThey are the ones who have always been there for him, be it inside or outside the boxing ring.",
+    "kr": "땀방울처럼 빛나는 결심",
+    "cn": "决心如汗珠般闪耀",
+    "jp": "{RUBY_B#けつい}決意{RUBY_E#}は{RUBY_B#あせ}汗{RUBY_E#}のように{RUBY_B#かがや}輝{RUBY_E#}く"
+  },
+  "21016": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Knight",
+    "en": "Trend of the Universal Market",
+    "desc": "The planet is receiving a revaluation...\\n\\n<i>\"Will this project show that it's mutually beneficial to collect any outstanding debts?\"\\n\"But we only need to convey one message — our existence.\"</i>\\n\\n\"If it were to have a value of its own, then it must create value for the corporation.\"",
+    "kr": "우주 시장 동향",
+    "cn": "宇宙市场趋势",
+    "jp": "{RUBY_B#せいかんいちば}星間市場{RUBY_E#}のトレンド"
+  },
+  "21017": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Rogue",
+    "en": "Subscribe for More!",
+    "desc": "<i>\"Yo, yo. What is up! Is everything coming through?\"</i>\\n\\nThe orange-haired girl slowly lifts a sledgehammer while shouting enthusiastically at the camera.\\n<i>\"Ever seen a pretty girl doing the cinder-block-smashed-on-chest stunt?\"</i>\\n\\n<i>\"I didn't sign up for this!\"</i>\\nThe brunette girl cried out loud, only to be met with a sly smile from the girl with the orange hair.\\n<i>\"Please. Just let me do this. This is what people would've wanted.\"</i>",
+    "kr": "팔로우를 부탁해!",
+    "cn": "点个关注吧！",
+    "jp": "フォローして！"
+  },
+  "21018": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "Dance! Dance! Dance!",
+    "desc": "<i>\"Why couldn't Hook do a spinning dance move, just like how Clara does?\"</i>\\nShe clenched her tiny fists and pouted her cute lips, her chubby little face looking redder than ever under her signature felt hat.\\n<i>\"Please, Mr. Svarog, can you please help Hook with this?\"</i>\\nWithout saying any words, Mr. Svarog began to hold out his robotic arm.\\n\\n<i>\"I'm g—gonna be sick!!! Put me down now! Please!\"</i>",
+    "kr": "댄스! 댄스! 댄스!",
+    "cn": "舞！舞！舞！",
+    "jp": "ダンス！ダンス！ダンス！"
+  },
+  "21019": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warrior",
+    "en": "Under the Blue Sky",
+    "desc": "Under the blue sky, fields of wheat were dancing.\\nThe young girl was carefully weaving a flower wreath,\\nfor her most beloved little sister.\\n\\nThat was when they were still the same height.\\nThat was when they shared the same smile.",
+    "kr": "푸른 하늘 아래",
+    "cn": "在蓝天下",
+    "jp": "{RUBY_B#あおぞら}青空{RUBY_E#}の{RUBY_B#した}下{RUBY_E#}で"
+  },
+  "21020": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Mage",
+    "en": "Geniuses' Repose",
+    "desc": "She pointed at that green rice cake.\\n<i>\"The experiment has ended. Time to take a break. I just can't miss this freshly made dessert.\"</i>\\n\\nShe saw the puppet girl frowning in deep thought.\\n<i>\"Well, in your current body, you can only look but not eat. I'll make you a box of new ones when the time comes.\"</i>\\n\\nShe saw the mechanical aristocrat hesitating at his own cup.\\n<i>\"Don't worry. It's only machine oil. Perfectly safe for you to consume.\"</i>",
+    "kr": "천재들의 휴식",
+    "cn": "天才们的休憩",
+    "jp": "{RUBY_B#てんさい}天才{RUBY_E#}たちの{RUBY_B#きゅうそく}休息{RUBY_E#}"
+  },
+  "21021": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Priest",
+    "en": "Quid Pro Quo",
+    "desc": "After enjoying an intense massage from the dragon girl,\\nthe foxian girl held out her hand and playfully pinched the dragon girl's little chubby cheeks.\\nThe little girl then pouted her lips, clearly offended, only to elicit a gleeful giggle from the foxian girl.\\n\\n<i>\"Now that's what I call a proper quid pro quo.\"</i>",
+    "kr": "등가교환",
+    "cn": "等价交换",
+    "jp": "{RUBY_B#とうかこうかん}等価交換{RUBY_E#}"
+  },
+  "21022": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warlock",
+    "en": "Fermata",
+    "desc": "The phonograph record is being played, spinning nonstop. Even the sounds of all those hoarse shrieks cannot escape the heatwave and are dampened by its tepidity.\\nShe seemed unprepared and utterly enthralled by the fascinating melodies:\\n\\nIt started with sincerity and anticipation...\\n...followed by a passionate catharsis...\\n...with one climax after another...\\n\\n...until the record's spinning came to a final stop and those hoarse shrieks were no longer audible.\\n<i>\"Mission accomplished.\"</i>",
+    "kr": "페르마타",
+    "cn": "延长记号",
+    "jp": "フェルマータ"
+  },
+  "21023": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Knight",
+    "en": "We Are Wildfire",
+    "desc": "She got used to people losing their homes.\\nAnd she got used to people losing their lives.\\nBut crying alone was useless.\\n\\n<i>\"Wear this red scarf, and then we shall share each other's pain.\"\\n\"We are family. We are Wildfire.\"</i>\\n\\nThe moment that pair of big hands held her head, she could no longer hold back her tears.",
+    "kr": "우리는 와일드 파이어",
+    "cn": "我们是地火",
+    "jp": "{RUBY_B#われ}我{RUBY_E#}ら{RUBY_B#ちえん}地炎{RUBY_E#}"
+  },
+  "21024": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Rogue",
+    "en": "River Flows in Spring",
+    "desc": "The young boy took a short break from his sword practice.\\nThe sunlight was baking his already heated neck. He slowly got into the water, whose coldness touched his bare feet.\\nWhen the bell chimes and birds tweet, even the people far away would know that springtime had arrived.",
+    "kr": "움트는 봄물",
+    "cn": "春水初生",
+    "jp": "{RUBY_B#しゅんすい}春水{RUBY_E#}に{RUBY_B#しょせい}初生{RUBY_E#}する"
+  },
+  "21025": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "Past and Future",
+    "desc": "The wings of the paper kite in her hands were broken, brutally reminding her of her beloved's tragic passing.\\nShe kneeled next to the fire of war, eyes full of sorrow.\\n\\n<i>\"If you are the only one left to do this, then our sacrifice would...\"</i>\\n\\nGunfire raged on, painting the sky red without dampening its majesty.\\nShe looked up at the sky, eyes full of fury.",
+    "kr": "과거와 미래",
+    "cn": "过往未来",
+    "jp": "{RUBY_B#かこ}過去{RUBY_E#}と{RUBY_B#みらい}未来{RUBY_E#}"
+  },
+  "21026": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warrior",
+    "en": "Woof! Walk Time!",
+    "desc": "Pity that no one has seen it...\\nSeen it screw up its nose and sniff around and dive into an empty path.\\n\\nPity that no one has seen it...\\nSeen it retract its claws, enter the password, and leap into the embraces of freedom.\\n\\nHas nobody seen it still...?\\nA grown dog can now walk itself in space!",
+    "kr": "멍! 산책 시간!",
+    "cn": "汪！散步时间！",
+    "jp": "ワン！{RUBY_B#さんぽ}散歩{RUBY_E#}の{RUBY_B#じかん}時間{RUBY_E#}！"
+  },
+  "21027": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Mage",
+    "en": "The Seriousness of Breakfast",
+    "desc": "Though the table is set...\\nSome people want a cup of tea first.\\nSome people want to take a picture first.\\nSome people want to read the newspaper first.\\nSome people want to write a page in their notebook first.\\nSome people want to play on their phone first.\\n\\n<i>\"All of you, eat while the food is hot!\"</i>",
+    "kr": "느낌 있는 아침 식사 루틴",
+    "cn": "早餐的仪式感",
+    "jp": "{RUBY_B#ちょうしょく}朝食{RUBY_E#}の{RUBY_B#ぎしきかん}儀式感{RUBY_E#}"
+  },
+  "21028": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Priest",
+    "en": "Warmth Shortens Cold Nights",
+    "desc": "Lighting a light, she glanced at her friend beside her while holding a mug of warm chocolate.\\nWatching her read the books and notes she gifted her.\\nWatching her expressing a rare smile.\\n\\nIn cold nights like this, even the tiniest bit of bliss can chase away the chills.",
+    "kr": "따듯한 밤은 길지 않고",
+    "cn": "暖夜不会漫长",
+    "jp": "{RUBY_B#あたた}暖{RUBY_E#}かい{RUBY_B#よる}夜{RUBY_E#}は{RUBY_B#なが}長{RUBY_E#}くない"
+  },
+  "21029": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warlock",
+    "en": "We Will Meet Again",
+    "desc": "She had once thought it was some sort of program. How else would it never tire?\\nBut a program would never actively discard the optimal solution and bypass her trap.\\n\\n<i>\"Seems like we'll have a war of attrition.\"</i>\\nShe yawns.\\n\\n<i>\"Time to sleep. Organic lifeforms should treasure rest.\"</i>\\nThe surroundings dim.\\n\\nShe suddenly bolts awake, but the residues of data are swept away and destroyed. It all seems like a dream\\n— but the taste of defeat is very real.",
+    "kr": "훗날 기약",
+    "cn": "后会有期",
+    "jp": "またお{RUBY_B#あ}会{RUBY_E#}いしましょう"
+  },
+  "21030": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Knight",
+    "en": "This Is Me!",
+    "desc": "The girl could rock any outfit she chooses, but she was unsatisfied, judging by the dozen sets of clothing piled up behind her.\\n\\n<i>\"Will this be the last outfit for today?\"</i>\\n\\nShe thought silently to herself and looked at the girl in the mirror. She looked extra happy on this day.\\n\\n<i>\"Okay! This is me!\"</i>",
+    "kr": "이게 바로 나야!",
+    "cn": "这就是我啦！",
+    "jp": "これがウチだよ！"
+  },
+  "21031": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Rogue",
+    "en": "Return to Darkness",
+    "desc": "Even though her sister was close by her side, she could hear nothing.\\nThe only thing audible was the voice in the depths of her heart, which only grew louder by the minute.\\n\\n<i>\"Big sis's body is cold.\"\\n\"Big sis's body is not moving.\"</i>\\n\\nA violent surge of fury irrevocably overwhelmed her so much that she didn't even find the time to clear her mind, or to remember this crucial yet neglected fact...\\n\\n<i>\"Big sis's body has been cold like this for a very long time.\"</i>",
+    "kr": "또다시 저승으로",
+    "cn": "重返幽冥",
+    "jp": "{RUBY_B#ゆうめい}幽冥{RUBY_E#}に{RUBY_B#き}帰{RUBY_E#}す"
+  },
+  "21032": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "Carve the Moon, Weave the Clouds",
+    "desc": "He immediately falls in love with the golden vessel and is about to buy it,\\nbut the foxian girl drags him aside and whispers:\\n<i>\"Please return at night, Mr. Benefactor, and make up your mind then.\"</i>\\n\\nAs promised, he returns at night.\\nThe same foxian girl opens the door and smiles at him.\\n<i>\"Please follow me, Mr. Benefactor.\"</i>\\n\\nA ray of moonlight shines onto the base of the etched plate.\\nThe artisan had traced the petals with lines of various depths, and he would not be able to see such details without the moonlight.\\n\\nHe finally recalls why this item is called \"Carve the Moon, Weave the Clouds.\"",
+    "kr": "누월재운의 뜻",
+    "cn": "镂月裁云之意",
+    "jp": "{RUBY_B#ちょうげつさいうん}彫月裁雲{RUBY_E#}の{RUBY_B#い}意{RUBY_E#}"
+  },
+  "21033": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warrior",
+    "en": "Nowhere to Run",
+    "desc": "This isn't the first time he's seen this man.\\nThis man had become his own inseparable shadow.\\nNo matter how many times he runs this man through with his spear, the man always comes back.\\n\\nHe can neither lose to this man, nor truly win.\\nThough he wants to run away, there is nowhere to run.",
+    "kr": "도망칠 곳은 없다",
+    "cn": "无处可逃",
+    "jp": "{RUBY_B#に}逃{RUBY_E#}げ{RUBY_B#ば}場{RUBY_E#}なし"
+  },
+  "21034": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Mage",
+    "en": "Today Is Another Peaceful Day",
+    "desc": "There is the new book borrowed for lunch and she just figured out a new way to play tiles.\\nIf she works slowly, the rest of her job should last exactly till the end of day.\\nShe ducks easily into a corner.\\n\\nNo one must disturb her in her wonderful off time\\n— not even diviner Fu.\\nJust on the off chance that she does show up...\\n\\n<i>\"Then I'll give this milk candy ball to Diviner Fu. She can't be angry after having sweets!\"</i>",
+    "kr": "오늘도 평화로운 하루",
+    "cn": "今日亦是和平的一日",
+    "jp": "{RUBY_B#きょう}今日{RUBY_E#}も{RUBY_B#へいわ}平和{RUBY_E#}な{RUBY_B#いちにち}一日{RUBY_E#}"
+  },
+  "21035": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Priest",
+    "en": "What Is Real?",
+    "desc": "<i>\"If all the clocks are displaying the wrong time...\"</i>\\n<i>\"If those bound to promises fulfilled their vows through betrayal...\"</i>\\n<i>\"If those who sink into the realm of dreams never truly fell asleep...\"</i>\\n<i>\"If the dead return to life, only to discover their names have been stripped...\"</i>\\n\\n<i>\"If... if...\"</i>\\nHe blows out the flame, and in darkness, there is but the eternal ticking of the timepiece.",
+    "kr": "무엇이 진실인가",
+    "cn": "何物为真",
+    "jp": "{RUBY_B#なに}何{RUBY_E#}が{RUBY_B#まこと}真{RUBY_E#}か"
+  },
+  "21036": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "Dreamville Adventure",
+    "desc": "<i>\"Hello, dear viewers! Clockie and his pals have come to see you all again!\"</i>\\n\\n<i>\"In the previous episode, Boss Stone discovered that Dreamville was sitting on a wealth of natural resources, and moved to seize control over the city. In response, Clockie joined forces with Brother Hanu and Origami Bird, and together, they sent Boss Stone and his goons running from Dreamville.\"</i>\\n\\n<i>\"But Boss Stone isn't going to be defeated that easily, and this time, he's gathered a legion of thugs to fulfill his oath of turning Dreamville into a crater. In this episode, Clockie might just be standing against the greatest threat he ever faced!\"</i>\\n\\n<i>\"What scheme will Clockie employ to escape from this crisis? And what new friends will join his party? Stay tuned for the latest episode of 'Dreamville Adventure'!\"</i>",
+    "kr": "좋은꿈 마을 대모험",
+    "cn": "美梦小镇大冒险",
+    "jp": "ドリームタウンの{RUBY_B#だいぼうけん}大冒険{RUBY_E#}"
+  },
+  "21037": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Rogue",
+    "en": "Final Victor",
+    "desc": "<i>\"You don't believe me?\"</i>\\nHe provocatively looks at the man before him, then draws out a revolver, empties its cylinder, and leaves a single shot in the chamber.\\n\\n<i>\"Seems like I'll need to get you up to speed on how I do things if our cooperation were to remain amicable.\"</i>\\nHe pushes the gun into his opponent's hand, spins the cylinder, and points the barrel to his own chest.\\n\\nHe pulls the trigger repeatedly, and the smile on his face remains the same after three empty clicks.\\n<i>\"Life is a grand gamble, and I'll always be the final victor.\"</i>",
+    "kr": "최후의 승자",
+    "cn": "最后的赢家",
+    "jp": "{RUBY_B#さいご}最後{RUBY_E#}の{RUBY_B#しょうしゃ}勝者{RUBY_E#}"
+  },
+  "21038": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warrior",
+    "en": "Flames Afar",
+    "desc": "<i>\"Package secured. I'll leave covering our retreat to you.\"</i>\\nTheir comrade's voice comes through the communicator.\\n\\nThey glance around the surroundings, watching as the savaged remnants of their enemies continue to pass through the complex architecture inside the vast and abandoned structure. They are drawing ever closer.\\n<i>\"Please hold.\"</i>\\n\\nAfter a beat of quietude, a series of apocalyptic explosions rocket up into the sky. Waves of displaced air cast clouds of dust high across the battlefield, and smoke scatter in all directions, the blinding white cleaving light into the night.\\n<i>\"You know they purposely planted loads of gunpowder in there, right?\"</i>\\n\\nWith a rustle, they flung open the cape as if they just finished a leisurely stroll.\\n<i>\"Of course.\"</i>\\n<i>\"So, let's light it up. All I need to do is play the part of the match.\"</i>",
+    "kr": "불의 먼 곳에서",
+    "cn": "在火的远处",
+    "jp": "{RUBY_B#れっか}烈火{RUBY_E#}の{RUBY_B#かなた}彼方{RUBY_E#}"
+  },
+  "21039": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Knight",
+    "en": "Destiny's Threads Forewoven",
+    "desc": "Destiny always tows the masses onward without reason, and she lurks within the darkness, waiting to inscribe the most crucial of instants.\\n\\nSorting, matching, shuffling, drawing... She simulates fate's hand in how it manipulates all variables for the masses, seeking the trajectory of truth beneath the visage of a disorderly exterior.\\n\\nFinally, when all the characters are in their place, she brushes over the card faces that are in stasis and assembles the unfathomable truth.\\n<i>\"Still missing a card... So, I'll add one in.\"</i>",
+    "kr": "운명의 실을 엮다",
+    "cn": "织造命运之线",
+    "jp": "{RUBY_B#うんめい}運命{RUBY_E#}を{RUBY_B#つむ}紡{RUBY_E#}ぐ{RUBY_B#いと}糸{RUBY_E#}"
+  },
+  "21040": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Mage",
+    "en": "The Day The Cosmos Fell",
+    "desc": "<i>\"Molten Cheese Tart! You are in charge of disarming the planet's lookouts with your charm!\"</i>\\n<i>\"Gray Bean Paste! You will be in charge of breaching the planet's line of defense!\"</i>\\n<i>\"Salty Rimeplume! Bring us the head of the planet's leader!\"</i>\\n<i>\"My lord, what are you going to do!\"</i>\\n<i>\"I shall pretend to be an adorable kitten to befuddle these stupid humans!\"</i>\\n\\nThat day, the Cosmos remembered... the terror of being ruled by them.",
+    "kr": "은하 함락의 날",
+    "cn": "银河沦陷日",
+    "jp": "{RUBY_B#ぎんが}銀河{RUBY_E#}が{RUBY_B#かんらく}陥落{RUBY_E#}した{RUBY_B#ひ}日{RUBY_E#}"
+  },
+  "21041": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warlock",
+    "en": "It's Showtime",
+    "desc": "—Who witnessed his death?\\n—Me! I spied it with my little eyes!\\n—Who took his blood?\\n—Me! I seized it with my little saucer!\\n—Who dug his grave?\\n—Me! I did it with my chisel and shovel!\\n\\nThe sage schemes exhaustedly, the king lusts insatiably, the hero prides falsely — only the Fool laughs perpetually\\n<i>\"Now, let us welcome Ms. Sparkle to bring us the performance of the year — Penacony's Night of Fright!\"</i>",
+    "kr": "쇼타임",
+    "cn": "好戏开演",
+    "jp": "ショーの{RUBY_B#はじ}始{RUBY_E#}まり"
+  },
+  "21042": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warrior",
+    "en": "Indelible Promise",
+    "desc": "A weathered past. A sworn duty to defend home. A dream to blaze a trail across the world—\\nThese were entrusted to the unworldly youth by a pair of rough, calloused hands.\\n\\n<i>\"Soon, we'll be able to go to a larger world.\" </i>\\nThe boy happily accepted his inheritance. Guarded by youth, he could not yet feel the weight born by the object's significance.\\n\\n<i>\"Of course. Before that time comes, however, guard this place well, Misha.\" </i>\\n\\nHe thus engraved that promise deep inside his heart, holding to it forever and always.",
+    "kr": "마음에 새긴 약속",
+    "cn": "铭记于心的约定",
+    "jp": "{RUBY_B#こころ}心{RUBY_E#}に{RUBY_B#きざ}刻{RUBY_E#}まれた{RUBY_B#やくそく}約束{RUBY_E#}"
+  },
+  "21043": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Knight",
+    "en": "Concert for Two",
+    "desc": "<i>\"Big brother, what's this...\"</i>\\n<i>\"It's been so long since you sang with joy... I've built a stage for you, though it's... a bit rudimentary.\"</i>\\n<i>\"But the teacher thinks I'm not cut out for this...\"</i>\\n<i>\"Nonsense, I think you sound amazing! And your dreams will definitely come true. You deserve to sing on a bigger stage...\"</i>\\n...\\n\\nMany years later, she stood on a dazzling stage, looking at the surging fans below, but lost herself for a moment...\\nOn the long journey of chasing dreams, she would always remember that trusting gaze and her first \"concert.\"\\nNo glamorous lights, no elaborate makeup, just a child building a stage to encourage another child to pursue their dreams.\\n\\n<i>\"Now, our dreams have come true. But... are they still 'our' dreams?\"</i>\\nShe tightened her grip on the microphone. Before the next song began, she didn't even have time to feel sad.",
+    "kr": "두 사람의 콘서트",
+    "cn": "两个人的演唱会",
+    "jp": "{RUBY_B#ふたり}二人{RUBY_E#}だけのコンサート"
+  },
+  "21044": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warlock",
+    "en": "Boundless Choreo",
+    "desc": "Their dance glides gracefully, shadows and light silently exchanging places. She takes the other person's hand, her smile beaming into those indifferent eyes.\\n<i>\"Beautiful Ranger... Welcome to the stage of the Remembrance. At this proximity... you are far more enchanting than one might perceive.\"</i>\\n\\nThe surroundings darken, a beam of light cascading from the dome above, tracing their evolving steps.\\n<i>\"However, some were meant to dance with us but have yet to arrive...\"</i>\\n\\nIn a spinning moment, she draws closer to that expressionless face, grips that cold hand, and softly inquires—\\n<i>\"Tell me. What have you done?\"</i>\\n\\nAs their dance steps grow hurried more and more, fragmented snippets of the past rush into her mind through their joined fingertips.\\nIn a past that stretches back further and further, she hears the sound of rain and the lamentations just before life's extinguish. Then, she sees her dance partner holding a blood-red paper umbrella in the drizzling rain. Finally, as far as her eyes can see—\\n\\nA field of drowned corpses bobbing in the deluge.\\n\\nPanic-stricken, she tries to withdraw her hand, falling backward.\\nThe surroundings brighten again, the banquet's clamor resurfacing. Her dance partner gently supports her waist, as if oblivious to the ordeal that just unfolded.\\n<i>\"What a lovely dance that was, Memokeeper. Shall we have another go?\"</i>",
+    "kr": "끝없는 춤",
+    "cn": "无边曼舞",
+    "jp": "{RUBY_B#お}終{RUBY_E#}わりなき{RUBY_B#ぶとう}舞踏{RUBY_E#}"
+  },
+  "21045": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Mage",
+    "en": "After the Charmony Fall",
+    "desc": "The eternal dream he longed for vanished in an instant. As he plummeted towards the earth, he felt no sadness, only a desire to close his eyes.\\n\\nThe old path treaded upon has now crumbled, yet the journey ahead remains shrouded in mist.\\n<i>\"After the awakening, the world continues its cycle of suffering, with no escape, the same as always...\"</i>\\nHe carries the past, turns his back on his homeland, and continues towards a paradise that does not yet exist.\\n\\nSo, why do people slumber? And why do they wake?\\n— As planets streak past outside the window, this answer now demands a new meaning to be given.\\n<i>\"Maybe... just maybe I still can...\"</i>",
+    "kr": "조화가 침묵한 후",
+    "cn": "谐乐静默之后",
+    "jp": "{RUBY_B#ちょうわ}調和{RUBY_E#}が{RUBY_B#ちんもく}沈黙{RUBY_E#}した{RUBY_B#あと}後{RUBY_E#}"
+  },
+  "21046": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "Poised to Bloom",
+    "desc": "Dawn's first light whispers. In the stillness of the flower grove, a shifting form dances, startling birds into flight one after another.\\n\\nSilently reciting sword techniques, she moves with the flow, her once-clumsy moves now gaining finesse. Where the sword's cuts rend the air, petals fall like rain, swirling chaotically as they fall. Unbeknownst to her, the cool mist has dampened her hair.\\n\\n<i> \"Nice swordplay!\" </i>\\nStartled, she instinctively turns her sword—\\nBehind her, a young {F#woman}{M#man} with gray hair lowers the camera in hand.\\n<i> \"Beautiful memories won't just fade away with the wind.\"</i>",
+    "kr": "피어나길 기다리는 꽃",
+    "cn": "芳华待灼",
+    "jp": "{RUBY_B#うつく}美{RUBY_E#}しき{RUBY_B#はな}華{RUBY_E#}よ{RUBY_B#いま}今{RUBY_E#}{RUBY_B#さ}咲{RUBY_E#}かん"
+  },
+  "21047": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Rogue",
+    "en": "Shadowed by Night",
+    "desc": "<i>\"Footprints.\"</i>\\n<i>\"Scratches.\"</i>\\n<i>\"Scents.\"</i>\\n\\nAfter everything has been appropriately handled, he picks up a crow feather and gracefully leaps onto the roof.\\nIn the vast city, a pitch-black shadow shuttles through the corners unseen.\\n\\n<i>\"I shall merge into shadows and keep vigil over you all.\"</i>",
+    "kr": "그림자처럼 뒤따르는 밤",
+    "cn": "黑夜如影随行",
+    "jp": "{RUBY_B#よる}夜{RUBY_E#}は{RUBY_B#かげ}影{RUBY_E#}のように{RUBY_B#つ}付{RUBY_E#}き{RUBY_B#まと}纏{RUBY_E#}う"
+  },
+  "21048": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Priest",
+    "en": "Dream's Montage",
+    "desc": "<i>\"The City of Dreams, the Breeding Ground of Sin, or the Promised Land...\"</i>\\n\\nExtracting the memories of many, he scrutinizes the spectacular moments, disrupting, reorganizing, and splicing them together.\\n<i>\"Most people's memories are but a collection of trivial and monotonous fragments, where only a handful of precious moments stand out, while the existences of the rest are utterly unnecessary.\"</i>\\n\\nFrame by frame, the images flow through his grasp, gradually woven into a tapestry of brilliance.\\n<i>\"We don't transport memories. We only create the past.\"</i>",
+    "kr": "꿈의 몽타주",
+    "cn": "梦的蒙太奇",
+    "jp": "{RUBY_B#ゆめ}夢{RUBY_E#}のモンタージュ"
+  },
+  "21050": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Memory",
+    "en": "Victory In a Blink",
+    "desc": "The Titankins' all-consuming roars sweep across the battlefield. Two lightning-quick figures slaughter their way out of combat.\\n\\n<i>\"I alone will be enough to handle them.\"</i>\\nEvery punch unleashed by the warrior sends spears of blood through the bodies of the enemy.\\n<i>\"Brute force and nothing more. Watch my blade!\"</i>\\nAs a blade of pale silver slices in a curve, monsters drop like falling leaves.\\n<i>\"A contest of speed?\"</i>\\nThe two charge at the other side simultaneously.\\nHowls of anguish sound as the stealthy beasts behind them are struck down at once.\\nTwo voices can be heard at the same time.\\n<i>\"That was my kill!\"</i>\\n",
+    "kr": "찰나에 결정되는 승리",
+    "cn": "胜利只在朝夕间",
+    "jp": "{RUBY_B#しゅんこく}瞬刻{RUBY_E#}の{RUBY_B#しょうき}勝機{RUBY_E#}"
+  },
+  "21051": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Memory",
+    "en": "Geniuses' Greetings",
+    "desc": "<i>\"Congratulations. Experiment failed again, didn't it?\"</i>\\n<i>\"...\"</i>\\n<i>\"I told you before that there are mistakes in your method.\"</i>\\n<i>\"...\"</i>\\n<i>\"I gotta tell you, I've been getting some big breakthroughs recently...\"</i>\\n\\nThe aloof woman lifts her head from her book...\\n<i>\"I'm sorry. What did you say?\"</i>\\nShe waves her hand.\\n<i>\"Well, I can't say how great these breakthroughs are. They might only affect half the cosmos.\"</i>\\nThe woman closes her book.\\n<i>\"Let's hear it, then.\"</i>\\n\\n<i>\"Hmph. A genius of my caliber... it's not something you'll just get to hear randomly...\"</i>\\n<i>\"I understand. I'll make some pastries. We can talk and eat at the same time.\"</i>",
+    "kr": "천재들의 안부 인사",
+    "cn": "天才们的问候",
+    "jp": "{RUBY_B#てんさい}天才{RUBY_E#}たちの「{RUBY_B#あいさつ}挨拶{RUBY_E#}」"
+  },
+  "21052": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Memory",
+    "en": "Sweat Now, Cry Less",
+    "desc": "Resounding impacts echo through the training room and a thunderous kick follows, practically folding the sandbag in two.\\n\\n<i>\"General... isn't this level of training too much for you?\"</i> Such is the question asked by a nearby soldier.\\n\\nSmiling, she shakes her head and hangs a new sandbag in place.\\n\\n<i>\"This? No. Not even close!\"</i>\\n\\nHer glistening sweat reflects the glow of the moon, trailing down her body like crystalline pearls. The memory of that departed general re-surfaces in her mind... <i>\"Sweat more when training, so you might weep less in battle.\"</i>",
+    "kr": "땀은 많이, 눈물은 적게",
+    "cn": "多流汗，少流泪",
+    "jp": "{RUBY_B#なが}流{RUBY_E#}すなら{RUBY_B#なみだ}涙{RUBY_E#}より{RUBY_B#あせ}汗{RUBY_E#}"
+  },
+  "21053": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Knight",
+    "en": "Journey, Forever Peaceful",
+    "desc": "The boy ran amongst the star-like raindrops and cheered for the blissful rain that arrived after a long drought.\\n\\nThe rain fell for a long, long time, and the covered wagon stopped on the land covered by budding green.\\n<i>\"Mom! Big sis! We'll never go cold or hungry again!\"\\n</i>The Avgins' campfire warmed the long night, as the boy listened to his big sister's stories and waited for the dawn.\\n\\n<i>\"Kakavasha... You, too, will go forth with your good luck blessed by the Mother Goddess, and achieve what we could not achieve... May your journey be forever peaceful, and your schemes forever concealed...\"</i>\\n\\nGolden sunlight reflects from his dreams into his real-life abode, and transactions and numbers are once again mirrored in his eyes.\\nHe lets go of the hand that was clutched into a fist —\\n\\nIt's as if he did not manage to grab onto anything... yet there's still a throbbing, lingering warmth.",
+    "kr": "언제나 여정이 평탄하기를",
+    "cn": "愿旅途永远坦然",
+    "jp": "{RUBY_B#たび}旅{RUBY_E#}が{RUBY_B#へいおん}平穏{RUBY_E#}であるように"
+  },
+  "21054": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Memory",
+    "en": "The Story's Next Page",
+    "desc": "The breeze stirs the wheat fields as the girl, clutching a blank journal, strolls through the golden waves.\\n\\nBeyond Aedes Elysiae, in a city both unfamiliar and eerily familiar, companions of all kinds will cross paths, and a journey like a song, like a dream, is about to begin...\\n\\n<i>\"This time, together with me...\"</i>\\nAt the edge of the field, the girl who has waited so long closes her book and extends a hand toward the \"future\"—\\n\\n<i>\"Let's write a new chapter of the story ♪\"</i>",
+    "kr": "이야기의 다음 페이지",
+    "cn": "故事的下一页",
+    "jp": "{RUBY_B#ものがたり}物語{RUBY_E#}をめくって"
+  },
+  "21055": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Priest",
+    "en": "Unto Tomorrow's Morrow",
+    "desc": "<i>\"See you tomorrow, Tribios...\"</i>\\n\\nThe girl wiped the tears on her cheeks when her mother went somewhere far, far away.\\n\\nShe waited one tomorrow after another, till she grew up to be someone like her mother.\\nShe stands before the passage and grasps the Coreflame tight as she recalled her mother's words.\\n\\n<i>\"There are no blizzards, colds, or rain at that place...\"</i>\\n\\n<i>\"But if we can't see you tomorrow, then...\"</i>\\n\\nShe falls towards the earth, leaving her young figure behind, like a shooting star across the sky —\\n\\n<i>\"Then, see you on tomorrow's morrow!\"</i>",
+    "kr": "내일의 내일이 올 때까지",
+    "cn": "直到明天的明天",
+    "jp": "{RUBY_B#あした}明日{RUBY_E#}の{RUBY_B#あした}明日{RUBY_E#}まで"
+  },
+  "21056": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "In Pursuit of the Wind",
+    "desc": "<i>\"Heh. This one can go to that unlucky brat. It'll shut her money-owing parents up, and maybe they'll hit her less.\"\\n\"This can go to the granny selling pickle candies to help her out in a pitch. She really needs to see a doctor for all her pains. I don't wanna see a day when I can't buy such tasty candies anymore...\"</i>\\n\\nBent over the rucksack, the girl meticulously counts the jewels in there, and suddenly sneezes.\\n<i>\"Who's missed me?\"</i>\\n\\n<i>\"There you are, Cifera.\"</i>\\nThe threads wind around her back, as if hesitating where to start.\\n\\n<i>\"From now on, when you're chasing the wind...\"</i>\\nThe icy golden thread wraps around her wrists, holding her in place.\\n\\n<i>\"Don't forget to look after yourself as well.\"</i>\\n\\nShe runs, escaping far away. It's only when she turns around that she discovers the corner of her cloak that's starting to fray had already been stitched up, as if it were new.",
+    "kr": "바람을 쫓을 때",
+    "cn": "追逐风的时候",
+    "jp": "{RUBY_B#かぜ}風{RUBY_E#}を{RUBY_B#お}追{RUBY_E#}う{RUBY_B#とき}時{RUBY_E#}"
+  },
+  "21057": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Memory",
+    "en": "The Flower Remembers",
+    "desc": "In spring, they sowed seeds.\\nIn summer, they irrigated the fields.\\nIn autumn, they harvested the fruits.\\nIn winter, they sang as they walked in the snow.\\n...\\n\\nThe land that was originally barren now blooms with flowers, and butterflies are drawn by the peals of laughter and land on the girls' fingertips.\\n<i>\"Big sis! We'll keep working together to turn this into a huge sea of flowers!\"</i>\\n\\n<i>\"See. Our promise...\"</i>\\nThe butterfly flies to the other shore. The rather taciturn girl softly caresses the warm flower petals as if her little sister is still there with her.\\n<i>\"...Wasn't forgotten by me or the flowers we once attended.\"</i>",
+    "kr": "꽃은 잊지 않는다",
+    "cn": "花儿不会忘记",
+    "jp": "{RUBY_B#はな}花{RUBY_E#}は{RUBY_B#わす}忘{RUBY_E#}れない"
+  },
+  "21058": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warrior",
+    "en": "A Trail of Bygone Blood",
+    "desc": "A storm broods in the distance. Tentacles extend from the Sea of Souls, as if intending to toy with that floating, fragile life.\\nThe broken limbs of the sea beast hammer giant sprays skyward, and sink into the oceanic abyss after shattering like rubble.\\n\\nThey say that the roar of the fight lasted for ten days and nights, overwhelming even the thunder and lightning.\\nThey say that even if a man had ten thousand lives, he would not be enough to resist the Sea of Souls's erosion.\\n\\nThen, courage washes away the immaturity and cold pride tempered timidity —\\n\\nAnd that thin figure stumbled onto the shore. The first ray of the morning sun shines down upon the sea's waters, dyeing it like past blood.",
+    "kr": "과거의 핏자국",
+    "cn": "一行往日的血",
+    "jp": "{RUBY_B#いにしえ}古{RUBY_E#}より{RUBY_B#う}受{RUBY_E#}け{RUBY_B#つ}継{RUBY_E#}がれる{RUBY_B#ち}血{RUBY_E#}"
+  },
+  "21060": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Mage",
+    "en": "A Dream Scented in Wheat",
+    "desc": "The breeze blows past the youth's fingertips and sends the letter, still wet with ink, to the distant beyond.\\n\\n<i>\"What would my future look like...\"</i>\\nDreams grow wings in his mind and fly towards the ends of the sky.\\nEars of wheat dance in the wind and form ripples, as if responding to his boyish and earnest wish.\\n\\n<i>\"Even if I only have a single sword in my hand, I want to protect this place no matter what!\"</i>\\nThe youth made this silent vow in his mind —\\n\\nA vow as deep as a brand, eternally etched into his heart.",
+    "kr": "밀 내음이 가득한 꿈",
+    "cn": "氤氲麦香的梦",
+    "jp": "{RUBY_B#むぎ}麦{RUBY_E#}の{RUBY_B#かお}香{RUBY_E#}り{RUBY_B#ただよ}漂{RUBY_E#}う{RUBY_B#ゆめ}夢{RUBY_E#}"
+  },
+  "21061": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warlock",
+    "en": "Holiday Thermae Escapade",
+    "desc": "<i>\"Cinny, let's go try out that new special bath that recently opened.\"</i>\\n\\nAfter finishing her medical duties in Okhema, the girl followed the curious child into the eclectic set of pools.\\n\\n<i>\"How about a Tomato Juice Massage?\"</i>\\nStaring at the attendant's crimson-stained hands, she hugged the eager Little Ica and retreated—\\n<i>\"I prefer something... drinkable....\"</i>\\n\\n<i>\"Dromas back massage, limited-time discount!\"</i>\\nA curious dromas lowered its head, its hot breath tousling her hair.\\n<i>\"N—Next time, maybe!\"</i>\\n\\n<i>\"Herbal Bath — strengthens body and soul! How many in your party?\"</i>\\nLured by the fragrant herbs, she tentatively dipped a foot into the pool.\\n<i>\"This... seems healthy...\"</i>\\n\\n<i>\"Doot, doot-doot!\"</i>\\nLittle Ica floated blissfully on its back.\\n<i>\"Guess even you needed a break from all we've been doing recently...\"</i>\\n\\nOn this rare day off, sipping grape juice, the girl chatted with the red-haired child about everything from sleep tips to pastry recipes.\\n\\n<i>\"Oh no—Little Ica!\"</i>\\nThe child's shriek shattered the bathhouse's calm.\\n\\n<i>\"Doot...\"\\n\"Hold on, Little Ica!\"</i>",
+    "kr": "휴일의 목욕탕 대모험",
+    "cn": "假日浴场大冒险",
+    "jp": "{RUBY_B#きゅうじつ}休日{RUBY_E#}のバルネア{RUBY_B#だいぼうけん}大冒険{RUBY_E#}"
+  },
+  "21062": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Rogue",
+    "en": "See You at the End",
+    "desc": "Unwilling tears trailed down his cheeks. At the heart of the shattered ritual array lingered not just death's shadow, but an abyss of silence and emptiness.\\n\\nThen, a sigh trembled through the darkness — a ripple from the \"soul's\" deepest recesses.\\n<i>\"Is that you... Sister...\"</i>\\nThe boy lifted his hand, a weak light flickering in his eyes. The silhouette of his loved one lingered but a breath, yet its imprint etched a millennium into his heart.\\n\\n<i>\"I see... Thank you... for this final farewell.\"</i>\\nHe rose slowly. Dawn's first rays caressed his resolute face, still streaked with tears.\\n\\n<i>\"The path of seeking is a solitary one... Let us meet again at the journey's end.\"</i>",
+    "kr": "그 종착지에서 다시 만나자",
+    "cn": "于那终点再见",
+    "jp": "{RUBY_B#しゅうてん}終点{RUBY_E#}でまた{RUBY_B#あ}会{RUBY_E#}おう"
+  },
+  "22000": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warlock",
+    "en": "Before the Tutorial Mission Starts",
+    "desc": "<i>How much longer until the action starts?\\nYou have the nerve to ask a question like that... is something wrong with the new recruit?\\nNo.\\nElio didn't choose her because she was good at field work, but she has to at least survive this rookie assignment.\\nShe's cruising.\\nThen I'm relieved. It seems that Bladie has proved to be a reliable operative as well.\\n...</i>",
+    "kr": "초보자 임무 시작 전",
+    "cn": "新手任务开始前",
+    "jp": "{RUBY_B#はじ}初{RUBY_E#}めてのクエストの{RUBY_B#まえ}前{RUBY_E#}に"
+  },
+  "22001": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Priest",
+    "en": "Hey, Over Here",
+    "desc": "Three girls stroll in the darkness, and the surroundings seem to gain a hint of eeriness.\\n\"Huohuo, hurry up, or we won't wait for you!\"\\nShe steps forward confidently with her phone clutched in her hand, seemingly unaffected by the paranormal ambiance.\\n\"I—I'm over here!\"\\nThe girl standing ahead responds timidly.\\n\"Huh? So you were in the front all along, then who is following Shangshang and me...\"\\n\\nThe perfect end for this scene would definitely be a girlish scream.",
+    "kr": "저기, 나 여기 있어",
+    "cn": "嘿，我在这儿",
+    "jp": "よぉ、ここにいるぜ"
+  },
+  "22002": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "For Tomorrow's Journey",
+    "desc": "The hands of the compass keep turning until they point to the moment of dreams.\\nThe Asdana system, overflowing with memoria, glows with a soft light outside the train's windows. The frontier prison within is currently engulfed in the fires of war.\\n\\n<i>\"Hey guys, what do you suppose the world within the dream would look like?? I must meticulously map it out!\"</i>\\nThe girl, packing away her surveying tools, gazes at the new world within reach, filled with anticipation.\\n<i>\"That place is a mess. Don't you run off once we get there. I won't have you two getting kidnapped again...\"</i>\\nThe man in cowboy attire grumbles as he cleans his weapon, then walks over to the sofa with a drink, shaking his head in resignation.\\n<i>\"The Land of the Dreams promises infinite possibilities. We'll surely make our mark... Hey, conductor, if we fall in love with that place and never return, would you miss us?\"</i>\\nThe Nameless dressed like a gentleman winks at Pom-Pom, smiling.\\n<i>\"'You can't joke at the conductor's expense like this!' Is that what you want to say, conductor?\" </i>The girl's mischievous grin spreads across her face.\\n<i>\"You guys are! So! Mean!\"</i>\\nBubbles drift up and down in the glass as the Express fills up with joyful laughter.\\n...\\n\\nThe youthful silhouettes of these Nameless get gradually swallowed by memoria.\\n<i>\"Have a... safe... trip...please...\"</i>\\nWhen the conductor turns their head, the Express is already empty.\\nThe conductor stands frozen, this scene hauntingly familiar, as if lived through countless times before.",
+    "kr": "내일을 위한 여정",
+    "cn": "为了明日的旅途",
+    "jp": "{RUBY_B#あす}明日{RUBY_E#}のための{RUBY_B#たび}旅{RUBY_E#}"
+  },
+  "22003": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Warrior",
+    "en": "Ninja Record: Sound Hunt",
+    "desc": "In the realm of Cosmic Ninjutsu, ever-changing grace,\\nHear the echoes of my hunting chase!\\n\\nFeel the beat, my rhythm's call,\\nGuitar strums, the atmospheres enthrall.\\nBass notes with a tender hue,\\nElectro-acoustic kindles anew.\\nSweat's testament, truth untold,\\nEvery twist and turn, melodies unfold.\\nMy sound ascends, reaching high,\\nThrough bruises and battles, I never shy.\\n<i>The Dazzling!</i> <i>The Dazzling!</i> A chant so bold.\\n<i>The Dazzling!</i> <i>The Dazzling!</i> In tales untold,\\n<i>The Dazzling!</i> <i>The Dazzling!</i> An epic foretold!\\nYo. Yo. In this wild world. Let the hearts go ablaze.\\nSing out loud, chant your soul, and let's embrace the utter craze!",
+    "kr": "인사록•음률 사냥",
+    "cn": "忍事录•音律狩猎",
+    "jp": "{RUBY_B#にんじろく}忍事録{RUBY_E#}・{RUBY_B#おんりつしゅりょう}音律狩猟{RUBY_E#}"
+  },
+  "22004": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Mage",
+    "en": "The Great Cosmic Enterprise",
+    "desc": "In a virtual exhibition hall sculpted from data, the exhibition representatives exchanged opinions.\\nTwo figures moved between the booths, delivering everything needed by each party.\\n\\n<i>\"Hmm, are you...?\"</i>\\n<i>\"I've seen you on TV.\"</i>\\nThey talked about games, food, each other's morphologies, and all the beautiful things in the universe.\\nThough their meetings were few and far between, they were as close as old friends—\\n\\n<i>\"By the way, have you thought about my proposal...\"</i>\\n<i>\"The Express is not for sale!\"</i>",
+    "kr": "우주 대사업",
+    "cn": "宇宙大生意",
+    "jp": "{RUBY_B#うちゅういち}宇宙一{RUBY_E#}の{RUBY_B#おおあきな}大商{RUBY_E#}い！"
+  },
+  "22005": {
+    "rank": "CombatPowerLightconeRarity4",
+    "baseType": "Shaman",
+    "en": "The Forever Victual",
+    "desc": "*BOOM*...\\nOutside the Maze, a storm rages endlessly.\\n*gurgle*...\\nThe fairies' magical cauldron burns with an eternal flame.\\n\\n<i>\"Sprinkle in the special spices...\"</i>\\n<i>\"Add some fresh vegetables!\"</i>\\n<i>\"This time, we'll succeed for sure!\"</i>\\n\\nThe huge cauldron bubbled up again as the fairies watched eagerly.\\n<i>\"Here it comes, here it comes!\"</i>\\nA brilliant light burst forth from the bottom of the pot...\\n\\nLook, everyone's gathering around!\\n\\n...\\n\\nAt the fragrant feast, guests raised their glasses to toast to these wonderful times...\\n\\nMay this dreamy paradise stay warm and joyful forever!",
+    "kr": "영원한 미궁의 식사",
+    "cn": "永远的迷境饭",
+    "jp": "{RUBY_B#えいえん}永遠{RUBY_E#}の{RUBY_B#めいきょう}迷境{RUBY_E#}ごはん"
+  },
+  "23000": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Mage",
+    "en": "Night on the Milky Way",
+    "desc": "If you are concerned for the road, just look up again.\\nWhen the stars look gently down, the heart would already be soaring.\\nEvery thought and every whisper,\\nbecomes a life experience that would never leave.",
+    "kr": "은하철도의 밤",
+    "cn": "银河铁道之夜",
+    "jp": "{RUBY_B#ぎんがてつどう}銀河鉄道{RUBY_E#}の{RUBY_B#よる}夜{RUBY_E#}"
+  },
+  "23001": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Rogue",
+    "en": "In the Night",
+    "desc": "A young girl smiles subtly.\\n<i>\"How?\"\\n\"Right here, right now, I am alone...\"\\n\"But it feels... very lively.\"</i>",
+    "kr": "야경 속에서",
+    "cn": "于夜色中",
+    "jp": "{RUBY_B#よる}夜{RUBY_E#}の{RUBY_B#とばり}帳{RUBY_E#}の{RUBY_B#なか}中{RUBY_E#}で"
+  },
+  "23002": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "Something Irreplaceable",
+    "desc": "<i>\"Should a day come when even I'm not here anymore, please look after this database, Svarog.\"</i>\\n(Who is this... Why is this message in my records...)\\n<i>\"Do you have something that's irreplaceable, Svarog?\"</i>\\n(Irreplaceable... broken parts... can simply be replaced...)\\n<i>\"You'll definitely find it one day, Svarog.\"</i>\\n(Such things... will only cause trouble...)\\n\\n<i>\"When that time comes... You should leave this place behind.\"</i>",
+    "kr": "대체할 수 없는 것",
+    "cn": "无可取代的东西",
+    "jp": "かけがえのないもの"
+  },
+  "23003": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Shaman",
+    "en": "But the Battle Isn't Over",
+    "desc": "<i>\"Remember, the war with the monsters cannot be won by retreating.\"\\n\"We are the last defense, the final iron wall between them and Belobog...\"\\n\"We cannot retreat under any circumstances!\"</i>\\n\\nShe looks up to see the frozen earth and endless winter ahead.\\nBusiness as usual.\\nOnly that... the figure at which she had been gazing is gone.",
+    "kr": "아직 전투는 끝나지 않았다",
+    "cn": "但战斗还未结束",
+    "jp": "だが{RUBY_B#せんそう}戦争{RUBY_E#}は{RUBY_B#お}終{RUBY_E#}わらない"
+  },
+  "23004": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "In the Name of the World",
+    "desc": "<i>\"Welt...?\"\\n\"It's a... great name, right?\"\\n\"Then...\"\\n\"From now on, you are Welt.\"\\n\"This Herrscher core... and the mission to protect the world...\"\\n\"I'll leave them to you, Welt.\"</i>",
+    "kr": "세계의 이름으로",
+    "cn": "以世界之名",
+    "jp": "{RUBY_B#せかい}世界{RUBY_E#}の{RUBY_B#な}名{RUBY_E#}を{RUBY_B#もっ}以{RUBY_E#}て"
+  },
+  "23005": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Knight",
+    "en": "Moment of Victory",
+    "desc": "<i>\"If you want to cry after your loss, Gepard, then cry.\"\\n\"But you need to stand back up even when you are crying, until you can defeat me... Even if it takes years.\"</i>\\nA few years later, the boy no longer cried or lost to his sister.\\n\\nNow on the battle field, the courageous Silvermane Guard captain will defend till the end no matter what\\n— all to find the moment to completely destroy the enemy.",
+    "kr": "승리의 순간",
+    "cn": "制胜的瞬间",
+    "jp": "{RUBY_B#しょうり}勝利{RUBY_E#}の{RUBY_B#せつな}刹那{RUBY_E#}"
+  },
+  "23006": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Patience Is All You Need",
+    "desc": "<i>\"Could it be that there's something you haven't told me?\"\\n\\n</i>She watches as their neck stiffens, as if a lump is blocking their throat.\\nShe knows she is feared, and that no further step is needed.\\nAt this point, it no longer mattered what she said.\\nAny word she utters radiates horror...\\nThey stand no chance against her, and have no choice but to blurt out what she wants to hear.\\n\\nLike a spider waiting in its web, patience is all she needs.",
+    "kr": "필요한 건 기다림뿐",
+    "cn": "只需等待",
+    "jp": "{RUBY_B#ま}待{RUBY_E#}つのみ"
+  },
+  "23007": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Incessant Rain",
+    "desc": "She leaves the cover of the awning, opens her umbrella, and dives into an alley while humming a lighthearted tune.\\nThe rain stops a little while after.\\n\\nShe scratches her head and swipes her screen open. After a few taps, raindrops begin to fall in an area no wider than her umbrella.\\nThe pitter-patter sound of raindrops on the umbrella mixes with music from the game. All was calm and relaxing.\\n<i>\"Gaming and rain totally go together.\"</i>",
+    "kr": "계속 내리는 비",
+    "cn": "雨一直下",
+    "jp": "{RUBY_B#ふ}降{RUBY_E#}りやまぬ{RUBY_B#あめ}雨{RUBY_E#}"
+  },
+  "23008": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Priest",
+    "en": "Echoes of the Coffin",
+    "desc": "Under the watch of the white irises, he knocks on the coffin.\\n<i>\"Sometimes I feel I underestimated you by proposing this deal.\"</i>\\nHe receives no response other than a thorny branch piercing through his palm.\\nYet he smiles, and tightly grasps the thorn.\\n\\n<i>\"Indeed. This is how it is. We wanted to use each other, and both ended up underestimating the other.\"</i>",
+    "kr": "관의 울림",
+    "cn": "棺的回响",
+    "jp": "{RUBY_B#ひつぎ}棺{RUBY_E#}のこだま"
+  },
+  "23009": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "The Unreachable Side",
+    "desc": "He would come to this place every year, bringing new swords with him each time.\\nHe had seen all the owners of the swords draw their last breath.\\nEvery time he leaves, he would sorrowfully ponder...\\n\\nWhen would his own blade be brought here by someone else?",
+    "kr": "닿을 수 없는 저편",
+    "cn": "到不了的彼岸",
+    "jp": "{RUBY_B#つ}着{RUBY_E#}かない{RUBY_B#ひがん}彼岸{RUBY_E#}"
+  },
+  "23010": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Mage",
+    "en": "Before Dawn",
+    "desc": "<i>\"Do not make this decision lightly, general... Think about how you will be remembered in history...\"</i>\\nThe general of the Cloud Knights listens to his subordinates' words with eyes half-closed.\\n<i>\"History will make its own judgment, but I have no interest in my legacy.\"\\n\"If I succeed, history will state that I am currently supremely confident in my masterful strategy.\"\\n\"But if I fail, then history will state that I am currently neglecting my duties in wanton pleasure, preferring finches over my people.\"</i>\\n\\nA finch jumps down from his shoulder, and he extends his hand to catch the small creature.\\n<i>\"I have simply made my own decision.\"</i>",
+    "kr": "동트기 전",
+    "cn": "拂晓之前",
+    "jp": "{RUBY_B#よあ}夜明{RUBY_E#}け{RUBY_B#まえ}前{RUBY_E#}"
+  },
+  "23011": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Knight",
+    "en": "She Already Shut Her Eyes",
+    "desc": "The ache in the middle of her forehead will accompany her for the rest of her life, but it is only a fraction of what she had experienced in the past.\\nShe thought herself prescient until the departure of those for whom she cared.\\nShe now \"sees\" the world ever-changing, the times ever-shifting...\\nBut she already shut her eyes, because the future has already been determined\\n...inside \"the third eye.\"",
+    "kr": "그녀는 두 눈을 감았네",
+    "cn": "她已闭上双眼",
+    "jp": "{RUBY_B#と}閉{RUBY_E#}ざした{RUBY_B#ひとみ}瞳{RUBY_E#}"
+  },
+  "23012": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Rogue",
+    "en": "Sleep Like the Dead",
+    "desc": "The boy is still tightly grasping the sword even when fast asleep against the general's shoulder.\\nThe general gently taps the boy's cheek, and the boy mutters in his sleep.\\n<i>\"General... I finally... won.\"</i>\\n\\nThe general pauses. He suddenly realizes that, compared to the boy trying to improve every day,\\nhe himself has endured too many years and is used to stagnation.\\n\\n<i>\"You will soon be better than everyone, and that will only be the beginning...\"</i>",
+    "kr": "깊게 든 단잠",
+    "cn": "如泥酣眠",
+    "jp": "{RUBY_B#どろ}泥{RUBY_E#}の{RUBY_B#ごと}如{RUBY_E#}き{RUBY_B#ねむ}眠{RUBY_E#}り"
+  },
+  "23013": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Priest",
+    "en": "Time Waits for No One",
+    "desc": "She had spent many days next to the window.\\n\\nFlowers were blooming outside when she made gentle medicines with mint and nepeta.\\nRain was falling outside when she made strong medicines with mosla and ginger.\\nLeaves were falling outside when she made sour medicines with peony roots and dry plums.\\nAnd snow was falling outside when she made bitter medicines with skullcaps and anemarrhena.\\n\\nTime flows endlessly, but this window and the person sitting next to it remain forever the same.",
+    "kr": "세월은 흐를 뿐",
+    "cn": "时节不居",
+    "jp": "{RUBY_B#じせつ}時節{RUBY_E#}は{RUBY_B#お}居{RUBY_E#}らず"
+  },
+  "23014": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "I Shall Be My Own Sword",
+    "desc": "The blade shattered, plunging into the bone-chilling cold.\\nAll earthly instruments are mere futilities, their worth discernible with a single glance.\\n<i>\"What use do I have of swords?\"</i>\\nShe holds no attachment, nor does her gaze accommodate anything within.\\n\\n<i>\"From now on, I shall be my own sword.\"</i>\\nTo transcend perceived precipices and achieve unprecedented breakthroughs,\\none must regard themselves as \"kindling\" to fuel their own fire.",
+    "kr": "이 몸이 검이니",
+    "cn": "此身为剑",
+    "jp": "この{RUBY_B#み}身{RUBY_E#}は{RUBY_B#けん}剣{RUBY_E#}なり"
+  },
+  "23015": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "Brighter Than the Sun",
+    "desc": "From birth, all that ever lay before him was but a lightless dungeon.\\nTo this darkness, irrelevant sins bound him... irrelevant memories engulfed him.\\nHe writhed, gasping for breath with every fiber of his being,\\nattempting to clasp a sliver of light in this fathomless ocean.\\n\\nUntil the day the general stepped into the lightless depths of this prison,\\nhe beheld a radiance shining brighter than the sun — the gaze of a young man.",
+    "kr": "태양보다 밝게 빛나는 것",
+    "cn": "比阳光更明亮的",
+    "jp": "{RUBY_B#ようこう}陽光{RUBY_E#}より{RUBY_B#かがや}輝{RUBY_E#}くもの"
+  },
+  "23016": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Rogue",
+    "en": "Worrisome, Blissful",
+    "desc": "For a competent IPC professional, \"feeling overwhelmed\" is absolutely not allowed.\\nStand tall and take on whatever comes your way, be it burnout or overwork! \\nUnless... it's being overwhelmed by \"them.\"\\n\\n<i>\"Oh, don't get so antsy! I only have two hands!\"</i>\\nA girl who just returned home from working overtime is pinned down by a group of fluffy creatures.\\nThey may not fully understand her words, simply nuzzling their round heads closer to her palm.\\nThe feeling of exhaustion gradually fades from her body, replaced by the warmth and comfort brought by stroking their fur.",
+    "kr": "고민, 그리고 행복",
+    "cn": "烦恼着，幸福着",
+    "jp": "{RUBY_B#なや}悩{RUBY_E#}んで{RUBY_B#わら}笑{RUBY_E#}って"
+  },
+  "23017": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Priest",
+    "en": "Night of Fright",
+    "desc": "The girl hides behind the door and dares not move one step closer. \\nPerhaps due to the fact that tonight's objective is already within her reach, her heart is actually beating faster.\\n\"I'm not scared, not scared, not scared...\"\\nIn darkness, silence lets out a piercing scream.\\n\\nThe girl is shivering and grasps the \"weapon\" in her hands tight, but still does not dare to approach the \"target.\"\\n\"There is nothing to be s—s—scared of!\"\\n\\nThe tail behind her has finally had enough and suddenly lights up.\\n\"Hurry up. You're just picking up a delivery!\"",
+    "kr": "섬뜩한 밤",
+    "cn": "惊魂夜",
+    "jp": "{RUBY_B#きょうこん}驚魂{RUBY_E#}の{RUBY_B#よる}夜{RUBY_E#}"
+  },
+  "23018": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Mage",
+    "en": "An Instant Before A Gaze",
+    "desc": "He once heard a ballad, singing in praise of that sliver of light:\\nRose blooms, to answer THEIR smile.\\nDawn shines, to illuminate THEIR visage.\\nMelody plays, to banish THEIR fatigue.\\n\\nBut, light, once gone, never returns. Yet, he still gallops to the far beyond.\\nAll that is needed is to wait for, to believe in, and to preach about everything that is of the Beauty in this cosmos.\\nEven if everything is but a fleeting instant before a gaze, he has already found the answer he sought.",
+    "kr": "눈에 담긴 순간",
+    "cn": "片刻，留在眼底",
+    "jp": "その{RUBY_B#いっこく}一刻{RUBY_E#}、{RUBY_B#め}目{RUBY_E#}に{RUBY_B#や}焼{RUBY_E#}き{RUBY_B#つ}付{RUBY_E#}けて"
+  },
+  "23019": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Shaman",
+    "en": "Past Self in Mirror",
+    "desc": "She once loved to seal the moment when plum blossoms were on the verge of wilting and keep them close to her.\\nIt has been many years since then. Many lifeforms — rambunctious, sweet, and everything in between — have bloomed from her hands, but the plum blossoms still wilt at their preordained times.\\nIt has been many years since then. Her visage in the mirror seems untouched by time. But, in the grand scheme of the cosmos, is she too destined to last for but a fleeting moment?\\n\\n<i>\"If all is set for eventual demise, what purpose, then, does creation serve?\"</i>\\nAfter a silence that seems to stretch to eternity, the winds blow, the petals fall, and the reflection in the mirror tenders the same answer as always.\\n<i>\"For the day when plum blossoms are no longer kept.\"</i>\\nShe deftly caresses the icy surface of the mirror. Such soliloquies have happened too many times for her to count.",
+    "kr": "거울 속 지난날의 나",
+    "cn": "镜中故我",
+    "jp": "{RUBY_B#かがみ}鏡{RUBY_E#}の{RUBY_B#なか}中{RUBY_E#}の{RUBY_B#わたし}私{RUBY_E#}"
+  },
+  "23020": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Rogue",
+    "en": "Baptism of Pure Thought",
+    "desc": "The afternoon sunshine is just right, and the floral scents fill the air.\\nThough he tries to keep his thoughts pure, cognitive stagnancy inevitably attracts particulates of mind like gathered dust.\\n\\n<i>\"Healing one's thoughts is just as vital as the maintenance of one's health.\"</i>\\nThe fools' clamoring fades alongside fatigue as he sinks into the water, letting all thoughts loose, his mind elucidated and ordered.\\n\\n<i>\"Truth eludes all filths, accepting only those of pure thoughts.\"</i>",
+    "kr": "순수 사유의 세례",
+    "cn": "纯粹思维的洗礼",
+    "jp": "{RUBY_B#じゅんすい}純粋{RUBY_E#}なる{RUBY_B#しい}思惟{RUBY_E#}の{RUBY_B#せんれい}洗礼{RUBY_E#}"
+  },
+  "23021": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Shaman",
+    "en": "Earthly Escapade",
+    "desc": "Just as fireworks can flicker, she too can shift between ten different colors in a minute.\\n\\nWhen the light show nears its end, she sits high above, regarding the bustling masses beneath her feet with boredom.\\nThoughts flow and vanish, and slyness circulates across myriad eyes like a dancing kaleidoscope.\\n<i>\"I've made my decision. This is how we're going to have fun today!\"</i>\\n\\nBouncing and hopping, she glides through the crowds, her golden-red tail flitting in and out of sight.\\n<i>\"Keep up! The brightest fireworks are just about to begin!\"</i>",
+    "kr": "속세에서의 유희",
+    "cn": "游戏尘寰",
+    "jp": "{RUBY_B#じんせい}人生{RUBY_E#}は{RUBY_B#あそ}遊{RUBY_E#}び"
+  },
+  "23022": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Reforged Remembrance",
+    "desc": "Light the candles, spread the cards, breathe in the fragrance...\\nThese broken memories become faces in the dancing light.\\nThe apparitions that emerge from flames tell her of pasts fondly recalled.\\nTime is shorn. The moment is frozen. She turns these most precious instants into crystallizations of eternity.\\n\\n<i>\"There is too much lost, and too little that remains... We nurture remembrance against the cruelties of time.\"</i>",
+    "kr": "시간의 기억에 대한 재구성",
+    "cn": "重塑时光之忆",
+    "jp": "{RUBY_B#とき}時間{RUBY_E#}の{RUBY_B#きおく}記憶{RUBY_E#}を{RUBY_B#さいこうちく}再構築{RUBY_E#}して"
+  },
+  "23023": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Knight",
+    "en": "Inherently Unjust Destiny",
+    "desc": "With the final card revealed, despondency, rage, acceptance, and sangfroid... A cascade of emotions drops onto the faces of his opponents.\\n<i>\"Now that we're all here, why don't we spice things up a bit?\"</i>\\nHe puts in all his chips. Those who have cut their losses leave the table, cursing profanities and secretly hoping that he would lose.\\n\\nVictories, reputation, fortune... He cares not for any of that. Instead, he's enthralled only by those moments that make his very life quiver —\\nAfter all, hell is but one choice away from heaven.\\n\\nThe chips are cast, sorrow fills the air, and the illusory sense of satisfaction dissipates in an instant when the dust finally settles.\\n<i>\"All or nothing, I have not the luxury of choice...\"</i>",
+    "kr": "언제나 불공평한 운명",
+    "cn": "命运从未公平",
+    "jp": "{RUBY_B#うんめい}運命{RUBY_E#}は{RUBY_B#つね}常{RUBY_E#}に{RUBY_B#ふこうへい}不公平{RUBY_E#}"
+  },
+  "23024": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Along the Passing Shore",
+    "desc": "Flowing in the narrow border between \"existence\" and \"nothingness,\" the ice-cold tides eternally lap against the shores and bring all things to their final end.\\n\\nIn this place, the drowned ask for help, lament with songs, find their happiness, enjoy sweet moments, and suffer great agony... All these are reflected in the water. She cannot experience these, but she can feel them —\\nThere are still many roads to walk, many sounds to listen to, and many things to change before she arrives at the end.\\n\\nShe reaches out and saves the drowning from the temptations of Nihility, and one mirage after another bursts apart behind her figure.\\nShe keeps walking in this boundless world, all for an end that does not exist.\\n\\n— And it's always raining here.",
+    "kr": "흘러가는 강가를 따라",
+    "cn": "行于流逝的岸",
+    "jp": "{RUBY_B#なが}流{RUBY_E#}れ{RUBY_B#ゆ}逝{RUBY_E#}く{RUBY_B#きし}岸{RUBY_E#}を{RUBY_B#ある}歩{RUBY_E#}いて"
+  },
+  "23025": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "Whereabouts Should Dreams Rest",
+    "desc": "This is the edge of the Asdana system. The ocean of memoria roars with mountainous waves and she, like a singular tiny spark, may be doused at any moment in the storm.\\n<i>\"For one who cannot dream to enter the Synesthesia Dreamscape, they would have to pay a price comparable to death.\"</i>\\nShe can still hear her companions' concerned voices next to her ears. She takes a deep breath and dives into the Memory Zone.\\nAs the vessel silently sinks into the depth of the Memory Zone, small pinpricks of firefly lights dissipate from the cracks and are then immediately swallowed up by the endless darkness.\\n\\n<i>\"Wherefore do you hurtle unto death?\"</i>\\nIn the ocean of memoria that grows deeper and deeper, the weak light emitted by the Memory Zone creatures are like faraway eyes that nonchalantly glance at her.\\n\\nDreams remained too distant for her. She gazes emptily out at the boundless darkness, her body and soul having reached the breakdown threshold long ago under the heavy pressure of memoria. Though she realizes her consciousness is gradually fading, only those remaining memories are playing over and over in her brain —\\nThe Swarm that covered the sky tore through the frontline defenses as she flew towards the Swarm while enveloped in fire. The charred ash of the Swarm faded like snow, under which lies the pitch-black carcasses of the knights.\\nShe didn't even have the time to take a bouquet and offer her final acknowledgement to knights, who were dying one after another. Their lives bloomed in the blink of an eye and went out equally fleetingly. Like a string of genetic code, they never possessed names and only had numbers allotted instead.\\n\\n<i>\"Wherefore do you live?\"</i>\\nIn the deathly silence, like flames dissolving in the sea, she is reduced to a singular spot of fire and unendingly progresses towards the light...\\nShe opens her eyes after what seems to be forever. She sees the \"future\" looking like a pearl, radiating with a soft and vague light. Tears stream down her face —\\n<i>\"I do it to find... my own 'dream'...\"</i>",
+    "kr": "꿈은 어디로 돌아가야 하는가",
+    "cn": "梦应归于何处",
+    "jp": "{RUBY_B#ゆめ}夢{RUBY_E#}が{RUBY_B#かえ}帰{RUBY_E#}り{RUBY_B#つ}着{RUBY_E#}く{RUBY_B#ばしょ}場所{RUBY_E#}"
+  },
+  "23026": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Shaman",
+    "en": "Flowing Nightglow",
+    "desc": "Time flows through the mirror, metamorphosing the once inexperienced little girl into a seasoned songstress.\\nShe studies her reflection in the mirror. Time has altered all but her green eyes, which still remain as serene as a lake, as if recounting an unshakable faith.\\n\\n<i>\"You seem in high spirits today.\"</i>\\n<i>\"Yes... after all, there's a very important 'performance'.\"</i>\\n<i>\"Indeed. The Charmony Festival's rehearsal is about to start. Please head to the preparation room.\"</i>\\n...\\n\\nShe steps out from the dressing room, leaving behind the brilliant lights of the theater, fading into the distance.\\n<i>\"My stage lies not here.\"</i>\\nShe closes her eyes, letting the night swallow her silhouette.\\n<i>\"From the past to the present, my song has always been for...\"</i>\\n<i>\"For those who have lost hope.\"</i>",
+    "kr": "찬란하게 빛나는 밤",
+    "cn": "夜色流光溢彩",
+    "jp": "{RUBY_B#ひかり}光{RUBY_E#}あふれる{RUBY_B#よる}夜{RUBY_E#}"
+  },
+  "23027": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Rogue",
+    "en": "Sailing Towards a Second Life",
+    "desc": "He felt as if he had fallen into a deep sea. Everything was departing from him, leaving only his hollow thoughts writhing and struggling all alone.\\n\\nTerror, anxiety, loneliness, darkness, rage — these feelings didn't dissipate with his physical body, but remained within the mechanical shell in a different manner — and they were even heavier than before.\\n\\nHe heard the call of the dead, smelled the scent of something being charred, the whirl of machinery buzzed around his ears, and the new blue blood flew towards his thirsty heart... Some cruel memories resurfaced as the unforgettable hatred turned into a weak light in the darkness. He followed the light to walk toward the end of it all, exerting every ounce of his strength to rise once again to the surface.\\n\\nHe opened his eyes and a flash of fireworks darted past before hearing the doctor's congratulations — \\n<i>\"Welcome to this world, once again.\"</i>\\nHe balled his hands into fists — hands that were now made of cold iron...\\nHe would no longer live for himself.",
+    "kr": "두 번째 생명을 향해",
+    "cn": "驶向第二次生命",
+    "jp": "{RUBY_B#にどめ}二度目{RUBY_E#}の{RUBY_B#せい}生{RUBY_E#}に{RUBY_B#む}向{RUBY_E#}かって"
+  },
+  "23028": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Mage",
+    "en": "Yet Hope Is Priceless",
+    "desc": "<i>\"Lady Bonajade, if it weren't for your continuous supply of goods and donations, the orphanage would probably...\"</i>\\nShe gently stroked the children's heads, cutting off the director's words.\\n<i>\"As long as I'm here, there's no need to worry about the days ahead... And there's no need to say these things to the children, it only adds to their worries.\"</i>\\n\\nThe children looked up, chattering with her about recent happenings, their worries, and their dreams.\\n<i>\"Lady Bonajade, when are you gonna come visit us again?\"</i>\\n<i>\"Don't work too hard, and make sure you get lotsa sleep...\"</i>\\n<i>\"Lady Bonajade, when I grow up, I want to be someone like you!\"</i>\\nShe looked at the children's clear eyes and paused for a moment.\\n<i>\"Someone like me...\"</i>\\nThe child handed her an apple, <i>\"Yes! Someone who brings light and hope to others!\"</i>\\n\\nPoverty, demerits, sorrow, suffering... She walked among the galaxies, taking others' pledges and giving equivalent returns.\\nLife exists for desire, runs on it, and dies from it — this is an irrefutable law, as well as an inevitability of life itself.\\nA philanthropist with a hidden agenda, a villainous merchant who mortgages souls... She was labeled by the world in many such ways, yet only she understood the true morals behind these actions.",
+    "kr": "값을 매길 수 없는 건 희망뿐",
+    "cn": "偏偏希望无价",
+    "jp": "されど{RUBY_B#きぼう}希望{RUBY_E#}の{RUBY_B#めい}銘{RUBY_E#}は{RUBY_B#むか}無価{RUBY_E#}"
+  },
+  "23029": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Those Many Springs",
+    "desc": "After a few sudden drizzles, spring tides rise, birthing lush greenery.\\n<i>\"How many springs has it been?\"</i>\\nHe recalls those young soldiers heading to the battlefield for the first time. Year after year, the faces were all different, yet they radiated the exact same vigor and hope.\\nThe willow withers as it waits for their return. But what they manage to bring home is often... the frost that can never melt.\\n\\nBirds' warbles linger in the air as he closes his eyes, allowing sunlight to fall on his face through the gaps between the leaves.\\n—<i>\"Alas, those who remain are the loneliest of all.\"</i>",
+    "kr": "그 무수한 봄날",
+    "cn": "那无数个春天",
+    "jp": "{RUBY_B#いくどめ}幾度目{RUBY_E#}かの{RUBY_B#はる}春{RUBY_E#}"
+  },
+  "23030": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "Dance at Sunset",
+    "desc": "<i>In the resplendent twilight, a swift figure darts across the rooftops.</i>\\n\\n<i>\"Lili, Guoguo, let's see who makes it to the finish line first!\"</i>\\nScaling the eaves, evading the guards, swaying with the wind, the girl moves like a nimble critter, chasing the last sliver of sunlight.\\n\\nThe warm evening breeze caresses her face, and the setting sun bathes the cat in a kaleidoscope of colors.\\n<i>\"You guys won!\"</i>\\nShe declares, wiping sweat from her brow and cradling the cat in her arms.\\nAmidst a rising galaxy of stars, her unguarded smile dissolves into a bloom of innocence, akin to the layered twilight hues adrift in the sky.",
+    "kr": "해 질 무렵 시작되는 춤",
+    "cn": "落日时起舞",
+    "jp": "{RUBY_B#ゆうひ}夕日{RUBY_E#}に{RUBY_B#ま}舞{RUBY_E#}う"
+  },
+  "23031": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Rogue",
+    "en": "I Venture Forth to Hunt",
+    "desc": "<i>\"Pitiful, laughable slaves...\"</i>\\nThe Denizens of Abundance's legions come crashing upon the border like an avalanche, with Lupitoxin rushing toward the Verdant Knights like a tide, trying to arouse the deep-set fear hidden in the soldiers' hearts. Illusions of dread came forth, striking the wills of the warriors, compelling them to drop their blades and be seized by hesitation.\\nBut the front remains stalwart like a bronze wall, unstirred by the borisins' disdainful words. From among the soldiers, a single figure saunters forth.\\nShe moves her body at a slow pace, and the flags behind her rustle under the unseen killing intent.\\n<i>\"The general... it's the general...\"</i>\\n<i>\"General Feixiao...\"</i>\\n<i>\"The Merlin's Claw!\"</i>\\nThese small cheers and calls then come together into a thunderous battle cry.\\n\\n<i>\"Always soaring! Forever triumphant!\"</i>\\nShe stands there, alone. A single figure, but imbued with the might of an entire army.",
+    "kr": "정복하고 사냥하리",
+    "cn": "我将，巡征追猎",
+    "jp": "{RUBY_B#われ}我{RUBY_E#}が{RUBY_B#ゆ}征{RUBY_E#}く{RUBY_B#じゅんしゅ}巡狩{RUBY_E#}の{RUBY_B#みち}道{RUBY_E#}"
+  },
+  "23032": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Priest",
+    "en": "Scent Alone Stays True",
+    "desc": "<i>\"First, overhaul the department's work habits.\"</i>\\n<i>\"Then, strictly implement rewards and penalties.\"</i>\\n<i>\"Of course, the most important part is figuring out everyone's tangled web of personal interests as soon as possible...\"</i>\\nThough she was originally here to admire the scenery, her mind had unknowingly drifted toward work, with stress and trouble naturally following.\\n\\nShe hurriedly ignites the soothing incense she always carried with her.\\n<i>\"The world is so beautiful, yet I am so irritable... Best not to think of such miserable matters while on vacation...\"</i>",
+    "kr": "오직 향만이 변함없이",
+    "cn": "唯有香如故",
+    "jp": "{RUBY_B#せきじつ}昔日{RUBY_E#}の{RUBY_B#かお}香{RUBY_E#}りは{RUBY_B#いま}今{RUBY_E#}も{RUBY_B#なお}猶{RUBY_E#}"
+  },
+  "23033": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Mage",
+    "en": "Ninjutsu Inscription: Dazzling Evilbreaker",
+    "desc": "Somewhere in the Ninja Realm, a shroud of dreary gray veils the city.\\n\\n<i>\"Hiyaaa!\"</i>\\nA young lady darts through the monsters, her vibrant silhouette cutting through the darkness like a stroke of paint against a moonless earth.\\n\\nIn the midst of smoke, the Evil Ninjas wince in both agony and disbelief.\\n<i>\"Who...are you...?\"</i>\\n<i>\"I'm Ninja Rappa! A beacon of determination, eradicating evil and upholding justice.\"</i>\\nThe Evil Ninjas exchange hesitant glances, eyes wide as they attempt to flee.\\n<i>\"Are you prepared to recite your final rhymes?\"</i>\\nHer shuriken dances through the air, a flurry of light and steel, overwhelming her adversaries with its blinding swiftness.\\n<i>\"Secret Technique: Dazzling Obliteration!\"</i>\\n\\nThe explosion behind her shatters the night, unveiling the city's wounds.\\nWith a breath drawn deep, she launches herself into the neon-lit distance, where the vibrant lights scream like a heavy metal chorus.\\n<i>\"Such loathsome evil spirits. The Dazzling Ninja's ultimate hunt shall continue...\"</i>",
+    "kr": "인법첩•요란 파마",
+    "cn": "忍法帖•缭乱破魔",
+    "jp": "{RUBY_B#にんぽうちょう}忍法帖{RUBY_E#}・{RUBY_B#りょうらんはま}繚乱破魔{RUBY_E#}"
+  },
+  "23034": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Shaman",
+    "en": "A Grounded Ascent",
+    "desc": "Those delusions and fallacies have been shattered. He wanted to be the sun of the whole world, yet he fell from the sky.\\n\\n<i>\"Now, do you feel what pain is?\"</i>\\nAnother voice in his heart spoke thus.\\n<i>\"Yes. And that is what I deserve to feel.\"</i>\\nHe fell into dust and answered himself with his heavy footsteps.\\n\\nHe walked on the earth and once again beheld the agony that covers the mortal realm like a never-ending font.\\nHe stepped over the thorns that blocked the road and listened to the calls of humanity. He experienced anguish, through which he obtained tranquility.\\n\\n<i>\"Falling was originally just another name for flying.\"</i>\\nAnd on this eighth day, he granted himself \"departure.\"",
+    "kr": "대지로 돌아온 비행",
+    "cn": "回到大地的飞行",
+    "jp": "{RUBY_B#だいち}大地{RUBY_E#}より{RUBY_B#てん}天{RUBY_E#}を{RUBY_B#めざ}目指{RUBY_E#}して"
+  },
+  "23035": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Long Road Leads Home",
+    "desc": "<i>\"Who... Is she?\"</i> The girl caresses the unfamiliar self.\\n\\nShe recalls how the fire that day had swallowed her whole, and how her bejeweled fan turned into ash.\\n\\nShe had once walked on a never-ending road, looking for the light ahead.\\nThe sounds outside were calling for her, leading her forward, guiding her through the layers of night.\\nThe sounds within reminded her of those unfulfilled promises, unexecuted plans, and unrealized wishes... They were all still waiting for her.\\n\\nThey never dissipated in the fire, but instead, glowed ever brighter in the flames.\\n\\n<i>\"That is me...\"</i>\\nShe stands at the end of the road and no longer looks back in reminiscence —\\n<i>\"It's the original me, and also the brand-new me.\"</i>",
+    "kr": "먼 길 끝의 귀로",
+    "cn": "长路终有归途",
+    "jp": "{RUBY_B#ちょうと}長途{RUBY_E#}はやがて{RUBY_B#きと}帰途{RUBY_E#}へと{RUBY_B#つづ}続{RUBY_E#}く"
+  },
+  "23036": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Memory",
+    "en": "Time Woven Into Gold",
+    "desc": "<i>\"This strand, a soldier's sacrifice.\"</i>\\n<i>\"This strand, a hero's growth.\"</i>\\n<i>\"This strand, the city's prosperity.\"</i>\\n....\\nThe Garmentmaker pulls at the threads using a needle, everything held between her fingers.\\n<i>\"The destiny of certain heroes has already been severed...\"</i>\\nShe scoops up another set of golden threads and continues her mending.\\n<i>\"The fates of certain heroes must continue...\"</i>\\n\\nThe divine loom weaves on, and the Garmentmakers dance with lively grace. Eons of time had already passed through the loom, and she has long been accustomed to such waiting....\\n\\nFor the sake of turning time to golden \"inspiration.\"",
+    "kr": "시간을 황금으로 엮어",
+    "cn": "将光阴织成黄金",
+    "jp": "{RUBY_B#こういん}光陰{RUBY_E#}を{RUBY_B#お}織{RUBY_E#}り{RUBY_B#おうごん}黄金{RUBY_E#}と{RUBY_B#な}成{RUBY_E#}す"
+  },
+  "23037": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Mage",
+    "en": "Into the Unreachable Veil",
+    "desc": "<i>\"The Intelligentsia Guild's letters have been handled.\"</i>\\n<i>\"The Simulated Universe is functioning normally...\"</i>\\n<i>\"Literary collections have been reprinted.\"</i>\\n<i>\"Hey. Shhh. Don't bother Madam Herta...\"</i>\\n\\n...Within a great tower on the edge of the cosmos, puppets work methodically, dealing with all manner of chores in anticipation of her arrival.\\nTime passes. Countless people drift through the canvas of time like meteors streaking across the night sky, bright for an instant, before ultimately returning to silence.\\n<i>\"Madam Herta hasn't shown herself in a long time...\"</i>\\n<i>\"Is she still thinking...?\"</i>\\n\\n<i>\"Hmmm. Thought this would all be done after discovering a few axioms?\"</i>\\nShe stretches, lifting her head from the calculations, and another thought surfaces in her mind...\\n<i>\"Nothing is irrefutable. I will chase these questions to the end!\"</i>",
+    "kr": "추궁할 수 없는 곳을 향해",
+    "cn": "向着不可追问处",
+    "jp": "{RUBY_B#ふ}触{RUBY_E#}れてはならぬ{RUBY_B#りょういき}領域{RUBY_E#}へ"
+  },
+  "23038": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Shaman",
+    "en": "If Time Were a Flower",
+    "desc": "<i>\"Mama, I want to hear another story!\"\\n\\n\"My sweet girl, how about a story about time?\"\\n\\n\"Time... what is it?\"\\n\\n\"Time, my dear, is like a flower.\"\\n\\n\"Like the dandelions blooming in the fields?\"\\n\\n\"Yes, just like dandelions. Time grows, blossoms, and bears fruit. We call its petals 'moments.'\"\\n\\n\"And then what happens?\"\\n\\n\"Then, it withers into a thousand pieces, leaving seeds that drift everywhere...\"\\n\\n\"Mama, does that mean it becomes the 'future'?\"\\n\\n\"Guess what it turns into after that?\"\\n\\n\"It turns into so many flowers, blooming into a vibrant sea of blossoms, right?\"</i>\\n\\nThe mother didn't have time to answer as the sunlight from the window warmed the girl's face. That gentle figure vanished once more into her dream.\\nShe opened her eyes—\\n<i>\"If time were a flower...\"</i> she murmured.\\n<i>\"It would surely become a sea of flowers,\"</i> said the serene girl.\\n<i>\"Of course it would!\"</i> Exclaimed the playful girl, cheering at her masterpiece.",
+    "kr": "시간이 한 송이 꽃이라면",
+    "cn": "如果时间是一朵花",
+    "jp": "もしも{RUBY_B#とき}時{RUBY_E#}が{RUBY_B#はな}花{RUBY_E#}だったら"
+  },
+  "23039": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "Flame of Blood, Blaze My Path",
+    "desc": "Cold dew congealed on the blade, sliding down in crimson streaks.\\nThe rust-tainted wilderness still flickered with embers of battle, flames leaping upon the ashes.\\n\\n<i>\"Mydeimos, that was a godlike fight just now!\"</i>\\nA bare-chested warrior wiped his weapon clean, shouting in exhilaration.\\n\\n<i>\"Mydei, one day, I'll be as invincible as you!\"</i>\\nA child gazed at him with reverence, clutching a broken sword in small hands.\\n\\n<i>\"Crown Prince, our return to Castrum Kremnos is within sight.\"</i>\\nAn aged man smiled, raising his cup in a toast to him.\\n\\nHe nodded silently and walked to the edge of the camp.\\nThe pain of rebirth still coursed across his skin. Tomorrow, he would lead the Kremnoan Detachment forth once again, migrating to foreign lands.\\nWhere this wandering would end, he did not know. The only certainty was this — he would bear the duty of a king until the blood and flames consumed him.\\n\\nAs night deepened, he drank the bloodwine alone. A passing bard plucked at his strings, a wandering melody drifting through the air—\\n<i>\"Home is the land of dreams, not a place one can ever reach.\"</i>",
+    "kr": "피의 불꽃이여, 앞길을 태워라",
+    "cn": "血火啊，燃烧前路",
+    "jp": "{RUBY_B#ぜんと}前途{RUBY_E#}{RUBY_B#も}燃{RUBY_E#}やす{RUBY_B#ち}血{RUBY_E#}の{RUBY_B#ごと}如{RUBY_E#}き{RUBY_B#ほのお}炎{RUBY_E#}"
+  },
+  "23040": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Memory",
+    "en": "Make Farewells More Beautiful",
+    "desc": "Another farewell ceremony was underway.\\nA young girl, stepping on broken moonlight, wove a garland of parting by the riverbank.\\n\\nAncient laments crystallized in the cold air, while the quiet river flowed into a distant land of blossoms.\\nBlood-stained scrolls, rusted long swords, handkerchiefs embroidered with poetry... She accepted their remains, along with the tales of their lives.\\n\\n<i>\"My eyes are like lenses, forever longing for the starry sky.\"</i>\\n—An epitaph dedicated to the departed scholar.\\n<i>\"For life and for death, the knight grants only a cold glance.\"</i>\\n—The maxim that the nameless warrior upheld all his life.\\n<i>\"Life is nothing but death, aglow with shimmering light.\"</i>\\n—The final verse penned by the eternal-seeking poet with his life.\\n...\\n\\n<i>\"Every flower once bloomed with pride...\"</i>\\nAccompanied by the river's soft lament, she offered the departed poems, garlands, and remembrances—\\n<i>\"If withering is inevitable, at least let our farewell be... a little more beautiful.\"</i>",
+    "kr": "이별이 더 아름답도록",
+    "cn": "让告别，更美一些",
+    "jp": "{RUBY_B#えいけつ}永訣{RUBY_E#}よ{RUBY_B#うつく}美{RUBY_E#}しくあれ"
+  },
+  "23041": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Mage",
+    "en": "Life Should Be Cast to Flames",
+    "desc": "In that hidden experiment, various illusions constantly surged forward, pulling at his steps.\\n\\nThe seductive whispers beckoned him to give up on that treacherous topic, for what reason was there to gamble his life?\\nThe cold, threatening voice declared that those who walk the edge of life and death will ultimately burn their lives away.\\nThen there were the angry accusations, shouting to cast the blasphemer — the one who had desecrated the gods — into an execution grounds most cruel.\\n\\n<i>\"The performance of life, too, must eventually reach the curtain call.\"</i>\\n\\nHe closed his eyes, grasped the divine flame, and let the pain drown his fading soul.\\nFirst, his resolute gaze. Then, his beating heart. The complete soul... He threw himself willingly into that most pure and intense flame to be used for the smelting—\\n\\nThe voices bubbled and then became silent.\\nIn the darkness, the brilliant truth began to take shape in his hands.",
+    "kr": "생명은 불태워야 하는 것",
+    "cn": "生命当付之一炬",
+    "jp": "{RUBY_B#せいめい}生命{RUBY_E#}、{RUBY_B#しょうめつ}焼滅{RUBY_E#}すべし"
+  },
+  "23042": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Memory",
+    "en": "Long May Rainbows Adorn the Sky",
+    "desc": "<i>\"Emotions are like clouds, and we are the sky that carries them. If the sky is overcast, then our emotions will fluctuate all over.\"</i>\\nThe physician listens with care to the visitor's sorrows, offering words of gentle solace.\\n<i>\"Please close your eyes and breathe slowly... Imagine yourself in a warm and soft place...\"</i>\\n\\nAs if infused with magic, a seven-colored rainbow radiance spills from beneath the wings of the winged beast.\\n<i>\"A breeze would drift across the plains, carrying the fragrance of wildflowers. Moist clouds would pass by, laden with sunlight...\"</i>\\nThe visitor gradually sinks into a peaceful dream, responding only with the quiet rhythm of steady breaths.\\n\\nAfter seeing the last patient, the physician gently closes the door of the ward.\\n\\nIn the distance, the boundless evernight still surges, with many ruins standing like the scars of the earth.\\n\\n<i>\"In the next life, may dawn shine upon all...\"</i>\\nBefore departing, she makes a wish to the sky —\\n<i>\"May the sky forever hold that rainbow radiance.\"</i>",
+    "kr": "무지개가 영원히 하늘에 머물길",
+    "cn": "愿虹光永驻天空",
+    "jp": "{RUBY_B#そら}空{RUBY_E#}の{RUBY_B#にじ}虹{RUBY_E#}が{RUBY_B#き}消{RUBY_E#}えぬように"
+  },
+  "23043": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Lies Dance on the Breeze",
+    "desc": "The cat-eared girl stretches her limbs on the rooftop, slinking into the night.\\nIn the treasure vault that had slumbered for a thousand years, she glides effortlessly, gathering precious treasures into her embrace before vanishing without a sound.\\n<i>\"Foolish fate could never catch me!\"</i>\\n\\nThe wind through the ruins carries the scent of the wild, rustling her hood.\\nResting her head against the cold stone, she swallows a bite of rough, dry rations, idly tossing a gold coin between her fingers.\\n\\nA faint sound from afar reaches her ears. In that holy city bathed in dawn's light, the bustling crowds still revel in warmth and celebration.\\n<i>\"How much longer... a year, or ten thousand?\"</i>\\n\\nShe stretches with a lazy yawn, casting her restless thoughts aside.\\n<i>\"Hah, Cifera always has the last laugh!\"</i>\\n\\nA golden streak of lightning cuts across the sky, and her proclamation lingers in the wind—\\nJust as it had a thousand years ago.",
+    "kr": "바람에 흩날리는 거짓말",
+    "cn": "谎言在风中飘扬",
+    "jp": "{RUBY_B#かぜ}風{RUBY_E#}に{RUBY_B#たゆた}揺蕩{RUBY_E#}う{RUBY_B#きょげん}虚言{RUBY_E#}"
+  },
+  "23044": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "Thus Burns the Dawn",
+    "desc": "Once again, at the journey's end, the man's silhouette was swallowed by the sweltering golden sun.\\n\\n<i>\"So... that golden blood, the last hope of deliverance, was really...\"</i>\\n\\nHis tears never had the chance to fall — they vanished into steam.\\n<i>\"Snowy, see you tomorrow!\"</i>\\n<i>\"Deliverer, remember to stay alive till the final act!\"</i>\\n<i>\"Go be the dawn of Amphoreus...\"</i>\\n\\n...\\nThe people's wishes echoed in the void. The Nameless Hero crumbled, his fierce and tragic death laid bare.\\n\\n<i>\"If rage can't burn this twisted fate to ashes...\"</i>\\nHe climbed toward the peak, over and over, only to fall and be shattered, again and again—\\n\\n<i>\"Then let me burn with it!\"</i>",
+    "kr": "이와 같이 타오르는 여명",
+    "cn": "黎明恰如此燃烧",
+    "jp": "{RUBY_B#も}燃{RUBY_E#}え{RUBY_B#さか}盛{RUBY_E#}る{RUBY_B#れいめい}黎明{RUBY_E#}のように"
+  },
+  "23045": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "A Thankless Coronation",
+    "desc": "The girl's ears rang in the fantasia with the words conversed on that day.\\n\\n<i>\"This sword wasn't hard to pull out at all, Merlin.\"</i>\\n<i>\"Indeed. Becoming the king everyone wishes for won't be hard for you at all, given that I'm guiding you. However, Altria... The hard part is that you can't always meet everyone's expectations.\"</i>\\n<i>\"Then they can choose a more fitting king by that time. I won't protest.\"</i>\\n<i>\"But what if such a person will never exist?\"</i>\\n<i>\"...Then I'll do my best to meet everyone's expectations.\"</i>\\n\\nNow, the girl had long since become aware of how profound that tragedy would be. Would she have chosen to give up if she were to return to that moment where everything began?\\n\\nThe king does not speak and simply grasps the sword tightly.\\nThe stone again gives out a thundering roar as the sword is pulled out.",
+    "kr": "보답 없는 왕관",
+    "cn": "没有回报的加冕",
+    "jp": "{RUBY_B#むく}報{RUBY_E#}われぬ{RUBY_B#たいかん}戴冠{RUBY_E#}"
+  },
+  "23046": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Rogue",
+    "en": "The Hell Where Ideals Burn",
+    "desc": "The flames of karma ignite the plains. The ideals of unknowns turn to ashes, as the ideals of others burn passionately.\\n\\nThe Guardian traverses between bullets and arrowheads.\\nHe can save no one here. He can save everyone here.\\n\\nKill one person to save one person. Kill ten thousand to save ten thousand. The fate of trampling over our peers is one part of humanity's continued existence.\\n\\nThe Guardian had already grown used to all this, and his steps never hesitated.\\nThe determination that covers his legs is like wind. The determination that covers his arms is like fire.\\n\\nHe is still seeking a miracle that can bring forth salvation.",
+    "kr": "이상이 불타는 지옥",
+    "cn": "理想燃烧的地狱",
+    "jp": "{RUBY_B#りそう}理想{RUBY_E#}を{RUBY_B#や}焼{RUBY_E#}く{RUBY_B#ならく}奈落{RUBY_E#}で"
+  },
+  "23047": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Why Does the Ocean Sing",
+    "desc": "Waves surge forth, their roar echoing across the heavens.\\nFish swim through the empty seas, where ancient foam churns and that melody seems to still linger.\\n\\n<i>\"Noble Princess, feast with us!\"</i>\\nAnswering the deep sea's call, she danced with the black tide until she alone remained on that grand stage.\\n\\n<i>\"Swordmaster of the seas, why do you stay silent, what makes you sing?\"</i>\\nWith every step upon the Earth, she endured the pain, rarely singing, only her crimson blade sang the lament of life.\\n\\n<i>\"Dux Gladiorum, come with me to conquer the starry seas!\"</i>\\nWhen she found this blazing light, she finally took up her bow, believing it to be the start of the celebration.\\n\\n...\\n\\n<i>\"Helektra... Helektra... when your song ends, where will you swim to next?\"</i>\\n\\nWhen futile hopes shatter, she always answers their questions with a solitary melody, yet it enchants all who hear it.\\n\\nOr perhaps... whether in the mortal realm or the deep sea, the only true listener is the performer herself.",
+    "kr": "바다는 왜 노래하는가",
+    "cn": "海洋为何而歌",
+    "jp": "{RUBY_B#うみ}海{RUBY_E#}の{RUBY_B#うた}歌{RUBY_E#}は{RUBY_B#なに}何{RUBY_E#}がため"
+  },
+  "23048": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Shaman",
+    "en": "Epoch Etched in Golden Blood",
+    "desc": "<i>\"How will history remember Cerydra a thousand years from now?\"</i>\\nShe was once asked.\\n\\nTo some, she was the eminent \"Imperator.\"\\nThat cold and cruel tyrant, that ambitious \"Flamecrowned,\" that empress who burned the Old Era with blood and fire...\\n\\nOthers argued she was merely a pitiful \"pawn.\"\\nThis forsaken ruler was but a prisoner of ambition, destined to lose everything in that game of chess against the gods.\\n\\nAnd some said that in the depths of her heart, darker than the ocean's abyss, she was just a mortal named \"Cerydra.\"\\nOne who mourned for fallen comrades, who hesitated and feared before her heavy fate, unable to move forward...\\n\\n<i>\"Heh. There is no need for history to remember me...\"</i>\\n\\nSwallowing the bitterness in her heart, she continued down that path of Flame-Chase paved with sacrifice.\\n\\n<i>\"It is our burning golden blood that shall engrave it!\"</i>",
+    "kr": "황금 피가 새긴 시대",
+    "cn": "金血铭刻的时代",
+    "jp": "{RUBY_B#おうごん}黄金{RUBY_E#}の{RUBY_B#ち}血{RUBY_E#}で{RUBY_B#きざ}刻{RUBY_E#}む{RUBY_B#じだい}時代{RUBY_E#}"
+  },
+  "23049": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Memory",
+    "en": "To Evernight's Stars",
+    "desc": "In the crevices of time, only her heartbeat echoes.\\nLike many nights before, watching in the darkness and resting in dormancy.\\n\\nShe treasures the memories entrusted to her.\\nThe girl sets forth from a blank starting point, painting each stop she lingered at with vibrant colors. A cozy Express, companions each with their unique personalities, dazzling and magnificent planets... like a dream too beautiful to leave behind.\\n\\n<i>\"My real journey starts now!\"</i>\\nThe girl's declaration seems to whisper right beside her ear.\\n\\nShe gazes toward the distant starry sky, as a beam of light approaches.\\nIt's the Express's headlight, like a shooting star.\\n\\n<i>\"Good night, March... When you awaken, continue on your Trailblaze journey ♭\"</i>\\n\\nAs the memoria tide surges, she buries her wish deep in her heart, those tiny whispers and that light\\n—she has never forgotten.",
+    "kr": "긴 밤의 별빛에",
+    "cn": "致长夜的星光",
+    "jp": "長き夜に輝く星へ"
+  },
+  "23051": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Knight",
+    "en": "Though Worlds Apart",
+    "desc": "In the boundless ancient lands, a young man walks alone on his quest.\\nHe seems to return to those wandering days, wading through surging waves, weathering wind and frost, battling behemoths, struggling against raging tides.\\n\\nYet in those moments of respite, he is not alone.\\nThough wolds apart, he can still see the light ahead...\\n\\nIt is the light of hope of all living beings.\\nThe shattered earth can no longer sustain rebirths, and they gather around him, seeking comfort and shelter.\\n\\nThose are the words his companions left in his heart, like an endless voyage connecting them firmly together.\\n\\nThe troubles of his past may stir with the wind, but the path he's traveled will become the strength for his metamorphosis.\\n\\n<i>\"I will stand guard for the Path of the Trailblaze.\"</i>\\nThe young man leaps forth with his spear, advancing toward the light—\\n\\n<i>\"And I shall defend all hope that threatens to fade away!\"</i>",
+    "kr": "끝없는 산과 강이 가로막아도",
+    "cn": "纵然山河万程",
+    "jp": "万里の山河を越えて"
+  },
+  "24000": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warrior",
+    "en": "On the Fall of an Aeon",
+    "desc": "It began with a flash of light.\\nOne by one, THEY fell as the threat of expiration loomed over THEM.\\nTHEY had to stop self-replicating and rushed to embrace each other,\\ntrying to offer the right to reproduce in exchange for a possibility of survival.\\nTHEY held hands in a show of unprecedented unity.\\n...But the Paths met an abrupt end,\\nand THEY were headed to a true death.",
+    "kr": "어떤 에이언즈의 몰락",
+    "cn": "记一位星神的陨落",
+    "jp": "とある{RUBY_B#アイオーン}星神{RUBY_E#}の{RUBY_B#うんらく}殞落{RUBY_E#}を{RUBY_B#しる}記{RUBY_E#}す"
+  },
+  "24001": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Rogue",
+    "en": "Cruising in the Stellar Sea",
+    "desc": "Coursing 'tween the sea of stars,\\nTHEY cruise with the speed of a rainbow's chromatic flash.\\nA journey of hunting undying abominations,\\ncollecting cures and miracles,\\nand seeking deliverance.\\nAkin to a vow unbroken, THEIR voyage will be,\\nad infinitum.",
+    "kr": "별바다 순항",
+    "cn": "星海巡航",
+    "jp": "{RUBY_B#せいかいじゅんこう}星海巡航{RUBY_E#}"
+  },
+  "24002": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Knight",
+    "en": "Texture of Memories",
+    "desc": "The universe is like a wasteland filled with rubbish,\\nwhere occasional treasures lie undiscovered.\\nTHEY sift through the cracks of yesterday, seeking seeds of memory.\\n...If a new life is to be born, its seed has to be dead.\\nPrecious stones of pink, blue, and white are brought forth,\\ntwinkling gently in THEIR seed plot,\\neven though the universe holds onto its enigmatic silence.",
+    "kr": "기억의 소재",
+    "cn": "记忆的质料",
+    "jp": "{RUBY_B#きおく}記憶{RUBY_E#}の{RUBY_B#そざい}素材{RUBY_E#}"
+  },
+  "24003": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Solitary Healing",
+    "desc": "Things molded by the hands of secrecy are shapeless and incorporeal.\\nIn the totality of emptiness, there yet exists a sudden dreaming.\\nThose that court destruction will reap ruinous fruit, while those that clamor to live will survive.\\nThat which is extinguished may yet spark, and that which has dried may yet be filled anew.\\nIn compassion for the salvation of chaos, the elixir nurtures the shadows.\\nWith back faced to the darkness between the stars, the encapsulation of this vessel can only be done in vain.\\n\\n<i>\"Paradoxical these knowings are, in them shine the fullness of our pride.\"</i>",
+    "kr": "고독의 치유",
+    "cn": "孤独的疗愈",
+    "jp": "{RUBY_B#こどく}孤独{RUBY_E#}の{RUBY_B#いや}癒{RUBY_E#}し"
+  },
+  "24004": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Mage",
+    "en": "Eternal Calculus",
+    "desc": "Eternally suspended in the void,\\nStreams of shimmering data flood into THEIR mind.\\nTurning all things past and future into symbols,\\nTHEY deduce the end from the beginning.\\nKnowledge, answers, truths...\\nIn the mist of information, a brilliant light arises,\\nAnd everything becomes clear to THEM.",
+    "kr": "멈추지 않는 연산",
+    "cn": "不息的演算",
+    "jp": "{RUBY_B#た}絶{RUBY_E#}え{RUBY_B#ま}間{RUBY_E#}ない{RUBY_B#えんざん}演算{RUBY_E#}"
+  },
+  "24005": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Memory",
+    "en": "Memory's Curtain Never Falls",
+    "desc": "Be it bustling, desolate, fleeting, or enduring... every planet and every instant is brimming with countless events.\\nThat condensed history melts at a single touch, flowing as tears from the world's gaze—\\n\\nSome say: How heavy those tears must be, the amassed years capable of fading eternity.\\nSome say: How wondrous the stories they tell, sorrow so clear, joy so serene, unmarred by even a hint of falsehood.\\n\\nThe Cosmos flows in silent stillness, and THEY speak not, only watching—\\nWatching and waiting for them to become \"memories.\"",
+    "kr": "기억은 영원히 막을 내리지 않는다",
+    "cn": "记忆永不落幕",
+    "jp": "{RUBY_B#つ}尽{RUBY_E#}きぬ{RUBY_B#ついおく}追憶{RUBY_E#}"
+  }
+}

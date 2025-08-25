@@ -6,6 +6,8 @@ import {
 	MessageContextMenuCommandInteraction,
 	MessageFlags
 } from "discord.js";
+import { TranslationFunction } from "@/types/index.js";
+import emoji from "@/assets/emoji.js";
 
 interface Translation {
 	(key: string): string;
@@ -30,12 +32,8 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(
-		client: Client,
 		interaction: MessageContextMenuCommandInteraction,
-		args: string[],
-		tr: Translation,
-		db: any,
-		emoji: Emoji
+		tr: TranslationFunction
 	): Promise<void> {
 		let code = interaction.targetMessage?.content;
 		let codes: string[] = [];

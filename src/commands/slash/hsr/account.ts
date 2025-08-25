@@ -42,13 +42,13 @@ export default {
 				})
 				.setRequired(true)
 				.addChoices(
-					{
-						name: "🔥Login with account and password🔥",
-						name_localizations: {
-							"zh-TW": "🔥帳號密碼登入🔥"
-						},
-						value: "LoginAccount"
-					},
+					// {
+					// 	name: "🔥Login with account and password🔥",
+					// 	name_localizations: {
+					// 		"zh-TW": "🔥帳號密碼登入🔥"
+					// 	},
+					// 	value: "LoginAccount"
+					// },
 					{
 						name: "❓ How to set up account",
 						name_localizations: {

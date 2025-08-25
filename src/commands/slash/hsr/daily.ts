@@ -6,6 +6,7 @@ import {
 } from "discord.js";
 import { getRandomColor, getUserHSRData } from "@/utilities/index.js";
 import { database } from "@/index.js";
+import { TranslationFunction } from "@/types/index.js";
 
 // 类型定义
 interface TimeChoice {
@@ -153,7 +154,7 @@ export default {
 	 */
 	async execute(
 		interaction: ChatInputCommandInteraction,
-		tr: (key: string, params?: Record<string, any>) => string
+		tr: TranslationFunction
 	): Promise<any> {
 		await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 		const haveAccount = await database.get(

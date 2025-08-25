@@ -152,6 +152,18 @@ function setupWarpImageCacheCleanup(): void {
 			let clearedCount = 0;
 			for (const [url, promise] of warpImageLoadPromises.entries()) {
 				clearedCount++;
+				promise
+					.then(image => {
+						if (image instanceof Canvas) {
+							warpImageCache.delete(url);
+						}
+					})
+					.catch(error => {
+						console.error(
+							`[Warp Image Cache] Error clearing cache for ${url}:`,
+							error
+						);
+					});
 			}
 
 			if (clearedCount > 0) {
@@ -260,7 +272,6 @@ async function warpLog(
 
 				if (warpData && warpData.data) {
 					const listLength = warpData.data.list.length - 1;
-
 					if (listLength < 0) break;
 
 					for (const warp of warpData.data.list) {
@@ -286,6 +297,8 @@ async function warpLog(
 				size: tempWarps.length,
 				data: tempWarps
 			});
+
+			await sleep(1000);
 		}
 
 		const list: WarpHistory = {
@@ -896,28 +909,121 @@ async function createImage(
 async function warpLogImage(
 	tr: any,
 	datas: any,
-	title: string
+	title: string,
+	userId?: string
 ): Promise<Buffer> {
 	try {
-		// 檢查數據是否有效
-		if (!datas || !datas.data) {
+		// 如果有用户ID，尝试获取合并后的历史记录
+		let mergedData = datas;
+
+		if (userId) {
+			try {
+				const savedHistory = await getWarpHistory(userId);
+				if (savedHistory && savedHistory[title.toLowerCase()]) {
+					const savedTypeData = savedHistory[title.toLowerCase()];
+					const currentTypeData = datas;
+
+					// 合并数据，使用时间戳去重
+					const mergedItems = new Map();
+
+					// 先添加已保存的数据
+					if (savedTypeData.data && savedTypeData.data.length > 0) {
+						savedTypeData.data.forEach((item: any) => {
+							const key = `${item.id}_${item.time}`;
+							mergedItems.set(key, item);
+						});
+					}
+
+					// 再添加当前的新数据（会覆盖重复的）
+					if (
+						currentTypeData.data &&
+						currentTypeData.data.length > 0
+					) {
+						currentTypeData.data.forEach((item: any) => {
+							const key = `${item.id}_${item.time}`;
+							mergedItems.set(key, item);
+						});
+					}
+
+					// 转换为数组并按时间排序
+					const mergedDataArray = Array.from(
+						mergedItems.values()
+					).sort((a: any, b: any) => {
+						const timeA = new Date(a.time).getTime();
+						const timeB = new Date(b.time).getTime();
+						return timeB - timeA;
+					});
+
+					// 重新计算统计信息
+					let total = mergedDataArray.length;
+					let count = 0;
+					const counts: number[] = [];
+
+					// 从最新的数据开始计算保底
+					for (let i = mergedDataArray.length - 1; i >= 0; i--) {
+						const item = mergedDataArray[i];
+						count++;
+						if (item.rank === "5") {
+							counts.push(count);
+							count = 0;
+						}
+					}
+
+					const pity = count;
+					const average =
+						counts.length > 0
+							? parseFloat(
+									(
+										counts.reduce(
+											(acc, val) => acc + val,
+											0
+										) / counts.length
+									).toFixed(2)
+								)
+							: 0;
+
+					// 创建合并后的数据结构
+					mergedData = {
+						...currentTypeData,
+						data: mergedDataArray,
+						total: total,
+						pity: pity,
+						average: average
+					};
+
+					console.log(
+						`[WarpLogImage] 用户 ${userId} 的 ${title} 记录已合并，总计 ${total} 条记录`
+					);
+				}
+			} catch (error) {
+				console.error(
+					`[WarpLogImage] 获取用户 ${userId} 的历史记录失败:`,
+					error
+				);
+				// 如果获取失败，继续使用原始数据
+			}
+		}
+
+		// 检查数据是否有效
+		if (!mergedData || !mergedData.data) {
 			throw new Error(tr("draw_InvalidData"));
 		}
 
-		// 限制處理的數據量，避免過多的渲染操作
+		// 限制处理的数据量，避免过多的渲染操作
 		const maxItems = 23;
-		const historyData = [...datas.data.slice(0, maxItems)];
-		historyData.unshift({ count: datas.pity });
+		const historyData = [...mergedData.data.slice(0, maxItems)];
+		historyData.unshift({ count: mergedData.pity });
 
-		// 創建畫布 - 使用更小的尺寸以提高性能
+		// ... existing code for canvas creation and rendering ...
+		// 创建画布 - 使用更小的尺寸以提高性能
 		const canvas = createCanvas(1370, 900);
 		const ctx = canvas.getContext("2d");
 
-		// 使用離屏渲染緩存常用元素
+		// 使用离屏渲染缓存常用元素
 		const circleCache = new Map();
 		const rectCache = new Map();
 
-		// 預加載所有圖像資源，避免渲染過程中的等待
+		// 预加载所有图像资源，避免渲染过程中的等待
 		const imagePromises = [
 			// 背景和UI元素
 			loadImageAsync("./src/assets/image/warp/bg.jpg").catch(() => null),
@@ -925,7 +1031,7 @@ async function warpLogImage(
 			loadImageAsync(image_Header + "icon/deco/StarBig.png"),
 			loadImageAsync(image_Header + "icon/item/102.png"),
 			loadImageAsync(image_Header + "icon/item/900001.png"),
-			// 預加載角色/光錐圖像
+			// 预加载角色/光锥图像
 			...historyData.map((res: any, index: number) => {
 				if (index === 0)
 					return loadImageAsync(
@@ -937,20 +1043,20 @@ async function warpLogImage(
 			})
 		];
 
-		// 並行加載所有圖像
+		// 并行加载所有图像
 		const [bg, drawIcon, star, item102, item900001, ...characterImages] =
 			await Promise.all(imagePromises);
 
-		// 繪製背景
+		// 绘制背景
 		if (bg) {
 			ctx.drawImage(bg, 0, 0, 1920, 1080);
 		} else {
-			// 創建一個簡單的背景
+			// 创建一个简单的背景
 			ctx.fillStyle = "#1A1A2E";
 			ctx.fillRect(0, 0, 1370, 900);
 		}
 
-		// 繪製標題區域
+		// 绘制标题区域
 		if (drawIcon) {
 			ctx.drawImage(drawIcon, 50, 22.5, 64, 64);
 		}
@@ -959,33 +1065,33 @@ async function warpLogImage(
 		ctx.textAlign = "left";
 		ctx.fillText(`${title} ${tr("warplog_Title")}`, 130, 70);
 
-		// 繪製統計信息 - 使用批處理減少狀態切換
+		// 绘制统计信息 - 使用批处理减少状态切换
 		const statItems = [
 			{
 				label: tr("warplog_Count"),
-				value: `${datas.total}`,
+				value: `${mergedData.total}`,
 				y: 250,
 				icon: item102
 			},
 			{
 				label: tr("warplog_Cost"),
-				value: `${datas.total * 160}`,
+				value: `${mergedData.total * 160}`,
 				y: 300,
 				icon: item900001
 			},
 			{
 				label: tr("warplog_5Count"),
-				value: `${datas?.data.length}`,
+				value: `${mergedData?.data.length}`,
 				y: 350
 			},
 			{
 				label: tr("warplog_5CountAverage"),
-				value: `${datas.average}`,
+				value: `${mergedData.average}`,
 				y: 400
 			}
 		];
 
-		// 批量繪製標籤
+		// 批量绘制标签
 		ctx.font = "bold 24px 'Hanyi', URW DIN Arabic, Arial, sans-serif'";
 		ctx.fillStyle = "#FFFFFF";
 		ctx.textAlign = "left";
@@ -993,7 +1099,7 @@ async function warpLogImage(
 			ctx.fillText(item.label, 55, item.y);
 		}
 
-		// 批量繪製值
+		// 批量绘制值
 		ctx.font = "bold 24px 'URW DIN Arabic', Arial, sans-serif'";
 		ctx.fillStyle = "#80B3FF";
 		ctx.textAlign = "right";
@@ -1001,14 +1107,14 @@ async function warpLogImage(
 			ctx.fillText(item.value, 400, item.y + 2.5);
 		}
 
-		// 繪製圖標
+		// 绘制图标
 		for (const item of statItems) {
 			if (item.icon) {
 				ctx.drawImage(item.icon, 410, item.y - 25, 36, 36);
 			}
 		}
 
-		// 繪製歷史記錄標題
+		// 绘制历史记录标题
 		if (star) {
 			ctx.drawImage(star, 530, 103, 60, 60);
 		}
@@ -1017,14 +1123,14 @@ async function warpLogImage(
 		ctx.textAlign = "left";
 		ctx.fillText(`${tr("warplog_React")}`, 600, 145);
 
-		// 創建進度條顏色映射函數
+		// 创建进度条颜色映射函数
 		const getProgressColor = (progress: number): string => {
 			if (progress <= 50) return "#9DF1DF";
 			if (progress <= 70) return "#FFBB5C";
 			return "#FF6969";
 		};
 
-		// 預先計算佈局
+		// 预先计算布局
 		const layout = [];
 		for (let i = 0; i < historyData.length; i++) {
 			const y = Math.floor(i / 5);
@@ -1040,7 +1146,7 @@ async function warpLogImage(
 			});
 		}
 
-		// 創建圓形進度條緩存函數
+		// 创建圆形进度条缓存函数
 		const getCircleCanvas = (
 			progress: number,
 			radius: number,
@@ -1058,14 +1164,14 @@ async function warpLogImage(
 			const startAngle = -Math.PI / 2;
 			const endAngle = startAngle + (progress / 100) * (2 * Math.PI);
 
-			// 繪製背景
+			// 绘制背景
 			circleCtx.beginPath();
 			circleCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
 			circleCtx.lineWidth = lineWidth;
 			circleCtx.strokeStyle = "#000000";
 			circleCtx.stroke();
 
-			// 繪製進度
+			// 绘制进度
 			circleCtx.beginPath();
 			circleCtx.arc(centerX, centerY, radius, startAngle, endAngle);
 			circleCtx.lineWidth = lineWidth;
@@ -1077,7 +1183,7 @@ async function warpLogImage(
 			return circleCanvas;
 		};
 
-		// 創建矩形計數框緩存函數
+		// 创建矩形计数框缓存函数
 		const getRectCanvas = (): Canvas => {
 			if (rectCache.has("default")) return rectCache.get("default");
 
@@ -1115,12 +1221,12 @@ async function warpLogImage(
 			return rectCanvas;
 		};
 
-		// 批量繪製歷史記錄
+		// 批量绘制历史记录
 		const radius = 55;
 		const lineWidth = 8;
 		const rectCanvas = getRectCanvas();
 
-		// 使用requestAnimationFrame模擬的批處理渲染
+		// 使用requestAnimationFrame模拟的批处理渲染
 		for (let i = 0; i < historyData.length; i++) {
 			try {
 				const res = historyData[i];
@@ -1132,7 +1238,7 @@ async function warpLogImage(
 
 				const { centerX, centerY, rectX, rectY } = layoutItem;
 
-				// 繪製進度圓
+				// 绘制进度圆
 				const circleCanvas = getCircleCanvas(
 					progress,
 					radius,
@@ -1144,7 +1250,7 @@ async function warpLogImage(
 					centerY - circleCanvas.height / 2
 				);
 
-				// 繪製角色/光錐圖像
+				// 绘制角色/光锥图像
 				const image = characterImages[i];
 				if (image) {
 					const imageWidth = 2 * (radius - lineWidth);
@@ -1160,25 +1266,25 @@ async function warpLogImage(
 					);
 				}
 
-				// 繪製計數框
+				// 绘制计数框
 				ctx.drawImage(rectCanvas, rectX, rectY);
 
-				// 繪製計數文本
+				// 绘制计数文本
 				ctx.font = "bold 20px 'URW DIN Arabic', Arial, sans-serif'";
 				ctx.fillStyle = "#000000";
 				ctx.textAlign = "center";
 				ctx.fillText(`${progress}`, rectX + 30, rectY + 22.5);
 			} catch {
-				// 靜默處理錯誤，繼續下一個項目
+				// 静默处理错误，继续下一个项目
 				continue;
 			}
 		}
 
-		// 清理緩存
+		// 清理缓存
 		circleCache.clear();
 		rectCache.clear();
 
-		// 返回結果
+		// 返回结果
 		const result = canvas.toBuffer("image/png");
 		if (!result) {
 			throw new Error(tr("draw_CanvasError"));
@@ -1190,87 +1296,121 @@ async function warpLogImage(
 }
 
 /**
- * 保存用户抽卡记录到数据库
- * @param {string} userId - 用户ID
- * @param {Object} warpData - 抽卡数据
+ * 保存用戶抽卡紀錄到資料庫
+ * @param {string} userId - 用戶ID
+ * @param {Object} warpData - 抽卡資料
  */
 async function saveWarpHistory(
 	userId: string,
 	warpData: WarpHistory
 ): Promise<WarpHistory> {
 	try {
-		// 获取现有记录
+		// 獲取現有記錄
 		const existingData = (await database.get(`${userId}.warpHistory`)) || {
-			character: { total: 0, data: [] },
-			light_cone: { total: 0, data: [] },
-			regular: { total: 0, data: [] },
+			character: { total: 0, data: [], lastUpdated: 0 },
+			light_cone: { total: 0, data: [], lastUpdated: 0 },
+			regular: { total: 0, data: [], lastUpdated: 0 },
 			lastUpdated: 0
 		};
 
-		// 合并新数据
+		// 合併新資料，使用時間戳進行去重
 		for (const type of ["character", "light_cone", "regular"]) {
 			if (
 				warpData[type as keyof WarpHistory] &&
 				warpData[type as keyof WarpHistory].data
 			) {
-				// 检查是否有新数据
-				const newItems = warpData[
-					type as keyof WarpHistory
-				].data.filter((newItem: WarpItem) => {
-					// 检查此物品是否已存在于历史记录中
-					return !existingData[type].data.some(
-						(existingItem: WarpItem) =>
-							existingItem.id === newItem.id &&
-							existingItem.time === newItem.time
-					);
+				const newItems = warpData[type as keyof WarpHistory].data;
+				const existingItems = existingData[type].data || [];
+
+				// 創建現有資料的查找映射，使用 item_id + time 作為唯一鍵
+				const existingMap = new Map();
+				existingItems.forEach((item: WarpItem) => {
+					const key = `${item.id}_${item.time}`;
+					existingMap.set(key, item);
 				});
 
-				// 添加新数据
-				existingData[type].data = [
-					...newItems,
-					...existingData[type].data
-				];
-				existingData[type].total =
-					warpData[type as keyof WarpHistory].total ||
-					existingData[type].total;
+				// 過濾出真正的新資料
+				const trulyNewItems = newItems.filter((newItem: WarpItem) => {
+					const key = `${newItem.id}_${newItem.time}`;
+					return !existingMap.has(key);
+				});
 
-				// 重新计算平均值
+				// 合併資料，新資料放在前面（時間更近）
+				existingData[type].data = [...trulyNewItems, ...existingItems];
+
+				// 按時間排序，最新的在前面
+				existingData[type].data.sort((a: WarpItem, b: WarpItem) => {
+					const timeA = new Date(a.time).getTime();
+					const timeB = new Date(b.time).getTime();
+					return timeB - timeA;
+				});
+
+				// 更新總數和統計信息
+				existingData[type].total = existingData[type].data.length;
+
+				// 重新計算平均值和保底計數
 				if (existingData[type].data.length > 0) {
-					existingData[type].average = parseFloat(
-						(
-							existingData[type].data.reduce(
-								(acc: number, i: any) => acc + (i.count || 0),
-								0
-							) / existingData[type].data.length
-						).toFixed(2)
-					);
+					let count = 0;
+					const counts: number[] = [];
+
+					// 從最新的資料開始計算保底
+					for (
+						let i = existingData[type].data.length - 1;
+						i >= 0;
+						i--
+					) {
+						const item = existingData[type].data[i];
+						count++;
+						if (item.rank === "5") {
+							counts.push(count);
+							count = 0;
+						}
+					}
+
+					// 當前保底計數
+					existingData[type].pity = count;
+
+					// 計算平均保底
+					existingData[type].average =
+						counts.length > 0
+							? parseFloat(
+									(
+										counts.reduce(
+											(acc, val) => acc + val,
+											0
+										) / counts.length
+									).toFixed(2)
+								)
+							: 0;
 				}
 
-				// 更新当前保底计数
-				existingData[type].pity =
-					warpData[type as keyof WarpHistory].pity ||
-					existingData[type].pity;
+				// 記錄該類型資料的最後更新時間
+				existingData[type].lastUpdated = Date.now();
 			}
 		}
 
-		// 更新时间戳
+		// 更新整體最後更新時間
 		existingData.lastUpdated = Date.now();
 
-		// 保存到数据库
+		// 保存到資料庫
 		await database.set(`${userId}.warpHistory`, existingData);
+
+		console.log(
+			`[Warp History] 用戶 ${userId} 的抽卡紀錄已更新，新增 ${warpData.character?.data?.length || 0} 條角色記錄，${warpData.light_cone?.data?.length || 0} 條光錐記錄`
+		);
 
 		return existingData;
 	} catch (error) {
-		console.error("保存抽卡历史记录失败:", error);
+		console.error("保存抽卡紀錄失敗:", error);
 		throw error;
 	}
 }
 
 /**
- * 获取用户抽卡历史记录
- * @param {string} userId - 用户ID
- * @param {string} type - 记录类型 (character, light_cone, regular)
- * @returns {Object} 抽卡历史记录
+ * 獲取用戶抽卡紀錄
+ * @param {string} userId - 用戶ID
+ * @param {string} type - 記錄類型 (character, light_cone, regular)
+ * @returns {Object} 抽卡紀錄
  */
 async function getWarpHistory(
 	userId: string,
@@ -1286,53 +1426,37 @@ async function getWarpHistory(
 
 		return history;
 	} catch (error) {
-		console.error("获取抽卡历史记录失败:", error);
+		console.error("獲取抽卡紀錄失敗:", error);
 		return null;
 	}
 }
 
 /**
- * 导出用户抽卡历史记录
- * @param {string} userId - 用户ID
- * @returns {Object} 历史记录数据
- */
-async function exportWarpHistory(userId: string): Promise<any> {
-	try {
-		const history = await getWarpHistory(userId);
-		if (!history) throw new Error("没有找到抽卡历史记录");
-		return history;
-	} catch (error) {
-		console.error("导出抽卡历史记录失败:", error);
-		throw error;
-	}
-}
-
-/**
- * 导入用户抽卡历史记录
- * @param {string} userId - 用户ID
- * @param {Object} importedData - 要导入的历史记录数据
- * @returns {Object} 导入的历史记录
+ * 導入用戶抽卡紀錄
+ * @param {string} userId - 用戶ID
+ * @param {Object} importedData - 要導入的抽卡紀錄資料
+ * @returns {Object} 導入的抽卡紀錄
  */
 async function importWarpHistory(
 	userId: string,
 	importedData: any
 ): Promise<any> {
 	try {
-		// 验证数据格式
+		// 驗證資料格式
 		if (
 			!importedData.character ||
 			!importedData.light_cone ||
 			!importedData.regular
 		) {
-			throw new Error("无效的抽卡历史记录格式");
+			throw new Error("無效的抽卡紀錄格式");
 		}
 
-		// 保存到数据库
+		// 保存到資料庫
 		await database.set(`${userId}.warpHistory`, importedData);
 
 		return importedData;
 	} catch (error) {
-		console.error("导入抽卡历史记录失败:", error);
+		console.error("導入抽卡紀錄失敗:", error);
 		throw error;
 	}
 }
@@ -1344,7 +1468,6 @@ export {
 	warpLogImage,
 	saveWarpHistory,
 	getWarpHistory,
-	exportWarpHistory,
 	importWarpHistory,
 	setupWarpImageCacheCleanup,
 	clearWarpImageCache

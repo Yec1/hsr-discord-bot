@@ -8,8 +8,7 @@ const webhook = new WebhookClient({ url: config.JLWEBHOOK || "" });
 client.on(Events.GuildDelete, async (guild: Guild) => {
 	let totalGuilds = 0;
 
-	// 检查 client.cluster 是否存在
-	if (client.cluster) {
+	if (cluster) {
 		const results = await cluster.broadcastEval(
 			(c: any) => c.guilds.cache.size
 		);
@@ -18,7 +17,6 @@ client.on(Events.GuildDelete, async (guild: Guild) => {
 			0
 		);
 	} else {
-		// 如果没有 cluster，使用当前客户端的服务器数量
 		totalGuilds = client.guilds.cache.size;
 	}
 

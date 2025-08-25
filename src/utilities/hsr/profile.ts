@@ -248,26 +248,6 @@ const IMAGE_DOWNLOAD_CONFIG = {
 		remoteBase: `${image_Header}/image/character_portrait/`,
 		localDir: "./src/assets/image/character_portrait",
 		extension: ".png"
-	},
-	relic: {
-		remoteBase: `${image_Header}/icon/relic`,
-		localDir: "./src/assets/image/relic",
-		extension: ".png"
-	},
-	light_cone: {
-		remoteBase: `${image_Header}/image/light_cone_preview`,
-		localDir: "./src/assets/image/light_cone",
-		extension: ".png"
-	},
-	element: {
-		remoteBase: `${image_Header}/image/icon/element/`,
-		localDir: "./src/assets/image/icon/element",
-		extension: ".png"
-	},
-	path: {
-		remoteBase: `${image_Header}/image/icon/path/`,
-		localDir: "./src/assets/image/icon/path",
-		extension: ".png"
 	}
 };
 
@@ -1362,13 +1342,13 @@ async function handleProfileDraw(
 			];
 
 			interaction.editReply({
-				contents: tr("CostTime", {
+				contents: `-# ${tr("CostTime", {
 					requestTime: (
 						(requestEndTime - requestStartTime) /
 						1000
 					).toFixed(2),
 					drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
-				}),
+				})}`,
 				embeds: [],
 				components: components,
 				files: [image]

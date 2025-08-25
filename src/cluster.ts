@@ -17,8 +17,9 @@ if (!token) {
  * @description 分片管理器 */
 const clusterManager = new ClusterManager(`${__dirname}/index.js`, {
 	totalShards: "auto",
-	totalClusters: 5,
+	totalClusters: 10,
 	mode: "worker",
+	respawn: true,
 	token,
 	restarts: {
 		max: 5,
@@ -47,11 +48,4 @@ clusterManager.on("clusterCreate", cluster => {
 
 (async () => {
 	await clusterManager.spawn();
-	setInterval(
-		() =>
-			clusterManager.broadcastEval(
-				`this.ws.status && this.isReady() ? this.ws.reconnect() : 0`
-			),
-		60_000
-	);
 })();

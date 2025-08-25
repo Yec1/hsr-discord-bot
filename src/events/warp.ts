@@ -208,7 +208,8 @@ client.on(Events.InteractionCreate, async interaction => {
 						const imageBuffer = await warpLogImage(
 							tr,
 							datas,
-							title
+							title,
+							interaction.user.id
 						);
 
 						if (!imageBuffer) {
@@ -220,11 +221,7 @@ client.on(Events.InteractionCreate, async interaction => {
 						});
 
 						interaction.editReply({
-							embeds: [
-								new EmbedBuilder().setImage(
-									`attachment://${image.name}`
-								)
-							],
+							embeds: [],
 							components: [
 								(new ActionRowBuilder() as any).addComponents(
 									new StringSelectMenuBuilder()
@@ -342,7 +339,7 @@ client.on(Events.InteractionCreate, async interaction => {
 			collector.on("collect", async interaction => {
 				const type = interaction.values[0];
 				await interaction.deferUpdate().catch(() => {});
-				interaction.editReply({
+				interaction.message.edit({
 					embeds: [
 						new EmbedBuilder()
 							.setTitle(tr("Searching"))

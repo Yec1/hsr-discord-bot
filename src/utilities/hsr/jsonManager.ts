@@ -2,6 +2,40 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import axios from "axios";
 
+// 日志级别配置
+const LOG_LEVEL = {
+	ERROR: 0, // 只显示错误
+	WARN: 1, // 显示警告和错误
+	INFO: 2, // 显示信息、警告和错误
+	DEBUG: 3 // 显示所有日志
+};
+
+// 当前日志级别（可以通过环境变量设置）
+const CURRENT_LOG_LEVEL = process.env.JSON_LOG_LEVEL
+	? LOG_LEVEL[
+			process.env.JSON_LOG_LEVEL.toUpperCase() as keyof typeof LOG_LEVEL
+		] || LOG_LEVEL.INFO
+	: LOG_LEVEL.INFO;
+
+// 日志工具函数
+function log(level: number, message: string, ...args: any[]) {
+	if (level <= CURRENT_LOG_LEVEL) {
+		console.log(message, ...args);
+	}
+}
+
+function logWarn(level: number, message: string, ...args: any[]) {
+	if (level <= CURRENT_LOG_LEVEL) {
+		console.warn(message, ...args);
+	}
+}
+
+function logError(level: number, message: string, ...args: any[]) {
+	if (level <= CURRENT_LOG_LEVEL) {
+		console.error(message, ...args);
+	}
+}
+
 interface JSONFileConfig {
 	localPath: string;
 	remoteUrl: string;
@@ -39,15 +73,11 @@ export class JSONManager {
 
 		// 检查缓存
 		if (this.cache.has(cacheKey)) {
-			console.log(`[JSON] Using cached ${config.fileName}`);
 			return this.cache.get(cacheKey);
 		}
 
 		// 防止重複加載
 		if (this.isUpdating.has(cacheKey)) {
-			console.log(
-				`[JSON] ${config.fileName} is being loaded, waiting...`
-			);
 			// 等待加載完成
 			while (this.isUpdating.has(cacheKey)) {
 				await new Promise(resolve => setTimeout(resolve, 100));
@@ -60,16 +90,10 @@ export class JSONManager {
 		try {
 			// 首先尝试从本地加载
 			if (existsSync(config.localPath)) {
-				console.log(
-					`[JSON] Loading ${config.fileName} from local: ${config.localPath}`
-				);
 				const localData = readFileSync(config.localPath, "utf-8");
 				const parsedData = JSON.parse(localData);
 				this.cache.set(cacheKey, parsedData);
 				this.lastUpdateTime.set(cacheKey, Date.now());
-				console.log(
-					`[JSON] ✓ Successfully loaded ${config.fileName} from local`
-				);
 				return parsedData;
 			}
 
@@ -168,11 +192,9 @@ export class JSONManager {
 			const dir = join(filePath, "..");
 			if (!existsSync(dir)) {
 				mkdirSync(dir, { recursive: true });
-				console.log(`[JSON] Created directory: ${dir}`);
 			}
 
 			writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
-			console.log(`[JSON] Saved file: ${filePath}`);
 		} catch (error) {
 			console.error(`[JSON] Failed to save file: ${filePath}`, error);
 		}
@@ -208,13 +230,11 @@ export class JSONManager {
 	private startPeriodicUpdate(): void {
 		// 每24小時檢查一次更新
 		this.updateTimer = setInterval(async () => {
-			console.log("[JSON] 開始定時檢查JSON文件更新...");
 			await this.checkAllFilesUpdate();
 		}, this.updateInterval);
 
 		// 立即執行一次檢查
 		setTimeout(async () => {
-			console.log("[JSON] 首次檢查JSON文件更新...");
 			await this.checkAllFilesUpdate();
 		}, 5000); // 5秒後開始首次檢查
 	}
@@ -246,23 +266,17 @@ export class JSONManager {
 
 		// 檢查是否需要更新（距離上次更新超過24小時）
 		if (now - lastUpdate < this.updateInterval) {
-			console.log(
-				`[JSON] ${config.fileName} 距離上次更新未滿24小時，跳過檢查`
-			);
 			return;
 		}
 
 		// 防止重複更新
 		if (this.isUpdating.has(config.fileName)) {
-			console.log(`[JSON] ${config.fileName} 正在更新中，跳過檢查`);
 			return;
 		}
 
 		this.isUpdating.add(config.fileName);
 
 		try {
-			console.log(`[JSON] 檢查 ${config.fileName} 是否有更新...`);
-
 			// 下載遠程文件進行比較
 			const remoteData = await this.downloadJSON(config.remoteUrl);
 			if (!remoteData) {
@@ -299,7 +313,6 @@ export class JSONManager {
 				this.lastUpdateTime.set(config.fileName, now);
 				console.log(`[JSON] ✓ ${config.fileName} 更新完成`);
 			} else {
-				console.log(`[JSON] ${config.fileName} 已是最新版本`);
 				this.lastUpdateTime.set(config.fileName, now);
 			}
 		} catch (error) {
@@ -316,7 +329,6 @@ export class JSONManager {
 	 * 手動觸發更新檢查
 	 */
 	async forceUpdateCheck(): Promise<void> {
-		console.log("[JSON] 手動觸發更新檢查...");
 		await this.checkAllFilesUpdate();
 	}
 
@@ -373,6 +385,34 @@ export const JSON_CONFIGS = {
 			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cht/light_cone_ranks.json",
 		fileName: "light_cone_ranks.json"
 	},
+	LIGHT_CONE_NAMES: {
+		localPath: "./src/assets/lightcone.json",
+		remoteUrl: "https://api.hakush.in/hsr/data/lightcone.json",
+		fileName: "lightcone.json"
+	},
+	CHARACTER_NAMES_CN: {
+		localPath: "./src/assets/characters_cn.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cn/characters.json",
+		fileName: "characters_cn.json"
+	},
+	CHARACTER_NAMES_EN: {
+		localPath: "./src/assets/characters_en.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/en/characters.json",
+		fileName: "characters_en.json"
+	},
+	CHARACTER_NAMES_CHT: {
+		localPath: "./src/assets/characters_cht.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cht/characters.json",
+		fileName: "characters_cht.json"
+	},
+	RELIC_SET: {
+		localPath: "./src/assets/relicset.json",
+		remoteUrl: "https://api.hakush.in/hsr/data/relicset.json",
+		fileName: "relicset.json"
+	},
 	BANNERS: {
 		localPath: "./src/assets/banners.json",
 		remoteUrl:
@@ -402,13 +442,11 @@ export async function loadJSONFile(config: JSONFileConfig): Promise<any> {
  * 专门用于加载光锥数据的函数，优先使用本地文件
  */
 export async function loadLightConeData(): Promise<any> {
-	console.log("[JSON] Loading light cone data with local priority...");
 	const manager = JSONManager.getInstance();
 
 	try {
 		// 首先检查本地文件
 		if (existsSync(JSON_CONFIGS.LIGHT_CONE_RANKS.localPath)) {
-			console.log("[JSON] Light cone local file found, loading...");
 			const localData = readFileSync(
 				JSON_CONFIGS.LIGHT_CONE_RANKS.localPath,
 				"utf-8"
@@ -417,9 +455,6 @@ export async function loadLightConeData(): Promise<any> {
 			manager.setCacheData(
 				JSON_CONFIGS.LIGHT_CONE_RANKS.fileName,
 				parsedData
-			);
-			console.log(
-				"[JSON] ✓ Light cone data loaded from local successfully"
 			);
 			return parsedData;
 		}
@@ -431,6 +466,113 @@ export async function loadLightConeData(): Promise<any> {
 		return await loadJSONFile(JSON_CONFIGS.LIGHT_CONE_RANKS);
 	} catch (error) {
 		console.error("[JSON] Error loading light cone data:", error);
+		return null;
+	}
+}
+
+/**
+ * 专门用于加载遗器套装数据的函数，优先使用本地文件
+ */
+export async function loadRelicSetData(): Promise<any> {
+	const manager = JSONManager.getInstance();
+
+	try {
+		// 首先检查本地文件
+		if (existsSync(JSON_CONFIGS.RELIC_SET.localPath)) {
+			const localData = readFileSync(
+				JSON_CONFIGS.RELIC_SET.localPath,
+				"utf-8"
+			);
+			const parsedData = JSON.parse(localData);
+			manager.setCacheData(JSON_CONFIGS.RELIC_SET.fileName, parsedData);
+			return parsedData;
+		}
+
+		// 如果本地文件不存在，使用标准加载流程
+		console.log(
+			"[JSON] Relic set local file not found, using standard loading..."
+		);
+		return await loadJSONFile(JSON_CONFIGS.RELIC_SET);
+	} catch (error) {
+		console.error("[JSON] Error loading relic set data:", error);
+		return null;
+	}
+}
+
+/**
+ * 专门用于加载光锥名称数据的函数，优先使用本地文件
+ */
+export async function loadLightConeNamesData(): Promise<any> {
+	const manager = JSONManager.getInstance();
+
+	try {
+		// 首先检查本地文件
+		if (existsSync(JSON_CONFIGS.LIGHT_CONE_NAMES.localPath)) {
+			const localData = readFileSync(
+				JSON_CONFIGS.LIGHT_CONE_NAMES.localPath,
+				"utf-8"
+			);
+			const parsedData = JSON.parse(localData);
+			manager.setCacheData(
+				JSON_CONFIGS.LIGHT_CONE_NAMES.fileName,
+				parsedData
+			);
+			return parsedData;
+		}
+
+		// 如果本地文件不存在，使用标准加载流程
+		console.log(
+			"[JSON] Light cone names local file not found, using standard loading..."
+		);
+		return await loadJSONFile(JSON_CONFIGS.LIGHT_CONE_NAMES);
+	} catch (error) {
+		console.error("[JSON] Error loading light cone names data:", error);
+		return null;
+	}
+}
+
+/**
+ * 专门用于加载角色名称数据的函数，优先使用本地文件
+ */
+export async function loadCharacterNamesData(locale: string): Promise<any> {
+	const manager = JSONManager.getInstance();
+
+	// 根据语言选择对应的配置
+	let config;
+	switch (locale) {
+		case "cn":
+			config = JSON_CONFIGS.CHARACTER_NAMES_CN;
+			break;
+		case "en":
+			config = JSON_CONFIGS.CHARACTER_NAMES_EN;
+			break;
+		case "cht":
+		case "tw":
+			config = JSON_CONFIGS.CHARACTER_NAMES_CHT;
+			break;
+		default:
+			config = JSON_CONFIGS.CHARACTER_NAMES_EN; // 默认使用英文
+	}
+
+	try {
+		// 首先检查本地文件
+		if (existsSync(config.localPath)) {
+			const localData = readFileSync(config.localPath, "utf-8");
+			const parsedData = JSON.parse(localData);
+			manager.setCacheData(config.fileName, parsedData);
+			return parsedData;
+		}
+
+		// 如果本地文件不存在，使用标准加载流程
+		console.log(
+			`[JSON] Character names local file not found for ${locale}, using standard loading...`
+		);
+		return await loadJSONFile(config);
+	} catch (error) {
+		console.error(
+			`[JSON] Error loading character names data for ${locale}:`,
+			error
+		);
 		return null;
 	}
 }

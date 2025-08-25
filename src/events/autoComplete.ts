@@ -4,6 +4,8 @@ import {
 	filterVersionChoices,
 	getLastVersionChoices
 } from "@/utilities/index.js";
+import { getCharacterAutocompleteOptions } from "@/utilities/hsr/atlas.js";
+import { createTranslator, toI18nLang } from "@/utilities/core/i18n.js";
 
 interface Account {
 	uid: string;
@@ -35,7 +37,6 @@ client.on(Events.InteractionCreate, async (interaction: any) => {
 	}
 
 	if (optionName === "version") {
-		// 篩選?��?
 		const filteredChoices = userInput
 			? filterVersionChoices(userInput)
 			: getLastVersionChoices(25);
@@ -49,6 +50,29 @@ client.on(Events.InteractionCreate, async (interaction: any) => {
 		}));
 
 		await interaction.respond(choices);
+		return;
+	}
+
+	if (optionName === "character") {
+		const tr = createTranslator(toI18nLang(interaction.locale));
+
+		try {
+			const locale =
+				interaction.locale === "zh-TW"
+					? "tw"
+					: interaction.locale === "zh-CN"
+						? "cn"
+						: "en";
+			const choices = await getCharacterAutocompleteOptions(
+				userInput,
+				tr,
+				locale
+			);
+			await interaction.respond(choices);
+		} catch (error) {
+			console.error("Error in character autocomplete:", error);
+			await interaction.respond([]);
+		}
 		return;
 	}
 });

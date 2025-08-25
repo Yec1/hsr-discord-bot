@@ -4,21 +4,75 @@ import emoji from "@/assets/emoji.js";
 import { toI18nLang } from "@/utilities/core/i18n.js";
 import { getUserLang } from "@/utilities/index.js";
 import { StringSelectMenuBuilder, CommandInteraction } from "discord.js";
-
-interface Character {
-	id: string;
-	score?: any[];
-	element?:
-		| {
-				id?: string;
-		  }
-		| string;
-}
+import {
+	loadLightConeNamesData,
+	loadCharacterNamesData
+} from "@/utilities/hsr/jsonManager.js";
 
 interface LocaleJson {
 	[key: string]: {
 		name: string;
+		path?: string;
+		element?: string;
 	};
+}
+
+// 移除原有的简单缓存，使用JSON缓存系统
+async function getCharacters(locale: string): Promise<LocaleJson> {
+	try {
+		// 使用新的JSON缓存系统
+		const characterData = await loadCharacterNamesData(locale);
+		return characterData || {};
+	} catch (error) {
+		console.error(
+			`Error fetching character names for locale ${locale}:`,
+			error
+		);
+		return {};
+	}
+}
+
+export async function getLightconeNameById(
+	lightconeId: string
+): Promise<string | null> {
+	try {
+		const lightcones = await loadLightConeNamesData();
+		return lightcones[lightconeId].cn || lightcones[lightconeId].en;
+	} catch (error) {
+		console.error(
+			`Error getting lightcone name for ID ${lightconeId}:`,
+			error
+		);
+		return null;
+	}
+}
+
+export async function getCharacterSimplyData(
+	characterId: string,
+	locale: string
+): Promise<{
+	name: string | null;
+	path: string | null;
+	element: string | null;
+}> {
+	try {
+		const characters = await getCharacters(locale);
+		return {
+			name: characters[characterId]?.name || null,
+			path: characters[characterId]?.path || null,
+			element: characters[characterId]?.element || null
+		};
+	} catch (error) {
+		console.error(
+			`Error getting character name for ID ${characterId}:`,
+			error
+		);
+		return {
+			name: null,
+			path: null,
+			element: null
+		};
+	}
 }
 
 async function getSelectMenu(
@@ -31,21 +85,12 @@ async function getSelectMenu(
 		toI18nLang(interaction.locale) ||
 		"en";
 
-	const responses = await axios.get(
-		`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/${
-			locale == "tw" ? "cht" : "en"
-		}/characters.json`
-	);
-	const localeJson = responses.data as LocaleJson;
-
+	const localeJson = await getCharacters(locale);
 	const leaderboardData = (await database.get("LeaderBoard")) || {};
-
-	// 过滤掉没有分数记录的角色
 	const charactersWithScores = Object.values(leaderboardData).filter(
 		(character: any) => character.score && character.score.length > 0
 	);
 
-	// 按角色名称排序
 	const sortedCharacters = charactersWithScores.sort((a: any, b: any) => {
 		const nameA = localeJson[a.id]?.name || a.id;
 		const nameB = localeJson[b.id]?.name || b.id;
@@ -61,7 +106,7 @@ async function getSelectMenu(
 				: "physical";
 
 		return {
-			emoji: (emoji as any)[elementKey] || emoji.physical, // 如果找不到对应的emoji，使用物理属性作为默认值
+			emoji: (emoji as any)[elementKey] || emoji.physical,
 			label: `${
 				localeJson[character.id]?.name == "{NICKNAME}"
 					? tr("MainCharacter")

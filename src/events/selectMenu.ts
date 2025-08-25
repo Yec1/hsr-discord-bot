@@ -643,22 +643,14 @@ async function handleProfileFilter(
 			.addOptions(filterOptions);
 
 		await interaction.editReply({
-			embeds: [
-				new EmbedBuilder()
-					.setImage(`attachment://${image.name}`)
-					.setFooter({
-						text: tr("CostTime", {
-							requestTime: (
-								(requestEndTime - requestStartTime) /
-								1000
-							).toFixed(2),
-							drawTime: (
-								(drawEndTime - drawStartTime) /
-								1000
-							).toFixed(2)
-						})
-					})
-			],
+			content: `-# ${tr("CostTime", {
+				requestTime: (
+					(requestEndTime - requestStartTime) /
+					1000
+				).toFixed(2),
+				drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
+			})}`,
+			embeds: [],
 			components: [
 				...selectMenus.map(menu =>
 					new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
@@ -978,7 +970,7 @@ async function handleGuide(
 	);
 
 	interaction.editReply({
-		embeds: [new EmbedBuilder().setImage(`attachment://${image.name}`)],
+		embeds: [],
 		files: [image],
 		components: selectMenus.map(selectMenu => {
 			return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
@@ -1332,28 +1324,14 @@ async function handleForgottenHall(
 			const commonParams = { s: `${floor?.star_num || 0}` };
 
 			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setAuthor({
-							name: interaction.user.username,
-							iconURL: interaction.user.displayAvatarURL({
-								size: 4096
-							})
-						})
-						.setImage(`attachment://${image.name}`)
-						.setFooter({
-							text: tr("CostTime", {
-								requestTime: (
-									(requestEndTime - requestStartTime) /
-									1000
-								).toFixed(2),
-								drawTime: (
-									(drawEndTime - drawStartTime) /
-									1000
-								).toFixed(2)
-							})
-						})
-				],
+				content: `-# ${tr("CostTime", {
+					requestTime: (
+						(requestEndTime - requestStartTime) /
+						1000
+					).toFixed(2),
+					drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
+				})}`,
+				embeds: [],
 				files: [image],
 				components: [
 					new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
@@ -1697,22 +1675,14 @@ async function handleSelectCharacter(
 			);
 
 			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setImage(`attachment://${image.name}`)
-						.setFooter({
-							text: tr("CostTime", {
-								requestTime: (
-									(requestEndTime - requestStartTime) /
-									1000
-								).toFixed(2),
-								drawTime: (
-									(drawEndTime - drawStartTime) /
-									1000
-								).toFixed(2)
-							})
-						})
-				],
+				content: `-# ${tr("CostTime", {
+					requestTime: (
+						(requestEndTime - requestStartTime) /
+						1000
+					).toFixed(2),
+					drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
+				})}`,
+				embeds: [],
 				components: [
 					...selectMenus.map(menu =>
 						new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(

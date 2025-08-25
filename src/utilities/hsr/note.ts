@@ -73,37 +73,12 @@ async function handleNoteDraw(
 			});
 
 			interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setAuthor({
-							name: interaction.user.username,
-							iconURL: interaction.user.displayAvatarURL({
-								size: 4096
-							})
-						})
-						.setTitle(
-							`${tr("TP_RecoveryTime")}  ${`<t:${
-								moment(new Date()).unix() +
-								res.stamina_recover_time
-							}:f>`} (${`<t:${
-								moment(new Date()).unix() +
-								res.stamina_recover_time
-							}:R>`})`
-						)
-						.setImage(`attachment://${image.name}`)
-						.setFooter({
-							text: tr("CostTime", {
-								requestTime: (
-									(requestEndTime - requestStartTime) /
-									1000
-								).toFixed(2),
-								drawTime: (
-									(drawEndTime - drawStartTime) /
-									1000
-								).toFixed(2)
-							})
-						})
-				],
+				content: `-# ${tr("TP_RecoveryTime")}  ${`<t:${
+					moment(new Date()).unix() + res.stamina_recover_time
+				}:f>`} (${`<t:${
+					moment(new Date()).unix() + res.stamina_recover_time
+				}:R>`})`,
+				embeds: [],
 				files: [image]
 			});
 		} catch (error) {

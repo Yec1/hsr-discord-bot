@@ -145,6 +145,16 @@ class AutoDailySignSystem {
 		);
 	}
 
+	getBackfillHours(currentHour: number, signedHour: number[]): number[] {
+		const backfillHours = [];
+		for (let i = 0; i < currentHour; i++) {
+			if (!signedHour.includes(i)) {
+				backfillHours.push(i);
+			}
+		}
+		return backfillHours;
+	}
+
 	async processDailySign(
 		userId: string,
 		dailyData: DailyData
@@ -170,9 +180,6 @@ class AutoDailySignSystem {
 				const uid = await getUserUid(userId, accountIndex);
 
 				if (!cookie || !uid) {
-					this.logger.info(
-						`[用戶 ${userId}] [帳號 #${accountIndex}] 缺少 Cookie 或 UID，跳過處理`
-					);
 					this.stats.skipped++;
 					continue;
 				}
@@ -190,14 +197,8 @@ class AutoDailySignSystem {
 				const errorMessage = (error as Error).message;
 
 				if (this.isSkippableError(errorMessage)) {
-					this.logger.info(
-						`[用戶 ${userId}] [帳號 #${accountIndex}] 跳過處理: ${errorMessage}`
-					);
 					this.stats.skipped++;
 				} else {
-					this.logger.error(
-						`[用戶 ${userId}] [帳號 #${accountIndex}] 簽到失敗: ${errorMessage}`
-					);
 					this.stats.failed++;
 				}
 			}
@@ -233,9 +234,6 @@ class AutoDailySignSystem {
 
 			if (result.code === -5003 || result.info.is_sign === true) {
 				this.stats.signed++;
-				this.logger.info(
-					`[用戶 ${userId}] [帳號 #${accountIndex}] 已經簽到過了`
-				);
 				return;
 			}
 
@@ -246,9 +244,6 @@ class AutoDailySignSystem {
 				rewards.awards[info.total_sign_day + 1] || rewards.awards[1];
 
 			this.stats.success++;
-			this.logger.success(
-				`[用戶 ${userId}] [帳號 #${accountIndex}] 簽到成功`
-			);
 
 			await this.sendSuccessMessage(channelId, {
 				content: tag,
@@ -404,6 +399,18 @@ export default async function autoDailySign(): Promise<void> {
 	const dailyData = (await (system as any).db.get("autoDaily")) as DailyData;
 	if (!dailyData) return;
 
+	let currentDate = new Date().toLocaleString("en-US", {
+		timeZone: CONFIG.TAIPEI_TIMEZONE,
+		dateStyle: "full"
+	});
+	currentDate = currentDate.split(",")[0] || "";
+	const lastDate = await (system as any).db.get("lastDate");
+	if (currentDate !== lastDate) {
+		await (system as any).db.set("lastDate", currentDate);
+		await (system as any).db.delete("signedHour");
+	}
+
+	const signedHour = (await (system as any).db.get("signedHour")) || [];
 	const currentHour = new Date().toLocaleString("en-US", {
 		timeZone: CONFIG.TAIPEI_TIMEZONE,
 		hour: "numeric",
@@ -424,6 +431,38 @@ export default async function autoDailySign(): Promise<void> {
 					`處理用戶 ${userId} 時發生錯誤: ${(error as Error).message}`
 				);
 			}
+		}
+	}
+	await (system as any).db.push("signedHour", parseInt(currentHour));
+
+	const backfillHours = system.getBackfillHours(
+		parseInt(currentHour),
+		signedHour
+	);
+
+	if (backfillHours.length !== 0) {
+		for (const hour of backfillHours) {
+			if (hour === parseInt(currentHour)) continue;
+			const usersToProcess = Object.keys(dailyData).filter(userId => {
+				const scheduledTime = dailyData[userId]?.time || "13";
+				return parseInt(scheduledTime) === parseInt(hour.toString());
+			});
+			if (usersToProcess.length === 0) continue;
+			(system as any).logger.info(
+				`${hour}:00 時段需要補簽，共 ${usersToProcess.length} 個用戶需要補簽`
+			);
+
+			for (const userId of usersToProcess) {
+				try {
+					await system.processDailySign(userId, dailyData);
+				} catch (error) {
+					(system as any).logger.error(
+						`補簽用戶 ${userId} 時發生錯誤: ${(error as Error).message}`
+					);
+				}
+			}
+
+			await (system as any).db.push("signedHour", hour);
 		}
 	}
 

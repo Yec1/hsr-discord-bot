@@ -499,11 +499,7 @@ export default {
 
 			collector.on("end", async () => {
 				interaction.editReply({
-					embeds: [
-						new EmbedBuilder().setImage(
-							`attachment://${image.name}`
-						)
-					],
+					embeds: [],
 					components: [
 						new ActionRowBuilder().addComponents(
 							new ButtonBuilder()

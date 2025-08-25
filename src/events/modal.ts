@@ -399,6 +399,7 @@ async function handleCookieSet(
 			flags: MessageFlags.Ephemeral
 		});
 	} catch (error: any) {
+		console.log(error);
 		await interaction.reply({
 			embeds: [
 				new EmbedBuilder()

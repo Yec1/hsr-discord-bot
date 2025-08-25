@@ -4,11 +4,11 @@ import {
 	EmbedBuilder,
 	ChannelType,
 	PermissionsBitField,
-	Client,
 	GuildBasedChannel,
-	GuildMember,
 	MessageFlags
 } from "discord.js";
+import { TranslationFunction } from "@/types/index.js";
+import { database } from "@/index.js";
 
 // 类型定义
 interface UserData {
@@ -158,12 +158,8 @@ export default {
 	 * @param {String[]} args
 	 */
 	async execute(
-		client: Client,
 		interaction: ChatInputCommandInteraction,
-		args: string[],
-		tr: (key: string, params?: Record<string, any>) => string,
-		db: any,
-		emoji: any
+		tr: TranslationFunction
 	): Promise<any> {
 		if (
 			!(interaction.member?.permissions as any)?.has?.(
@@ -185,10 +181,10 @@ export default {
 		const cmd = interaction.options.getSubcommand();
 		switch (cmd) {
 			case "remove":
-				await handleRemove(interaction, tr, db);
+				await handleRemove(interaction, tr, database);
 				break;
 			case "move":
-				await handleMove(interaction, tr, db);
+				await handleMove(interaction, tr, database);
 				break;
 		}
 	}
