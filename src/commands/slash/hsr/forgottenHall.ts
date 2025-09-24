@@ -5,6 +5,7 @@ import { EmbedBuilder } from "discord.js";
 import type { TranslationFunction } from "@/types/index.js";
 
 const modeMap: Record<string, number> = {
+	peak: 4,
 	shadow: 3,
 	story: 2
 };
@@ -54,6 +55,13 @@ export default {
 							"zh-TW": "末日幻影"
 						},
 						value: "shadow"
+					},
+					{
+						name: "Anomaly Arbitration",
+						name_localizations: {
+							"zh-TW": "異相仲裁"
+						},
+						value: "peak"
 					}
 				)
 		)

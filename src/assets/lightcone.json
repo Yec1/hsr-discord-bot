@@ -1083,7 +1083,7 @@
     "rank": "CombatPowerLightconeRarity5",
     "baseType": "Warrior",
     "en": "Dance at Sunset",
-    "desc": "<i>In the resplendent twilight, a swift figure darts across the rooftops.</i>\\n\\n<i>\"Lili, Guoguo, let's see who makes it to the finish line first!\"</i>\\nScaling the eaves, evading the guards, swaying with the wind, the girl moves like a nimble critter, chasing the last sliver of sunlight.\\n\\nThe warm evening breeze caresses her face, and the setting sun bathes the cat in a kaleidoscope of colors.\\n<i>\"You guys won!\"</i>\\nShe declares, wiping sweat from her brow and cradling the cat in her arms.\\nAmidst a rising galaxy of stars, her unguarded smile dissolves into a bloom of innocence, akin to the layered twilight hues adrift in the sky.",
+    "desc": "In the resplendent twilight, a swift figure darts across the rooftops.\\n\\n<i>\"Lili, Guoguo, let's see who makes it to the finish line first!\"</i>\\nScaling the eaves, evading the guards, swaying with the wind, the girl moves like a nimble critter, chasing the last sliver of sunlight.\\n\\nThe warm evening breeze caresses her face, and the setting sun bathes the cat in a kaleidoscope of colors.\\n<i>\"You guys won!\"</i>\\nShe declares, wiping sweat from her brow and cradling the cat in her arms.\\nAmidst a rising galaxy of stars, her unguarded smile dissolves into a bloom of innocence, akin to the layered twilight hues adrift in the sky.",
     "kr": "해 질 무렵 시작되는 춤",
     "cn": "落日时起舞",
     "jp": "{RUBY_B#ゆうひ}夕日{RUBY_E#}に{RUBY_B#ま}舞{RUBY_E#}う"
@@ -1255,18 +1255,18 @@
     "baseType": "Memory",
     "en": "To Evernight's Stars",
     "desc": "In the crevices of time, only her heartbeat echoes.\\nLike many nights before, watching in the darkness and resting in dormancy.\\n\\nShe treasures the memories entrusted to her.\\nThe girl sets forth from a blank starting point, painting each stop she lingered at with vibrant colors. A cozy Express, companions each with their unique personalities, dazzling and magnificent planets... like a dream too beautiful to leave behind.\\n\\n<i>\"My real journey starts now!\"</i>\\nThe girl's declaration seems to whisper right beside her ear.\\n\\nShe gazes toward the distant starry sky, as a beam of light approaches.\\nIt's the Express's headlight, like a shooting star.\\n\\n<i>\"Good night, March... When you awaken, continue on your Trailblaze journey ♭\"</i>\\n\\nAs the memoria tide surges, she buries her wish deep in her heart, those tiny whispers and that light\\n—she has never forgotten.",
-    "kr": "긴 밤의 별빛에",
+    "kr": "긴 밤의 별빛에게",
     "cn": "致长夜的星光",
-    "jp": "長き夜に輝く星へ"
+    "jp": "{RUBY_B#なが}長{RUBY_E#}き{RUBY_B#よる}夜{RUBY_E#}に{RUBY_B#かがや}輝{RUBY_E#}く{RUBY_B#ほし}星{RUBY_E#}へ"
   },
   "23051": {
     "rank": "CombatPowerLightconeRarity5",
     "baseType": "Knight",
     "en": "Though Worlds Apart",
-    "desc": "In the boundless ancient lands, a young man walks alone on his quest.\\nHe seems to return to those wandering days, wading through surging waves, weathering wind and frost, battling behemoths, struggling against raging tides.\\n\\nYet in those moments of respite, he is not alone.\\nThough wolds apart, he can still see the light ahead...\\n\\nIt is the light of hope of all living beings.\\nThe shattered earth can no longer sustain rebirths, and they gather around him, seeking comfort and shelter.\\n\\nThose are the words his companions left in his heart, like an endless voyage connecting them firmly together.\\n\\nThe troubles of his past may stir with the wind, but the path he's traveled will become the strength for his metamorphosis.\\n\\n<i>\"I will stand guard for the Path of the Trailblaze.\"</i>\\nThe young man leaps forth with his spear, advancing toward the light—\\n\\n<i>\"And I shall defend all hope that threatens to fade away!\"</i>",
-    "kr": "끝없는 산과 강이 가로막아도",
+    "desc": "In the boundless ancient lands, a young man walks alone on his quest.\\nHe seems to return to those wandering days, wading through surging waves, weathering wind and frost, battling behemoths, struggling against raging tides.\\n\\nYet in those moments of respite, he is not alone.\\nThough worlds apart, he can still see the light ahead...\\n\\nIt is the light of hope of all living beings.\\nThe shattered earth can no longer sustain new life, and the newborn creatures gather around him, seeking comfort and shelter.\\n\\nThose are the words his companions left in his heart, like an endless voyage connecting them firmly together.\\n\\nThe troubles of his past may stir with the wind, but the path he's traveled will become the strength for his metamorphosis.\\n\\n<i>\"I will stand guard for the Path of the Trailblaze.\"</i>\\nThe young man leaps forth with his spear, advancing toward the light\\n\\n<i>\"And I shall defend all hope that threatens to fade away!\"</i>",
+    "kr": "끝없는 산과 강을 거치더라도",
     "cn": "纵然山河万程",
-    "jp": "万里の山河を越えて"
+    "jp": "{RUBY_B#ばんり}万里{RUBY_E#}の{RUBY_B#さんが}山河{RUBY_E#}を{RUBY_B#こ}越{RUBY_E#}えて"
   },
   "24000": {
     "rank": "CombatPowerLightconeRarity5",

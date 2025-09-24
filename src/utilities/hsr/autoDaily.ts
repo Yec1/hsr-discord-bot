@@ -13,7 +13,6 @@ import {
 import { loadConfig } from "@/utilities/core/config.js";
 
 interface Config {
-	TAIPEI_TIMEZONE: string;
 	API_TIMEOUT: number;
 	WEBHOOK_RETRIES: number;
 	DEFAULT_LANGUAGE: string;
@@ -51,39 +50,13 @@ interface SignResult {
 	};
 }
 
-interface SignInfo {
-	total_sign_day: number;
-	sign_cnt_missed: number;
-	month_last_day: boolean;
-}
-
-interface SignReward {
-	month: string;
-}
-
-interface SignRewards {
-	awards: Array<{
-		name: string;
-		cnt: number;
-		icon: string;
-	}>;
-}
-
 interface MessageData {
 	content: string;
 	embeds: EmbedBuilder[];
 }
 
-interface Context {
-	channelId: string;
-	messageData: MessageData;
-}
-
 const config = loadConfig();
-
-// Constants remain the same
 const CONFIG: Config = {
-	TAIPEI_TIMEZONE: "Asia/Taipei",
 	API_TIMEOUT: 10000,
 	WEBHOOK_RETRIES: 3,
 	DEFAULT_LANGUAGE: "en"
@@ -169,7 +142,6 @@ class AutoDailySignSystem {
 		const channelId = dailyData[userId]?.channelId || "";
 		const tag = dailyData[userId]?.tag === "true" ? `<@${userId}>` : "";
 
-		// Process each account sequentially instead of concurrently
 		for (
 			let accountIndex = 0;
 			accountIndex < accounts.length;
@@ -222,14 +194,12 @@ class AutoDailySignSystem {
 		});
 
 		try {
-			// Get all required information first
 			const [info, reward, rewards] = (await Promise.all([
 				hsr.daily.info(),
 				hsr.daily.reward(),
 				hsr.daily.rewards()
 			])) as any;
 
-			// Perform the claim
 			const result = (await hsr.daily.claim()) as SignResult;
 
 			if (result.code === -5003 || result.info.is_sign === true) {
@@ -237,7 +207,6 @@ class AutoDailySignSystem {
 				return;
 			}
 
-			// Get sign info for today and tomorrow
 			const todaySign =
 				rewards.awards[info.total_sign_day] || rewards.awards[0];
 			const tmrSign =
@@ -295,7 +264,7 @@ class AutoDailySignSystem {
 			const errorMessage = (error as Error).message;
 
 			if (this.isSkippableError(errorMessage)) {
-				throw new Error(errorMessage); // 重新拋出，讓上層處理
+				throw new Error(errorMessage);
 			} else {
 				throw new Error(`API 錯誤: ${errorMessage}`);
 			}
@@ -326,7 +295,6 @@ class AutoDailySignSystem {
 		}
 	}
 
-	// Statistics methods remain the same...
 	async updateStatistics(
 		startTime: number,
 		currentHour: string
@@ -400,7 +368,7 @@ export default async function autoDailySign(): Promise<void> {
 	if (!dailyData) return;
 
 	let currentDate = new Date().toLocaleString("en-US", {
-		timeZone: CONFIG.TAIPEI_TIMEZONE,
+		timeZone: "Asia/Taipei",
 		dateStyle: "full"
 	});
 	currentDate = currentDate.split(",")[0] || "";
@@ -412,7 +380,7 @@ export default async function autoDailySign(): Promise<void> {
 
 	const signedHour = (await (system as any).db.get("signedHour")) || [];
 	const currentHour = new Date().toLocaleString("en-US", {
-		timeZone: CONFIG.TAIPEI_TIMEZONE,
+		timeZone: "Asia/Taipei",
 		hour: "numeric",
 		hour12: false
 	});

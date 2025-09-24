@@ -1,0 +1,11 @@
+{
+	"TOKEN": "Your Discord Bot Token",
+	"TEST_TOKEN": "Your Test Discord Bot Token",
+	"CMDWEBHOOK": "Command Execution Webhook URL",
+	"JLWEBHOOK": "Record Webhook URL",
+	"LOGWEBHOOK": "Log Webhook URL",
+	"FBWEBHOOK": "Feedback Webhook URL",
+	"ERRWEBHOOK": "Error Webhook URL",
+	"AUTHTOKEN": "Your Auth Token",
+	"WEBSERVER_PORT": 3000
+}

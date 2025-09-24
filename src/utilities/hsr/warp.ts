@@ -145,37 +145,6 @@ function clearWarpImageCache(): void {
 	console.log("[Warp Image Cache] All warp image caches cleared");
 }
 
-// 定期清理 warp 圖片緩存
-function setupWarpImageCacheCleanup(): void {
-	setInterval(
-		() => {
-			let clearedCount = 0;
-			for (const [url, promise] of warpImageLoadPromises.entries()) {
-				clearedCount++;
-				promise
-					.then(image => {
-						if (image instanceof Canvas) {
-							warpImageCache.delete(url);
-						}
-					})
-					.catch(error => {
-						console.error(
-							`[Warp Image Cache] Error clearing cache for ${url}:`,
-							error
-						);
-					});
-			}
-
-			if (clearedCount > 0) {
-				console.log(
-					`[Warp Image Cache] Cleaned ${clearedCount} cached promises`
-				);
-			}
-		},
-		5 * 60 * 1000
-	); // 每5分鐘清理一次
-}
-
 async function fetchWarpData(
 	query: URLSearchParams,
 	id: number,
@@ -903,7 +872,7 @@ async function createImage(
 		ctx.restore();
 	}
 
-	return canvas.toBuffer("image/png");
+	return canvas.toBuffer("image/webp");
 }
 
 async function warpLogImage(
@@ -1285,7 +1254,7 @@ async function warpLogImage(
 		rectCache.clear();
 
 		// 返回结果
-		const result = canvas.toBuffer("image/png");
+		const result = canvas.toBuffer("image/webp");
 		if (!result) {
 			throw new Error(tr("draw_CanvasError"));
 		}
@@ -1469,6 +1438,5 @@ export {
 	saveWarpHistory,
 	getWarpHistory,
 	importWarpHistory,
-	setupWarpImageCacheCleanup,
 	clearWarpImageCache
 };

@@ -25,7 +25,8 @@ export function loadConfig(): Config {
 		return config;
 	}
 
-	const configPath = join(__dirname, "../../../config.json");
+	// 修复路径问题，使用相对于项目根目录的路径
+	const configPath = join(process.cwd(), "config.json");
 
 	if (!existsSync(configPath)) {
 		throw new Error(`配置文件不存在: ${configPath}`);

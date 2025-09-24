@@ -141,32 +141,6 @@ async function loadNoteImage(url: string): Promise<any> {
 	return result;
 }
 
-// 清理 note 圖片緩存
-function clearNoteImageCache(): void {
-	noteImageCache.clear();
-	noteImageLoadPromises.clear();
-	console.log("[Note Image Cache] All note image caches cleared");
-}
-
-// 定期清理 note 圖片緩存
-function setupNoteImageCacheCleanup(): void {
-	setInterval(
-		() => {
-			let clearedCount = 0;
-			for (const [url, promise] of noteImageLoadPromises.entries()) {
-				clearedCount++;
-			}
-
-			if (clearedCount > 0) {
-				console.log(
-					`[Note Image Cache] Cleaned ${clearedCount} cached promises`
-				);
-			}
-		},
-		5 * 60 * 1000
-	); // 每5分鐘清理一次
-}
-
 async function drawNoteImage(
 	tr: any,
 	res: NoteResponse
@@ -319,11 +293,11 @@ async function drawNoteImage(
 			expeditionIndex++;
 		}
 
-		return canvas.toBuffer("image/png");
+		return canvas.toBuffer("image/webp");
 	} catch (e) {
 		new Logger("分片").error(`Note Error: ${e}`);
 		return null;
 	}
 }
 
-export { handleNoteDraw, setupNoteImageCacheCleanup, clearNoteImageCache };
+export { handleNoteDraw };

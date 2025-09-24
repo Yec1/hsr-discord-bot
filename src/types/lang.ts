@@ -125,6 +125,7 @@ export interface LanguageStrings {
 	forgottenHall_Mode1: string;
 	forgottenHall_Mode2: string;
 	forgottenHall_Mode3: string;
+	forgottenHall_Mode4: string;
 	forgottenHall_Title: string;
 	forgottenHall_SelectFloor: string;
 	forgottenHall_FloorFormat1: string;
@@ -135,6 +136,8 @@ export interface LanguageStrings {
 	forgottenHall_Battle: string;
 	forgottenHall_UseRound: string;
 	forgottenHall_TeamSetup: string;
+	forgottenHall_BossRecord: string;
+	forgottenHall_KnightRecord: string;
 
 	leaderboard_Character: string;
 	leaderboard_Title: string;

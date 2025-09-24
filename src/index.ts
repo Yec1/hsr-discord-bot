@@ -51,7 +51,14 @@ if (cluster.id == 0) await import("./server.js");
 /**
  * @description 資料庫
  */
-const database = new QuickDB();
+let database: QuickDB;
+
+try {
+	database = new QuickDB();
+} catch (error) {
+	new Logger("系統").error(`資料庫初始化失敗: ${error}`);
+	process.exit(1);
+}
 
 /**
  * @description 指令集合
@@ -137,30 +144,40 @@ async function bindEvents(paths: string[]) {
  * @description 載入指令
  */
 export async function load() {
-	// 訊息指令
-	const messageCommandPaths = await getAllFiles(
-		`${__dirname}/commands/message`,
-		[".js"]
-	);
-	const messageCommands = await getMessageCommands(messageCommandPaths);
+	try {
+		// 訊息指令
+		const messageCommandPaths = await getAllFiles(
+			`${__dirname}/commands/message`,
+			[".js"]
+		);
+		const messageCommands = await getMessageCommands(messageCommandPaths);
 
-	// 斜線指令
-	const slashCommandPaths = await getAllFiles(`${__dirname}/commands/slash`, [
-		".js"
-	]);
-	const slashCommands = await getSlashCommands(slashCommandPaths);
+		// 斜線指令
+		const slashCommandPaths = await getAllFiles(
+			`${__dirname}/commands/slash`,
+			[".js"]
+		);
+		const slashCommands = await getSlashCommands(slashCommandPaths);
 
-	// 事件
-	const eventPaths = await getAllFiles(`${__dirname}/events`, [".js"]);
-	await bindEvents(eventPaths);
+		// 事件
+		const eventPaths = await getAllFiles(`${__dirname}/events`, [".js"]);
+		await bindEvents(eventPaths);
 
-	new Logger("系統").success(
-		`已載入 ${eventPaths.length} 事件、${slashCommands.length} 斜線指令、${messageCommands.length} 訊息指令`
-	);
+		new Logger("系統").success(
+			`已載入 ${eventPaths.length} 事件、${slashCommands.length} 斜線指令、${messageCommands.length} 訊息指令`
+		);
 
-	client.on("ready", async () => {
-		await client.application?.commands.set(slashCommands);
-	});
+		client.on("ready", async () => {
+			try {
+				await client.application?.commands.set(slashCommands);
+			} catch (error) {
+				new Logger("系統").error(`設置斜線指令失敗: ${error}`);
+			}
+		});
+	} catch (error) {
+		new Logger("系統").error(`載入指令失敗: ${error}`);
+		process.exit(1);
+	}
 }
 
 client.login(process.env.NODE_ENV === "dev" ? config.TEST_TOKEN : config.TOKEN);

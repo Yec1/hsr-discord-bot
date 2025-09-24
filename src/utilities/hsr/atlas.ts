@@ -2801,7 +2801,7 @@ async function createCharacterCanvas(
 		canvasHeight - 10
 	);
 
-	return canvas.toBuffer("image/png");
+	return canvas.toBuffer("image/webp");
 }
 
 export async function getCharacterAutocompleteOptions(

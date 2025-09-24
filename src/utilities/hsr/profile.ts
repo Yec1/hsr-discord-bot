@@ -1,4 +1,4 @@
-import { client, database } from "../../index.js";
+import { database } from "../../index.js";
 import {
 	requestPlayerData,
 	drawInQueueReply,
@@ -15,20 +15,15 @@ import {
 	EmbedBuilder,
 	AttachmentBuilder,
 	ActionRowBuilder,
-	StringSelectMenuBuilder,
-	Interaction
+	StringSelectMenuBuilder
 } from "discord.js";
 import { getRelicsScore } from "./relics.js";
 import emoji from "../../assets/emoji.js";
 import Queue from "queue";
 import axios from "axios";
 import { writeFile, mkdir, access } from "fs/promises";
-import { existsSync, readFileSync, writeFileSync } from "fs";
-import {
-	loadJSONFile,
-	JSON_CONFIGS,
-	loadLightConeData
-} from "./jsonManager.js";
+import { existsSync } from "fs";
+import { loadLightConeData } from "./jsonManager.js";
 
 // 類型定義
 interface PlayerData {
@@ -363,6 +358,105 @@ async function downloadCharacterPortraits(
 	await downloadImages("character_portrait", characterIds);
 }
 
+// 處理角色皮膚圖片
+async function handleCharacterSkin(character: Character): Promise<string> {
+	const localSkinPath = `./src/assets/image/character_skin/${character.id}.webp`;
+
+	// 如果本地已有皮膚圖片，直接返回
+	if (existsSync(localSkinPath)) {
+		return localSkinPath;
+	}
+
+	try {
+		// 請求角色皮膚數據
+		const response = await fetch(
+			`https://api.hakush.in/hsr/data/cn/character/${character.id}.json`
+		);
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
+
+		const data = await response.json();
+		const skinData = data.Skin;
+
+		if (!skinData || typeof skinData !== "object") {
+			throw new Error("Invalid skin data format");
+		}
+
+		// 獲取皮膚ID
+		const skinId = Object.keys(skinData)[0];
+		if (!skinId) {
+			throw new Error(`No skin ID found for character ${character.id}`);
+		}
+
+		// 構建皮膚圖片URL
+		const skinImageUrl = `https://api.hakush.in/hsr/UI/avatardrawcard/avatarskin/${skinId}.webp`;
+
+		// 下載並保存皮膚圖片
+		const skinResponse = await fetch(skinImageUrl);
+		if (!skinResponse.ok) {
+			throw new Error(
+				`Failed to download skin image: HTTP ${skinResponse.status}`
+			);
+		}
+
+		const skinImageBuffer = await skinResponse.arrayBuffer();
+		await writeFile(localSkinPath, Buffer.from(skinImageBuffer));
+
+		return localSkinPath;
+	} catch (error) {
+		console.warn(
+			`[Skin Handler] Failed to process skin for ${character.id}:`,
+			error
+		);
+		return character?.image || "";
+	}
+}
+
+// 處理角色頭像圖片
+async function handleCharacterPortrait(
+	character: Character,
+	imageHeader: string
+): Promise<{ imageUrl: string; fallbackUrl: string | null }> {
+	const localPortraitPath = `./src/assets/image/character_portrait/${character.id}.png`;
+
+	// 優先使用本地頭像
+	if (existsSync(localPortraitPath)) {
+		return { imageUrl: localPortraitPath, fallbackUrl: null };
+	}
+
+	// 使用portrait字段
+	if (character?.portrait) {
+		const imageUrl = imageHeader + "/" + character.portrait;
+		const fallbackUrl = character?.image || null;
+
+		// 異步下載角色頭像（不阻塞圖片繪製）
+		downloadCharacterPortrait(character.id).catch(error => {
+			console.warn(
+				`[Character Portrait] Background download failed for ${character.id}:`,
+				error
+			);
+		});
+
+		return { imageUrl, fallbackUrl };
+	}
+
+	// 使用標準角色頭像路徑
+	const imageUrl = `${imageHeader}/image/character_portrait/${character.id}.png`;
+	const fallbackUrl = character?.image || null;
+
+	// 異步下載角色頭像（不阻塞圖片繪製）
+	downloadCharacterPortrait(character.id).catch(error => {
+		console.warn(
+			`[Character Portrait] Background download failed for ${character.id}:`,
+			error
+		);
+	});
+
+	return { imageUrl, fallbackUrl };
+}
+
 const pathMap: { [key: number]: string } = {
 	1: "destruction", // 毀滅
 	2: "hunt", // 巡獵
@@ -498,7 +592,7 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 				ctx.fillStyle = "#666";
 				ctx.fillRect(0, 0, 64, 64);
 				const fallbackImage = await loadImage(
-					canvas.toBuffer("image/png")
+					canvas.toBuffer("image/webp")
 				);
 				loadImageAsync.cache!.set(defaultUrl, fallbackImage);
 				return {
@@ -514,7 +608,7 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 		const ctx = canvas.getContext("2d");
 		ctx.fillStyle = "#666";
 		ctx.fillRect(0, 0, 64, 64);
-		const fallbackImage = await loadImage(canvas.toBuffer("image/png"));
+		const fallbackImage = await loadImage(canvas.toBuffer("image/webp"));
 		return {
 			image: fallbackImage,
 			usedFallback: false
@@ -1613,7 +1707,7 @@ async function drawMainImage(
 			}
 		});
 
-		return canvas.toBuffer("image/png");
+		return canvas.toBuffer("image/webp");
 	} catch (error) {
 		console.error(`MainPage Error: ${error}`);
 		return null;
@@ -1681,39 +1775,18 @@ async function drawCharacterImage(
 		const [bg, element, path, star, ...relicImages] = imageResults;
 
 		// 優化角色圖片加載 - 優先使用本地文件
-		const isSkinImage = character?.image?.includes("skin");
 		let characterImageUrl: string;
 		let characterFallbackUrl: string | null = null;
-
+		const isSkinImage = character?.image?.includes("skin");
 		if (isSkinImage) {
-			characterImageUrl = character?.image || "";
+			characterImageUrl = await handleCharacterSkin(character);
 		} else {
-			const localPortraitPath = `./src/assets/image/character_portrait/${character.id}.png`;
-			if (existsSync(localPortraitPath)) {
-				characterImageUrl = localPortraitPath;
-			} else if (character?.portrait) {
-				characterImageUrl = image_Header + "/" + character.portrait;
-				characterFallbackUrl = character?.image || null;
-
-				downloadCharacterPortrait(character.id).catch(error => {
-					console.warn(
-						`[Character Portrait] Background download failed for ${character.id}:`,
-						error
-					);
-				});
-			} else {
-				// 如果都沒有，使用標準角色頭像路徑並嘗試下載
-				characterImageUrl = `${image_Header}/image/character_portrait/${character.id}.png`;
-				characterFallbackUrl = character?.image || null;
-
-				// 異步下載角色頭像（不阻塞圖片繪製）
-				downloadCharacterPortrait(character.id).catch(error => {
-					console.warn(
-						`[Character Portrait] Background download failed for ${character.id}:`,
-						error
-					);
-				});
-			}
+			const portraitResult = await handleCharacterPortrait(
+				character,
+				image_Header
+			);
+			characterImageUrl = portraitResult.imageUrl;
+			characterFallbackUrl = portraitResult.fallbackUrl;
 		}
 
 		let characterImageResult = null;
@@ -1730,21 +1803,29 @@ async function drawCharacterImage(
 		}
 
 		// 绘制背景
-		if (bg) {
-			ctx.drawImage(bg, 0, 0, 1920, 1080);
-		} else {
-			// 创建简单的背景
-			ctx.fillStyle = "#1a1a2e";
-			ctx.fillRect(0, 0, 1920, 1080);
-		}
+		ctx.drawImage(bg, 0, 0, 1920, 1080);
 
-		// 绘制角色图片
+		// 绘制角色图片 - 根据图片类型调整显示方式
 		if (characterImageResult) {
-			ctx.drawImage(characterImageResult, 475, 0, 768, 768);
-		} else {
-			console.warn(
-				`[Character Image] Failed to load image for character: ${character.id}`
-			);
+			const originalWidth = characterImageResult.width;
+			const originalHeight = characterImageResult.height;
+			const aspectRatio = originalWidth / originalHeight;
+
+			if (aspectRatio > 0.8) {
+				const scaledWidth = 768 * aspectRatio;
+				ctx.drawImage(characterImageResult, 475, 0, scaledWidth, 768);
+			} else {
+				const size = 0.8;
+				const scaledHeight = (768 * size) / aspectRatio;
+				const xOffset = 475 + 768 * ((1 - size) / 2);
+				ctx.drawImage(
+					characterImageResult,
+					xOffset,
+					-220,
+					768 * size,
+					scaledHeight
+				);
+			}
 		}
 
 		// 优化字体大小计算
@@ -2395,7 +2476,7 @@ async function drawCharacterImage(
 			}
 		} else {
 			ctx.textAlign = "center";
-			ctx.fillText(tr("RelicNoScore"), centerX, 830);
+			ctx.fillText(tr("RelicNoScore"), centerX - 200, 830);
 		}
 
 		const relicRenderData = await Promise.all(
@@ -2609,7 +2690,7 @@ async function drawCharacterImage(
 			}
 		});
 
-		return canvas.toBuffer("image/png");
+		return canvas.toBuffer("image/webp");
 	} catch (error) {
 		console.error("Error generating image:", error);
 		// 尝试创建一个简单的错误图片
@@ -2622,7 +2703,7 @@ async function drawCharacterImage(
 			errorCtx.font = "48px Arial";
 			errorCtx.textAlign = "center";
 			errorCtx.fillText("圖片生成失敗", 960, 540);
-			return errorCanvas.toBuffer("image/png");
+			return errorCanvas.toBuffer("image/webp");
 		} catch (fallbackError) {
 			console.error("Failed to create error image:", fallbackError);
 			return null;
@@ -2844,43 +2925,11 @@ async function drawAllCharactersImage(
 			}
 		}
 
-		return canvas.toBuffer("image/png");
+		return canvas.toBuffer("image/webp");
 	} catch (error) {
 		console.error("Error generating all characters image:", error);
 		return null;
 	}
-}
-
-function clearImageCache(): void {
-	if (loadImageAsync.cache) {
-		loadImageAsync.cache.clear();
-	}
-	preloadedImages.clear();
-	imageLoadPromises.clear();
-	console.log("[Image Cache] All image caches cleared");
-}
-
-// 定期清理图片缓存，防止内存泄漏
-function setupImageCacheCleanup(): void {
-	setInterval(
-		() => {
-			const now = Date.now();
-			let clearedCount = 0;
-
-			// 清理Promise缓存
-			for (const [url, promise] of imageLoadPromises.entries()) {
-				// 这里可以根据需要添加更复杂的清理逻辑
-				clearedCount++;
-			}
-
-			if (clearedCount > 0) {
-				console.log(
-					`[Image Cache] Cleaned ${clearedCount} cached promises`
-				);
-			}
-		},
-		5 * 60 * 1000
-	); // 每5分钟清理一次
 }
 
 async function setupLeaderboardMaintenance(): Promise<void> {
@@ -3143,8 +3192,6 @@ export {
 	saveLeaderboard,
 	maintainLeaderboard,
 	getLeaderboardStats,
-	clearImageCache,
-	setupImageCacheCleanup,
 	setupLeaderboardMaintenance,
 	getOptimizedLeaderboard,
 	preloadCommonImages,

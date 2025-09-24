@@ -754,12 +754,12 @@
         "jp": "会心率+<unbreak>#1[i]%</unbreak>。"
       },
       "4": {
-        "en": "After the wearer uses Basic ATK or Skill, if the wearer's memosprite is on the field, increases Max HP of the wearer and their memosprite by <unbreak>#1[i]%</unbreak>, and increases all allies' DMG by <unbreak>#2[i]%</unbreak> until the wearer's next Basic ATK or Skill.",
+        "en": "After the wearer uses Basic ATK or Skill, if the wearer's memosprite is on the field, increases Max HP of the wearer and their memosprite by <unbreak>#1[i]%</unbreak>, and increases all allies' dealt DMG by <unbreak>#2[i]%</unbreak>, lasting until after the wearer's next use of Basic ATK or Skill.",
         "ParamList": [
           0.24000000022351742,
-          0.0800000000745058
+          0.1500000001396984
         ],
-        "kr": "장착한 캐릭터가 일반 공격 또는 전투 스킬 발동 후, 장착한 캐릭터의 기억 정령이 필드에 있으면, 장착한 캐릭터와 해당 캐릭터의 기억 정령의 HP 최대치가 <unbreak>#1[i]%</unbreak> 증가하고, 모든 아군이 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가하며, 해당 효과는 장착한 캐릭터가 다음 일반 공격 또는 전투 스킬을 발동한 후까지 지속된다",
+        "kr": "장착한 캐릭터가 일반 공격 또는 전투 스킬 발동 후, 장착한 캐릭터의 기억 정령이 필드에 있으면 장착한 캐릭터와 해당 캐릭터의 기억 정령의 HP 최대치가 <unbreak>#1[i]%</unbreak> 증가하고, 모든 아군이 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가하며, 장착한 캐릭터가 다음 일반 공격 또는 전투 스킬을 발동한 후까지 지속된다",
         "cn": "装备者施放普攻或战技后，若装备者的忆灵在场，使装备者及其忆灵生命上限提高<unbreak>#1[i]%</unbreak>，我方全体造成的伤害提高<unbreak>#2[i]%</unbreak>，持续至装备者下次施放普攻或战技后。",
         "jp": "装備キャラが通常攻撃または戦闘スキルを発動した後、装備キャラの記憶の精霊がフィールド上にいる場合、装備キャラとその記憶の精霊の最大HP+<unbreak>#1[i]%</unbreak>、味方全体の与ダメージ+<unbreak>#2[i]%</unbreak>、装備キャラが次に通常攻撃または戦闘スキルを発動した後まで継続。"
       }
@@ -773,24 +773,23 @@
     "en": "Self-Enshrouded Recluse",
     "set": {
       "2": {
-        "en": "Increases CRIT DMG by <unbreak>#1[i]%</unbreak>.",
+        "en": "The provided Shield Effect increases by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.1600000001490116
+          0.10000000009313226
         ],
-        "kr": "치명타 피해 <unbreak>#1[i]%</unbreak> 증가",
-        "cn": "暴击伤害提高<unbreak>#1[i]%</unbreak>。",
-        "jp": "会心ダメージ+<unbreak>#1[i]%</unbreak>。"
+        "kr": "제공하는 실드량 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "提供的护盾量提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "付与するバリアの耐久値+<unbreak>#1[i]%</unbreak>。"
       },
       "4": {
-        "en": "Increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak>. When any ally target consumes Skill Points for the first time in a turn, recovers 1 Skill Point. This effect triggers up to <unbreak>#1[i]</unbreak> time(s) per battle, and <unbreak>#2[i]</unbreak> trigger count(s) will be restored at the start of each subsequent wave. Only 1 Skill Point Recovery effect can be active in the same team.",
+        "en": "Increases the Shield Effect provided by the wearer by <unbreak>#1[i]%</unbreak>. When an ally target holds a Shield provided by the wearer, the ally target's CRIT DMG increases by <unbreak>#2[i]%</unbreak>.",
         "ParamList": [
-          1,
-          1,
-          0.1600000001490116
+          0.12000000011175871,
+          0.1500000001396984
         ],
-        "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가하고, 임의의 아군이 턴마다 처음으로 전투 스킬 포인트 소모 후 전투 스킬 포인트를 1pt 회복한다. 해당 효과는 전투당 최대 <unbreak>#1[i]</unbreak>회 발동하며, 이후 웨이브가 시작될 때마다 발동 가능 횟수가 <unbreak>#2[i]</unbreak>회 회복된다. 전투 스킬 포인트 회복 효과는 같은 파티 내에서 최대 1개만 적용된다",
-        "cn": "使装备者的暴击伤害提高<unbreak>#3[i]%</unbreak>，任意我方目标在每回合内首次消耗战技点后，恢复1点战技点，该效果每场战斗最多触发<unbreak>#1[i]</unbreak>次，后续每个波次开始后恢复<unbreak>#2[i]</unbreak>次可触发次数。恢复战技点的效果在同一队伍中最多生效1个。",
-        "jp": "装備キャラの会心ダメージ+<unbreak>#3[i]%</unbreak>。任意の味方キャラが1ターン内に初回SPを消費した時、SPを1回復する。この効果は1回の戦闘で最大<unbreak>#1[i]</unbreak>回まで発動できる。その後、各ウェーブ開始時に、発動可能回数が<unbreak>#2[i]</unbreak>回回復する。SP回復効果は同じチームでは重ねがけできない。"
+        "kr": "장착한 캐릭터가 제공하는 실드량이 <unbreak>#1[i]%</unbreak> 증가하고, 아군이 장착한 캐릭터가 제공한 실드 보유 시 치명타 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
+        "cn": "使装备者提供的护盾量提高<unbreak>#1[i]%</unbreak>，我方目标持有装备者提供的护盾时，暴击伤害提高<unbreak>#2[i]%</unbreak>。",
+        "jp": "装備キャラが付与するバリアの耐久値+<unbreak>#1[i]%</unbreak>。装備キャラが付与したバリアを持つ味方の会心ダメージ+<unbreak>#2[i]%</unbreak>。"
       }
     },
     "kr": "별빛에 숨은 은둔자",

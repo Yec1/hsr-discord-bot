@@ -135,6 +135,7 @@ const langs: LanguageStrings = {
 	forgottenHall_Mode1: "Memory of Chaos",
 	forgottenHall_Mode2: "Pure Fiction",
 	forgottenHall_Mode3: "Apocalyptic Shadow",
+	forgottenHall_Mode4: "Anomaly Arbitration",
 	forgottenHall_Title: "",
 	forgottenHall_SelectFloor: "Select Floor",
 	forgottenHall_FloorFormat1: "<s> Stars • <r> Rounds",
@@ -145,6 +146,8 @@ const langs: LanguageStrings = {
 	forgottenHall_Battle: "Battles",
 	forgottenHall_UseRound: "Rounds Used",
 	forgottenHall_TeamSetup: "Team Setup<z>",
+	forgottenHall_BossRecord: "Boss Record",
+	forgottenHall_KnightRecord: "Knight Record",
 
 	leaderboard_Character: "View Leaderboard",
 	leaderboard_Title: "<z> Relic Rating Leaderboard",

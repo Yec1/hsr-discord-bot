@@ -130,6 +130,7 @@ const langs: LanguageStrings = {
 	forgottenHall_Mode1: "浑沌回忆",
 	forgottenHall_Mode2: "虚构叙事",
 	forgottenHall_Mode3: "末日幻影",
+	forgottenHall_Mode4: "异相仲裁",
 	forgottenHall_Title: "挑战回顾",
 	forgottenHall_SelectFloor: "选择楼层",
 	forgottenHall_FloorFormat1: "<s>星 • <r>轮",
@@ -140,6 +141,8 @@ const langs: LanguageStrings = {
 	forgottenHall_Battle: "战斗次数",
 	forgottenHall_UseRound: "使用轮",
 	forgottenHall_TeamSetup: "编队<z>",
+	forgottenHall_BossRecord: "王棋过关战绩",
+	forgottenHall_KnightRecord: "骑士关卡战绩",
 
 	leaderboard_Character: "查看排行",
 	leaderboard_Title: "<z> 遗器评分排行榜",
