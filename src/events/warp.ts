@@ -217,7 +217,7 @@ client.on(Events.InteractionCreate, async interaction => {
 						}
 
 						const image = new AttachmentBuilder(imageBuffer, {
-							name: `warplog.png`
+							name: `warplog.webp`
 						});
 
 						interaction.editReply({

@@ -8,6 +8,21 @@ import {
 	getUserGameInfo,
 	getFriendlyErrorMessage
 } from "../index.js";
+
+// 異常仲裁輪次記錄接口
+interface AnomalyRoundRecord {
+	roundNum: number;
+	expireTime: number;
+}
+
+// 獲取異常仲裁圖標路徑
+function getAnomalyIconPath(roundNum: number): string | null {
+	if (roundNum === 0) return "./src/assets/image/226004.png";
+	if (roundNum >= 1 && roundNum <= 2) return "./src/assets/image/226003.png";
+	if (roundNum >= 3 && roundNum <= 4) return "./src/assets/image/226002.png";
+	if (roundNum >= 5 && roundNum <= 6) return "./src/assets/image/226001.png";
+	return null; // 6以上不使用
+}
 import { createChunkedSelectMenus } from "./selectmenu.js";
 import { join } from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
@@ -1293,7 +1308,7 @@ async function handleProfileDraw(
 
 			const drawEndTime = Date.now();
 			const image = new AttachmentBuilder(imageBuffer, {
-				name: `MainPage_${playerData?.player.uid}.png`
+				name: `MainPage_${playerData?.player.uid}.webp`
 			});
 
 			if (!characters) throw new Error("No characters data");
@@ -1522,6 +1537,29 @@ async function drawMainImage(
 
 		if (avatar) {
 			ctx.drawImage(avatar, 896, 70, 128, 128);
+		}
+
+		// 繪製異常仲裁圖標（如果有的話）
+		const anomalyRecord = (await database.get(
+			`${playerData.player.uid}.anomalyRoundNum`
+		)) as AnomalyRoundRecord | null;
+		if (anomalyRecord && Date.now() / 1000 < anomalyRecord.expireTime) {
+			const iconPath = getAnomalyIconPath(anomalyRecord.roundNum);
+			if (iconPath) {
+				const anomalyIcon = await loadImage(iconPath);
+				if (anomalyIcon) {
+					const iconSize = 128 * 1.1;
+					const iconX = 896 - 896 * 0.3;
+					const iconY = 70 - 70 * 0.1;
+					ctx.drawImage(
+						anomalyIcon,
+						iconX,
+						iconY,
+						iconSize,
+						iconSize
+					);
+				}
+			}
 		}
 
 		const setupMainFont = (size: number, isBold: boolean = false) => {
@@ -2748,6 +2786,29 @@ async function drawAllCharactersImage(
 			ctx.clip();
 			ctx.drawImage(avatar, 40, 40, 140, 140);
 			ctx.restore();
+		}
+
+		// 繪製異常仲裁圖標（如果有的話）
+		const anomalyRecord = (await database.get(
+			`${playerData.player.uid}.anomalyRoundNum`
+		)) as AnomalyRoundRecord | null;
+		if (anomalyRecord && Date.now() / 1000 < anomalyRecord.expireTime) {
+			const iconPath = getAnomalyIconPath(anomalyRecord.roundNum);
+			if (iconPath) {
+				const anomalyIcon = await loadImage(iconPath);
+				if (anomalyIcon) {
+					const iconSize = 140 * 1.1;
+					const iconX = 40 - 40 * 0.3;
+					const iconY = 40 - 40 * 0.1;
+					ctx.drawImage(
+						anomalyIcon,
+						iconX,
+						iconY,
+						iconSize,
+						iconSize
+					);
+				}
+			}
 		}
 
 		// 文字資訊

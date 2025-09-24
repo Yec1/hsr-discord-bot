@@ -450,7 +450,7 @@ export default {
 				warpResults
 			);
 			const image = new AttachmentBuilder(imageBuffer, {
-				name: "result.png"
+				name: "result.webp"
 			});
 
 			let videoTime = 12000;

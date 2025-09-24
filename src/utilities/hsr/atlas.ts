@@ -744,7 +744,7 @@ export async function handleCharacterAtlas(
 
 				const drawEndTime = Date.now();
 				const image = new AttachmentBuilder(imageBuffer, {
-					name: `character_${characterInput}.png`
+					name: `character_${characterInput}.webp`
 				});
 
 				// 计算耗时

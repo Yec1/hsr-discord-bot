@@ -136,7 +136,7 @@ const langs: LanguageStrings = {
 	forgottenHall_Mode2: "Pure Fiction",
 	forgottenHall_Mode3: "Apocalyptic Shadow",
 	forgottenHall_Mode4: "Anomaly Arbitration",
-	forgottenHall_Title: "",
+	forgottenHall_Title: "Challenge Review",
 	forgottenHall_SelectFloor: "Select Floor",
 	forgottenHall_FloorFormat1: "<s> Stars • <r> Rounds",
 	forgottenHall_FloorFormat2: "<s> Stars • <r> Rounds • <z> Points",

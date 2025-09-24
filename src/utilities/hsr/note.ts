@@ -69,7 +69,7 @@ async function handleNoteDraw(
 
 			const drawEndTime = Date.now();
 			const image = new AttachmentBuilder(imageBuffer, {
-				name: `note.png`
+				name: `note.webp`
 			});
 
 			interaction.editReply({

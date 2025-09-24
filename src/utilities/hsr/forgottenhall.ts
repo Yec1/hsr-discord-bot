@@ -7,6 +7,7 @@ import {
 	CommandInteraction,
 	User
 } from "discord.js";
+import { database } from "../../index.js";
 import {
 	createCanvas,
 	loadImage,
@@ -20,6 +21,24 @@ import Queue from "queue";
 
 const formatDate = (time: TimeInfo) =>
 	`${time.year}/${time.month.toString().padStart(2, "0")}/${time.day.toString().padStart(2, "0")}`;
+
+// 將 TimeInfo 轉換為 timestamp
+const timeToTimestamp = (time: TimeInfo): number => {
+	const date = new Date(
+		time.year,
+		time.month - 1,
+		time.day,
+		time.hour || 0,
+		time.minute || 0
+	);
+	return Math.floor(date.getTime() / 1000);
+};
+
+// 異常仲裁輪次記錄接口
+interface AnomalyRoundRecord {
+	roundNum: number;
+	expireTime: number;
+}
 
 // 角色繪製配置接口
 interface CharacterDrawConfig {
@@ -529,7 +548,7 @@ const CANVAS_CONFIG = {
 	WIDTH: 1920,
 	HEIGHT: {
 		ANOMALY: 1300,
-		FORGOTTEN: 1400
+		FORGOTTEN: 1080
 	}
 } as const;
 
@@ -700,7 +719,7 @@ async function handleForgottenHallDraw(
 
 			const drawEndTime = Date.now();
 			const image = new AttachmentBuilder(imageBuffer, {
-				name: `${mode === 4 ? (floor as ChallengePeakRecord).group.group_id : (floor as FloorDetail).maze_id}.png`
+				name: `${mode === 4 ? (floor as ChallengePeakRecord).group.group_id : (floor as FloorDetail).maze_id}.webp`
 			});
 
 			const commonParams = {
@@ -1488,6 +1507,21 @@ async function drawAnomalyArbitrationImage(
 				7,
 				canvas.height - 13
 			);
+		}
+
+		// 儲存異常仲裁輪次記錄（如果是用戶自己的帳號且有 boss_record）
+		if (
+			floor.boss_record.has_challenge_record &&
+			floor.boss_record.round_num !== undefined
+		) {
+			const expireTime = timeToTimestamp(floor.group.end_time);
+			const anomalyRecord: AnomalyRoundRecord = {
+				roundNum: floor.boss_record.round_num,
+				expireTime: expireTime
+			};
+
+			// 儲存到數據庫
+			await database.set(`${uid}.anomalyRoundNum`, anomalyRecord);
 		}
 
 		return canvas.toBuffer("image/webp");

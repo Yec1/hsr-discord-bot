@@ -527,7 +527,7 @@ async function handleProfileFilter(
 
 		const drawEndTime = Date.now();
 		const image = new AttachmentBuilder(imageBuffer, {
-			name: `AllCharacters_${playerData.player.uid}.png`
+			name: `AllCharacters_${playerData.player.uid}.webp`
 		});
 
 		const selectMenus = createChunkedSelectMenus(
@@ -1318,7 +1318,7 @@ async function handleForgottenHall(
 
 			const drawEndTime = Date.now();
 			const image = new AttachmentBuilder(imageBuffer, {
-				name: `${floor?.maze_id || "floor"}.png`
+				name: `${floor?.maze_id || "floor"}.webp`
 			});
 
 			const commonParams = { s: `${floor?.star_num || 0}` };
@@ -1620,7 +1620,7 @@ async function handleSelectCharacter(
 			const drawEndTime = Date.now();
 
 			const image = new AttachmentBuilder(imageBuffer, {
-				name: `CharacterPage_${playerData.player.uid}.png`
+				name: `CharacterPage_${playerData.player.uid}.webp`
 			});
 
 			const selectMenus = createChunkedSelectMenus(
