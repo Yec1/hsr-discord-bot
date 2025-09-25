@@ -698,23 +698,40 @@ async function handleForgottenHallDraw(
 			if (mode == 4) {
 				floor = (res as AnomalyArbitrationResponse)
 					.challenge_peak_records[0];
+				if (
+					!floor ||
+					(!floor.mob_records?.length &&
+						!floor.boss_record?.has_challenge_record)
+				) {
+					interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+								)
+								.setTitle(tr("forgottenHall_NonData"))
+								.setDescription(tr("forgottenHall_NonDataDesc"))
+						]
+					});
+					return;
+				}
 			} else {
 				floor = (res as ForgottenHallResponse).all_floor_detail[0];
+				if (!floor) {
+					interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+								)
+								.setTitle(tr("forgottenHall_NonData"))
+								.setDescription(tr("forgottenHall_NonDataDesc"))
+						]
+					});
+					return;
+				}
 			}
 
-			if (!floor) {
-				interaction.editReply({
-					embeds: [
-						new EmbedBuilder()
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-							)
-							.setTitle(tr("forgottenHall_NonData"))
-							.setDescription(tr("forgottenHall_NonDataDesc"))
-					]
-				});
-				return;
-			}
 			const requestEndTime = Date.now();
 			const drawStartTime = Date.now();
 
@@ -962,7 +979,7 @@ async function drawAnomalyArbitrationImage(
 		}
 
 		// 星星顯示
-		if (floor.boss_record.has_challenge_record) {
+		if (floor.boss_record?.has_challenge_record) {
 			const peakRankIcon = await getCachedImage(
 				floor.boss_record.challenge_peak_rank_icon
 			);
@@ -1146,55 +1163,55 @@ async function drawAnomalyArbitrationImage(
 			bossCardX + 40,
 			bossCardY + 45
 		);
-		// 使用輪次文字
-		ctx.font = "24px 'Hanyi', URW DIN Arabic, Arial, sans-serif";
-		ctx.fillStyle = "hsla(0, 0%, 100%, .65)";
-		ctx.textAlign = "left";
-		const useRoundText = `${tr("forgottenHall_UseRound")}`;
-		ctx.fillText(useRoundText, bossCardX + 40, bossCardY + 80);
 
-		// 輪次數字
-		ctx.fillStyle = "#ffd37f";
-		ctx.fillText(
-			`${floor.boss_record.round_num}`,
-			bossCardX + 40 + ctx.measureText(useRoundText).width + 10,
-			bossCardY + 80
-		);
+		if (floor.boss_record?.has_challenge_record) {
+			// 使用輪次文字
+			ctx.font = "24px 'Hanyi', URW DIN Arabic, Arial, sans-serif";
+			ctx.fillStyle = "hsla(0, 0%, 100%, .65)";
+			ctx.textAlign = "left";
+			const useRoundText = `${tr("forgottenHall_UseRound")}`;
+			ctx.fillText(useRoundText, bossCardX + 40, bossCardY + 80);
 
-		// 挑戰時間
-		ctx.font = "24px 'Hanyi', URW DIN Arabic, Arial, sans-serif";
-		ctx.fillStyle = "hsla(0, 0%, 100%, .65)";
-		const { year, month, day, hour, minute } =
-			floor.boss_record.challenge_time;
-		ctx.fillText(
-			`${year}/${month}/${day} ${hour}:${minute}`,
-			bossCardX + 40 + ctx.measureText(useRoundText).width + 80,
-			bossCardY + 80
-		);
+			// 輪次數字
+			ctx.fillStyle = "#ffd37f";
+			ctx.fillText(
+				`${floor.boss_record.round_num}`,
+				bossCardX + 40 + ctx.measureText(useRoundText).width + 10,
+				bossCardY + 80
+			);
 
-		// 繪製王棋過關角色
-		const bossRecord = floor.boss_record;
-		const bossRecordAvatars = bossRecord.avatars;
-		const bossRecordAvatarPromises = bossRecordAvatars.map(character =>
-			getCachedImage(character.icon)
-		);
-		const bossRecordAvatarImages = await Promise.all(
-			bossRecordAvatarPromises
-		);
+			// 挑戰時間
+			ctx.font = "24px 'Hanyi', URW DIN Arabic, Arial, sans-serif";
+			ctx.fillStyle = "hsla(0, 0%, 100%, .65)";
+			const { year, month, day, hour, minute } =
+				floor.boss_record.challenge_time;
+			ctx.fillText(
+				`${year}/${month}/${day} ${hour}:${minute}`,
+				bossCardX + 40 + ctx.measureText(useRoundText).width + 80,
+				bossCardY + 80
+			);
 
-		// 獲取角色背景圖片
-		const bossChar4StarBg = await getCachedImage(
-			IMAGE_PATHS.CHARACTERS.FOUR_STAR
-		);
-		const bossChar5StarBg = await getCachedImage(
-			IMAGE_PATHS.CHARACTERS.FIVE_STAR
-		);
+			// 繪製王棋過關角色
+			const bossRecord = floor.boss_record;
+			const bossRecordAvatars = bossRecord.avatars;
+			const bossRecordAvatarPromises = bossRecordAvatars.map(character =>
+				getCachedImage(character.icon)
+			);
+			const bossRecordAvatarImages = await Promise.all(
+				bossRecordAvatarPromises
+			);
 
-		// 元素圖標緩存
-		const bossElementIcons = new Map<string, Image>();
+			// 獲取角色背景圖片
+			const bossChar4StarBg = await getCachedImage(
+				IMAGE_PATHS.CHARACTERS.FOUR_STAR
+			);
+			const bossChar5StarBg = await getCachedImage(
+				IMAGE_PATHS.CHARACTERS.FIVE_STAR
+			);
 
-		// 只有當 has_challenge_record 為 true 時才繪製角色
-		if (floor.boss_record.has_challenge_record) {
+			// 元素圖標緩存
+			const bossElementIcons = new Map<string, Image>();
+
 			for (let i = 0; i < bossRecordAvatars.length; i++) {
 				const character = bossRecordAvatars[i];
 				if (!character) continue;
@@ -1242,7 +1259,7 @@ async function drawAnomalyArbitrationImage(
 		}
 
 		// 繪製 Buff 信息區域
-		if (floor.boss_record.buff) {
+		if (floor.boss_record?.has_challenge_record && floor.boss_record.buff) {
 			const buffAreaX = bossCardX + 40 + 670 + 20; // 角色區域右側 + 間隔
 			const buffAreaY = bossCardY + 120;
 			const buffAreaWidth =
@@ -1521,7 +1538,7 @@ async function drawAnomalyArbitrationImage(
 
 		// 儲存異常仲裁輪次記錄（如果是用戶自己的帳號且有 boss_record）
 		if (
-			floor.boss_record.has_challenge_record &&
+			floor.boss_record?.has_challenge_record &&
 			floor.boss_record.round_num !== undefined
 		) {
 			const expireTime = timeToTimestamp(floor.group.end_time);
@@ -1536,7 +1553,7 @@ async function drawAnomalyArbitrationImage(
 
 		// 儲存異常仲裁徽章記錄（如果有 boss_record 且有 challenge_peak_rank_icon）
 		if (
-			floor.boss_record.has_challenge_record &&
+			floor.boss_record?.has_challenge_record &&
 			floor.boss_record.challenge_peak_rank_icon
 		) {
 			const expireTime = timeToTimestamp(floor.group.end_time);
@@ -1578,6 +1595,7 @@ async function drawAnomalyArbitrationImage(
 
 		return canvas.toBuffer("image/webp");
 	} catch (e) {
+		console.log(e);
 		new Logger("異常仲裁").error(`AnomalyArbitration Error: ${e}`);
 		return null;
 	}
