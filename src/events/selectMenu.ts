@@ -1437,6 +1437,9 @@ async function handleSelectCharacter(
 				value.split("-");
 			const allCharactersBool = allCharacters == "true" ? true : false;
 
+			// 獲取用戶語言
+			const userLang = (await getUserLang(userId || "")) || "tw";
+
 			let playerData: PlayerData | null = null;
 			let playerActivity = null;
 			let character: Character | null = null;
@@ -1613,7 +1616,8 @@ async function handleSelectCharacter(
 								tr,
 								playerData as any,
 								character as any,
-								allCharactersBool
+								allCharactersBool,
+								userLang
 							)
 						: null;
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));

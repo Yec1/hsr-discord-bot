@@ -75,6 +75,7 @@ const langs: LanguageStrings = {
 	profile_MemoryLevel: "Memory Progress",
 	profile_MemoryOfChaosLevel: "Memory of Chaos Progress",
 	profile_PureFictionLevel: "Pure Fiction Progress",
+	profile_Tip: "※ May be lower than UID query character rating",
 
 	NoSetAccount:
 		"This Trailblazer has not set up an account, so this command cannot be used!",
@@ -136,7 +137,7 @@ const langs: LanguageStrings = {
 	forgottenHall_Mode2: "Pure Fiction",
 	forgottenHall_Mode3: "Apocalyptic Shadow",
 	forgottenHall_Mode4: "Anomaly Arbitration",
-	forgottenHall_Title: "Challenge Review",
+	forgottenHall_Title: "Challenge Review	",
 	forgottenHall_SelectFloor: "Select Floor",
 	forgottenHall_FloorFormat1: "<s> Stars • <r> Rounds",
 	forgottenHall_FloorFormat2: "<s> Stars • <r> Rounds • <z> Points",

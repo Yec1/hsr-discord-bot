@@ -75,6 +75,7 @@ const langs: LanguageStrings = {
 	profile_MemoryLevel: "回憶進度",
 	profile_MemoryOfChaosLevel: "混沌回憶進度",
 	profile_PureFictionLevel: "虛構敘事進度",
+	profile_Tip: "※ 可能較低於UID查詢角色評分",
 
 	NoSetAccount: "這位開拓者尚未設置帳號，所以無法使用此指令！",
 	AccountNotFound: "找不到這位開拓者！",

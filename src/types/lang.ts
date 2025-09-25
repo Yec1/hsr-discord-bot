@@ -73,6 +73,7 @@ export interface LanguageStrings {
 	profile_MemoryLevel: string;
 	profile_MemoryOfChaosLevel: string;
 	profile_PureFictionLevel: string;
+	profile_Tip: string;
 
 	NoSetAccount: string;
 	AccountNotFound: string;

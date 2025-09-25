@@ -385,6 +385,18 @@ export const JSON_CONFIGS = {
 			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cht/light_cone_ranks.json",
 		fileName: "light_cone_ranks.json"
 	},
+	LIGHT_CONE_RANKS_CN: {
+		localPath: "./src/assets/light_cone_ranks_cn.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cn/light_cone_ranks.json",
+		fileName: "light_cone_ranks_cn.json"
+	},
+	LIGHT_CONE_RANKS_EN: {
+		localPath: "./src/assets/light_cone_ranks_en.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/en/light_cone_ranks.json",
+		fileName: "light_cone_ranks_en.json"
+	},
 	LIGHT_CONE_NAMES: {
 		localPath: "./src/assets/lightcone.json",
 		remoteUrl: "https://api.hakush.in/hsr/data/lightcone.json",
@@ -440,32 +452,45 @@ export async function loadJSONFile(config: JSONFileConfig): Promise<any> {
 
 /**
  * 专门用于加载光锥数据的函数，优先使用本地文件
+ * @param lang 用户语言 (tw, cn, en)
  */
-export async function loadLightConeData(): Promise<any> {
+export async function loadLightConeData(lang: string = "en"): Promise<any> {
 	const manager = JSONManager.getInstance();
+
+	// 根据语言选择配置
+	let config;
+	switch (lang) {
+		case "cn":
+			config = JSON_CONFIGS.LIGHT_CONE_RANKS_CN;
+			break;
+		case "en":
+			config = JSON_CONFIGS.LIGHT_CONE_RANKS_EN;
+			break;
+		case "tw":
+		default:
+			config = JSON_CONFIGS.LIGHT_CONE_RANKS;
+			break;
+	}
 
 	try {
 		// 首先检查本地文件
-		if (existsSync(JSON_CONFIGS.LIGHT_CONE_RANKS.localPath)) {
-			const localData = readFileSync(
-				JSON_CONFIGS.LIGHT_CONE_RANKS.localPath,
-				"utf-8"
-			);
+		if (existsSync(config.localPath)) {
+			const localData = readFileSync(config.localPath, "utf-8");
 			const parsedData = JSON.parse(localData);
-			manager.setCacheData(
-				JSON_CONFIGS.LIGHT_CONE_RANKS.fileName,
-				parsedData
-			);
+			manager.setCacheData(config.fileName, parsedData);
 			return parsedData;
 		}
 
 		// 如果本地文件不存在，使用标准加载流程
 		console.log(
-			"[JSON] Light cone local file not found, using standard loading..."
+			`[JSON] Light cone local file not found for ${lang}, using standard loading...`
 		);
-		return await loadJSONFile(JSON_CONFIGS.LIGHT_CONE_RANKS);
+		return await loadJSONFile(config);
 	} catch (error) {
-		console.error("[JSON] Error loading light cone data:", error);
+		console.error(
+			`[JSON] Error loading light cone data for ${lang}:`,
+			error
+		);
 		return null;
 	}
 }

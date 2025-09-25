@@ -1238,5 +1238,45 @@
     "kr": "즐거움에 취한 바다의 일각",
     "cn": "沉欢醉饮的海隅",
     "jp": "酩酊の海域"
+  },
+  "323": {
+    "icon": "SpriteOutput/ItemIcon/71050.png",
+    "en": "Amphoreus, The Eternal Land",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. While the wearer's memosprite is on the field, increases all allies' SPD by <unbreak>#2[i]%</unbreak>. This effect cannot be stacked.",
+        "ParamList": [
+          0.0800000000745058,
+          0.0800000000745058
+        ],
+        "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 기억 정령이 필드에 있을 시, 모든 아군의 속도가 <unbreak>#2[i]%</unbreak> 증가하며, 해당 효과는 중첩할 수 없다",
+        "cn": "使装备者的暴击率提高<unbreak>#1[i]%</unbreak>。装备者的忆灵在场时，我方全体速度提高<unbreak>#2[i]%</unbreak>，该效果无法叠加。",
+        "jp": "装備キャラの会心率+<unbreak>#1[i]%</unbreak>。装備キャラの記憶の精霊がフィールド上にいる時、味方全体の速度+<unbreak>#2[i]%</unbreak>。この効果は累積できない。"
+      }
+    },
+    "kr": "영원의 땅 앰포리어스",
+    "cn": "永恒之地翁法罗斯",
+    "jp": "永遠の地オンパロス"
+  },
+  "324": {
+    "icon": "SpriteOutput/ItemIcon/71051.png",
+    "en": "Tengoku @Live Stream",
+    "set": {
+      "2": {
+        "en": "Increases the wearer's CRIT DMG by <unbreak>#1[i]%</unbreak>. If <unbreak>#2[i]</unbreak> or more Skill Points are consumed in the same turn, additionally increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak> for <unbreak>#4[i]</unbreak> turns.",
+        "ParamList": [
+          0.1600000001490116,
+          3,
+          0.3200000002980232,
+          3
+        ],
+        "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가하며, 같은 턴에 전투 스킬 포인트를 <unbreak>#2[i]</unbreak>pt 이상 소모 시 추가로 장착한 캐릭터의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가한다, 지속 시간: <unbreak>#4[i]</unbreak>턴",
+        "cn": "使装备者的暴击伤害提高<unbreak>#1[i]%</unbreak>，若在同一回合内消耗大于等于<unbreak>#2[i]</unbreak>点战技点，额外使装备者暴击伤害提高<unbreak>#3[i]%</unbreak>，持续<unbreak>#4[i]</unbreak>回合。",
+        "jp": "装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>。1ターンにSPを<unbreak>#2[i]</unbreak>以上消費した場合、さらに会心ダメージ+<unbreak>#3[i]%</unbreak>、<unbreak>#4[i]</unbreak>ターン継続する。"
+      }
+    },
+    "kr": "천국@라이브 스트리밍",
+    "cn": "天国@直播间",
+    "jp": "天国@配信ルーム"
   }
 }

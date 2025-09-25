@@ -1,4 +1,6 @@
 import axios from "axios";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
+import { join } from "path";
 import { propertyMap } from "@/utilities/hsr/constants.js";
 
 interface PropertyTranslate {
@@ -92,10 +94,229 @@ const propertyTranslate: PropertyTranslate = {
 	59: "BreakDamageAddedRatioBase"
 };
 
+// 本地文件路徑配置
+const LOCAL_SCORE_FILE_PATH = "./src/assets/score.json";
+const REMOTE_SCORE_URL =
+	"https://raw.githubusercontent.com/Mar-7th/StarRailScore/master/score.json";
+
 // 緩存評分數據，避免重複網絡請求
 let scoreJsonCache: ScoreJson | null = null;
 let scoreJsonCacheTime = 0;
-const CACHE_DURATION = 3 * 60 * 1000; // 5分鐘緩存
+let lastUpdateTime = 0;
+let updateTimer: NodeJS.Timeout | null = null;
+const CACHE_DURATION = 3 * 60 * 1000; // 3分鐘緩存
+const UPDATE_INTERVAL = 24 * 60 * 60 * 1000; // 24小時更新間隔
+
+// 啟動定時檢查更新
+function startPeriodicUpdate(): void {
+	// 每24小時檢查一次更新
+	updateTimer = setInterval(async () => {
+		await checkAndUpdateScoreData();
+	}, UPDATE_INTERVAL);
+
+	// 立即執行一次檢查（延遲5秒）
+	setTimeout(async () => {
+		await checkAndUpdateScoreData();
+	}, 5000);
+}
+
+// 模塊加載時啟動定時更新
+startPeriodicUpdate();
+
+/**
+ * 智能合併兩個分數數據對象，只更新新增或修改的部分
+ */
+function mergeScoreData(
+	localData: ScoreJson,
+	remoteData: ScoreJson
+): ScoreJson {
+	const mergedData = { ...localData };
+
+	// 遍歷遠程數據，只添加新的角色或更新現有角色的新權重
+	for (const [characterId, remoteWeights] of Object.entries(remoteData)) {
+		if (!mergedData[characterId]) {
+			// 新角色，直接添加
+			mergedData[characterId] = remoteWeights;
+			console.log(`[Relics] 添加新角色分數數據: ${characterId}`);
+		} else {
+			// 現有角色，檢查是否有新的權重需要更新
+			const localWeights = mergedData[characterId];
+			let hasUpdate = false;
+
+			// 檢查主詞條權重
+			if (remoteWeights.main) {
+				if (!localWeights.main) {
+					localWeights.main = remoteWeights.main;
+					hasUpdate = true;
+				} else {
+					// 合併主詞條權重，保留本地修改
+					for (const [slot, remoteSlotWeights] of Object.entries(
+						remoteWeights.main
+					)) {
+						if (!localWeights.main[slot]) {
+							localWeights.main[slot] = remoteSlotWeights;
+							hasUpdate = true;
+						} else {
+							// 合併該槽位的權重
+							for (const [property, weight] of Object.entries(
+								remoteSlotWeights
+							)) {
+								if (!(property in localWeights.main[slot])) {
+									localWeights.main[slot][property] = weight;
+									hasUpdate = true;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// 檢查副詞條權重
+			if (remoteWeights.weight) {
+				if (!localWeights.weight) {
+					localWeights.weight = remoteWeights.weight;
+					hasUpdate = true;
+				} else {
+					// 合併副詞條權重，保留本地修改
+					for (const [property, weight] of Object.entries(
+						remoteWeights.weight
+					)) {
+						if (!(property in localWeights.weight)) {
+							localWeights.weight[property] = weight;
+							hasUpdate = true;
+						}
+					}
+				}
+			}
+
+			// 更新最大值（如果遠程數據有更新的話）
+			if (
+				remoteWeights.max !== undefined &&
+				localWeights.max !== remoteWeights.max
+			) {
+				localWeights.max = remoteWeights.max;
+				hasUpdate = true;
+			}
+
+			if (hasUpdate) {
+				console.log(`[Relics] 更新角色分數數據: ${characterId}`);
+			}
+		}
+	}
+
+	return mergedData;
+}
+
+/**
+ * 從遠程下載分數數據
+ */
+async function downloadScoreData(): Promise<ScoreJson | null> {
+	try {
+		const response = await axios.get(REMOTE_SCORE_URL, {
+			timeout: 15000,
+			headers: {
+				"User-Agent":
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+				Accept: "application/json",
+				"Accept-Encoding": "gzip, deflate, br"
+			},
+			maxRedirects: 5,
+			validateStatus: status => status < 400
+		});
+		return response.data;
+	} catch (error) {
+		console.warn(`[Relics] 下載遠程分數數據失敗:`, error);
+		return null;
+	}
+}
+
+/**
+ * 保存分數數據到本地文件
+ */
+async function saveLocalScoreData(data: ScoreJson): Promise<void> {
+	try {
+		// 確保目錄存在
+		const dir = join(LOCAL_SCORE_FILE_PATH, "..");
+		if (!existsSync(dir)) {
+			mkdirSync(dir, { recursive: true });
+		}
+
+		writeFileSync(
+			LOCAL_SCORE_FILE_PATH,
+			JSON.stringify(data, null, 2),
+			"utf-8"
+		);
+		console.log(
+			`[Relics] ✓ 成功保存分數數據到本地: ${LOCAL_SCORE_FILE_PATH}`
+		);
+	} catch (error) {
+		console.error(`[Relics] 保存本地分數數據失敗:`, error);
+	}
+}
+
+/**
+ * 檢查並更新分數數據
+ */
+async function checkAndUpdateScoreData(): Promise<void> {
+	const now = Date.now();
+
+	// 檢查是否需要更新（距離上次更新超過24小時）
+	if (now - lastUpdateTime < UPDATE_INTERVAL) {
+		return;
+	}
+
+	try {
+		console.log("[Relics] 檢查分數數據更新...");
+
+		// 下載遠程數據
+		const remoteData = await downloadScoreData();
+		if (!remoteData) {
+			console.warn("[Relics] 無法下載遠程分數數據");
+			return;
+		}
+
+		// 獲取本地數據
+		let localData: ScoreJson | null = null;
+		if (existsSync(LOCAL_SCORE_FILE_PATH)) {
+			try {
+				const localContent = readFileSync(
+					LOCAL_SCORE_FILE_PATH,
+					"utf-8"
+				);
+				localData = JSON.parse(localContent);
+			} catch (error) {
+				console.warn("[Relics] 讀取本地分數數據失敗:", error);
+			}
+		}
+
+		// 智能合併數據
+		const mergedData = localData
+			? mergeScoreData(localData, remoteData)
+			: remoteData;
+
+		// 檢查是否有實際更新
+		const hasUpdate =
+			!localData ||
+			JSON.stringify(mergedData) !== JSON.stringify(localData);
+
+		if (hasUpdate) {
+			// 保存合併後的數據
+			await saveLocalScoreData(mergedData);
+
+			// 更新緩存
+			scoreJsonCache = mergedData;
+			scoreJsonCacheTime = now;
+			lastUpdateTime = now;
+
+			console.log("[Relics] ✓ 分數數據更新完成");
+		} else {
+			lastUpdateTime = now;
+			console.log("[Relics] 分數數據無需更新");
+		}
+	} catch (error) {
+		console.error("[Relics] 檢查分數數據更新時發生錯誤:", error);
+	}
+}
 
 async function getScoreJson(): Promise<ScoreJson | null> {
 	const now = Date.now();
@@ -106,20 +327,67 @@ async function getScoreJson(): Promise<ScoreJson | null> {
 	}
 
 	try {
-		const response = await axios.get(
-			"https://raw.githubusercontent.com/Mar-7th/StarRailScore/master/score.json"
-		);
-		scoreJsonCache = response.data;
-		scoreJsonCacheTime = now;
-		return scoreJsonCache;
-	} catch (error) {
-		console.error("[Relics] Error fetching score data:", error);
-		// 如果網絡請求失敗但有緩存，返回緩存數據
-		if (scoreJsonCache) {
-			return scoreJsonCache;
+		// 首先嘗試從本地加載
+		if (existsSync(LOCAL_SCORE_FILE_PATH)) {
+			const localData = readFileSync(LOCAL_SCORE_FILE_PATH, "utf-8");
+			const parsedData = JSON.parse(localData);
+			scoreJsonCache = parsedData;
+			scoreJsonCacheTime = now;
+			console.log("[Relics] 從本地文件加載分數數據");
+			return parsedData;
 		}
-		return null;
+
+		// 如果本地文件不存在，從遠程下載
+		console.log("[Relics] 本地分數文件不存在，正在下載...");
+		const remoteData = await downloadScoreData();
+
+		if (remoteData) {
+			// 保存到本地
+			await saveLocalScoreData(remoteData);
+			scoreJsonCache = remoteData;
+			scoreJsonCacheTime = now;
+			lastUpdateTime = now;
+			console.log("[Relics] ✓ 成功下載並保存分數數據到本地");
+			return remoteData;
+		} else {
+			console.warn("[Relics] 下載遠程分數數據失敗");
+		}
+	} catch (error) {
+		console.error("[Relics] 加載分數數據時發生錯誤:", error);
+
+		// 如果是本地文件解析錯誤，嘗試刪除損壞的文件並重新下載
+		if (existsSync(LOCAL_SCORE_FILE_PATH) && error instanceof SyntaxError) {
+			console.log("[Relics] 本地分數文件損壞，嘗試重新下載...");
+			try {
+				// 刪除損壞的文件
+				const fs = await import("fs");
+				fs.unlinkSync(LOCAL_SCORE_FILE_PATH);
+				console.log(
+					`[Relics] 已刪除損壞的本地文件: ${LOCAL_SCORE_FILE_PATH}`
+				);
+
+				// 重新嘗試下載
+				const remoteData = await downloadScoreData();
+				if (remoteData) {
+					await saveLocalScoreData(remoteData);
+					scoreJsonCache = remoteData;
+					scoreJsonCacheTime = now;
+					lastUpdateTime = now;
+					console.log("[Relics] ✓ 成功重新下載並保存分數數據");
+					return remoteData;
+				}
+			} catch (retryError) {
+				console.error("[Relics] 重新下載分數數據失敗:", retryError);
+			}
+		}
 	}
+
+	// 如果網絡請求失敗但有緩存，返回緩存數據
+	if (scoreJsonCache) {
+		return scoreJsonCache;
+	}
+
+	return null;
 }
 
 async function getRelicsScore(
@@ -279,6 +547,33 @@ function calculateGrade(score: string): Grade {
 	}
 
 	return { grade: grade, color: grades[grade]?.color || "#9DB2BF" };
+}
+
+/**
+ * 手動觸發更新檢查
+ */
+export async function forceUpdateCheck(): Promise<void> {
+	await checkAndUpdateScoreData();
+}
+
+/**
+ * 獲取最後更新時間
+ */
+export function getLastUpdateTime(): number {
+	return lastUpdateTime;
+}
+
+/**
+ * 清理資源
+ */
+export function destroy(): void {
+	if (updateTimer) {
+		clearInterval(updateTimer);
+		updateTimer = null;
+	}
+	scoreJsonCache = null;
+	scoreJsonCacheTime = 0;
+	lastUpdateTime = 0;
 }
 
 export { getRelicsScore };

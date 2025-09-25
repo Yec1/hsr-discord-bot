@@ -40,6 +40,16 @@ interface AnomalyRoundRecord {
 	expireTime: number;
 }
 
+// 異常仲裁徽章記錄接口
+interface AnomalyRankRecord {
+	mazeId: number;
+	groupName: string;
+	rankIcon: string;
+	rankIconType: string;
+	expireTime: number;
+	challengeTime: number; // 挑戰時間戳
+}
+
 // 角色繪製配置接口
 interface CharacterDrawConfig {
 	avatarX: number;
@@ -1522,6 +1532,48 @@ async function drawAnomalyArbitrationImage(
 
 			// 儲存到數據庫
 			await database.set(`${uid}.anomalyRoundNum`, anomalyRecord);
+		}
+
+		// 儲存異常仲裁徽章記錄（如果有 boss_record 且有 challenge_peak_rank_icon）
+		if (
+			floor.boss_record.has_challenge_record &&
+			floor.boss_record.challenge_peak_rank_icon
+		) {
+			const expireTime = timeToTimestamp(floor.group.end_time);
+			const challengeTime = timeToTimestamp(
+				floor.boss_record.challenge_time
+			);
+
+			const rankRecord: AnomalyRankRecord = {
+				mazeId: floor.boss_info.maze_id,
+				groupName: floor.group.name_mi18n,
+				rankIcon: floor.boss_record.challenge_peak_rank_icon,
+				rankIconType: floor.boss_record.challenge_peak_rank_icon_type,
+				expireTime: expireTime,
+				challengeTime: challengeTime
+			};
+
+			// 獲取現有的徽章記錄
+			const existingRecords =
+				((await database.get(
+					`${uid}.anomalyRankIcon`
+				)) as AnomalyRankRecord[]) || [];
+
+			// 檢查是否已存在相同的 maze_id 記錄
+			const existingIndex = existingRecords.findIndex(
+				record => record.mazeId === floor.boss_info.maze_id
+			);
+
+			if (existingIndex >= 0) {
+				// 更新現有記錄
+				existingRecords[existingIndex] = rankRecord;
+			} else {
+				// 添加新記錄
+				existingRecords.push(rankRecord);
+			}
+
+			// 儲存到數據庫
+			await database.set(`${uid}.anomalyRankIcon`, existingRecords);
 		}
 
 		return canvas.toBuffer("image/webp");

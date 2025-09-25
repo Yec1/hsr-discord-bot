@@ -6,13 +6,24 @@ import {
 	requestPlayerActivity,
 	getUserHSRData,
 	getUserGameInfo,
-	getFriendlyErrorMessage
+	getFriendlyErrorMessage,
+	getUserLang
 } from "../index.js";
 
 // 異常仲裁輪次記錄接口
 interface AnomalyRoundRecord {
 	roundNum: number;
 	expireTime: number;
+}
+
+// 異常仲裁徽章記錄接口
+interface AnomalyRankRecord {
+	mazeId: number;
+	groupName: string;
+	rankIcon: string;
+	rankIconType: string;
+	expireTime: number;
+	challengeTime: number; // 挑戰時間戳
 }
 
 // 獲取異常仲裁圖標路徑
@@ -1549,7 +1560,7 @@ async function drawMainImage(
 				const anomalyIcon = await loadImage(iconPath);
 				if (anomalyIcon) {
 					const iconSize = 128 * 1.1;
-					const iconX = 896 - 896 * 0.3;
+					const iconX = 896 - 10;
 					const iconY = 70 - 70 * 0.1;
 					ctx.drawImage(
 						anomalyIcon,
@@ -1573,16 +1584,84 @@ async function drawMainImage(
 		setupMainFont(40, true);
 		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
-		ctx.fillText(playerData.player.nickname, 960, 260);
-
-		setupNumberFont(24);
-		ctx.fillStyle = "lightgray";
-		ctx.fillText(playerData.player.uid, 960, 300);
+		ctx.fillText(playerData.player.nickname, 960, 245);
 
 		const xRange = {
 			start: 610,
 			end: 1300
 		};
+
+		// 繪製 UID 和異常仲裁徽章（同一橫排，平均分配寬度）
+		const anomalyRankRecords = (await database.get(
+			`${playerData.player.uid}.anomalyRankIcon`
+		)) as AnomalyRankRecord[] | null;
+
+		const badgeSize = 46;
+		const badgeSpacing = 8;
+		const availableWidth = xRange.end - xRange.start; // 690px
+		const uidText = `UID ${playerData.player.uid}`;
+
+		// 計算 UID 文字寬度
+		setupNumberFont(24);
+		ctx.fillStyle = "lightgray";
+		const uidWidth = ctx.measureText(uidText).width;
+
+		if (anomalyRankRecords && anomalyRankRecords.length > 0) {
+			// 按挑戰時間排序，最新的在前
+			anomalyRankRecords.sort(
+				(a, b) => b.challengeTime - a.challengeTime
+			);
+
+			// 最多顯示 5 個徽章
+			const displayRecords = anomalyRankRecords.slice(0, 5);
+			const totalBadgeWidth =
+				displayRecords.length * badgeSize +
+				(displayRecords.length - 1) * badgeSpacing;
+			const totalContentWidth = uidWidth + totalBadgeWidth + 20; // UID 和徽章間距
+
+			// 計算起始位置（居中對齊）
+			const startX =
+				xRange.start + (availableWidth - totalContentWidth) / 2;
+			const uidX = startX;
+			const badgeStartX = startX + uidWidth + 22.5;
+			const contentY = 290; // UID 和徽章的垂直位置
+			const badgeY = contentY - badgeSize / 2 - 7.5;
+
+			// 繪製 UID
+			ctx.textAlign = "left";
+			ctx.fillText(uidText, uidX, contentY);
+
+			// 繪製徽章
+			for (let i = 0; i < displayRecords.length; i++) {
+				const record = displayRecords[i];
+				if (!record) continue;
+
+				const badgeX = badgeStartX + i * (badgeSize + badgeSpacing);
+
+				try {
+					const badgeIcon = await loadImage(record.rankIcon);
+					if (badgeIcon) {
+						ctx.drawImage(
+							badgeIcon,
+							badgeX,
+							badgeY,
+							badgeSize,
+							badgeSize
+						);
+					}
+				} catch (error) {
+					console.warn(
+						`Failed to load badge icon: ${record.rankIcon}`,
+						error
+					);
+				}
+			}
+		} else {
+			// 沒有徽章時，UID 居中顯示
+			ctx.textAlign = "center";
+			ctx.fillText(uidText, 960, 300);
+		}
+		ctx.textAlign = "center";
 
 		const profileStatsData = [
 			{
@@ -1756,7 +1835,8 @@ async function drawCharacterImage(
 	tr: any,
 	playerData: PlayerData,
 	character: Character,
-	isAllCharacter: boolean = false
+	isAllCharacter: boolean = false,
+	userLang: string = "en"
 ): Promise<Buffer | null> {
 	try {
 		// 验证输入参数
@@ -2128,9 +2208,12 @@ async function drawCharacterImage(
 			// 使用专门的光锥数据加载函数，优先使用本地文件
 			let lightConeEffect: any = {};
 			try {
-				lightConeEffect = (await loadLightConeData()) || {};
+				lightConeEffect = (await loadLightConeData(userLang)) || {};
 			} catch (error) {
-				console.warn("Failed to load light_cone_ranks.json:", error);
+				console.warn(
+					`Failed to load light_cone_ranks.json for ${userLang}:`,
+					error
+				);
 			}
 			const currentLightConeEffect =
 				lightConeEffect[character.light_cone?.id || ""] ||
@@ -2506,11 +2589,7 @@ async function drawCharacterImage(
 				ctx.fillStyle = "lightgray";
 				ctx.font =
 					"bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-				ctx.fillText(
-					`※ 可能較低於UID查詢角色評分`,
-					startX,
-					attrBottomY + 80
-				);
+				ctx.fillText(tr("profile_Tip"), startX, attrBottomY + 80);
 			}
 		} else {
 			ctx.textAlign = "center";
@@ -2806,6 +2885,56 @@ async function drawAllCharactersImage(
 						iconY,
 						iconSize,
 						iconSize
+					);
+				}
+			}
+		}
+
+		// 繪製異常仲裁徽章（如果有的話）
+		const anomalyRankRecords = (await database.get(
+			`${playerData.player.uid}.anomalyRankIcon`
+		)) as AnomalyRankRecord[] | null;
+		if (anomalyRankRecords && anomalyRankRecords.length > 0) {
+			// 按挑戰時間排序，最新的在前
+			anomalyRankRecords.sort(
+				(a, b) => b.challengeTime - a.challengeTime
+			);
+
+			// 最多顯示 3 個徽章（單角色頁面空間較小）
+			const displayRecords = anomalyRankRecords.slice(0, 3);
+			const badgeSize = 60;
+			const badgeSpacing = 6;
+
+			// 計算名稱寬度來定位徽章
+			ctx.font = "bold 40px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+			const nameWidth = ctx.measureText(playerData.player.nickname).width;
+			const nameX = 40 + 140 + 15; // 名稱起始位置
+			const nameY = 40 + 40; // 名稱垂直位置
+			const startX = nameX + nameWidth + 20; // 名稱後面
+			const startY = nameY - badgeSize / 2; // 與名稱垂直居中
+
+			for (let i = 0; i < displayRecords.length; i++) {
+				const record = displayRecords[i];
+				if (!record) continue;
+
+				const badgeX = startX + i * (badgeSize + badgeSpacing);
+				const badgeY = startY;
+
+				try {
+					const badgeIcon = await loadImage(record.rankIcon);
+					if (badgeIcon) {
+						ctx.drawImage(
+							badgeIcon,
+							badgeX,
+							badgeY,
+							badgeSize,
+							badgeSize
+						);
+					}
+				} catch (error) {
+					console.warn(
+						`Failed to load badge icon: ${record.rankIcon}`,
+						error
 					);
 				}
 			}
