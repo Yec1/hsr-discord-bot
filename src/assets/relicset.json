@@ -1260,7 +1260,7 @@
   },
   "324": {
     "icon": "SpriteOutput/ItemIcon/71051.png",
-    "en": "Tengoku @Live Stream",
+    "en": "Tengoku@Livestream",
     "set": {
       "2": {
         "en": "Increases the wearer's CRIT DMG by <unbreak>#1[i]%</unbreak>. If <unbreak>#2[i]</unbreak> or more Skill Points are consumed in the same turn, additionally increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak> for <unbreak>#4[i]</unbreak> turns.",
@@ -1272,10 +1272,10 @@
         ],
         "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가하며, 같은 턴에 전투 스킬 포인트를 <unbreak>#2[i]</unbreak>pt 이상 소모 시 추가로 장착한 캐릭터의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가한다, 지속 시간: <unbreak>#4[i]</unbreak>턴",
         "cn": "使装备者的暴击伤害提高<unbreak>#1[i]%</unbreak>，若在同一回合内消耗大于等于<unbreak>#2[i]</unbreak>点战技点，额外使装备者暴击伤害提高<unbreak>#3[i]%</unbreak>，持续<unbreak>#4[i]</unbreak>回合。",
-        "jp": "装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>。1ターンにSPを<unbreak>#2[i]</unbreak>以上消費した場合、さらに会心ダメージ+<unbreak>#3[i]%</unbreak>、<unbreak>#4[i]</unbreak>ターン継続する。"
+        "jp": "装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>。同じターンにSPを<unbreak>#2[i]</unbreak>以上消費した場合、さらに会心ダメージ+<unbreak>#3[i]%</unbreak>、<unbreak>#4[i]</unbreak>ターン継続する。"
       }
     },
-    "kr": "천국@라이브 스트리밍",
+    "kr": "텐고쿠@라이브스트리밍",
     "cn": "天国@直播间",
     "jp": "天国@配信ルーム"
   }

@@ -537,6 +537,11 @@ const IMAGE_PATHS = {
 		MID: "./src/assets/image/forgottenhall/normal_boss_bg_mid.png",
 		BOTTOM: "./src/assets/image/forgottenhall/normal_boss_bg_bottom.png"
 	},
+	HELL_BOSS_CARD: {
+		TOP: "./src/assets/image/forgottenhall/hell_boss_bg_top.png",
+		MID: "./src/assets/image/forgottenhall/hell_boss_bg_mid.png",
+		BOTTOM: "./src/assets/image/forgottenhall/hell_boss_bg_bottom.png"
+	},
 	CHARACTERS: {
 		FOUR_STAR: "./src/assets/image/forgottenhall/character4star.png",
 		FIVE_STAR: "./src/assets/image/forgottenhall/character5star.png"
@@ -626,6 +631,7 @@ async function preloadImages(): Promise<void> {
 			...Object.values(IMAGE_PATHS.BACKGROUNDS),
 			...Object.values(IMAGE_PATHS.BLOCKS),
 			...Object.values(IMAGE_PATHS.BOSS_CARD),
+			...Object.values(IMAGE_PATHS.HELL_BOSS_CARD),
 			...Object.values(IMAGE_PATHS.CHARACTERS),
 			...Object.values(IMAGE_PATHS.UI)
 		];
@@ -1037,11 +1043,13 @@ async function drawAnomalyArbitrationImage(
 		const bossCardY = summaryY + summaryHeight + 100; // 在主內容區域下方
 
 		// 繪製 Boss Card 分層背景 (背景填滿整個區域)
-		const bossCardTopBg = await getCachedImage(IMAGE_PATHS.BOSS_CARD.TOP);
-		const bossCardMidBg = await getCachedImage(IMAGE_PATHS.BOSS_CARD.MID);
-		const bossCardBottomBg = await getCachedImage(
-			IMAGE_PATHS.BOSS_CARD.BOTTOM
-		);
+		// 根據 hard_mode 選擇對應的背景圖片
+		const bossCardPaths = floor.boss_record?.hard_mode
+			? IMAGE_PATHS.HELL_BOSS_CARD
+			: IMAGE_PATHS.BOSS_CARD;
+		const bossCardTopBg = await getCachedImage(bossCardPaths.TOP);
+		const bossCardMidBg = await getCachedImage(bossCardPaths.MID);
+		const bossCardBottomBg = await getCachedImage(bossCardPaths.BOTTOM);
 
 		// 繪製分層背景，添加圓角裁剪
 		const borderRadius = BOSS_CARD_CONFIG.BORDER_RADIUS;
@@ -1158,11 +1166,11 @@ async function drawAnomalyArbitrationImage(
 		ctx.fillStyle = "white";
 		ctx.textAlign = "left";
 		ctx.fillText(tr("forgottenHall_BossRecord"), bossCardX, bossCardY - 20);
-		ctx.fillText(
-			floor.boss_info.name_mi18n,
-			bossCardX + 40,
-			bossCardY + 45
-		);
+		// 根據 hard_mode 選擇對應的名稱
+		const bossName = floor.boss_record?.hard_mode
+			? floor.boss_info.hard_mode_name_mi18n
+			: floor.boss_info.name_mi18n;
+		ctx.fillText(bossName, bossCardX + 40, bossCardY + 45);
 
 		if (floor.boss_record?.has_challenge_record) {
 			// 使用輪次文字

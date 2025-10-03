@@ -68,6 +68,26 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 		handleLeaderboard(interaction, tr, values[0]);
 	if (customId.startsWith("account") && values[0])
 		handleAccountAction(interaction, tr, customId, values[0]);
+	if (customId === "account_AddAccount") {
+		await interaction.showModal(
+			new ModalBuilder()
+				.setCustomId("account_SetUserIDModal")
+				.setTitle(tr("account_SetUserID"))
+				.addComponents(
+					new ActionRowBuilder<TextInputBuilder>().addComponents(
+						new TextInputBuilder()
+							.setCustomId("account_SetUserIDModalField")
+							.setLabel(tr("account_SetUserIDDesc"))
+							.setPlaceholder("e.g. 809279679")
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true)
+							.setMinLength(9)
+							.setMaxLength(10)
+					)
+				)
+		);
+		return;
+	}
 	if (customId == "forgottenHall_Floor" && values[0])
 		handleForgottenHall(interaction, tr, values[0]);
 	if (customId.startsWith("profile_SelectCharacter") && values[0])

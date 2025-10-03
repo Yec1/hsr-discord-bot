@@ -2031,7 +2031,8 @@ async function drawCharacterImage(
 				"heal_ratio",
 				"status_prob",
 				"status_res",
-				"energy_recovery"
+				"energy_recovery",
+				"break_dmg"
 			];
 			const attributesWithAdditions = allAttributes
 				.filter(attribute => attribute.field)
