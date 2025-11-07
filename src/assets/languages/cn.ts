@@ -7,7 +7,7 @@ const langs: LanguageStrings = {
 	isSet: "已设置",
 	isNotSet: "未设置",
 	ms: "毫秒",
-	CostTime: "耗时：请求 <requestTime> 秒 • 绘制 <drawTime> 秒",
+	CostTime: "-# 耗时：请求 <requestTime> 秒 • 绘制 <drawTime> 秒",
 	level: "等级",
 	level_Format: "<level>级",
 	lightConeLevel: "叠影",

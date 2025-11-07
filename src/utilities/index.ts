@@ -482,13 +482,29 @@ export async function getUserHSRData(
 		getUserUid(userId, accountIndex)
 	]);
 
-	const lang =
-		userLang === "tw" ||
-		(interaction &&
-			"locale" in interaction &&
-			(interaction as any).locale === "zh-TW")
-			? LanguageEnum.TRADIIONAL_CHINESE
-			: LanguageEnum.ENGLISH;
+	const resolveLang = (
+		prefLang: string | null,
+		inter: Interaction | undefined
+	): LanguageEnum => {
+		switch (prefLang) {
+			case "tw":
+				return LanguageEnum.TRADIIONAL_CHINESE;
+			case "cn":
+				return LanguageEnum.SIMPLIFIED_CHINESE;
+			case "en":
+				return LanguageEnum.ENGLISH;
+		}
+
+		if (inter && "locale" in inter) {
+			const loc = (inter as any).locale;
+			if (loc === "zh-TW") return LanguageEnum.TRADIIONAL_CHINESE;
+			if (loc === "zh-CN") return LanguageEnum.SIMPLIFIED_CHINESE;
+		}
+
+		return LanguageEnum.ENGLISH;
+	};
+
+	const lang = resolveLang(userLang, interaction);
 
 	try {
 		const hsr = new HonkaiStarRail({

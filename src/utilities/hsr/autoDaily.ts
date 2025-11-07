@@ -367,33 +367,64 @@ export default async function autoDailySign(): Promise<void> {
 	const dailyData = (await (system as any).db.get("autoDaily")) as DailyData;
 	if (!dailyData) return;
 
-	let currentDate = new Date().toLocaleString("en-US", {
-		timeZone: "Asia/Taipei",
-		dateStyle: "full"
-	});
-	currentDate = currentDate.split(",")[0] || "";
-	const lastDate = await (system as any).db.get("lastDate");
-	if (currentDate !== lastDate) {
-		await (system as any).db.set("lastDate", currentDate);
-		await (system as any).db.delete("signedHour");
-	}
+	const getHourInTimezone = (timeZone: string): number => {
+		const parts = new Intl.DateTimeFormat("en-GB", {
+			timeZone,
+			hour: "2-digit",
+			hour12: false
+		}).formatToParts(new Date());
+		const hourStr = parts.find(p => p.type === "hour")?.value || "00";
+		return parseInt(hourStr, 10);
+	};
 
-	const signedHour = (await (system as any).db.get("signedHour")) || [];
-	const currentHour = new Date().toLocaleString("en-US", {
-		timeZone: "Asia/Taipei",
-		hour: "numeric",
-		hour12: false
-	});
+	const getDateKeyInTimezone = (timeZone: string): string => {
+		const parts = new Intl.DateTimeFormat("en-CA", {
+			timeZone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit"
+		}).formatToParts(new Date());
+		const y = parts.find(p => p.type === "year")?.value || "0000";
+		const m = parts.find(p => p.type === "month")?.value || "01";
+		const d = parts.find(p => p.type === "day")?.value || "01";
+		return `${y}-${m}-${d}`;
+	};
+
+	const normalizeTimeZone = (tz?: string): string => {
+		if (typeof tz === "string" && tz.includes("/")) return tz;
+		return "Asia/Taipei";
+	};
 
 	const startTime = Date.now();
-	(system as any).logger.success(`開始 ${currentHour}:00 自動簽到`);
+
+	const taipeiHour = getHourInTimezone("Asia/Taipei");
+	(system as any).logger.success(`開始 ${taipeiHour}:00 自動簽到`);
 
 	for (const userId of Object.keys(dailyData)) {
-		const scheduledTime = dailyData[userId]?.time || "13";
+		const userCfg = dailyData[userId] || ({} as any);
+		const scheduledTimeStr = userCfg.time || "13";
+		const scheduledTime = parseInt(scheduledTimeStr, 10);
+		const timeZone = normalizeTimeZone((userCfg as any).timeZone);
 
-		if (parseInt(scheduledTime) === parseInt(currentHour)) {
+		const userHour = getHourInTimezone(timeZone);
+		const userDateKey = getDateKeyInTimezone(timeZone);
+
+		const lastSignedDateKey = await (system as any).db.get(
+			`lastSignedDate:${userId}`
+		);
+		const signedToday = lastSignedDateKey === userDateKey;
+
+		if (
+			!signedToday &&
+			Number.isFinite(scheduledTime) &&
+			userHour >= scheduledTime
+		) {
 			try {
 				await system.processDailySign(userId, dailyData);
+				await (system as any).db.set(
+					`lastSignedDate:${userId}`,
+					userDateKey
+				);
 			} catch (error) {
 				(system as any).logger.error(
 					`處理用戶 ${userId} 時發生錯誤: ${(error as Error).message}`
@@ -401,38 +432,6 @@ export default async function autoDailySign(): Promise<void> {
 			}
 		}
 	}
-	await (system as any).db.push("signedHour", parseInt(currentHour));
 
-	const backfillHours = system.getBackfillHours(
-		parseInt(currentHour),
-		signedHour
-	);
-
-	if (backfillHours.length !== 0) {
-		for (const hour of backfillHours) {
-			if (hour === parseInt(currentHour)) continue;
-			const usersToProcess = Object.keys(dailyData).filter(userId => {
-				const scheduledTime = dailyData[userId]?.time || "13";
-				return parseInt(scheduledTime) === parseInt(hour.toString());
-			});
-			if (usersToProcess.length === 0) continue;
-			(system as any).logger.info(
-				`${hour}:00 時段需要補簽，共 ${usersToProcess.length} 個用戶需要補簽`
-			);
-
-			for (const userId of usersToProcess) {
-				try {
-					await system.processDailySign(userId, dailyData);
-				} catch (error) {
-					(system as any).logger.error(
-						`補簽用戶 ${userId} 時發生錯誤: ${(error as Error).message}`
-					);
-				}
-			}
-
-			await (system as any).db.push("signedHour", hour);
-		}
-	}
-
-	await system.updateStatistics(startTime, currentHour);
+	await system.updateStatistics(startTime, taipeiHour.toString());
 }

@@ -6,8 +6,7 @@ import {
 	requestPlayerActivity,
 	getUserHSRData,
 	getUserGameInfo,
-	getFriendlyErrorMessage,
-	getUserLang
+	getFriendlyErrorMessage
 } from "../index.js";
 
 // 異常仲裁輪次記錄接口
@@ -1462,7 +1461,7 @@ async function handleProfileDraw(
 			];
 
 			interaction.editReply({
-				contents: `-# ${tr("CostTime", {
+				contents: `${tr("CostTime", {
 					requestTime: (
 						(requestEndTime - requestStartTime) /
 						1000
@@ -2174,16 +2173,50 @@ async function drawCharacterImage(
 				);
 			}
 
-			// 文字靠右區域內左側
+			// 文字靠右區域內左側（限制名稱寬度，避免覆蓋描述）
 			ctx.textAlign = "left";
-			setupFont(ctx, 28, true);
+			let lcName = `${character.light_cone?.name || character.equip?.name || ""}`;
+			let nameFont = 28;
+			setupFont(ctx, nameFont, true);
+			// 右側描述區塊起點為 base_x + 268，因此名稱最長寬度需小於 (268 - 30)
+			const maxNameWidth = 268 - 40; // 預留額外邊距
+			while (
+				ctx.measureText(lcName).width > maxNameWidth &&
+				nameFont > 20
+			) {
+				nameFont -= 1;
+				setupFont(ctx, nameFont, true);
+			}
+			// 若字體縮到下限仍超寬，則進行省略號裁切
+			if (ctx.measureText(lcName).width > maxNameWidth) {
+				while (
+					lcName.length > 0 &&
+					ctx.measureText(lcName + "...").width > maxNameWidth
+				) {
+					lcName = lcName.slice(0, -1);
+				}
+				lcName = lcName + "...";
+			}
 			ctx.fillText(
-				`${character.light_cone?.name || character.equip?.name}`,
+				lcName,
 				light_cone_base_x + 30,
 				light_cone_base_y + 200
 			);
 
 			setupFont(ctx, 24, true);
+
+			const romanize = (rank: number) => {
+				const roman = ["I", "II", "III", "IV", "V"];
+				return roman[rank - 1];
+			};
+			const rankText =
+				userLang == "en"
+					? romanize(
+							character.light_cone?.rank ||
+								character.equip?.rank ||
+								1
+						)
+					: character.light_cone?.rank || character.equip?.rank || 1;
 
 			ctx.fillStyle = "white";
 			ctx.fillText(
@@ -2194,7 +2227,7 @@ async function drawCharacterImage(
 			ctx.fillStyle = "#DCC491";
 			ctx.fillText(
 				`${tr("lightConeLevel_Format", {
-					rank: character.light_cone?.rank || character.equip?.rank
+					rank: rankText
 				})}`,
 				light_cone_base_x +
 					30 +
@@ -2436,12 +2469,31 @@ async function drawCharacterImage(
 				);
 			}
 			ctx.textAlign = "center";
-			setupFont(ctx, 18, true);
-			ctx.fillText(
-				`${skill?.type_text || ""}`,
-				baseSkillX + 40 + index * 90,
-				870
-			);
+
+			const originalLabel = `${skill?.type_text || ""}`;
+			let displayLabel = originalLabel;
+			if (userLang === "en") {
+				const lower = originalLabel.toLowerCase();
+				if (lower.includes("memosprite talent"))
+					displayLabel = "M.Talent";
+				else if (lower.includes("memosprite skill"))
+					displayLabel = "M.Skill";
+				else if (originalLabel.length > 12)
+					displayLabel = originalLabel
+						.replace("Technique", "Tech")
+						.replace("Ultimate", "Ult");
+			}
+			let fontSize = 18;
+			setupFont(ctx, fontSize, true);
+			const maxLabelWidth = 80;
+			while (
+				ctx.measureText(displayLabel).width > maxLabelWidth &&
+				fontSize > 14
+			) {
+				fontSize -= 1;
+				setupFont(ctx, fontSize, true);
+			}
+			ctx.fillText(displayLabel, baseSkillX + 40 + index * 90, 870);
 			setupFont(ctx, 16, true);
 			let skillColor = "white";
 
@@ -2518,12 +2570,26 @@ async function drawCharacterImage(
 					);
 				}
 				ctx.textAlign = "center";
-				setupFont(ctx, 18, true);
-				ctx.fillText(
-					`${servantSkill.type_text}`,
-					servantSkillX + 40,
-					870
-				);
+				// 英語下憶靈技能名稱過長處理
+				let servantLabel = `${servantSkill.type_text}`;
+				if (userLang === "en") {
+					const lower = servantLabel.toLowerCase();
+					if (lower.includes("memosprite talent"))
+						servantLabel = "M.Talent";
+					else if (lower.includes("memosprite skill"))
+						servantLabel = "M.Skill";
+				}
+				let svFont = 18;
+				setupFont(ctx, svFont, true);
+				const svMax = 80;
+				while (
+					ctx.measureText(servantLabel).width > svMax &&
+					svFont > 14
+				) {
+					svFont -= 1;
+					setupFont(ctx, svFont, true);
+				}
+				ctx.fillText(servantLabel, servantSkillX + 40, 870);
 				setupFont(ctx, 16, true);
 				let skillColor = "white";
 				if (character.rank >= 3 && index === 1) skillColor = "#DCC491";
@@ -2569,14 +2635,17 @@ async function drawCharacterImage(
 			});
 
 			const scoreWidth = ctx.measureText(scoreText).width;
-
 			const startX =
 				centerX -
 				(scoreWidth +
 					ctx.measureText(relicsScore.totalGrade.grade).width) /
 					2;
 
-			ctx.fillText(scoreText, startX, attrBottomY + 50);
+			ctx.fillText(
+				scoreText,
+				userLang == "en" ? startX + 50 : startX,
+				attrBottomY + 50
+			);
 
 			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
 			ctx.fillText(
@@ -2590,7 +2659,8 @@ async function drawCharacterImage(
 				ctx.fillStyle = "lightgray";
 				ctx.font =
 					"bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-				ctx.fillText(tr("profile_Tip"), startX, attrBottomY + 80);
+				const tipX = userLang == "en" ? centerX - 150 : startX;
+				ctx.fillText(tr("profile_Tip"), tipX, attrBottomY + 80);
 			}
 		} else {
 			ctx.textAlign = "center";
@@ -2693,6 +2763,12 @@ async function drawCharacterImage(
 				tr(
 					`property_${relic.main_affix?.propertyName || propertyMap[relic.main_property?.property_type || 0]}`
 				);
+			// 英文環境縮寫關鍵詞，避免過長
+			if (userLang === "en" && typeof text === "string") {
+				text = text
+					.replace(/Critical Damage/g, "Crit DMG")
+					.replace(/Critical Rate/g, "Crit Rate");
+			}
 			if (typeof text !== "string") text = "";
 
 			// 動態調整字體大小以適應寬度
@@ -2750,22 +2826,45 @@ async function drawCharacterImage(
 					ctx.fillStyle = color;
 					ctx.textAlign = "left";
 
-					const text =
+					let text =
 						subAffix.name ||
 						tr(
 							`property_${subAffix.propertyName || propertyMap[subAffix.property_type]}`
 						);
+					// 英文環境縮寫關鍵詞
+					if (userLang === "en" && typeof text === "string") {
+						text = text
+							.replace(/Critical Damage/g, "CritDMG")
+							.replace(/Critical Rate/g, "CritRATE");
+					}
+					// 限制名稱最右邊不超過 +count 的左側（+count 中心在 x+230，預留 10px）
+					const nameStartX = x + 137;
+					const nameRightLimit = x + 240; // 與 +count(中心 x+250) 保持約 10px 留白
+					const allowedWidth = Math.max(
+						60,
+						nameRightLimit - nameStartX
+					);
 					let textWidth = ctx.measureText(text).width;
 
-					while (textWidth > maxWidth && fontSize > 16) {
+					while (textWidth > allowedWidth && fontSize > 14) {
 						fontSize -= 1;
 						setupFont(ctx, fontSize, true);
 						textWidth = ctx.measureText(text).width;
 					}
+					if (textWidth > allowedWidth) {
+						// 省略號裁切
+						while (
+							text.length > 0 &&
+							ctx.measureText(text + "...").width > allowedWidth
+						) {
+							text = text.slice(0, -1);
+						}
+						text = text + "...";
+					}
 
 					ctx.fillText(
 						text,
-						x + 137,
+						nameStartX,
 						y + affixYStart + 23 + subIndex * 34
 					);
 
@@ -2789,7 +2888,7 @@ async function drawCharacterImage(
 						ctx.textAlign = "center";
 						ctx.fillText(
 							`+${count}`,
-							x + 230,
+							x + 250,
 							y + affixYStart + 23 + subIndex * 34
 						);
 					}

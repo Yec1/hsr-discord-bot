@@ -663,7 +663,7 @@ async function handleProfileFilter(
 			.addOptions(filterOptions);
 
 		await interaction.editReply({
-			content: `-# ${tr("CostTime", {
+			content: `${tr("CostTime", {
 				requestTime: (
 					(requestEndTime - requestStartTime) /
 					1000
@@ -1344,7 +1344,7 @@ async function handleForgottenHall(
 			const commonParams = { s: `${floor?.star_num || 0}` };
 
 			interaction.editReply({
-				content: `-# ${tr("CostTime", {
+				content: `${tr("CostTime", {
 					requestTime: (
 						(requestEndTime - requestStartTime) /
 						1000
@@ -1699,7 +1699,7 @@ async function handleSelectCharacter(
 			);
 
 			interaction.editReply({
-				content: `-# ${tr("CostTime", {
+				content: `${tr("CostTime", {
 					requestTime: (
 						(requestEndTime - requestStartTime) /
 						1000

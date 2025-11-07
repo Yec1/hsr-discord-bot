@@ -7,7 +7,8 @@ const langs: LanguageStrings = {
 	isSet: "已設置",
 	isNotSet: "未設置",
 	ms: "毫秒",
-	CostTime: "耗時：請求 <requestTime> 秒 • 繪製 <drawTime> 秒",
+	CostTime:
+		"-# 📣11/7 ~ 11/30 DC 群有周邊抽獎活動 \n-# ✨《MST瑪思塔周邊屋》高雄快閃店盛大啟幕：<https://www.facebook.com/share/p/17UWFggQF1>\n-# ✨魔儲賣場活動：<https://reurl.cc/MMZlXv>", // "-# 耗時：請求 <requestTime> 秒 • 繪製 <drawTime> 秒",
 	level: "等級",
 	level_Format: "<level>級",
 	lightConeLevel: "疊影",

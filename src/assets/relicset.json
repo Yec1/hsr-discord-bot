@@ -6,7 +6,7 @@
       "2": {
         "en": "Increases Outgoing Healing by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "치유량 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "治疗量提高<unbreak>#1[i]%</unbreak>。",
@@ -31,7 +31,7 @@
       "2": {
         "en": "Increases ATK by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871
+          0.12
         ],
         "kr": "공격력 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "攻击力提高<unbreak>#1[i]%</unbreak>。",
@@ -40,8 +40,8 @@
       "4": {
         "en": "The wearer's SPD increases by <unbreak>#1[i]%</unbreak> and DMG dealt by Basic ATK increases by <unbreak>#2[i]%</unbreak>.",
         "ParamList": [
-          0.060000000055879354,
-          0.10000000009313226
+          0.06,
+          0.1
         ],
         "kr": "장착한 캐릭터의 속도가 <unbreak>#1[i]%</unbreak> 증가한다. 일반 공격이 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
         "cn": "使装备者的速度提高<unbreak>#1[i]%</unbreak>，普攻造成的伤害提高<unbreak>#2[i]%</unbreak>。",
@@ -59,7 +59,7 @@
       "2": {
         "en": "Increases DEF by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.1500000001396984
+          0.15
         ],
         "kr": "방어력 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "防御力提高<unbreak>#1[i]%</unbreak>。",
@@ -68,7 +68,7 @@
       "4": {
         "en": "Increases the max DMG that can be absorbed by the Shield created by the wearer by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.20000000018626451
+          0.2
         ],
         "kr": "장착한 캐릭터가 제공하는 실드량이 <unbreak>#1[i]%</unbreak> 증가한다",
         "cn": "使装备者提供的护盾量提高<unbreak>#1[i]%</unbreak>。",
@@ -86,7 +86,7 @@
       "2": {
         "en": "Increases Ice DMG by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "얼음 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "冰属性伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -95,7 +95,7 @@
       "4": {
         "en": "After the wearer uses their Ultimate, their CRIT DMG increases by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s).",
         "ParamList": [
-          0.25000000023283064,
+          0.25,
           2
         ],
         "kr": "장착한 캐릭터는 필살기 발동 시 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#2[i]</unbreak>턴",
@@ -114,7 +114,7 @@
       "2": {
         "en": "Increases Physical DMG by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "물리 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "物理属性伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -123,7 +123,7 @@
       "4": {
         "en": "After the wearer attacks or is hit, their ATK increases by <unbreak>#1[i]%</unbreak> for the rest of the battle. This effect can stack up to <unbreak>#2[i]</unbreak> time(s).",
         "ParamList": [
-          0.05000000004656613,
+          0.05,
           5
         ],
         "kr": "장착한 캐릭터는 공격 발동 혹은 피격 후 해당 전투에서 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 최대 중첩수: <unbreak>#2[i]</unbreak>스택",
@@ -142,7 +142,7 @@
       "2": {
         "en": "Reduces DMG taken by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.0800000000745058
+          0.08
         ],
         "kr": "받는 피해 <unbreak>#1[i]%</unbreak> 감소",
         "cn": "受到伤害降低<unbreak>#1[i]%</unbreak>。",
@@ -151,8 +151,8 @@
       "4": {
         "en": "At the beginning of the turn, if the wearer's HP percentage is equal to or less than <unbreak>#1[i]%</unbreak>, restores HP equal to <unbreak>#2[i]%</unbreak> of their Max HP and regenerates <unbreak>#3[i]</unbreak> Energy.",
         "ParamList": [
-          0.5000000004656613,
-          0.0800000000745058,
+          0.5,
+          0.08,
           5
         ],
         "kr": "턴 시작 시 장착한 캐릭터의 현재 HP 백분율이 <unbreak>#1[i]%</unbreak> 이하일 경우, 자신 HP 최대치 <unbreak>#2[i]%</unbreak>만큼의 HP를 회복하고 에너지를 <unbreak>#3[i]</unbreak>pt 회복한다",
@@ -171,7 +171,7 @@
       "2": {
         "en": "Increases Fire DMG by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "화염 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "火属性伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -180,8 +180,8 @@
       "4": {
         "en": "Increases DMG by the wearer's Skill by <unbreak>#1[i]%</unbreak>. After unleashing Ultimate, increases the wearer's Fire DMG by <unbreak>#2[i]%</unbreak> for the next attack.",
         "ParamList": [
-          0.12000000011175871,
-          0.12000000011175871
+          0.12,
+          0.12
         ],
         "kr": "장착한 캐릭터의 전투 스킬이 가하는 피해가 <unbreak>#1[i]%</unbreak> 증가하고, 필살기 발동 후 다음번 공격이 가하는 화염 속성 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
         "cn": "使装备者战技造成的伤害提高<unbreak>#1[i]%</unbreak>，并使施放终结技后的下一次攻击造成的火属性伤害提高<unbreak>#2[i]%</unbreak>。",
@@ -199,7 +199,7 @@
       "2": {
         "en": "Increases Quantum DMG by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "양자 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "量子属性伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -208,8 +208,8 @@
       "4": {
         "en": "When the wearer deals DMG to the target enemy, ignores <unbreak>#1[i]%</unbreak> DEF. If the target enemy has Quantum Weakness, the wearer additionally ignores <unbreak>#2[i]%</unbreak> DEF.",
         "ParamList": [
-          0.10000000009313226,
-          0.10000000009313226
+          0.1,
+          0.1
         ],
         "kr": "장착한 캐릭터는 적에게 피해를 줄 때 <unbreak>#1[i]%</unbreak>의 방어력을 무시한다. 목표가 양자 속성 약점을 보유할 경우, 추가로 <unbreak>#2[i]%</unbreak>의 방어력을 무시한다",
         "cn": "当装备者对敌方目标造成伤害时，无视其<unbreak>#1[i]%</unbreak>的防御力。若目标拥有量子属性弱点，额外无视其<unbreak>#2[i]%</unbreak>的防御力。",
@@ -227,7 +227,7 @@
       "2": {
         "en": "Increases Lightning DMG by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "번개 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "雷属性伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -236,7 +236,7 @@
       "4": {
         "en": "When the wearer uses their Skill, increases the wearer's ATK by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s).",
         "ParamList": [
-          0.20000000018626451,
+          0.2,
           1
         ],
         "kr": "장착한 캐릭터는 전투 스킬 발동 시 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#2[i]</unbreak>턴",
@@ -255,7 +255,7 @@
       "2": {
         "en": "Increases Wind DMG by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "바람 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "风属性伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -264,7 +264,7 @@
       "4": {
         "en": "After the wearer uses their Ultimate, their action is Advanced Forward by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.25000000023283064
+          0.25
         ],
         "kr": "장착한 캐릭터는 필살기 발동 후 행동 게이지가 <unbreak>#1[i]%</unbreak> 증가한다",
         "cn": "当装备者施放终结技后，使其行动提前<unbreak>#1[i]%</unbreak>。",
@@ -282,7 +282,7 @@
       "2": {
         "en": "Increases Break Effect by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.1600000001490116
+          0.16
         ],
         "kr": "격파 특수효과 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "击破特攻提高<unbreak>#1[i]%</unbreak>。",
@@ -291,7 +291,7 @@
       "4": {
         "en": "Increases the wearer's Break Effect by <unbreak>#1[i]%</unbreak>. After the wearer inflicts Weakness Break on an enemy, regenerates <unbreak>#2[i]</unbreak> Energy.",
         "ParamList": [
-          0.1600000001490116,
+          0.16,
           3
         ],
         "kr": "장착한 캐릭터의 격파 특수효과가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터는 적의 약점을 격파한 후 에너지를 <unbreak>#2[i]</unbreak>pt 회복한다",
@@ -310,7 +310,7 @@
       "2": {
         "en": "Increases Imaginary DMG by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "허수 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "虚数属性伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -319,8 +319,8 @@
       "4": {
         "en": "When dealing DMG to debuffed enemy targets, the wearer has their CRIT Rate increased by <unbreak>#1[i]%</unbreak>. And when they deal DMG to Imprisoned enemy targets, their CRIT DMG increases by <unbreak>#2[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226,
-          0.20000000018626451
+          0.1,
+          0.2
         ],
         "kr": "장착한 캐릭터가 디버프 효과에 빠진 적에게 피해를 가할 시 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 속박 상태에 빠진 적에게 피해를 가할 시 치명타 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
         "cn": "装备者对陷入负面效果的敌方目标造成伤害时暴击率提高<unbreak>#1[i]%</unbreak>，对陷入禁锢状态的敌方目标造成伤害时暴击伤害提高<unbreak>#2[i]%</unbreak>。",
@@ -338,7 +338,7 @@
       "2": {
         "en": "Increases Max HP by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871
+          0.12
         ],
         "kr": "HP 최대치 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "生命上限提高<unbreak>#1[i]%</unbreak>。",
@@ -347,7 +347,7 @@
       "4": {
         "en": "When the wearer is hit or has their HP consumed by an ally or themselves, their CRIT Rate increases by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s) and up to <unbreak>#3[i]</unbreak> stacks.",
         "ParamList": [
-          0.0800000000745058,
+          0.08,
           2,
           2
         ],
@@ -367,7 +367,7 @@
       "2": {
         "en": "Increases SPD by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.060000000055879354
+          0.06
         ],
         "kr": "속도 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "速度提高<unbreak>#1[i]%</unbreak>。",
@@ -376,7 +376,7 @@
       "4": {
         "en": "When the wearer uses their Ultimate on an ally, SPD for all allies increases by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s). This effect cannot be stacked.",
         "ParamList": [
-          0.12000000011175871,
+          0.12,
           1
         ],
         "kr": "장착한 캐릭터가 아군에게 필살기 발동 시 모든 아군의 속도가 <unbreak>#1[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#2[i]</unbreak>턴. 해당 효과는 중첩되지 않는다",
@@ -395,7 +395,7 @@
       "2": {
         "en": "Increases the DMG dealt by Follow-up ATK by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.20000000018626451
+          0.2
         ],
         "kr": "추가 공격으로 가하는 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "追加攻击造成的伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -404,7 +404,7 @@
       "4": {
         "en": "When the wearer uses a Follow-up ATK, increases the wearer's ATK by <unbreak>#1[i]%</unbreak> for every time the Follow-up ATK deals DMG. This effect can stack up to <unbreak>#2[i]</unbreak> time(s) and lasts for <unbreak>#3[i]</unbreak> turn(s). This effect is removed the next time the wearer uses a Follow-up ATK.",
         "ParamList": [
-          0.060000000055879354,
+          0.06,
           8,
           3
         ],
@@ -424,7 +424,7 @@
       "2": {
         "en": "Increases ATK by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871
+          0.12
         ],
         "kr": "공격력 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "攻击力提高<unbreak>#1[i]%</unbreak>。",
@@ -433,7 +433,7 @@
       "4": {
         "en": "For every DoT the enemy target is afflicted with, the wearer will ignore <unbreak>#1[i]%</unbreak> of its DEF when dealing DMG to it. This effect is valid for a max of <unbreak>#2[i]</unbreak> DoTs.",
         "ParamList": [
-          0.060000000055879354,
+          0.06,
           3
         ],
         "kr": "장착한 캐릭터가 적에게 피해를 가할 시 적이 받는 지속 피해 효과 1개마다 대상의 방어력을 <unbreak>#1[i]%</unbreak> 무시한다. 지속 피해 효과는 최대 <unbreak>#2[i]</unbreak>개까지 계산한다",
@@ -452,7 +452,7 @@
       "2": {
         "en": "Increases DMG dealt to enemies with debuffs by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871
+          0.12
         ],
         "kr": "디버프 상태의 영향을 받은 적에게 가하는 피해가 <unbreak>#1[i]%</unbreak> 증가한다",
         "cn": "对受负面状态影响的敌人造成的伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -461,9 +461,9 @@
       "4": {
         "en": "Increases CRIT Rate by <unbreak>#1[i]%</unbreak>. The wearer deals <unbreak>#2[i]%</unbreak>/<unbreak>#3[i]%</unbreak> increased CRIT DMG to enemies with at least <unbreak>#4[i]</unbreak>/<unbreak>#5[i]</unbreak> debuffs. After the wearer inflicts a debuff on enemy targets, the aforementioned effects increase by <unbreak>100%</unbreak>, lasting for <unbreak>#6[i]</unbreak> turn(s).",
         "ParamList": [
-          0.0400000000372529,
-          0.0800000000745058,
-          0.12000000011175871,
+          0.04,
+          0.08,
+          0.12,
           2,
           3,
           1
@@ -484,7 +484,7 @@
       "2": {
         "en": "Increases Break Effect by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.1600000001490116
+          0.16
         ],
         "kr": "격파 특수효과 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "击破特攻提高<unbreak>#1[i]%</unbreak>。",
@@ -493,7 +493,7 @@
       "4": {
         "en": "When the wearer uses their Ultimate on an ally, all allies' Break Effect increases by <unbreak>#1[i]%</unbreak> for <unbreak>#2[i]</unbreak> turn(s). This effect cannot be stacked.",
         "ParamList": [
-          0.3000000002793968,
+          0.3,
           2
         ],
         "kr": "장착한 캐릭터가 아군에게 필살기 발동 시, 모든 아군의 격파 특수효과가 <unbreak>#1[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#2[i]</unbreak>턴. 해당 효과는 중첩할 수 없다",
@@ -512,7 +512,7 @@
       "2": {
         "en": "Increases Break Effect by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.1600000001490116
+          0.16
         ],
         "kr": "격파 특수효과 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "击破特攻提高<unbreak>#1[i]%</unbreak>。",
@@ -521,10 +521,10 @@
       "4": {
         "en": "If the wearer's Break Effect is <unbreak>#1[i]%</unbreak> or higher, the Break DMG dealt to the enemy target ignores <unbreak>#3[i]%</unbreak> of their DEF. If the wearer's Break Effect is <unbreak>#2[i]%</unbreak> or higher, the Super Break DMG dealt to the enemy target additionally ignores <unbreak>#4[i]%</unbreak> of their DEF.",
         "ParamList": [
-          1.5000000004656613,
-          2.5000000004656613,
-          0.10000000009313226,
-          0.1500000001396984
+          1.5,
+          2.5,
+          0.1,
+          0.15
         ],
         "kr": "장착한 캐릭터의 격파 특수효과가 <unbreak>#1[i]%</unbreak> 이상이면 적에게 가하는 격파 피해가 해당 적의 방어력을 <unbreak>#3[i]%</unbreak> 무시한다. 장착한 캐릭터의 격파 특수효과가 <unbreak>#2[i]%</unbreak> 이상이면 적에게 가하는 슈퍼 격파 피해가 적의 방어력을 <unbreak>#4[i]%</unbreak> 추가로 무시한다",
         "cn": "当装备者的击破特攻大于等于<unbreak>#1[i]%</unbreak>时，对敌方目标造成的击破伤害无视其<unbreak>#3[i]%</unbreak>的防御力。当装备者的击破特攻大于等于<unbreak>#2[i]%</unbreak>时，对敌方目标造成的超击破伤害额外无视其<unbreak>#4[i]%</unbreak>的防御力。",
@@ -542,7 +542,7 @@
       "2": {
         "en": "Increases ATK by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871
+          0.12
         ],
         "kr": "공격력 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "攻击力提高<unbreak>#1[i]%</unbreak>。",
@@ -551,8 +551,8 @@
       "4": {
         "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. After the wearer uses a Follow-up ATK, increases DMG dealt by Ultimate by <unbreak>#2[i]%</unbreak>, lasting for <unbreak>#3[i]</unbreak> turn(s).",
         "ParamList": [
-          0.060000000055879354,
-          0.3600000003352761,
+          0.06,
+          0.36,
           1
         ],
         "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가하고, 장착한 캐릭터가 추가 공격 발동 시 필살기가 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가한다. 지속 시간: <unbreak>#3[i]</unbreak>턴",
@@ -571,7 +571,7 @@
       "2": {
         "en": "Increases SPD by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.060000000055879354
+          0.06
         ],
         "kr": "속도 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "速度提高<unbreak>#1[i]%</unbreak>。",
@@ -580,7 +580,7 @@
       "4": {
         "en": "When using Skill or Ultimate on one ally target, increases the ability target's CRIT DMG by <unbreak>#1[i]%</unbreak>, lasting for <unbreak>#2[i]</unbreak> turn(s). This effect can stack up to <unbreak>#3[i]</unbreak> time(s).",
         "ParamList": [
-          0.18000000016763806,
+          0.18,
           2,
           2
         ],
@@ -600,7 +600,7 @@
       "2": {
         "en": "Increases CRIT Rate by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.0800000000745058
+          0.08
         ],
         "kr": "치명타 확률 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "暴击率提高<unbreak>#1[i]%</unbreak>。",
@@ -609,8 +609,8 @@
       "4": {
         "en": "Increases DMG dealt by Skill and Ultimate by <unbreak>#1[i]%</unbreak>. After using Ultimate, additionally increases the DMG dealt by the next Skill by <unbreak>#2[i]%</unbreak>.",
         "ParamList": [
-          0.20000000018626451,
-          0.25000000023283064
+          0.2,
+          0.25
         ],
         "kr": "전투 스킬과 필살기로 가하는 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 필살기 발동 후, 다음번 전투 스킬 발동 시 가하는 피해가 추가로 <unbreak>#2[i]%</unbreak> 증가한다",
         "cn": "战技和终结技造成的伤害提高<unbreak>#1[i]%</unbreak>，施放终结技后，下一次施放战技时造成的伤害额外提高<unbreak>#2[i]%</unbreak>。",
@@ -628,7 +628,7 @@
       "2": {
         "en": "Increases ATK by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871
+          0.12
         ],
         "kr": "공격력 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "攻击力提高<unbreak>#1[i]%</unbreak>。",
@@ -637,8 +637,8 @@
       "4": {
         "en": "While the wearer's memosprite is on the field, increases the wearer's SPD by <unbreak>#1[i]%</unbreak>. When the wearer's memosprite attacks, increases the wearer's and memosprite's CRIT DMG by <unbreak>#2[i]%</unbreak>, lasting for <unbreak>#3[i]</unbreak> turn(s).",
         "ParamList": [
-          0.060000000055879354,
-          0.3000000002793968,
+          0.06,
+          0.3,
           2
         ],
         "kr": "장착한 캐릭터의 기억 정령이 필드에 있을 시 장착한 캐릭터의 속도가 <unbreak>#1[i]%</unbreak> 증가하고, 장착한 캐릭터의 기억 정령이 공격 시 장착한 캐릭터와 기억 정령의 치명타 피해가 <unbreak>#2[i]%</unbreak> 증가한다, 지속 시간: <unbreak>#3[i]</unbreak>턴",
@@ -657,7 +657,7 @@
       "2": {
         "en": "Increases Quantum DMG by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "양자 속성 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "量子属性伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -666,12 +666,12 @@
       "4": {
         "en": "Decreases the wearer's SPD by <unbreak>#6[i]%</unbreak>. Before entering battle, if the wearer's SPD is lower than <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>, increases the wearer's CRIT Rate by <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>. This effect applies to the wearer's memosprite at the same time.",
         "ParamList": [
-          -0.07999999984167516,
+          -0.08,
           110,
           95,
-          0.20000000018626451,
-          0.3200000002980232,
-          0.0800000000745058
+          0.2,
+          0.32,
+          0.08
         ],
         "kr": "장착한 캐릭터의 속도가 <unbreak>#6[i]%</unbreak> 감소한다. 전투 진입 전 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> 미만이면, 장착한 캐릭터의 치명타 확률이 <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> 증가한다. 해당 효과는 장착한 캐릭터의 기억 정령에게도 동시에 적용된다",
         "cn": "使装备者的速度降低<unbreak>#6[i]%</unbreak>。进入战斗前，若装备者的速度小于<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>，使装备者的暴击率提高<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。该效果同时对装备者的忆灵生效。",
@@ -689,7 +689,7 @@
       "2": {
         "en": "Increases SPD by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.060000000055879354
+          0.06
         ],
         "kr": "속도 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "速度提高<unbreak>#1[i]%</unbreak>。",
@@ -698,8 +698,8 @@
       "4": {
         "en": "When the wearer or their memosprite provides healing to ally targets other than themselves, the wearer gains \"Gentle Rain,\" which lasts for <unbreak>#3[i]</unbreak> turn(s) and can only trigger once per turn. While the wearer has \"Gentle Rain,\" SPD increases by <unbreak>#1[i]%</unbreak> and all allies' CRIT DMG increases by <unbreak>#2[i]%</unbreak>. This effect cannot stack.",
         "ParamList": [
-          0.060000000055879354,
-          0.1500000001396984,
+          0.06,
+          0.15,
           2
         ],
         "kr": "장착한 캐릭터와 해당 캐릭터의 기억 정령이 장착한 캐릭터와 해당 캐릭터의 기억 정령을 제외한 아군에게 치유를 제공하면 장착한 캐릭터가 [단비]를 획득하며, 턴마다 최대 1회 발동한다, 지속 시간: <unbreak>#3[i]</unbreak>턴. 장착한 캐릭터가 [단비] 보유 시 속도가 <unbreak>#1[i]%</unbreak> 증가하고, 모든 아군의 치명타 피해가 <unbreak>#2[i]%</unbreak> 증가하며, 해당 효과는 중첩할 수 없다",
@@ -718,7 +718,7 @@
       "2": {
         "en": "Increases CRIT DMG by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.1600000001490116
+          0.16
         ],
         "kr": "치명타 피해 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "暴击伤害提高<unbreak>#1[i]%</unbreak>。",
@@ -728,7 +728,7 @@
         "en": "When the wearer becomes the target of another ally target's ability, gains 1 stack of \"Help,\" stacking up to <unbreak>#1[i]</unbreak> time(s). If there are <unbreak>#1[i]</unbreak> stack(s) of \"Help\" when the wearer uses their Ultimate, consumes all \"Help\" to increase the wearer's ATK by <unbreak>#2[i]%</unbreak> for <unbreak>#3[i]</unbreak> turn(s).",
         "ParamList": [
           2,
-          0.48000000044703484,
+          0.48,
           1
         ],
         "kr": "장착한 캐릭터가 다른 아군의 스킬 목표가 되면 [조력]을 1스택 획득한다, 최대 중첩수: <unbreak>#1[i]</unbreak>스택. 필살기 발동 시 [조력]을 <unbreak>#1[i]</unbreak>스택 보유하면, 모든 [조력]을 소모해 장착한 캐릭터의 공격력을 <unbreak>#2[i]%</unbreak> 증가시킨다, 지속 시간: <unbreak>#3[i]</unbreak>턴",
@@ -747,7 +747,7 @@
       "2": {
         "en": "Increases CRIT Rate by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.0800000000745058
+          0.08
         ],
         "kr": "치명타 확률 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "暴击率提高<unbreak>#1[i]%</unbreak>。",
@@ -756,8 +756,8 @@
       "4": {
         "en": "After the wearer uses Basic ATK or Skill, if the wearer's memosprite is on the field, increases Max HP of the wearer and their memosprite by <unbreak>#1[i]%</unbreak>, and increases all allies' dealt DMG by <unbreak>#2[i]%</unbreak>, lasting until after the wearer's next use of Basic ATK or Skill.",
         "ParamList": [
-          0.24000000022351742,
-          0.1500000001396984
+          0.24,
+          0.15
         ],
         "kr": "장착한 캐릭터가 일반 공격 또는 전투 스킬 발동 후, 장착한 캐릭터의 기억 정령이 필드에 있으면 장착한 캐릭터와 해당 캐릭터의 기억 정령의 HP 최대치가 <unbreak>#1[i]%</unbreak> 증가하고, 모든 아군이 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가하며, 장착한 캐릭터가 다음 일반 공격 또는 전투 스킬을 발동한 후까지 지속된다",
         "cn": "装备者施放普攻或战技后，若装备者的忆灵在场，使装备者及其忆灵生命上限提高<unbreak>#1[i]%</unbreak>，我方全体造成的伤害提高<unbreak>#2[i]%</unbreak>，持续至装备者下次施放普攻或战技后。",
@@ -775,7 +775,7 @@
       "2": {
         "en": "The provided Shield Effect increases by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226
+          0.1
         ],
         "kr": "제공하는 실드량 <unbreak>#1[i]%</unbreak> 증가",
         "cn": "提供的护盾量提高<unbreak>#1[i]%</unbreak>。",
@@ -784,8 +784,8 @@
       "4": {
         "en": "Increases the Shield Effect provided by the wearer by <unbreak>#1[i]%</unbreak>. When an ally target holds a Shield provided by the wearer, the ally target's CRIT DMG increases by <unbreak>#2[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871,
-          0.1500000001396984
+          0.12,
+          0.15
         ],
         "kr": "장착한 캐릭터가 제공하는 실드량이 <unbreak>#1[i]%</unbreak> 증가하고, 아군이 장착한 캐릭터가 제공한 실드 보유 시 치명타 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
         "cn": "使装备者提供的护盾量提高<unbreak>#1[i]%</unbreak>，我方目标持有装备者提供的护盾时，暴击伤害提高<unbreak>#2[i]%</unbreak>。",
@@ -803,9 +803,9 @@
       "2": {
         "en": "Increases the wearer's ATK by <unbreak>#1[i]%</unbreak>. When the wearer's SPD reaches <unbreak>#2[i]</unbreak> or higher, the wearer's ATK increases by an extra <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871,
+          0.12,
           120,
-          0.12000000011175871
+          0.12
         ],
         "kr": "장착한 캐릭터의 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak> 이상일 경우 공격력이 추가로 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的攻击力提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>时，攻击力额外提高<unbreak>#3[i]%</unbreak>。",
@@ -823,9 +823,9 @@
       "2": {
         "en": "Increases the wearer's Max HP by <unbreak>#1[i]%</unbreak>. When the wearer's SPD reaches <unbreak>#2[i]</unbreak> or higher, all allies' ATK increases by <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871,
+          0.12,
           120,
-          0.0800000000745058
+          0.08
         ],
         "kr": "장착한 캐릭터의 HP 최대치가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak> 이상일 경우 모든 아군의 공격력이 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的生命上限提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>时，我方全体攻击力提高<unbreak>#3[i]%</unbreak>。",
@@ -843,9 +843,9 @@
       "2": {
         "en": "Increases the wearer's Effect Hit Rate by <unbreak>#1[i]%</unbreak>. Meanwhile, the wearer's ATK increases by an amount that is equal to <unbreak>#2[i]%</unbreak> of the current Effect Hit Rate, up to a maximum increase of <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226,
-          0.25000000023283064,
-          0.25000000023283064
+          0.1,
+          0.25,
+          0.25
         ],
         "kr": "장착한 캐릭터의 효과 명중이 <unbreak>#1[i]%</unbreak> 증가한다. 동시에 장착한 캐릭터의 현재 효과 명중 <unbreak>#2[i]%</unbreak>만큼의 공격력이 증가하며 최대 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的效果命中提高<unbreak>#1[i]%</unbreak>。同时提高装备者等同于当前效果命中<unbreak>#2[i]%</unbreak>的攻击力，最多提高<unbreak>#3[i]%</unbreak>。",
@@ -863,9 +863,9 @@
       "2": {
         "en": "Increases the wearer's DEF by <unbreak>#1[i]%</unbreak>. When the wearer's Effect Hit Rate is <unbreak>#2[i]%</unbreak> or higher, the wearer gains an extra <unbreak>#3[i]%</unbreak> DEF.",
         "ParamList": [
-          0.1500000001396984,
-          0.5000000004656613,
-          0.1500000001396984
+          0.15,
+          0.5,
+          0.15
         ],
         "kr": "장착한 캐릭터의 방어력이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 효과 명중이 <unbreak>#2[i]%</unbreak> 이상일 경우 방어력이 추가로 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的防御力提高<unbreak>#1[i]%</unbreak>。当装备者的效果命中大于等于<unbreak>#2[i]%</unbreak>时，防御力额外提高<unbreak>#3[i]%</unbreak>。",
@@ -883,9 +883,9 @@
       "2": {
         "en": "Increases the wearer's CRIT DMG by <unbreak>#1[i]%</unbreak>. When the wearer's current CRIT DMG reaches <unbreak>#2[i]%</unbreak> or higher, after entering battle, the wearer's CRIT Rate increases by <unbreak>#3[i]%</unbreak> until the end of their first attack.",
         "ParamList": [
-          0.1600000001490116,
-          1.2000000001862645,
-          0.6000000005587935
+          0.16,
+          1.2,
+          0.6
         ],
         "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 치명타 피해가 <unbreak>#2[i]%</unbreak> 이상일 경우, 전투 진입 후 장착한 캐릭터의 치명타 확률이 <unbreak>#3[i]%</unbreak> 증가한다. 첫 공격 발동 후까지 지속하고 종료된다",
         "cn": "使装备者的暴击伤害提高<unbreak>#1[i]%</unbreak>。当装备者的暴击伤害大于等于<unbreak>#2[i]%</unbreak>时，进入战斗后装备者的暴击率提高<unbreak>#3[i]%</unbreak>，持续到施放首次攻击后结束。",
@@ -903,9 +903,9 @@
       "2": {
         "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. When the wearer's current CRIT Rate reaches <unbreak>#2[i]%</unbreak> or higher, the DMG dealt by the wearer's Ultimate and Follow-up ATK increases by <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
-          0.0800000000745058,
-          0.5000000004656613,
-          0.1500000001396984
+          0.08,
+          0.5,
+          0.15
         ],
         "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 치명타 확률이 <unbreak>#2[i]%</unbreak> 이상일 경우, 필살기와 추가 공격이 가하는 피해가 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的暴击率提高<unbreak>#1[i]%</unbreak>。当装备者当前暴击率大于等于<unbreak>#2[i]%</unbreak>时，终结技和追加攻击造成的伤害提高<unbreak>#3[i]%</unbreak>。",
@@ -923,9 +923,9 @@
       "2": {
         "en": "Increases the wearer's Break Effect by <unbreak>#1[i]%</unbreak>. When the wearer's SPD reaches <unbreak>#2[i]</unbreak> or higher, the wearer's Break Effect increases by an extra <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
-          0.1600000001490116,
+          0.16,
           145,
-          0.20000000018626451
+          0.2
         ],
         "kr": "장착한 캐릭터의 격파 특수효과가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak> 이상일 경우 격파 특수효과가 추가로 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的击破特攻提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>时，击破特攻额外提高<unbreak>#3[i]%</unbreak>。",
@@ -943,9 +943,9 @@
       "2": {
         "en": "Increases the wearer's Energy Regeneration Rate by <unbreak>#1[i]%</unbreak>. When the wearer's SPD reaches <unbreak>#2[i]</unbreak> or higher, the wearer's action is Advanced Forward by <unbreak>#3[i]%</unbreak> immediately upon entering battle.",
         "ParamList": [
-          0.05000000004656613,
+          0.05,
           120,
-          0.40000000037252903
+          0.4
         ],
         "kr": "장착한 캐릭터의 에너지 회복효율이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak> 이상일 경우 전투 진입 시 즉시 행동 게이지가 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的能量恢复效率提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>时，进入战斗时立刻使行动提前<unbreak>#3[i]%</unbreak>。",
@@ -963,9 +963,9 @@
       "2": {
         "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. When the wearer's current CRIT Rate reaches <unbreak>#2[i]%</unbreak> or higher, DMG dealt by Basic ATK and Skill increases by <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
-          0.0800000000745058,
-          0.7000000006519258,
-          0.20000000018626451
+          0.08,
+          0.7,
+          0.2
         ],
         "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 치명타 확률이 <unbreak>#2[i]%</unbreak> 이상일 경우, 일반 공격과 전투 스킬이 가하는 피해가 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的暴击率提高<unbreak>#1[i]%</unbreak>。当装备者的当前暴击率大于等于<unbreak>#2[i]%</unbreak>时，普攻和战技造成的伤害提高<unbreak>#3[i]%</unbreak>。",
@@ -983,9 +983,9 @@
       "2": {
         "en": "Increases the wearer's Effect RES by <unbreak>#1[i]%</unbreak>. When the wearer's Effect RES is at <unbreak>#2[i]%</unbreak> or higher, all allies' CRIT DMG increases by <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
-          0.10000000009313226,
-          0.3000000002793968,
-          0.10000000009313226
+          0.1,
+          0.3,
+          0.1
         ],
         "kr": "장착한 캐릭터의 효과 저항이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 효과 저항이 <unbreak>#2[i]%</unbreak> 이상일 경우 모든 아군의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的效果抵抗提高<unbreak>#1[i]%</unbreak>。当装备者的效果抵抗大于等于<unbreak>#2[i]%</unbreak>时，我方全体暴击伤害提高<unbreak>#3[i]%</unbreak>。",
@@ -1003,11 +1003,11 @@
       "2": {
         "en": "Increases the wearer's ATK by <unbreak>#1[i]%</unbreak>. When the wearer's SPD is equal to or higher than <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>, the wearer deals <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> more DMG.",
         "ParamList": [
-          0.12000000011175871,
+          0.12,
           135,
           160,
-          0.12000000011175871,
-          0.18000000016763806
+          0.12,
+          0.18
         ],
         "kr": "장착한 캐릭터의 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> 이상일 경우, 장착한 캐릭터가 가하는 피해가 <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> 증가한다",
         "cn": "使装备者的攻击力提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>时，使装备者造成的伤害提高<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。",
@@ -1025,8 +1025,8 @@
       "2": {
         "en": "Increases wearer's Energy Regeneration Rate by <unbreak>#1[i]%</unbreak>. Increases DMG by <unbreak>#2[i]%</unbreak> for all other allies that are of the same Type as the wearer.",
         "ParamList": [
-          0.05000000004656613,
-          0.10000000009313226
+          0.05,
+          0.1
         ],
         "kr": "장착한 캐릭터의 에너지 회복효율이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터와 같은 속성의 파티 내 다른 아군 캐릭터가 주는 피해가 <unbreak>#2[i]%</unbreak> 증가한다",
         "cn": "使装备者的能量恢复效率提高<unbreak>#1[i]%</unbreak>。使队伍中与装备者属性相同的我方其他角色造成的伤害提高<unbreak>#2[i]%</unbreak>。",
@@ -1044,9 +1044,9 @@
       "2": {
         "en": "Increases the wearer's CRIT Rate by <unbreak>#3[i]%</unbreak>. When an enemy target gets defeated, the wearer's CRIT DMG increases by <unbreak>#1[i]%</unbreak>, stacking up to <unbreak>#2[i]</unbreak> time(s).",
         "ParamList": [
-          0.0400000000372529,
+          0.04,
           10,
-          0.0400000000372529
+          0.04
         ],
         "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#3[i]%</unbreak> 증가한다. 적이 처치될 시 장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 최대 중첩수: <unbreak>#2[i]</unbreak>",
         "cn": "使装备者的暴击率提高<unbreak>#3[i]%</unbreak>。当敌方目标被消灭时，装备者暴击伤害提高<unbreak>#1[i]%</unbreak>，最多叠加<unbreak>#2[i]</unbreak>层。",
@@ -1064,8 +1064,8 @@
       "2": {
         "en": "Increases the wearer's ATK by <unbreak>#1[i]%</unbreak>. When entering battle, if at least one teammate follows the same Path as the wearer, then the wearer's CRIT Rate increases by <unbreak>#2[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871,
-          0.12000000011175871
+          0.12,
+          0.12
         ],
         "kr": "장착한 캐릭터의 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 전투 진입 시 장착한 캐릭터와 운명의 길이 같은 동료가 최소 1명 존재할 경우, 장착한 캐릭터의 치명타 확률이 <unbreak>#2[i]%</unbreak> 증가한다",
         "cn": "使装备者的攻击力提高<unbreak>#1[i]%</unbreak>。进入战斗时，若至少存在一名与装备者命途相同的队友，装备者的暴击率提高<unbreak>#2[i]%</unbreak>。",
@@ -1084,8 +1084,8 @@
         "en": "When an ally uses a Follow-up ATK, the wearer gains 1 stack of Merit, stacking up to <unbreak>#1[i]</unbreak> time(s). Each stack of Merit increases the DMG dealt by the wearer's Follow-up ATKs by <unbreak>#2[i]%</unbreak>. When there are <unbreak>#1[i]</unbreak> stacks, additionally increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
           5,
-          0.05000000004656613,
-          0.25000000023283064
+          0.05,
+          0.25
         ],
         "kr": "아군 캐릭터가 추가 공격을 발동하면 장착한 캐릭터는 [공훈]을 1스택 획득한다, 최대 중첩수: <unbreak>#1[i]</unbreak>스택. [공훈] 스택당 장착한 캐릭터의 추가 공격으로 가하는 피해가 <unbreak>#2[i]%</unbreak> 증가하고, <unbreak>#1[i]</unbreak>스택까지 중첩 시 장착한 캐릭터의 치명타 피해가 추가로 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "我方角色施放追加攻击时，装备者获得一层【功勋】，最多叠加<unbreak>#1[i]</unbreak>层，每层【功勋】使装备者追加攻击造成的伤害提高<unbreak>#2[i]%</unbreak>，叠满<unbreak>#1[i]</unbreak>层时，额外使装备者的暴击伤害提高<unbreak>#3[i]%</unbreak>。",
@@ -1103,8 +1103,8 @@
       "2": {
         "en": "Increases the wearer's SPD by <unbreak>#1[i]%</unbreak>. When the wearer hits an enemy target that has Fire Weakness, the wearer's Break Effect increases by <unbreak>#2[i]%</unbreak>, lasting for <unbreak>#3[i]</unbreak> turn(s).",
         "ParamList": [
-          0.060000000055879354,
-          0.40000000037252903,
+          0.06,
+          0.4,
           1
         ],
         "kr": "장착한 캐릭터의 속도가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터가 화염 속성 약점을 보유한 적을 명중하면 격파 특수효과가 <unbreak>#2[i]%</unbreak> 증가한다, 지속 시간: <unbreak>#3[i]</unbreak>턴",
@@ -1123,8 +1123,8 @@
       "2": {
         "en": "Increases the wearer's Energy Regeneration Rate by <unbreak>#1[i]%</unbreak>. If the wearer is not the first character in the team lineup, then increases the ATK of the first character in the team lineup by <unbreak>#2[i]%</unbreak>.",
         "ParamList": [
-          0.05000000004656613,
-          0.12000000011175871
+          0.05,
+          0.12
         ],
         "kr": "장착한 캐릭터의 에너지 회복효율이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터가 파티 편성의 첫 번째 캐릭터가 아닐 경우, 파티 편성의 첫 번째 캐릭터의 공격력이 <unbreak>#2[i]%</unbreak> 증가한다",
         "cn": "使装备者的能量恢复效率提高<unbreak>#1[i]%</unbreak>，如果装备者不是编队中的第一位角色，使编队中的第一位角色攻击力提高<unbreak>#2[i]%</unbreak>。",
@@ -1142,8 +1142,8 @@
       "2": {
         "en": "Increases the wearer's CRIT DMG by <unbreak>#1[i]%</unbreak>. When a target summoned by the wearer is on the field, CRIT DMG additionally increases by <unbreak>#2[i]%</unbreak>.",
         "ParamList": [
-          0.1600000001490116,
-          0.3200000002980232
+          0.16,
+          0.32
         ],
         "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터가 소환한 목표가 있을 시, 치명타 피해가 추가로 <unbreak>#2[i]%</unbreak> 증가한다",
         "cn": "使装备者的暴击伤害提高<unbreak>#1[i]%</unbreak>，当存在装备者召唤的目标时，暴击伤害额外提高<unbreak>#2[i]%</unbreak>。",
@@ -1161,9 +1161,9 @@
       "2": {
         "en": "Increases the wearer's Max HP by <unbreak>#1[i]%</unbreak>. When the wearer's Max HP is <unbreak>#2[i]</unbreak> or higher, increases the wearer's and their memosprite's CRIT DMG by <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
-          0.12000000011175871,
+          0.12,
           5000,
-          0.2800000002607703
+          0.28
         ],
         "kr": "장착한 캐릭터의 HP 최대치가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 HP 최대치가 <unbreak>#2[i]</unbreak>pt 이상일 경우, 장착한 캐릭터와 해당 캐릭터의 기억 정령의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가한다",
         "cn": "使装备者的生命上限提高<unbreak>#1[i]%</unbreak>。当装备者的生命上限大于等于<unbreak>#2[i]</unbreak>点时，使装备者及其忆灵的暴击伤害提高<unbreak>#3[i]%</unbreak>。",
@@ -1181,11 +1181,11 @@
       "2": {
         "en": "Increases the wearer's SPD by <unbreak>#1[i]%</unbreak>. When the wearer's SPD is <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> or higher, the wearer and their memosprite's Outgoing Healing increases by <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>.",
         "ParamList": [
-          0.060000000055879354,
+          0.06,
           135,
           180,
-          0.12000000011175871,
-          0.20000000018626451
+          0.12,
+          0.2
         ],
         "kr": "장착한 캐릭터의 속도가 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 속도가 <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> 이상일 경우, 장착한 캐릭터와 해당 캐릭터의 기억 정령의 치유량이 <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> 증가한다",
         "cn": "使装备者的速度提高<unbreak>#1[i]%</unbreak>。当装备者的速度大于等于<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>时，使装备者及其忆灵的治疗量提高<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。",
@@ -1203,8 +1203,8 @@
       "2": {
         "en": "When the number of ally targets on the field is not equal to 4, for every 1 additional/missing ally target, increases the DMG dealt by the wearer and their memosprite by <unbreak>#1[i]%</unbreak>/<unbreak>#2[i]%</unbreak>, stacking up to <unbreak>#3[i]</unbreak>/<unbreak>#4[i]</unbreak> time(s).",
         "ParamList": [
-          0.09000000008381903,
-          0.12000000011175871,
+          0.09,
+          0.12,
           4,
           3
         ],
@@ -1224,11 +1224,11 @@
       "2": {
         "en": "Increases the wearer's ATK by <unbreak>#1[i]%</unbreak>. When the wearer's ATK is higher than or equal to <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>, increases the DoT DMG dealt by <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> respectively.",
         "ParamList": [
-          0.12000000011175871,
+          0.12,
           2400,
           3600,
-          0.12000000011175871,
-          0.24000000022351742
+          0.12,
+          0.24
         ],
         "kr": "장착한 캐릭터의 공격력이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 공격력이 <unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak> 이상일 시 가하는 지속 피해가 추가로 <unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak> 증가한다",
         "cn": "使装备者的攻击力提高<unbreak>#1[i]%</unbreak>。当装备者的攻击力大于等于<unbreak>#2[i]</unbreak>/<unbreak>#3[i]</unbreak>时，使造成的持续伤害额外提高<unbreak>#4[i]%</unbreak>/<unbreak>#5[i]%</unbreak>。",
@@ -1246,10 +1246,10 @@
       "2": {
         "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. While the wearer's memosprite is on the field, increases all allies' SPD by <unbreak>#2[i]%</unbreak>. This effect cannot be stacked.",
         "ParamList": [
-          0.0800000000745058,
-          0.0800000000745058
+          0.08,
+          0.08
         ],
-        "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 기억 정령이 필드에 있을 시, 모든 아군의 속도가 <unbreak>#2[i]%</unbreak> 증가하며, 해당 효과는 중첩할 수 없다",
+        "kr": "장착한 캐릭터의 치명타 확률이 <unbreak>#1[i]%</unbreak> 증가한다. 장착한 캐릭터의 기억 정령이 필드에 있을 시 모든 아군의 속도가 <unbreak>#2[i]%</unbreak> 증가하며, 해당 효과는 중첩할 수 없다",
         "cn": "使装备者的暴击率提高<unbreak>#1[i]%</unbreak>。装备者的忆灵在场时，我方全体速度提高<unbreak>#2[i]%</unbreak>，该效果无法叠加。",
         "jp": "装備キャラの会心率+<unbreak>#1[i]%</unbreak>。装備キャラの記憶の精霊がフィールド上にいる時、味方全体の速度+<unbreak>#2[i]%</unbreak>。この効果は累積できない。"
       }
@@ -1265,14 +1265,14 @@
       "2": {
         "en": "Increases the wearer's CRIT DMG by <unbreak>#1[i]%</unbreak>. If <unbreak>#2[i]</unbreak> or more Skill Points are consumed in the same turn, additionally increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak> for <unbreak>#4[i]</unbreak> turns.",
         "ParamList": [
-          0.1600000001490116,
+          0.16,
           3,
-          0.3200000002980232,
+          0.32,
           3
         ],
         "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가하며, 같은 턴에 전투 스킬 포인트를 <unbreak>#2[i]</unbreak>pt 이상 소모 시 추가로 장착한 캐릭터의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가한다, 지속 시간: <unbreak>#4[i]</unbreak>턴",
         "cn": "使装备者的暴击伤害提高<unbreak>#1[i]%</unbreak>，若在同一回合内消耗大于等于<unbreak>#2[i]</unbreak>点战技点，额外使装备者暴击伤害提高<unbreak>#3[i]%</unbreak>，持续<unbreak>#4[i]</unbreak>回合。",
-        "jp": "装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>。同じターンにSPを<unbreak>#2[i]</unbreak>以上消費した場合、さらに会心ダメージ+<unbreak>#3[i]%</unbreak>、<unbreak>#4[i]</unbreak>ターン継続する。"
+        "jp": "装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>。同じターンにSPを<unbreak>#2[i]</unbreak>以上消費した場合、さらに会心ダメージ+<unbreak>#3[i]%</unbreak>、<unbreak>#4[i]</unbreak>ターン継続。"
       }
     },
     "kr": "텐고쿠@라이브스트리밍",

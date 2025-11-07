@@ -8,11 +8,11 @@ const langs: LanguageStrings = {
 	isNotSet: "Not Set",
 	ms: "ms",
 	CostTime:
-		"Time Cost: Request <requestTime> seconds • Draw <drawTime> seconds",
+		"-# Time Cost: Request <requestTime> seconds • Draw <drawTime> seconds",
 	level: "Level",
 	level_Format: "Level <level>",
 	lightConeLevel: "Light Cone",
-	lightConeLevel_Format: "Light Cone <rank> Level",
+	lightConeLevel_Format: "<rank>",
 	MainPage: "Main Page",
 	Eidolon: "Eidolon <rank> Level",
 	RelicGrade: "Relic Rating <grade> • Grade",

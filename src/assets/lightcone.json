@@ -812,11 +812,11 @@
   "22006": {
     "rank": "CombatPowerLightconeRarity4",
     "baseType": "Memory",
-    "en": "Take Flight Toward A Pink Tomorrow",
+    "en": "Fly Into a Pink Tomorrow",
     "desc": null,
     "kr": "핑크빛 내일을 향해",
     "cn": "飞向粉色的明天",
-    "jp": "ピンクの明日へ"
+    "jp": "ピンク色の明日へ"
   },
   "23000": {
     "rank": "CombatPowerLightconeRarity5",
@@ -1268,6 +1268,15 @@
     "cn": "致长夜的星光",
     "jp": "{RUBY_B#なが}長{RUBY_E#}き{RUBY_B#よる}夜{RUBY_E#}に{RUBY_B#かがや}輝{RUBY_E#}く{RUBY_B#ほし}星{RUBY_E#}へ"
   },
+  "23050": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Warlock",
+    "en": "Never Forget Her Flame",
+    "desc": null,
+    "kr": "그녀의 불꽃을 잊지 말라",
+    "cn": "勿忘她的火焰",
+    "jp": "彼女の炎を忘れずに"
+  },
   "23051": {
     "rank": "CombatPowerLightconeRarity5",
     "baseType": "Knight",
@@ -1284,7 +1293,7 @@
     "desc": null,
     "kr": "이 순간처럼 영원한 사랑",
     "cn": "爱如此刻永恒",
-    "jp": "愛は永遠の今"
+    "jp": "{RUBY_B#あい}愛{RUBY_E#}はいま{RUBY_B#えいえん}永遠{RUBY_E#}に"
   },
   "24000": {
     "rank": "CombatPowerLightconeRarity5",
