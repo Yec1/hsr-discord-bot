@@ -15,8 +15,8 @@ import {
 import { createTranslator, toI18nLang } from "@/utilities/core/i18n.js";
 import loginAccount from "@/utilities/hsr/login.js";
 import type { TranslationFunction } from "@/types/index.js";
-
-// 定义账户类型
+import { loadConfig } from "@/utilities/core/config.js";
+const config = loadConfig();
 interface Account {
 	uid: string;
 	cookie: string;
@@ -138,7 +138,10 @@ async function handleAccountLogin(
 			});
 		} else {
 			// 如果是新帳號，檢查數量限制
-			if (existedAccounts.length >= 5) {
+			if (
+				!config.DEVIDS.includes(interaction.user.id) &&
+				existedAccounts.length >= 5
+			) {
 				await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
@@ -287,7 +290,10 @@ async function handleUidSet(
 	if (await database.has(`${interaction.user.id}.account`)) {
 		const accounts: Account[] =
 			(await database.get(`${interaction.user.id}.account`)) || [];
-		if (accounts.length >= 5) {
+		if (
+			!config.DEVIDS.includes(interaction.user.id) &&
+			accounts.length >= 5
+		) {
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()

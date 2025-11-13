@@ -16,8 +16,9 @@ interface TimeChoice {
 
 interface AutoDailyConfig {
 	channelId: string;
-	time: string;
-	tag: boolean | string;
+	tag: string;
+	time?: string;
+	timeZone?: string;
 }
 
 interface DailyInfo {
@@ -60,6 +61,19 @@ export default {
 		.setDescriptionLocalizations({
 			"zh-TW": "領取每日簽到獎勵"
 		})
+		.addStringOption(option =>
+			option
+				.setName("account")
+				.setDescription("...")
+				.setNameLocalizations({
+					"zh-TW": "帳號"
+				})
+				.setDescriptionLocalizations({
+					"zh-TW": "..."
+				})
+				.setRequired(false)
+				.setAutocomplete(true)
+		)
 		.addUserOption(option =>
 			option
 				.setName("user")
@@ -174,6 +188,7 @@ export default {
 			});
 		}
 
+		const accountIndex = interaction.options.getString("account") || "0";
 		const user = interaction.options.getUser("user") ?? interaction.user;
 		const auto = interaction.options.getString("autosign");
 		const time = interaction.options.getString("time");
@@ -192,11 +207,19 @@ export default {
 				]
 			});
 		} else if (time || tag || auto === "on") {
+			const existingConfig = (await database.get(
+				`autoDaily.${interaction.user.id}`
+			)) as AutoDailyConfig | null;
+
 			const autoDailyConfig: AutoDailyConfig = {
 				channelId: interaction.channel!.id,
-				time: time || "12",
-				tag: tag || false
+				tag: tag || existingConfig?.tag || "false",
+				time: time || existingConfig?.time || "13"
 			};
+
+			if (existingConfig?.timeZone) {
+				autoDailyConfig.timeZone = existingConfig.timeZone;
+			}
 
 			await database.set(
 				`autoDaily.${interaction.user.id}`,
@@ -210,12 +233,15 @@ export default {
 						.setTitle(tr("autoDaily_On"))
 						.setDescription(
 							tr("autoDaily_Time", {
-								time: time ? "`" + time + ":00`" : "`12:00`"
+								time:
+									"`" +
+									(autoDailyConfig.time || "13") +
+									":00`"
 							}) +
 								"\n" +
 								tr("autoDaily_Tag", {
 									z:
-										tag === "true"
+										autoDailyConfig.tag === "true"
 											? "`" + tr("True") + "`"
 											: "`" + tr("False") + "`"
 								})
@@ -227,7 +253,12 @@ export default {
 			});
 		}
 
-		const hsr = await getUserHSRData(interaction, tr, user.id, 0);
+		const hsr = await getUserHSRData(
+			interaction,
+			tr,
+			user.id,
+			parseInt(accountIndex)
+		);
 		if (!hsr) return;
 
 		const info: DailyInfo = await hsr.daily.info();

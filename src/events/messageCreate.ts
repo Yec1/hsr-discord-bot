@@ -1,8 +1,8 @@
 import { client, commands } from "@/index.js";
 import { Events, Message } from "discord.js";
 import type { MessageCommandType } from "@/types/index.js";
-
-const userIds: string[] = ["283946584461410305", "878830839822176287"];
+import { loadConfig } from "@/utilities/core/config.js";
+const config = loadConfig();
 
 client.on(Events.MessageCreate, async (message: Message) => {
 	const prefix = `<@${client.user?.id}>`;
@@ -10,7 +10,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 		message.author.bot ||
 		!message.guild ||
 		!message.content.toLowerCase().startsWith(prefix) ||
-		!userIds.includes(message.author.id)
+		!config.DEVIDS.includes(message.author.id)
 	)
 		return;
 

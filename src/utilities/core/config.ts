@@ -16,6 +16,7 @@ interface Config {
 	ERRWEBHOOK: string;
 	AUTHTOKEN: string;
 	WEBSERVER_PORT: number;
+	DEVIDS: string[];
 }
 
 let config: Config | null = null;

@@ -30,6 +30,14 @@ interface Stats {
 	skipped: number;
 }
 
+interface AutoDailyOptions {
+	manualHours?: number[];
+	label?: string;
+	all?: boolean;
+	force?: boolean;
+	initiatedBy?: string;
+}
+
 interface DailyData {
 	[key: string]: {
 		channelId: string;
@@ -85,6 +93,15 @@ class AutoDailySignSystem {
 		this.webhook = new WebhookClient({ url: webhookUrl });
 		this.logger = new Logger("自動簽到");
 		this.stats = { total: 0, success: 0, failed: 0, signed: 0, skipped: 0 };
+	}
+
+	logStart(label: string, initiatedBy?: string): void {
+		const message = `${label} 自動簽到`;
+		if (initiatedBy) {
+			this.logger.command(`手動觸發者 ${initiatedBy}，開始 ${message}`);
+		} else {
+			this.logger.success(`開始 ${message}`);
+		}
 	}
 
 	async initialize(): Promise<void> {
@@ -295,24 +312,21 @@ class AutoDailySignSystem {
 		}
 	}
 
-	async updateStatistics(
-		startTime: number,
-		currentHour: string
-	): Promise<void> {
+	async updateStatistics(startTime: number, label: string): Promise<void> {
 		const endTime = Date.now();
 		const duration = (endTime - startTime) / 1000;
 		const averageTime =
 			this.stats.total > 0 ? duration / this.stats.total : 0;
 
 		this.logger.success(
-			`已完成 ${currentHour}:00 自動簽到: ${this.stats.total} 總數, ` +
+			`已完成 ${label} 自動簽到: ${this.stats.total} 總數, ` +
 				`${this.stats.success} 成功, ${this.stats.signed} 已簽到, ` +
 				`${this.stats.skipped} 跳過, ${this.stats.failed} 失敗`
 		);
 
 		const statsEmbed = new EmbedBuilder()
 			.setColor("#F2BE22")
-			.setTitle(`${currentHour}:00 自動簽到統計`)
+			.setTitle(`${label} 自動簽到統計`)
 			.setTimestamp()
 			.addFields(this.buildStatsFields(duration, averageTime));
 
@@ -358,14 +372,29 @@ class AutoDailySignSystem {
 			}
 		];
 	}
+
+	getStats(): Stats {
+		return { ...this.stats };
+	}
 }
 
-export default async function autoDailySign(): Promise<void> {
+export default async function autoDailySign(
+	options: AutoDailyOptions = {}
+): Promise<Stats> {
 	const system = new AutoDailySignSystem(client, config.LOGWEBHOOK);
 	await system.initialize();
 
+	const normalizedManualHours =
+		options.manualHours
+			?.map(hour => Number(hour))
+			.filter(
+				hour => Number.isInteger(hour) && hour >= 0 && hour <= 23
+			) ?? [];
+	const manualMode = Boolean(options.all) || normalizedManualHours.length > 0;
+
 	const dailyData = (await (system as any).db.get("autoDaily")) as DailyData;
-	if (!dailyData) return;
+	const hasDailyData =
+		dailyData && Object.keys(dailyData).length > 0 ? true : false;
 
 	const getHourInTimezone = (timeZone: string): number => {
 		const parts = new Intl.DateTimeFormat("en-GB", {
@@ -395,15 +424,26 @@ export default async function autoDailySign(): Promise<void> {
 		return "Asia/Taipei";
 	};
 
+	const taipeiHour = getHourInTimezone("Asia/Taipei");
+	const defaultLabel = `${taipeiHour.toString().padStart(2, "0")}:00`;
+	const label = options.label || defaultLabel;
 	const startTime = Date.now();
 
-	const taipeiHour = getHourInTimezone("Asia/Taipei");
-	(system as any).logger.success(`開始 ${taipeiHour}:00 自動簽到`);
+	if (!hasDailyData) {
+		if (manualMode) {
+			system.logStart(label, options.initiatedBy);
+			await system.updateStatistics(startTime, label);
+		}
+		return system.getStats();
+	}
+
+	system.logStart(label, options.initiatedBy);
 
 	for (const userId of Object.keys(dailyData)) {
 		const userCfg = dailyData[userId] || ({} as any);
 		const scheduledTimeStr = userCfg.time || "13";
-		const scheduledTime = parseInt(scheduledTimeStr, 10);
+		const parsedTime = parseInt(scheduledTimeStr, 10);
+		const scheduledTime = Number.isNaN(parsedTime) ? 13 : parsedTime;
 		const timeZone = normalizeTimeZone((userCfg as any).timeZone);
 
 		const userHour = getHourInTimezone(timeZone);
@@ -414,24 +454,41 @@ export default async function autoDailySign(): Promise<void> {
 		);
 		const signedToday = lastSignedDateKey === userDateKey;
 
-		if (
-			!signedToday &&
+		const shouldProcessManual =
+			Boolean(options.all) ||
+			normalizedManualHours.includes(scheduledTime);
+		const shouldProcessAuto =
+			!manualMode &&
 			Number.isFinite(scheduledTime) &&
-			userHour >= scheduledTime
-		) {
-			try {
-				await system.processDailySign(userId, dailyData);
-				await (system as any).db.set(
-					`lastSignedDate:${userId}`,
-					userDateKey
-				);
-			} catch (error) {
-				(system as any).logger.error(
-					`處理用戶 ${userId} 時發生錯誤: ${(error as Error).message}`
-				);
+			userHour >= scheduledTime;
+
+		if (manualMode) {
+			if (!shouldProcessManual) {
+				continue;
 			}
+		} else if (!shouldProcessAuto) {
+			continue;
+		}
+
+		if (!manualMode) {
+			if (signedToday && !options.force) {
+				continue;
+			}
+		}
+
+		try {
+			await system.processDailySign(userId, dailyData);
+			await (system as any).db.set(
+				`lastSignedDate:${userId}`,
+				userDateKey
+			);
+		} catch (error) {
+			(system as any).logger.error(
+				`處理用戶 ${userId} 時發生錯誤: ${(error as Error).message}`
+			);
 		}
 	}
 
-	await system.updateStatistics(startTime, taipeiHour.toString());
+	await system.updateStatistics(startTime, label);
+	return system.getStats();
 }

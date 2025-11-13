@@ -7,5 +7,6 @@
 	"FBWEBHOOK": "Feedback Webhook URL",
 	"ERRWEBHOOK": "Error Webhook URL",
 	"AUTHTOKEN": "Your Auth Token",
-	"WEBSERVER_PORT": 3000
+	"WEBSERVER_PORT": 3000,
+	"DEVIDS": ["YOUR DISCORD ID"]
 }
