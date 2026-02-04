@@ -47,6 +47,14 @@ client.on(Events.InteractionCreate, async interaction => {
 		await handleCookieSet(interaction, tr, customId, fields);
 });
 
+import { VerificationServer } from "@/utilities/core/VerificationServer.js";
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	TextInputBuilder
+} from "discord.js";
+
 async function handleAccountLogin(
 	interaction: ModalSubmitInteraction,
 	tr: TranslationFunction,
@@ -57,6 +65,7 @@ async function handleAccountLogin(
 		"account_LoginAccountModalField2"
 	);
 	await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
 	try {
 		// Make sure Email is correct
 		const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -72,116 +81,209 @@ async function handleAccountLogin(
 			return;
 		}
 
-		const { cookie, error } = await loginAccount(email, password);
-		if (error || !cookie) {
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle(tr("account_LoginFailed"))
-						.setDescription(
-							`${tr("account_LoginFailedDesc")}\n\n\`${error?.message || "Unknown error"}\``
-						)
-						.setColor("#E76161")
-				]
-			});
-			return;
-		}
+		const loginRes = await loginAccount(email, password);
 
-		const gameInfo: GameInfo = await getUserGameInfo(cookie);
-		const { uid, nickname } = gameInfo;
-		if (!uid || !nickname) {
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle(tr("account_LoginFailed"))
-						.setDescription(tr("account_LoginFailedDesc"))
-						.setColor("#E76161")
-				]
-			});
-			return;
-		}
-		const existedAccounts: Account[] =
-			(await database.get(`${interaction.user.id}.account`)) || [];
+		if (loginRes.captcha) {
+			// loginRes.data is the aigisData from x-rpc-aigis header
+			const captchaData =
+				loginRes.data?.data?.captcha || loginRes.data?.captcha;
 
-		// 清除過期標記
-		if (uid) {
-			await database.delete(`${uid}.cookieExpired`);
-		}
-
-		// 檢查是否已經綁定過這個UID
-		const existingAccountIndex = existedAccounts.findIndex(
-			account => account.uid == uid
-		);
-
-		if (existingAccountIndex !== -1) {
-			// 如果已經綁定過，直接更新該帳號的Cookie
-			existedAccounts[existingAccountIndex]!.cookie = cookie;
-			existedAccounts[existingAccountIndex]!.nickname = nickname;
-
-			await database.set(
-				`${interaction.user.id}.account`,
-				existedAccounts
-			);
-
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setColor("#F6F1F1")
-						.setThumbnail(
-							"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
-						)
-						.setTitle(tr("account_LoginSuccess"))
-						.setDescription(
-							tr("account_LoginSuccessDesc", { z: `${uid}` })
-						)
-				]
-			});
-		} else {
-			// 如果是新帳號，檢查數量限制
-			if (
-				!config.DEVIDS.includes(interaction.user.id) &&
-				existedAccounts.length >= 5
-			) {
+			if (!captchaData) {
+				console.error(
+					"[Login] Invalid captcha data structure:",
+					loginRes.data
+				);
 				await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
-							.setTitle(tr("account_LimitExceeded"))
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							.setTitle(tr("account_LoginFailed"))
+							.setDescription(
+								`${tr("account_LoginFailedDesc")}\n\n驗證碼資料格式錯誤，請稍後再試。`
 							)
+							.setColor("#E76161")
 					]
 				});
 				return;
 			}
 
-			// 添加新帳號
-			await database.push(`${interaction.user.id}.account`, {
-				uid: uid,
-				cookie: cookie,
-				nickname: nickname
-			});
+			const { geetestId, riskType, challenge } = captchaData;
+			const sessionId = Math.random().toString(36).substring(2, 12);
+			const config = (
+				await import("@/utilities/core/config.js")
+			).loadConfig();
+			const baseUrl =
+				(config as any).VERIFY_PUBLIC_URL ||
+				`http://localhost:${config.WEBSERVER_PORT || 3000}`;
+			const verifyUrl = `${baseUrl}/verify?captchaId=${geetestId}&riskType=${encodeURIComponent(riskType)}&challenge=${challenge}&session=${sessionId}`;
+
+			VerificationServer.onResult(
+				sessionId,
+				async (captchaResult: any) => {
+					try {
+						const retryRes = await loginAccount(
+							email,
+							password,
+							captchaResult
+						);
+						if (retryRes && (retryRes as any).captcha) {
+							await interaction.followUp({
+								content: "❌ 驗證逾期或失敗，請重新嘗試登入。",
+								flags: MessageFlags.Ephemeral
+							});
+						} else if (retryRes) {
+							await finalizeLogin(interaction, retryRes, tr);
+						}
+					} catch (e: any) {
+						console.error("[Login] Captcha auto-retry failed:", e);
+						await interaction.followUp({
+							content: `❌ 驗證後登入失敗：\`${e.message}\``,
+							flags: MessageFlags.Ephemeral
+						});
+					}
+				}
+			);
+
+			const verifyBtn = new ButtonBuilder()
+				.setLabel("進行驗證 (Verify)")
+				.setURL(verifyUrl)
+				.setStyle(ButtonStyle.Link);
+
+			const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+				verifyBtn
+			);
 
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
-						.setColor("#F6F1F1")
-						.setThumbnail(
-							"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+						.setTitle("需要進行安全驗證")
+						.setDescription(
+							"為了保護您的帳號安全，請點擊下方按鈕在瀏覽器中完成 Geetest 驗證。驗證完成後，機器人將會自動繼續登入流程。"
 						)
-						.setTitle(tr("account_LoginSuccess"))
-				]
+						.setColor("#FFE9D0")
+				],
+				components: [row as any]
 			});
+			return;
 		}
-	} catch (error) {
+
+		await finalizeLogin(interaction, loginRes, tr);
+	} catch (error: any) {
 		console.log(error);
 		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
 					.setTitle(tr("account_LoginFailed"))
-					.setDescription(tr("account_LoginFailedDesc"))
+					.setDescription(
+						`${tr("account_LoginFailedDesc")}\n\n\`${error.message}\``
+					)
 					.setColor("#E76161")
 			]
 		});
+	}
+}
+
+async function finalizeLogin(
+	interaction: any,
+	loginData: any,
+	tr: TranslationFunction
+) {
+	const { cookie } = loginData;
+	const gameInfo: GameInfo = await getUserGameInfo(cookie);
+	const { uid, nickname } = gameInfo;
+
+	if (!uid || !nickname) {
+		const embed = new EmbedBuilder()
+			.setTitle(tr("account_LoginFailed"))
+			.setDescription(tr("account_LoginFailedDesc"))
+			.setColor("#E76161");
+
+		if (interaction.deferred || interaction.replied) {
+			await interaction.editReply({ embeds: [embed], components: [] });
+		} else {
+			await interaction.reply({
+				embeds: [embed],
+				flags: MessageFlags.Ephemeral
+			});
+		}
+		return;
+	}
+
+	const existedAccounts: Account[] =
+		(await database.get(`${interaction.user.id}.account`)) || [];
+
+	await database.delete(`${uid}.cookieExpired`);
+
+	const existingAccountIndex = existedAccounts.findIndex(
+		account => account.uid == uid
+	);
+
+	if (existingAccountIndex !== -1) {
+		existedAccounts[existingAccountIndex]!.cookie = cookie;
+		existedAccounts[existingAccountIndex]!.nickname = nickname;
+		await database.set(`${interaction.user.id}.account`, existedAccounts);
+
+		const embed = new EmbedBuilder()
+			.setColor("#F6F1F1")
+			.setThumbnail(
+				"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+			)
+			.setTitle(tr("account_LoginSuccess"))
+			.setDescription(tr("account_LoginSuccessDesc", { z: `${uid}` }));
+
+		if (interaction.deferred || interaction.replied) {
+			await interaction.editReply({ embeds: [embed], components: [] });
+		} else {
+			await interaction.reply({
+				embeds: [embed],
+				flags: MessageFlags.Ephemeral
+			});
+		}
+	} else {
+		if (
+			!config.DEVIDS.includes(interaction.user.id) &&
+			existedAccounts.length >= 5
+		) {
+			const embed = new EmbedBuilder()
+				.setTitle(tr("account_LimitExceeded"))
+				.setThumbnail(
+					"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+				);
+
+			if (interaction.deferred || interaction.replied) {
+				await interaction.editReply({
+					embeds: [embed],
+					components: []
+				});
+			} else {
+				await interaction.reply({
+					embeds: [embed],
+					flags: MessageFlags.Ephemeral
+				});
+			}
+			return;
+		}
+
+		await database.push(`${interaction.user.id}.account`, {
+			uid: uid,
+			cookie: cookie,
+			nickname: nickname
+		});
+
+		const embed = new EmbedBuilder()
+			.setColor("#F6F1F1")
+			.setThumbnail(
+				"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
+			)
+			.setTitle(tr("account_LoginSuccess"));
+
+		if (interaction.deferred || interaction.replied) {
+			await interaction.editReply({ embeds: [embed], components: [] });
+		} else {
+			await interaction.reply({
+				embeds: [embed],
+				flags: MessageFlags.Ephemeral
+			});
+		}
 	}
 }
 

@@ -393,7 +393,7 @@
     "en": "The Ashblazing Grand Duke",
     "set": {
       "2": {
-        "en": "Increases the DMG dealt by Follow-up ATK by <unbreak>#1[i]%</unbreak>.",
+        "en": "Increases the DMG dealt by Follow-Up ATK by <unbreak>#1[i]%</unbreak>.",
         "ParamList": [
           0.2
         ],
@@ -402,7 +402,7 @@
         "jp": "追加攻撃ダメージ+<unbreak>#1[i]%</unbreak>。"
       },
       "4": {
-        "en": "When the wearer uses a Follow-up ATK, increases the wearer's ATK by <unbreak>#1[i]%</unbreak> for every time the Follow-up ATK deals DMG. This effect can stack up to <unbreak>#2[i]</unbreak> time(s) and lasts for <unbreak>#3[i]</unbreak> turn(s). This effect is removed the next time the wearer uses a Follow-up ATK.",
+        "en": "When the wearer uses a Follow-Up ATK, increases the wearer's ATK by <unbreak>#1[i]%</unbreak> for every time the Follow-Up ATK deals DMG. This effect can stack up to <unbreak>#2[i]</unbreak> time(s) and lasts for <unbreak>#3[i]</unbreak> turn(s). This effect is removed the next time the wearer uses a Follow-Up ATK.",
         "ParamList": [
           0.06,
           8,
@@ -549,7 +549,7 @@
         "jp": "攻撃力+<unbreak>#1[i]%</unbreak>。"
       },
       "4": {
-        "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. After the wearer uses a Follow-up ATK, increases DMG dealt by Ultimate by <unbreak>#2[i]%</unbreak>, lasting for <unbreak>#3[i]</unbreak> turn(s).",
+        "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. After the wearer uses a Follow-Up ATK, increases DMG dealt by Ultimate by <unbreak>#2[i]%</unbreak>, lasting for <unbreak>#3[i]</unbreak> turn(s).",
         "ParamList": [
           0.06,
           0.36,
@@ -754,7 +754,7 @@
         "jp": "会心率+<unbreak>#1[i]%</unbreak>。"
       },
       "4": {
-        "en": "After the wearer uses Basic ATK or Skill, if the wearer's memosprite is on the field, increases Max HP of the wearer and their memosprite by <unbreak>#1[i]%</unbreak>, and increases all allies' dealt DMG by <unbreak>#2[i]%</unbreak>, lasting until after the wearer's next use of Basic ATK or Skill.",
+        "en": "After the wearer uses Basic ATK or Skill, if the wearer's memosprite is on the field, increases Max HP of the wearer and their memosprite by <unbreak>#1[i]%</unbreak>, and increases all allies' DMG dealt by <unbreak>#2[i]%</unbreak>, lasting until after the wearer's next use of Basic ATK or Skill.",
         "ParamList": [
           0.24,
           0.15
@@ -795,6 +795,67 @@
     "kr": "별빛에 숨은 은둔자",
     "cn": "自匿星芒的隐士",
     "jp": "星の光を隠した隠者"
+  },
+  "129": {
+    "icon": "SpriteOutput/ItemIcon/71052.png",
+    "en": "Ever-Glorious Magical Girl",
+    "set": {
+      "2": {
+        "en": "Increases CRIT DMG by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.16
+        ],
+        "kr": "치명타 피해 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "暴击伤害提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "会心ダメージ+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "The Elation DMG dealt by the wearer and their memosprites ignores <unbreak>#1[i]%</unbreak> of targets' DEF. For each <unbreak>#2[i]</unbreak> accumulated Punchline allies gain, the Elation DMG dealt additionally ignores <unbreak>#3[i]%</unbreak> of targets' DEF, which stacks up to <unbreak>#4[i]</unbreak> time(s).",
+        "ParamList": [
+          0.1,
+          5,
+          0.01,
+          10
+        ],
+        "kr": "장착한 캐릭터와 해당 캐릭터의 기억 정령이 가하는 환락 피해가 목표의 방어력을 <unbreak>#1[i]%</unbreak> 무시하고, 아군이 웃음 포인트를 누적 <unbreak>#2[i]</unbreak>pt 획득할 때마다 가하는 환락 피해가 추가로 목표의 방어력을 <unbreak>#3[i]%</unbreak> 무시한다, 최대 중첩수: <unbreak>#4[i]</unbreak>스택",
+        "cn": "装备者及其忆灵造成的欢愉伤害无视目标<unbreak>#1[i]%</unbreak>的防御力，我方每累计获得<unbreak>#2[i]</unbreak>点笑点，造成的欢愉伤害额外无视目标<unbreak>#3[i]%</unbreak>的防御力，最多叠加<unbreak>#4[i]</unbreak>层。",
+        "jp": "装備キャラとその記憶の精霊が与える愉悦ダメージが、ターゲットの防御力を<unbreak>#1[i]%</unbreak>無視する。味方が「爆笑ネタ」を<unbreak>#2[i]</unbreak>個獲得するごとに、与える愉悦ダメージがさらにターゲットの防御力を<unbreak>#3[i]%</unbreak>無視する。最大で<unbreak>#4[i]</unbreak>層累積できる。"
+      }
+    },
+    "kr": "빛나는 공훈의 마법 소녀",
+    "cn": "闪耀功勋的魔法少女",
+    "jp": "功績輝く魔法少女"
+  },
+  "130": {
+    "icon": "SpriteOutput/ItemIcon/71053.png",
+    "en": "Diviner of Distant Reach",
+    "set": {
+      "2": {
+        "en": "Increases SPD by <unbreak>#1[i]%</unbreak>.",
+        "ParamList": [
+          0.06
+        ],
+        "kr": "속도 <unbreak>#1[i]%</unbreak> 증가",
+        "cn": "速度提高<unbreak>#1[i]%</unbreak>。",
+        "jp": "速度+<unbreak>#1[i]%</unbreak>。"
+      },
+      "4": {
+        "en": "Before entering combat, if the wearer's SPD is greater than or equal to <unbreak>#1[i]</unbreak>/<unbreak>#2[i]</unbreak>, increases the wearer's CRIT Rate by <unbreak>#3[i]%</unbreak>/<unbreak>#4[i]%</unbreak>. When the wearer uses Elation Skill for the first time in each battle, enhances all allies' Elation by <unbreak>#5[i]%</unbreak>. This effect cannot stack.",
+        "ParamList": [
+          120,
+          160,
+          0.1,
+          0.18,
+          0.1
+        ],
+        "kr": "전투 진입 전, 장착한 캐릭터의 속도가 <unbreak>#1[i]</unbreak>/<unbreak>#2[i]</unbreak> 이상일 시 장착한 캐릭터의 치명타 확률이 <unbreak>#3[i]%</unbreak>/<unbreak>#4[i]%</unbreak> 증가한다. 장착한 캐릭터가 각 전투에서 처음으로 환락 스킬 발동 시 모든 아군의 환락도가 <unbreak>#5[i]%</unbreak> 증가하며, 해당 효과는 중첩되지 않는다",
+        "cn": "进入战斗前，若装备者的速度大于等于<unbreak>#1[i]</unbreak>/<unbreak>#2[i]</unbreak>，使装备者的暴击率提高<unbreak>#3[i]%</unbreak>/<unbreak>#4[i]%</unbreak>。装备者每场战斗首次施放欢愉技时，使我方全体欢愉度提高<unbreak>#5[i]%</unbreak>，该效果无法叠加。",
+        "jp": "戦闘に入る前、装備キャラの速度が<unbreak>#1[i]</unbreak>/<unbreak>#2[i]</unbreak>以上の場合、装備キャラの会心率+<unbreak>#3[i]%</unbreak>/<unbreak>#4[i]%</unbreak>。装備キャラが一度の戦闘で初めて愉悦スキルを使用した時、味方全体の愉悦度+<unbreak>#5[i]%</unbreak>。この効果は累積できない。"
+      }
+    },
+    "kr": "천명에 응해 먼 길을 떠난 점술가",
+    "cn": "应天涉远的卜者",
+    "jp": "天命に従う旅の卜者"
   },
   "301": {
     "icon": "SpriteOutput/ItemIcon/71012.png",
@@ -901,7 +962,7 @@
     "en": "Inert Salsotto",
     "set": {
       "2": {
-        "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. When the wearer's current CRIT Rate reaches <unbreak>#2[i]%</unbreak> or higher, the DMG dealt by the wearer's Ultimate and Follow-up ATK increases by <unbreak>#3[i]%</unbreak>.",
+        "en": "Increases the wearer's CRIT Rate by <unbreak>#1[i]%</unbreak>. When the wearer's current CRIT Rate reaches <unbreak>#2[i]%</unbreak> or higher, the DMG dealt by the wearer's Ultimate and Follow-Up ATK increases by <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
           0.08,
           0.5,
@@ -1081,7 +1142,7 @@
     "en": "Duran, Dynasty of Running Wolves",
     "set": {
       "2": {
-        "en": "When an ally uses a Follow-up ATK, the wearer gains 1 stack of Merit, stacking up to <unbreak>#1[i]</unbreak> time(s). Each stack of Merit increases the DMG dealt by the wearer's Follow-up ATKs by <unbreak>#2[i]%</unbreak>. When there are <unbreak>#1[i]</unbreak> stacks, additionally increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak>.",
+        "en": "When an ally character uses a Follow-Up ATK, the wearer gains 1 stack of \"Merit,\" stacking up to <unbreak>#1[i]</unbreak> time(s). Each stack of \"Merit\" increases the DMG dealt by the wearer's Follow-Up ATKs by <unbreak>#2[i]%</unbreak>. When there are <unbreak>#1[i]</unbreak> stacks, additionally increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak>.",
         "ParamList": [
           5,
           0.05,
@@ -1263,7 +1324,7 @@
     "en": "Tengoku@Livestream",
     "set": {
       "2": {
-        "en": "Increases the wearer's CRIT DMG by <unbreak>#1[i]%</unbreak>. If <unbreak>#2[i]</unbreak> or more Skill Points are consumed in the same turn, additionally increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak> for <unbreak>#4[i]</unbreak> turns.",
+        "en": "Increases the wearer's CRIT DMG by <unbreak>#1[i]%</unbreak>. If <unbreak>#2[i]</unbreak> or more Skill Points are consumed in the same turn, additionally increases the wearer's CRIT DMG by <unbreak>#3[i]%</unbreak>, lasting for <unbreak>#4[i]</unbreak> turns.",
         "ParamList": [
           0.16,
           3,
@@ -1272,7 +1333,7 @@
         ],
         "kr": "장착한 캐릭터의 치명타 피해가 <unbreak>#1[i]%</unbreak> 증가하며, 같은 턴에 전투 스킬 포인트를 <unbreak>#2[i]</unbreak>pt 이상 소모 시 추가로 장착한 캐릭터의 치명타 피해가 <unbreak>#3[i]%</unbreak> 증가한다, 지속 시간: <unbreak>#4[i]</unbreak>턴",
         "cn": "使装备者的暴击伤害提高<unbreak>#1[i]%</unbreak>，若在同一回合内消耗大于等于<unbreak>#2[i]</unbreak>点战技点，额外使装备者暴击伤害提高<unbreak>#3[i]%</unbreak>，持续<unbreak>#4[i]</unbreak>回合。",
-        "jp": "装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>。同じターンにSPを<unbreak>#2[i]</unbreak>以上消費した場合、さらに会心ダメージ+<unbreak>#3[i]%</unbreak>、<unbreak>#4[i]</unbreak>ターン継続。"
+        "jp": "装備キャラの会心ダメージ+<unbreak>#1[i]%</unbreak>。1ターン以内にSPを<unbreak>#2[i]</unbreak>以上消費した場合、さらに会心ダメージ+<unbreak>#3[i]%</unbreak>、<unbreak>#4[i]</unbreak>ターン継続。"
       }
     },
     "kr": "텐고쿠@라이브스트리밍",

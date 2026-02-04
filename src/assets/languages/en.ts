@@ -105,7 +105,7 @@ const langs: LanguageStrings = {
 	account_NoAccount: "No account set yet",
 	account_HowToSetUpAccount: "❓ How to Set Up Account",
 	account_HowToSetUpAccountDesc:
-		"1. Use the /account command\n2. Select `① Set UID` and `② Set Cookie`\n### 🔥 How to get the Cookie\n1. Open [Hoyolab](https://www.hoyolab.com/)\n2. After logging in, press `F12` or `Ctrl + Shift + I` to open Developer Tools\n3. Switch to `Application` and select `Cookie` on the left\n4. Copy `ltoken_v2` and `ltuid_v2` and fill them in the fields",
+		"1. Use the /account command\n2. Select `① Account Login` or `② Set UID` and `③ Set Cookie`\n### 🔥 How to get the Cookie\n1. Open [Hoyolab](https://www.hoyolab.com/)\n2. After logging in, press `F12` or `Ctrl + Shift + I` to open Developer Tools\n3. Switch to `Application` and select `Cookie` on the left\n4. Copy `ltoken_v2` and `ltuid_v2` and fill them in the fields",
 	account_CookieSetSuccess: "Cookie bound to <z>!",
 	account_CookieSetFailed: "Cookie binding failed",
 	account_CookieSetFailedDesc: "Please check if the Cookie is correct",
@@ -113,6 +113,11 @@ const langs: LanguageStrings = {
 	account_LimitExceeded: "You can set up to `5` accounts!",
 	account_AlreadySet: "You have already set <z>!",
 	account_UidSetSuccess: "UID <z> set successfully!",
+	account_QuickLink: "① Account Login (Recommended)",
+	account_QuickLinkModal: "Account Login",
+	account_QuickLinkDesc:
+		"Quickly login and link your account using email and password",
+	account_LoginAccountModalField: "Account (Email)",
 
 	admin_NoPermission: "You do not have permission to use this command!",
 	admin_RemoveFail: "Failed to delete",
@@ -172,9 +177,9 @@ const langs: LanguageStrings = {
 	daily_NonAccount: "Account not set",
 	daily_NonAccountDesc: "Please set up an account before using this command",
 	autoDaily_Off: "Auto Check-in turned off",
-	autoDaily_On: "Auto Check-in turned on",
-	autoDaily_Time: "Auto Check-in Time: <time>",
-	autoDaily_Tag: "Tag on Check-in: <z>",
+	autoDaily_On: "Automatic check-in is turned on",
+	autoDaily_Time: "Automatic check-in time: <time>",
+	autoDaily_Tag: "Mention when checking in: <z>",
 
 	warp_TypeCollaborationCharacter: "Collaboration Character Warp",
 	warp_TypeCollaborationLightcone: "Collaboration Light Cone Warp",

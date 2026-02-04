@@ -26,10 +26,11 @@ interface LoginResult {
 
 async function loginAccount(
 	account: string,
-	password: string
-): Promise<LoginResult> {
+	password: string,
+	captchaResult?: any
+): Promise<any> {
 	const URL =
-		"https://sg-public-api.hoyolab.com/account/ma-passport/api/webLoginByPassword";
+		"https://passport-api-sg.hoyolab.com/account/ma-passport/api/webLoginByPassword";
 
 	const payload = {
 		account: encrypt(account),
@@ -37,16 +38,29 @@ async function loginAccount(
 		token_type: 6
 	};
 
-	const headers = {
+	const headers: Record<string, string> = {
+		accept: "application/json, text/plain, */*",
+		"content-type": "application/json",
 		"x-rpc-app_id": "c9oqaq3s3gu8",
 		"x-rpc-client_type": "4",
-		"x-rpc-sdk_version": "2.14.1",
+		"x-rpc-sdk_version": "2.49.0",
 		"x-rpc-game_biz": "bbs_oversea",
+		"x-rpc-language": "zh-tw",
 		"x-rpc-source": "v2.webLogin",
-		"x-rpc-referrer": "https://www.hoyolab.com",
+		"x-rpc-device_model": "Chrome 144.0.0.0",
+		"x-rpc-device_name": "Chrome",
+		"x-rpc-device_os": "Windows 10 64-bit",
 		Origin: "https://account.hoyolab.com",
 		Referer: "https://account.hoyolab.com/"
 	};
+
+	if (captchaResult) {
+		headers["x-rpc-aigis"] = Buffer.from(
+			JSON.stringify({
+				data: JSON.stringify(captchaResult)
+			})
+		).toString("base64");
+	}
 
 	try {
 		const response = await fetch(URL, {
@@ -55,34 +69,65 @@ async function loginAccount(
 			body: JSON.stringify(payload)
 		});
 
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
+		const responseData: any = await response.json();
 
-		let responseData: any;
-		try {
-			const responseText = await response.text();
-			responseData = JSON.parse(responseText);
-		} catch (error) {
-			throw new Error(`Failed to parse response: ${error}`);
+		console.log(
+			"[Login] Response data:",
+			JSON.stringify(responseData, null, 2)
+		);
+
+		// Check for Geetest - retcode -3101 means captcha required
+		if (responseData.retcode === -3101) {
+			const aigisHeader = response.headers.get("x-rpc-aigis");
+			console.log("[Login] Aigis header:", aigisHeader);
+
+			if (aigisHeader) {
+				const aigisData = JSON.parse(aigisHeader);
+				console.log(
+					"[Login] Aigis data:",
+					JSON.stringify(aigisData, null, 2)
+				);
+
+				// aigisData.data is a JSON string, need to parse it again
+				const captchaData =
+					typeof aigisData.data === "string"
+						? JSON.parse(aigisData.data)
+						: aigisData.data;
+
+				console.log(
+					"[Login] Captcha data:",
+					JSON.stringify(captchaData, null, 2)
+				);
+
+				return {
+					captcha: true,
+					data: {
+						captcha: {
+							geetestId: captchaData.gt,
+							challenge: captchaData.challenge,
+							riskType: aigisData.mmt_type
+						}
+					}
+				};
+			}
 		}
 
 		if (responseData.retcode !== 0) {
-			throw new Error(`Failed to login: ${responseData.message}`);
+			throw new Error(
+				`登入失敗: ${responseData.message || responseData.retcode}`
+			);
 		}
 
 		const result = response.headers;
 		const cookie = parseCookie(result.get("set-cookie") || "");
 
 		return {
-			cookie: cookie,
-			error: null
+			cookie,
+			uid: responseData.data.account_info.weblogin_token, // Dummy as we usually detect UID later
+			nickname: responseData.data.account_info.email
 		};
 	} catch (error) {
-		return {
-			cookie: null,
-			error: error as Error
-		};
+		throw error;
 	}
 }
 
@@ -98,7 +143,15 @@ function parseCookie(cookie: string): string {
 		}
 	}
 
-	return `ltoken_v2=${parsedCookie.ltoken_v2}; ltuid_v2=${parsedCookie.ltuid_v2}; cookie_token_v2=${parsedCookie.cookie_token_v2}; account_mid_v2=${parsedCookie.account_mid_v2};`;
+	let res = "";
+	if (parsedCookie.ltoken_v2) res += `ltoken_v2=${parsedCookie.ltoken_v2}; `;
+	if (parsedCookie.ltuid_v2) res += `ltuid_v2=${parsedCookie.ltuid_v2}; `;
+	if (parsedCookie.cookie_token_v2)
+		res += `cookie_token_v2=${parsedCookie.cookie_token_v2}; `;
+	if (parsedCookie.account_mid_v2)
+		res += `account_mid_v2=${parsedCookie.account_mid_v2}; `;
+
+	return res;
 }
 
 export default loginAccount;

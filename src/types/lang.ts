@@ -107,6 +107,10 @@ export interface LanguageStrings {
 	account_LimitExceeded: string;
 	account_AlreadySet: string;
 	account_UidSetSuccess: string;
+	account_QuickLink: string;
+	account_QuickLinkModal: string;
+	account_QuickLinkDesc: string;
+	account_LoginAccountModalField: string;
 
 	admin_NoPermission: string;
 	admin_RemoveFail: string;

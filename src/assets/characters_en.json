@@ -3058,6 +3058,54 @@
     "preview": "image/character_preview/1317.png",
     "portrait": "image/character_portrait/1317.png"
   },
+  "1321": {
+    "id": "1321",
+    "name": "The Dahlia",
+    "tag": "dahlia",
+    "rarity": 5,
+    "path": "Warlock",
+    "element": "Fire",
+    "max_sp": 130,
+    "ranks": [
+      "132101",
+      "132102",
+      "132103",
+      "132104",
+      "132105",
+      "132106"
+    ],
+    "skills": [
+      "132101",
+      "132102",
+      "132103",
+      "132104",
+      "132106",
+      "132107"
+    ],
+    "skill_trees": [
+      "1321001",
+      "1321002",
+      "1321003",
+      "1321004",
+      "1321007",
+      "1321101",
+      "1321102",
+      "1321103",
+      "1321201",
+      "1321202",
+      "1321203",
+      "1321204",
+      "1321205",
+      "1321206",
+      "1321207",
+      "1321208",
+      "1321209",
+      "1321210"
+    ],
+    "icon": "icon/character/1321.png",
+    "preview": "image/character_preview/1321.png",
+    "portrait": "image/character_portrait/1321.png"
+  },
   "1401": {
     "id": "1401",
     "name": "The Herta",

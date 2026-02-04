@@ -42,13 +42,6 @@ export default {
 				})
 				.setRequired(true)
 				.addChoices(
-					// {
-					// 	name: "🔥Login with account and password🔥",
-					// 	name_localizations: {
-					// 		"zh-TW": "🔥帳號密碼登入🔥"
-					// 	},
-					// 	value: "LoginAccount"
-					// },
 					{
 						name: "❓ How to set up account",
 						name_localizations: {
@@ -57,16 +50,23 @@ export default {
 						value: "HowToSetUpAccount"
 					},
 					{
-						name: "① Set UID",
+						name: "① Account Login (Recommended)",
 						name_localizations: {
-							"zh-TW": "① 設定 UID"
+							"zh-TW": "① 帳密登入 (推薦)"
+						},
+						value: "QuickLink"
+					},
+					{
+						name: "② Set UID (Manual)",
+						name_localizations: {
+							"zh-TW": "② 設定 UID (手動)"
 						},
 						value: "SetUserID"
 					},
 					{
-						name: "② Set Cookie",
+						name: "③ Set Cookie (Manual)",
 						name_localizations: {
-							"zh-TW": "② 設定 Cookie"
+							"zh-TW": "③ 設定 Cookie (手動)"
 						},
 						value: "SetUserCookie"
 					},
@@ -134,11 +134,11 @@ export default {
 					flags: MessageFlags.Ephemeral
 				});
 				return;
-			case "LoginAccount":
+			case "QuickLink":
 				await interaction.showModal(
 					new ModalBuilder()
 						.setCustomId("account_LoginAccountModal")
-						.setTitle(tr("account_LoginAccount"))
+						.setTitle(tr("account_QuickLinkModal"))
 						.addComponents(
 							new ActionRowBuilder<TextInputBuilder>().addComponents(
 								new TextInputBuilder()

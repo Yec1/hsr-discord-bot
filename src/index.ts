@@ -140,6 +140,8 @@ async function bindEvents(paths: string[]) {
 	}
 }
 
+import { VerificationServer } from "@/utilities/core/VerificationServer.js";
+
 /**
  * @description 載入指令
  */
@@ -182,6 +184,8 @@ export async function load() {
 
 client.login(process.env.NODE_ENV === "dev" ? config.TEST_TOKEN : config.TOKEN);
 
-load();
+load().then(() => {
+	new VerificationServer(cluster as any).start();
+});
 
 export { client, database, cluster, commands };

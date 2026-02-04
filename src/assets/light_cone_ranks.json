@@ -7923,6 +7923,65 @@
       ]
     ]
   },
+  "23050": {
+    "id": "23050",
+    "skill": "焚身",
+    "desc": "使裝備者的擊破特攻提高#1[i]%。進入戰鬥時，使裝備者和另一位開戰的隊友造成的擊破傷害提高#2[i]%，若不存在開戰的隊友則對裝備者和擊破特攻最高的隊友生效，同類效果無法疊加。裝備者為敵方目標附加弱點時，恢復1個戰技點，該效果最多觸發1次，施放終結技時重置可觸發次數。",
+    "params": [
+      [
+        0.6,
+        0.32
+      ],
+      [
+        0.75,
+        0.42
+      ],
+      [
+        0.9,
+        0.52
+      ],
+      [
+        1.05,
+        0.62
+      ],
+      [
+        1.2,
+        0.72
+      ]
+    ],
+    "properties": [
+      [
+        {
+          "type": "BreakDamageAddedRatioBase",
+          "value": 0.6
+        }
+      ],
+      [
+        {
+          "type": "BreakDamageAddedRatioBase",
+          "value": 0.75
+        }
+      ],
+      [
+        {
+          "type": "BreakDamageAddedRatioBase",
+          "value": 0.9
+        }
+      ],
+      [
+        {
+          "type": "BreakDamageAddedRatioBase",
+          "value": 1.05
+        }
+      ],
+      [
+        {
+          "type": "BreakDamageAddedRatioBase",
+          "value": 1.2
+        }
+      ]
+    ]
+  },
   "23051": {
     "id": "23051",
     "skill": "新鱗",
