@@ -780,7 +780,7 @@
     "desc": null,
     "kr": "슈룸 모험기",
     "cn": "菇菇嘎嘎历险记",
-    "jp": "タケタケ冒険記"
+    "jp": "タケタケ{RUBY_B#ぼうけんき}冒険記{RUBY_E#}"
   },
   "21065": {
     "rank": "CombatPowerLightconeRarity4",
@@ -789,7 +789,7 @@
     "desc": null,
     "kr": "오늘의 행운",
     "cn": "今日好手气",
-    "jp": "今日は好運"
+    "jp": "{RUBY_B#きょう}今日{RUBY_E#}は{RUBY_B#こううん}好運{RUBY_E#}"
   },
   "22000": {
     "rank": "CombatPowerLightconeRarity4",

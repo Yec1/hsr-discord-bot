@@ -810,7 +810,7 @@
         "jp": "会心ダメージ+<unbreak>#1[i]%</unbreak>。"
       },
       "4": {
-        "en": "The Elation DMG dealt by the wearer and their memosprites ignores <unbreak>#1[i]%</unbreak> of targets' DEF. For each <unbreak>#2[i]</unbreak> accumulated Punchline allies gain, the Elation DMG dealt additionally ignores <unbreak>#3[i]%</unbreak> of targets' DEF, which stacks up to <unbreak>#4[i]</unbreak> time(s).",
+        "en": "The Elation DMG dealt by the wearer and their memosprites ignores <unbreak>#1[i]%</unbreak> of targets' DEF. For every <unbreak>#2[i]</unbreak> accumulated Punchline allies gain, the Elation DMG dealt additionally ignores <unbreak>#3[i]%</unbreak> of targets' DEF, stacking up to <unbreak>#4[i]</unbreak> time(s).",
         "ParamList": [
           0.1,
           5,

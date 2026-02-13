@@ -44,9 +44,12 @@ async function loginAccount(
 		"x-rpc-app_id": "c9oqaq3s3gu8",
 		"x-rpc-client_type": "4",
 		"x-rpc-sdk_version": "2.49.0",
+		"x-rpc-aigis_v4": "true",
 		"x-rpc-game_biz": "bbs_oversea",
 		"x-rpc-language": "zh-tw",
 		"x-rpc-source": "v2.webLogin",
+		"x-rpc-device_id": "59898f79-b602-48c7-9af4-38e7d6f8a659",
+		"x-rpc-device_fp": "38d7f38a087c3",
 		"x-rpc-device_model": "Chrome 144.0.0.0",
 		"x-rpc-device_name": "Chrome",
 		"x-rpc-device_os": "Windows 10 64-bit",
@@ -55,11 +58,56 @@ async function loginAccount(
 	};
 
 	if (captchaResult) {
+		console.log(
+			"[Login] Constructing Aigis header with:",
+			JSON.stringify(captchaResult, null, 2)
+		);
+		const { session_id } = captchaResult;
+
+		const isV4 = !!captchaResult.lot_number;
+		// v10: Respect riskType from server (likely 1 for hybrid), fallback to 2 for v4
+		const mmtType = Number(captchaResult.riskType) || (isV4 ? 2 : 1);
+
+		const aigisPayload = {
+			session_id: session_id,
+			mmt_type: mmtType,
+			data: JSON.stringify(
+				isV4
+					? {
+							gt:
+								captchaResult.captcha_id ||
+								captchaResult.geetestId,
+							captcha_id:
+								captchaResult.captcha_id ||
+								captchaResult.geetestId,
+							lot_number: captchaResult.lot_number,
+							pass_token: captchaResult.pass_token,
+							gen_time: captchaResult.gen_time,
+							captcha_output: captchaResult.captcha_output,
+							use_v4: true,
+							risk_type: captchaResult.risk_type,
+							success: 1,
+							new_captcha: 1
+						}
+					: {
+							geetest_challenge: captchaResult.geetest_challenge,
+							geetest_validate: captchaResult.geetest_validate,
+							geetest_seccode: captchaResult.geetest_seccode,
+							success: 1,
+							new_captcha: 1
+						}
+			)
+		};
+
+		// Revert to Base64 encoding for v10 (Passport API expectation)
 		headers["x-rpc-aigis"] = Buffer.from(
-			JSON.stringify({
-				data: JSON.stringify(captchaResult)
-			})
+			JSON.stringify(aigisPayload)
 		).toString("base64");
+
+		console.log(
+			"[Login-V4-v10] Final Aigis Header (Base64 + Server mmtType):",
+			JSON.stringify(aigisPayload, null, 2)
+		);
 	}
 
 	try {
@@ -76,18 +124,21 @@ async function loginAccount(
 			JSON.stringify(responseData, null, 2)
 		);
 
-		// Check for Geetest - retcode -3101 means captcha required
-		if (responseData.retcode === -3101) {
+		// Check for Geetest - retcode -3101 or 1034 means captcha required
+		if (responseData.retcode === -3101 || responseData.retcode === 1034) {
 			const aigisHeader = response.headers.get("x-rpc-aigis");
-			console.log("[Login] Aigis header:", aigisHeader);
+			console.log(
+				"[Login] Captcha required. Retcode:",
+				responseData.retcode
+			);
+			console.log(
+				"[Login] Response Data:",
+				JSON.stringify(responseData, null, 2)
+			);
+			console.log("[Login] Aigis Header:", aigisHeader);
 
 			if (aigisHeader) {
 				const aigisData = JSON.parse(aigisHeader);
-				console.log(
-					"[Login] Aigis data:",
-					JSON.stringify(aigisData, null, 2)
-				);
-
 				// aigisData.data is a JSON string, need to parse it again
 				const captchaData =
 					typeof aigisData.data === "string"
@@ -95,7 +146,11 @@ async function loginAccount(
 						: aigisData.data;
 
 				console.log(
-					"[Login] Captcha data:",
+					"[Login] Full Aigis Data:",
+					JSON.stringify(aigisData, null, 2)
+				);
+				console.log(
+					"[Login] Parsed Captcha Data:",
 					JSON.stringify(captchaData, null, 2)
 				);
 
@@ -105,7 +160,11 @@ async function loginAccount(
 						captcha: {
 							geetestId: captchaData.gt,
 							challenge: captchaData.challenge,
-							riskType: aigisData.mmt_type
+							riskType: aigisData.mmt_type,
+							risk_type: captchaData.risk_type,
+							success: captchaData.success,
+							new_captcha: captchaData.new_captcha,
+							aigisSessionId: aigisData.session_id
 						}
 					}
 				};
@@ -113,6 +172,7 @@ async function loginAccount(
 		}
 
 		if (responseData.retcode !== 0) {
+			console.error("[Login] Hoyoverse Login Failed:", responseData);
 			throw new Error(
 				`登入失敗: ${responseData.message || responseData.retcode}`
 			);

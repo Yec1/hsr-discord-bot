@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>終末地個人名片集開發室</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <style>
+        .material-symbols-outlined { font-size: 18px; vertical-align: middle; }
+        .layer-item { display: flex; align-items: center; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 4px; margin-bottom: 5px; cursor: pointer; font-size: 12px; border: 1px solid transparent; transition: background 0.2s; }
+        .layer-item:hover { background: rgba(255,255,255,0.05); }
+        .layer-item.selected { border: 1px solid var(--primary); background: rgba(52, 152, 219, 0.1); }
+        .layer-handle { cursor: grab; margin-right: 8px; color: #666; }
+        .layer-visibility { margin-right: 8px; cursor: pointer; color: #aaa; }
+        .layer-visibility.hidden { opacity: 0.3; }
+        .layer-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        input[type="color"] { width: 30px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; }
+        .prop-row input.wide { width: 100%; text-align: left; }
+        @font-face {
+            font-family: 'Noto Sans TC';
+            src: url('/assets/fonts/Noto-Sans-TC-400.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Noto Sans TC';
+            src: url('/assets/fonts/Noto-Sans-TC-700.woff2') format('woff2');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        :root {
+            --primary: #3498db;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f1c40f;
+            --bg: #121212;
+            --sidebar-bg: #1e1e1e;
+            --text: #e0e0e0;
+            --border: #333;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Noto Sans TC', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 8px 20px;
+            background: #181818;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 16px;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--warning);
+        }
+
+        .header-controls { display: flex; gap: 10px; }
+        .icon-btn { background: #333; border: 1px solid #444; color: #fff; width: 32px; height: 32px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .icon-btn:hover { background: #444; }
+        .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #editor-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #080808;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        #canvas-wrapper {
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            background: #000;
+        }
+
+        #sidebar {
+            width: 360px;
+            background: var(--sidebar-bg);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 12px; opacity: 0.5; }
+        .tab.active { opacity: 1; border-bottom: 2px solid var(--primary); background: rgba(255,255,255,0.05); }
+
+        .tab-content { flex: 1; display: none; flex-direction: column; padding: 15px; overflow-y: auto; }
+        .tab-content.active { display: flex; }
+
+        .panel { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; border: 1px solid #333; margin-bottom: 15px; }
+        .panel-h {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--warning);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            font-family: 'Orbitron', sans-serif;
+        }
+        .panel-h::after {
+            content: '▼';
+            font-size: 10px;
+            transition: 0.2s;
+        }
+        .panel.collapsed .panel-h::after {
+            transform: rotate(-90deg);
+        }
+        .panel-content {
+            transition: 0.2s;
+            overflow: hidden;
+        }
+        .panel.collapsed .panel-content {
+            display: none !important;
+        }
+
+        .prop-row { display: flex; margin-bottom: 8px; align-items: center; justify-content: space-between; font-size: 13px; }
+        input { background: #000; border: 1px solid #444; color: #fff; padding: 4px 8px; border-radius: 4px; width: 70px; text-align: right; }
+
+        .layer-item { display: flex; align-items: center; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 4px; margin-bottom: 5px; cursor: pointer; font-size: 12px; border: 1px solid transparent; }
+        .layer-item.selected { border: 1px solid var(--primary); background: rgba(52, 152, 219, 0.1); }
+        .layer-visibility { margin-right: 10px; font-size: 16px; cursor: pointer; }
+
+        .footer-btns { padding: 15px; border-top: 1px solid var(--border); background: var(--sidebar-bg); }
+        button { width: 100%; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 8px; transition: 0.2s; font-family: inherit; }
+        button.success { background: var(--success); color: white; }
+        button.ghost { background: #333; color: #ccc; }
+        button:hover { opacity: 0.8; }
+
+        #loading { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #222; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Background Selection Styles */
+        .bg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+        .bg-option { cursor: pointer; border: 2px solid transparent; border-radius: 4px; overflow: hidden; transition: 0.2s; position: relative; }
+        .bg-option:hover { border-color: var(--primary); }
+        .bg-option.active { border-color: var(--success); }
+        .bg-option img { width: 100%; height: 60px; object-fit: cover; display: block; }
+        .bg-option span { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); font-size: 10px; padding: 2px; text-align: center; }
+
+        /* Asset Picker Modal */
+        #asset-picker {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .picker-content {
+            width: 80%;
+            max-width: 1000px;
+            height: 80vh;
+            background: #181818;
+            border: 1px solid #333;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .picker-header {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .picker-header h2 { margin: 0; font-size: 20px; color: var(--warning); font-family: 'Orbitron', sans-serif; }
+        .picker-grid {
+            flex: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+        }
+        .asset-item {
+            aspect-ratio: 2/3;
+            background: #222;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .asset-item:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .asset-item img { width: 100%; height: 100%; object-fit: cover; }
+        .asset-item span {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: #eee;
+            font-size: 10px;
+            padding: 5px;
+            text-align: center;
+        }
+        .close-btn { background: none; border: none; color: #aaa; cursor: pointer; padding: 5px; }
+        .close-btn:hover { color: #fff; }
+    </style>
+</head>
+<body>
+    <div id="loading"><div class="spinner"></div><p>Syncing High-Fidelity Assets...</p></div>
+
+    <div id="asset-picker">
+        <div class="picker-content">
+            <div class="picker-header">
+                <h2>ILLUSTRATOR ASSETS</h2>
+                <button class="close-btn" onclick="closePicker()"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="picker-grid" id="asset-grid">
+                <!-- Assets will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <h1>ENDFIELD INDUSTRIES <span style="color: rgb(255, 255, 255)">v0.1.0</span> <span style="color: rgba(255, 255, 255, 0.37); font-size: 12px;">目前編輯器與機器人實際產出有些微誤差或錯位 敬請見諒，遇到問題請至 <a href="https://discord.gg/mPCEATJDve" target="_blank" style="color: var(--primary);">Discord</a> 詢問</span></h1>
+        <div class="header-controls">
+            <button class="icon-btn" onclick="undo()" id="btn-undo" title="Undo"><span class="material-symbols-outlined">undo</span></button>
+            <button class="icon-btn" onclick="redo()" id="btn-redo" title="Redo"><span class="material-symbols-outlined">redo</span></button>
+            <button class="icon-btn" onclick="share()" id="btn-share" title="Share Layout (分享佈局)" style="width: auto; padding: 0 10px; font-size: 12px; font-weight: bold; background: var(--primary);"><span class="material-symbols-outlined" style="margin-right:4px">share</span>分享 Share</button>
+        </div>
+        <div id="zoom-info" style="font-size:12px; opacity:0.5">Scale: 1.0x</div>
+    </header>
+
+    <main>
+        <div id="editor-area">
+            <div id="canvas-wrapper">
+                <canvas id="c"></canvas>
+            </div>
+        </div>
+
+        <div id="sidebar">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('inspector')">屬性</div>
+                <div class="tab" onclick="switchTab('layers')">圖層</div>
+                <div class="tab" onclick="switchTab('addElements')">其他</div>
+            </div>
+
+            <div id="inspector" class="tab-content active">
+                <div class="panel">
+                    <div class="panel-h" onclick="togglePanel(this)">佈局定位 <span id="sel-name" style="color:var(--primary)">NONE</span></div>
+                    <div class="panel-content">
+                        <div class="prop-row"><label>X</label><input type="number" id="p-x" onchange="mod()"></div>
+                        <div class="prop-row"><label>Y</label><input type="number" id="p-y" onchange="mod()"></div>
+                        <div class="prop-row"><label>縮放</label><input type="number" id="p-s" step="0.01" onchange="mod()"></div>
+                        <div class="prop-row"><label>旋轉</label><input type="number" id="p-rot" onchange="mod()"></div>
+                        <div class="prop-row"><label>透明度</label><input type="number" id="p-o" step="0.1" min="0" max="1" onchange="mod()"></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-h" onclick="togglePanel(this)">對齊工具</div>
+                    <div class="panel-content" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px;">
+                        <button class="ghost" style="padding:5px; font-size:10px;" onclick="align('left')">左對齊</button>
+                        <button class="ghost" style="padding:5px; font-size:10px;" onclick="align('center')">水平置中</button>
+                        <button class="ghost" style="padding:5px; font-size:10px;" onclick="align('right')">右對齊</button>
+                        <button class="ghost" style="padding:5px; font-size:10px;" onclick="align('top')">上對齊</button>
+                        <button class="ghost" style="padding:5px; font-size:10px;" onclick="align('middle')">垂直置中</button>
+                        <button class="ghost" style="padding:5px; font-size:10px;" onclick="align('bottom')">下對齊</button>
+                    </div>
+                </div>
+                
+                <div id="style-panel" class="panel" style="display:none">
+                    <div class="panel-h" onclick="togglePanel(this)">樣式與內容</div>
+                    <div class="panel-content">
+                        <div class="prop-row" id="row-fill"><label>顏色</label><input type="color" id="p-fill" onchange="mod()"></div>
+                        <div class="prop-row" id="row-text"><label>內容</label><input type="text" id="p-text" class="wide" onchange="mod()"></div>
+                        <div class="prop-row" id="row-fontSize"><label>字號</label><input type="number" id="p-fontSize" onchange="mod()"></div>
+                        <div class="prop-row" id="row-fontFamily"><label>字體</label>
+                            <select id="p-fontFamily" onchange="mod()" style="width:100px; background:#000; color:#fff; border:1px solid #444;">
+                                <option value="Noto Sans TC">Noto Sans</option>
+                                <option value="Orbitron">Orbitron</option>
+                                <option value="Arial">Arial</option>
+                            </select>
+                        </div>
+                        <div class="prop-row"><label>陰影距離</label><input type="number" id="p-shadowOffset" onchange="mod()"></div>
+                        <div class="prop-row"><label>陰影模糊</label><input type="number" id="p-shadowBlur" onchange="mod()"></div>
+                        <div class="prop-row"><label>邊框寬度</label><input type="number" id="p-strokeWidth" min="0" onchange="mod()"></div>
+                        <div class="prop-row"><label>邊框顏色</label><input type="color" id="p-stroke" onchange="mod()"></div>
+                    </div>
+                </div>
+                <div id="grid-controls" class="panel" style="display:none">
+                    <div class="panel-h" onclick="togglePanel(this)">角色列表設定</div>
+                    <div class="panel-content">
+                        <div class="prop-row"><label>每行數量</label><input type="number" id="g-cols" onchange="rerenderGrid()"></div>
+                        <div class="prop-row"><label>間距</label><input type="number" id="g-gap" onchange="rerenderGrid()"></div>
+                        <div class="prop-row"><label>最大顯示</label><input type="number" id="g-limit" onchange="rerenderGrid()"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="layers" class="tab-content">
+                <div id="layers-list"></div>
+            </div>
+
+            <div id="addElements" class="tab-content">
+                <div class="panel">
+                    <div class="panel-h" onclick="togglePanel(this)">快速新增元素</div>
+                    <div class="panel-content">
+                        <button class="ghost" style="width:100%; margin:5px 0" onclick="addRect()">➕ 新增矩形</button>
+                        <button class="ghost" style="width:100%; margin:5px 0" onclick="addLine()">➕ 新增分隔線</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-h" onclick="togglePanel(this)">背景設定</div>
+                    <div class="panel-content">
+                        <div class="prop-row">
+                            <label>縮放</label>
+                            <input type="range" id="bg-scale" min="0.01" max="10" step="0.1" value="1" oninput="updateBg(true, 'scale-range')"> 
+                            <input type="number" id="num-bg-scale" min="0.01" max="10" step="0.1" value="1" oninput="updateBg(true, 'scale-num')" style="width:50px; background:#000; color:#fff; border:1px solid #444; font-size:10px; margin-left:5px;">
+                        </div>
+                        <div class="prop-row">
+                            <label>X 位移</label>
+                            <input type="range" id="bg-x" min="-7000" max="10000" step="10" value="1200" oninput="updateBg(true, 'x-range')"> 
+                            <input type="number" id="num-bg-x" min="-7000" max="10000" step="10" value="1200" oninput="updateBg(true, 'x-num')" style="width:50px; background:#000; color:#fff; border:1px solid #444; font-size:10px; margin-left:5px;">
+                        </div>
+                        <div class="prop-row">
+                            <label>Y 位移</label>
+                            <input type="range" id="bg-y" min="-5000" max="7000" step="10" value="800" oninput="updateBg(true, 'y-range')"> 
+                            <input type="number" id="num-bg-y" min="-5000" max="7000" step="10" value="800" oninput="updateBg(true, 'y-num')" style="width:50px; background:#000; color:#fff; border:1px solid #444; font-size:10px; margin-left:5px;">
+                        </div>
+                        
+                        <div class="prop-row">
+                            <label>背景顏色</label>
+                            <input type="color" id="bg-fill-color" onchange="updateBg(true, 'picker')">
+                            <input type="text" id="bg-fill-color-text" oninput="updateBg(true, 'text')" placeholder="#HEX / RGBA" style="width:100px; background:#000; color:#fff; border:1px solid #444; font-size:10px; margin-left:5px;">
+                        </div>
+                        <button class="ghost" style="width:100%; margin-top:5px; font-size:10px;" onclick="resetBgSettings()">重置背景設定</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-h" onclick="togglePanel(this)">更換背景圖</div>
+                    <div class="panel-content bg-grid" id="bg-selector">
+                        <div class="bg-option" onclick="changeBg('bg.08c7f0.png')">
+                            <img src="/assets/bg.08c7f0.png" alt="Default">
+                            <span>預設</span>
+                        </div>
+                        <div class="bg-option" onclick="changeBg('bg.413ee1.png')">
+                            <img src="/assets/bg.413ee1.png" alt="Endfield Blue">
+                            <span>白色</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-h" onclick="togglePanel(this)">畫布尺寸</div>
+                    <div class="panel-content">
+                        <div class="prop-row"><label>寬度</label><input type="number" id="c-width" value="1500" onchange="resizeCanvas()"></div>
+                        <div class="prop-row"><label>高度</label><input type="number" id="c-height" value="2000" onchange="resizeCanvas()"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-btns">
+                <button class="success" onclick="save()">儲存同步 Save Layout</button>
+                <button class="ghost" onclick="resetTemplate()">重設預設模板 Reset Template</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const Editor = {
+            canvas: new fabric.Canvas('c', { 
+                width: 2400, 
+                height: 1600, 
+                backgroundColor: '#000', 
+                preserveObjectStacking: true 
+            }),
+            state: {
+                sessionData: null,
+                token: new URLSearchParams(window.location.search).get('token'),
+                registry: {},
+                clipboard: null
+            },
+            history: {
+                stack: [],
+                index: -1,
+                locked: false
+            }
+        };
+
+        const saveState = () => {
+            if(Editor.history.locked) return;
+            if(Editor.history.index < Editor.history.stack.length - 1) {
+                Editor.history.stack = Editor.history.stack.slice(0, Editor.history.index + 1);
+            }
+            const json = Editor.canvas.toJSON(['data']);
+            Editor.history.stack.push(JSON.stringify(json));
+            Editor.history.index++;
+            updateHistoryBtns();
+        };
+
+        const loadState = (idx) => {
+            Editor.history.locked = true;
+            Editor.canvas.loadFromJSON(Editor.history.stack[idx], () => {
+                // Re-bind registry
+                Editor.state.registry = {};
+                Editor.canvas.getObjects().forEach(o => {
+                    if (o.data && o.data.key) {
+                        Editor.state.registry[o.data.key] = o;
+                    }
+                });
+                updateLayers();
+                Editor.history.index = idx;
+                updateHistoryBtns();
+                Editor.history.locked = false;
+                Editor.canvas.requestRenderAll();
+            });
+        };
+
+        window.undo = () => {
+            if(Editor.history.index > 0) {
+                Editor.history.index--;
+                loadState(Editor.history.index);
+            }
+        };
+
+        window.redo = () => {
+            if(Editor.history.index < Editor.history.stack.length - 1) {
+                Editor.history.index++;
+                loadState(Editor.history.index);
+            }
+        };
+
+        function updateHistoryBtns() {
+            document.getElementById('btn-undo').disabled = Editor.history.index <= 0;
+            document.getElementById('btn-redo').disabled = Editor.history.index >= Editor.history.stack.length - 1;
+        }
+
+        let saveTimer = null;
+
+        function scheduleSave() {
+            if (Editor.history.locked) return;
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                saveState();
+            }, 300);
+        }
+
+        Editor.canvas.on('object:modified', scheduleSave);
+        Editor.canvas.on('object:added', scheduleSave);
+        Editor.canvas.on('object:removed', scheduleSave);
+
+        // Image Loader with Robustness & Timeout
+        const loadImg = (url) => new Promise(resolve => {
+            if(!url) return resolve(null);
+            
+            let target = url;
+            if (url.startsWith('http')) {
+                // Check if it's already a proxy URL to avoid double-proxying (unlikely but safe)
+                if (!url.includes('/api/proxy')) {
+                    target = `/endfield/api/proxy?url=${encodeURIComponent(url)}`;
+                }
+            }
+
+            // Create a native image first to handle loading state reliably
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            const timer = setTimeout(() => {
+                img.src = ''; // Cancel loading
+                console.warn('Image load timed out:', url);
+                resolve(null);
+            }, 5000); // 5s timeout per image
+
+            img.onload = () => {
+                clearTimeout(timer);
+                const fImg = new fabric.Image(img);
+                resolve(fImg);
+            };
+
+            img.onerror = () => {
+                clearTimeout(timer);
+                console.warn('Image load failed:', url);
+                resolve(null);
+            };
+
+            img.src = target;
+        });
+
+        async function init() {
+            if (!Editor.state.token) return alert('Token Error');
+            try {
+                // Show loading status
+                const loadingText = document.querySelector('#loading p');
+                loadingText.innerText = 'Fetching Profile Data...';
+
+                const res = await fetch(`/endfield/api/profile/${Editor.state.token}`);
+                Editor.state.sessionData = await res.json();
+                if (Editor.state.sessionData.error) throw new Error(Editor.state.sessionData.error);
+
+                if (!Editor.state.sessionData.template.canvas) {
+                    Editor.state.sessionData.template.canvas = { width: 2400, height: 1600, padding: 80 };
+                }
+                const cv = Editor.state.sessionData.template.canvas;
+                document.getElementById('c-width').value = cv.width || 2400;
+                document.getElementById('c-height').value = cv.height || 1600;
+                
+                // Initialize fabric dimensions from template
+                Editor.canvas.setWidth(cv.width || 2400);
+                Editor.canvas.setHeight(cv.height || 1600);
+
+                autoZoom();
+                window.onresize = autoZoom;
+
+                // Load from JSON if available
+                if (Editor.state.sessionData.template.fabricJson) {
+                    loadingText.innerText = 'Hydrating Canvas State...';
+                    console.log('Loading from JSON...');
+                    
+                    // loadFromJSON can sometimes hang if resources fail, let's wrap it
+                    await new Promise((resolve) => {
+                        Editor.canvas.loadFromJSON(Editor.state.sessionData.template.fabricJson, () => {
+                            Editor.canvas.renderAll();
+                            rebuildRegistry();
+                            if(window.syncBgUI) window.syncBgUI();
+                            saveState();
+                            resolve();
+                        });
+                    });
+                } else {
+                    loadingText.innerText = 'Rendering Fresh Layout...';
+                    await render();
+                    if(window.syncBgUI) window.syncBgUI();
+                    saveState();
+                }
+
+                // Load dynamic backgrounds
+                loadDynamicBackgrounds();
+
+                document.getElementById('loading').style.display = 'none';
+
+            } catch (e) { 
+                console.error(e);
+                alert('Error loading profile: ' + e.message);
+                // Allow user to try reset if stuck
+                document.querySelector('#loading p').innerText = '請至機器人重新使用指令';
+            }
+        }
+
+        // Extract most frequent (dominant) color from image edges/corners with Weighted Neighborhood Mode
+        function getEdgeAverageColor(fabricImage) {
+            try {
+                const img = fabricImage.getElement();
+                if (!img || !img.width || !img.height) return '#000000';
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = img.width;
+                tempCanvas.height = img.height;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                const width = img.width;
+                const height = img.height;
+                
+                const imgDataObject = ctx.getImageData(0, 0, width, height);
+                const data = imgDataObject.data;
+                const buckets = new Map();
+                const quantize = 8; 
+                const step = 4;
+                
+                const addPixel = (x, y) => {
+                    const ix = Math.floor(x);
+                    const iy = Math.floor(y);
+                    if (ix < 0 || ix >= width || iy < 0 || iy >= height) return;
+                    
+                    const idx = (iy * width + ix) * 4;
+                    const r = data[idx];
+                    const g = data[idx+1];
+                    const b = data[idx+2];
+                    const a = data[idx+3];
+                    
+                    if (a < 128) return;
+                    
+                    const qr = Math.floor(r / quantize);
+                    const qg = Math.floor(g / quantize);
+                    const qb = Math.floor(b / quantize);
+                    const key = `${qr},${qg},${qb}`;
+                    buckets.set(key, (buckets.get(key) || 0) + 1);
+                };
+                
+                // Optimized Zones: Focus on Top 25% and Sides (behind character area)
+                const zones = [
+                    { x: 0, y: 0, w: width, h: height * 0.25 }, // Top 25%
+                    { x: 0, y: height * 0.25, w: width * 0.15, h: height * 0.5 }, // Left Side
+                    { x: width * 0.85, y: height * 0.25, w: width * 0.15, h: height * 0.5 } // Right Side
+                ];
+                
+                zones.forEach(z => {
+                    for (let x = z.x; x < z.x + z.w; x += step) {
+                        for (let y = z.y; y < z.y + z.h; y += step) {
+                            addPixel(x, y);
+                        }
+                    }
+                });
+                
+                if (buckets.size === 0) return '#000000';
+                
+                // Smart Mode: Weighted Neighborhood (Sum counts of adjacent buckets)
+                let maxWeight = 0;
+                let bestKey = '0,0,0';
+                
+                for (const [key, count] of buckets.entries()) {
+                    const [qr, qg, qb] = key.split(',').map(Number);
+                    let weight = 0;
+                    
+                    // Look at 3x3x3 neighborhood
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dg = -1; dg <= 1; dg++) {
+                            for (let db = -1; db <= 1; db++) {
+                                const nKey = `${qr+dr},${qg+dg},${qb+db}`;
+                                // Factor in center weight (Gauss-like)
+                                const factor = (dr===0 && dg===0 && db===0) ? 2 : 1;
+                                weight += (buckets.get(nKey) || 0) * factor;
+                            }
+                        }
+                    }
+                    
+                    // Saturation Bias: Slightly favor more vibrant colors
+                    const sat = Math.max(qr, qg, qb) - Math.min(qr, qg, qb);
+                    weight *= (1 + sat / (255/quantize) * 0.2);
+                    
+                    if (weight > maxWeight) {
+                        maxWeight = weight;
+                        bestKey = key;
+                    }
+                }
+                
+                const [fr, fg, fb] = bestKey.split(',').map(k => Number(k) * quantize);
+                const toHex = (n) => Math.min(255, n).toString(16).padStart(2, '0');
+                const result = `#${toHex(fr)}${toHex(fg)}${toHex(fb)}`;
+                
+                console.log(`[ColorExtractor] Optimized: ${result} (Weight: ${maxWeight.toFixed(1)})`);
+                return result;
+            } catch (e) {
+                console.error('[ColorExtractor] Error:', e);
+                return '#000000';
+            }
+        }
+
+        async function resetTemplate() {
+             if(confirm('This will purge your current layout and reset to default. Continue?')) {
+                try {
+                    Editor.state.sessionData.template.fabricJson = null;
+                    document.getElementById('loading').style.display = 'flex';
+                    document.querySelector('#loading p').innerText = 'Resetting...';
+                    await render();
+                    saveState();
+                    // Save immediately to overwrite bad JSON
+                    await save(); 
+                    location.reload();
+                } catch(e) {
+                    alert('Reset failed: ' + e.message);
+                }
+             }
+        }
+
+        function rebuildRegistry() {
+            Editor.state.registry = {};
+            Editor.canvas.getObjects().forEach(obj => {
+                // Check top-level objects
+                if (obj.data && obj.data.key) {
+                    Editor.state.registry[obj.data.key] = obj;
+                }
+            });
+            updateLayers();
+        }
+
+        function autoZoom() {
+            const area = document.getElementById('editor-area');
+            const wrapper = document.getElementById('canvas-wrapper');
+            const scale = Math.min((area.clientWidth - 40) / 2400, (area.clientHeight - 40) / (Editor.canvas.getHeight() || 1600));
+            wrapper.style.transform = `scale(${scale})`;
+            document.getElementById('zoom-info').innerText = `顯示比例 Display Scale: ${(scale * 100).toFixed(0)}% (Internal: 2400x${Editor.canvas.getHeight()})`;
+        }
+
+        async function render() {
+            Editor.history.locked = true;
+            Editor.canvas.clear();
+            Editor.state.registry = {};
+            const { template, detail } = Editor.state.sessionData;
+
+            // Recalculate canvas height if grid is tall
+            const gc = template.elements.operatorsGrid.cols || 10;
+            const gh = template.elements.operatorsGrid.charHeight || 270;
+            const gg = template.elements.operatorsGrid.gap || 15;
+            const gy = template.elements.operatorsGrid.y;
+            const rows = Math.ceil(detail.chars.length / gc);
+            const reqH = gy + rows * (gh + gg) + 80;
+            
+            const currentTemplateWidth = template.canvas?.width || 2400;
+            const currentTemplateHeight = template.canvas?.height || 1600;
+
+            Editor.canvas.setWidth(currentTemplateWidth);
+
+            if(reqH > currentTemplateHeight) {
+                Editor.canvas.setHeight(reqH);
+            } else {
+                Editor.canvas.setHeight(currentTemplateHeight);
+            }
+            autoZoom();
+
+            // Background
+            let bgUrl = template.background.url;
+            if (bgUrl && !bgUrl.startsWith('http') && !bgUrl.startsWith('/')) {
+                bgUrl = `/assets/${bgUrl}`;
+            }
+            
+            // Set default background color (will be replaced by edge color if image loads)
+            Editor.canvas.backgroundColor = '#000';
+
+            const bgImg = await loadImg(bgUrl);
+            if(bgImg) {
+                const bgConf = template.background;
+                
+                // Calculate scale for main background
+                let mainScale, mainX, mainY;
+                if(bgConf.scale !== undefined) {
+                    mainScale = bgConf.scale;
+                    mainX = bgConf.x !== undefined ? bgConf.x : 1200;
+                    mainY = bgConf.y !== undefined ? bgConf.y : Editor.canvas.getHeight()/2;
+                } else {
+                    mainScale = Math.max(2400 / bgImg.width, Editor.canvas.getHeight() / bgImg.height);
+                    mainX = 1200;
+                    mainY = Editor.canvas.getHeight()/2;
+                }
+                
+                // Extract edge color and set as background
+                const edgeColor = getEdgeAverageColor(bgImg);
+                
+                // Use saved color if exists, otherwise use edge color
+                const finalColor = template.background.fillColor || edgeColor;
+                Editor.canvas.backgroundColor = finalColor;
+                
+                // Update picker UI
+                const picker = document.getElementById('bg-fill-color');
+                const textInput = document.getElementById('bg-fill-color-text');
+                if (picker) picker.value = finalColor;
+                if (textInput) textInput.value = finalColor;
+                
+                console.log('Background color applied:', finalColor);
+                
+                // Set main background image
+                Editor.canvas.setBackgroundImage(bgImg, () => {
+                    Editor.canvas.renderAll();
+                    if(window.syncBgUI) window.syncBgUI();
+                }, {
+                    scaleX: mainScale, scaleY: mainScale, 
+                    originX: 'center', originY: 'center', 
+                    left: mainX, 
+                    top: mainY
+                });
+            }
+
+            const el = template.elements;
+            const b = detail.base;
+
+            // 1. Avatar
+            await add('avatar', async () => {
+                const img = await loadImg(b.avatarUrl);
+                if(!img) return null;
+                const w = el.avatar.width || 180;
+                img.set({ 
+                    scaleX: w / img.width, scaleY: w / img.height,
+                    clipPath: new fabric.Rect({ width: img.width, height: img.height, rx: 30*(img.width/w), ry: 30*(img.height/w), originX: 'center', originY: 'center' })
+                });
+                return new fabric.Group([img], { 
+                    data: { key: 'avatar' },
+                    subTargetCheck: false
+                });
+            }, el.avatar);
+
+            // 2. Name & Info
+            await add('name', async () => new fabric.Text(b.nickname || b.name, { fontSize: el.name.fontSize || 80, fill: el.name.color || '#fff', fontFamily: 'Noto Sans TC', fontWeight: 'bold', originY: 'bottom' }), el.name);
+            
+            const awakeDate = new Date(parseInt(b.createTime) * 1000).toLocaleDateString('zh-TW', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\//g, '/');
+            const lastLogin = new Date(parseInt(b.lastLoginTime) * 1000).toLocaleDateString('zh-TW', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\//g, '/');
+            const badgeText = `UID ${b.roleId} | 甦醒日 ${awakeDate} | 最後登入 ${lastLogin} | ${b.serverName}`;
+            await add('badge', async () => new fabric.Text(badgeText, { fontSize: el.badge.fontSize || 36, fill: el.badge.color || '#aaa', fontFamily: 'Noto Sans TC', originY: 'bottom' }), el.badge);
+
+            // 3. Stats
+            await add('statsGrid', async () => createStats(b, el.statsGrid), el.statsGrid);
+
+            // 4. Boxes
+            await add('missionBox', async () => createRectBox('使命記事', b.mainMission?.description || 'NONE', el.missionBox), el.missionBox);
+            await add('authLevelBox', async () => createLevel(b.level, el.authLevelBox), el.authLevelBox);
+
+            // 5. Titles
+            await add('realtimeTitle', async () => createTitle(el.realtimeTitle, '即時數據'), el.realtimeTitle);
+
+            // 6. Realtime
+            await add('staminaBox', async () => createStamina(detail.dungeon, el.staminaBox), el.staminaBox);
+            await add('activityBpBox', async () => createActivity(detail.dailyMission, detail.bpSystem, el.activityBpBox), el.activityBpBox);
+            
+            // 7. Operators Title
+            await add('operatorsTitle', async () => new fabric.Text('幹員', { fontSize: el.operatorsTitle.fontSize || 50, fill: '#fff', fontFamily: 'Noto Sans TC', fontWeight: 'bold' }), el.operatorsTitle);
+
+            // 8. Operators Grid
+            await add('operatorsGrid', async () => createOperatorsGrid(detail.chars, el.operatorsGrid), el.operatorsGrid);
+
+            updateLayers();
+            Editor.history.locked = false;
+        }
+
+        async function add(key, fn, cfg) {
+            const result = await fn();
+            
+            const applyProtection = (obj, dataKey) => {
+                const isAPIBound = ['name', 'badge', 'statsGrid', 'staminaBox', 'activityBpBox', 'authLevelBox', 'missionBox', 'operatorsGrid'].includes(dataKey) || 
+                                   dataKey.startsWith('stat_') || dataKey.startsWith('level_') || 
+                                   dataKey.startsWith('stamina_') || dataKey.startsWith('act_') || 
+                                   dataKey.startsWith('char_');
+                
+                if (isAPIBound) {
+                    obj.lockMovementX = true;
+                    obj.lockMovementY = true;
+                    obj.lockScalingX = true;
+                    obj.lockScalingY = true;
+                    obj.lockRotation = true;
+                    obj.selectable = false;
+                    obj.evented = false;
+                }
+            };
+            
+            if (Array.isArray(result)) {
+                Editor.state.registry[key] = [];
+                result.forEach((obj, i) => {
+                    obj.left = (obj.left || 0) + (cfg.x || 0);
+                    obj.top = (obj.top || 0) + (cfg.y || 0);
+
+                    if(!obj.data) obj.data = {};
+                    if(!obj.data.key) obj.data.key = `${key}_${i}`;
+                    
+                    obj.visible = cfg.visible !== false;
+                    obj.originX = obj.originX || 'left';
+                    obj.originY = obj.originY || 'top';
+                    
+                    applyProtection(obj, obj.data.key);
+                    
+                    Editor.canvas.add(obj);
+                    Editor.state.registry[key].push(obj);
+                });
+            } else if (result) {
+                result.set({ 
+                    left: cfg.x, top: cfg.y, 
+                    data: { key }, 
+                    visible: cfg.visible !== false,
+                    originX: 'left', originY: result.originY || 'top'
+                });
+                
+                const isBlockLevel = ['avatar', 'statsGrid', 'staminaBox', 'activityBpBox', 'authLevelBox', 'missionBox', 'operatorsGrid', 'realtimeTitle', 'operatorsTitle'].includes(key);
+                
+                if (isBlockLevel && result.type === 'group') {
+                    result.lockScalingX = true;
+                    result.lockScalingY = true;
+                    result.lockRotation = true;
+                } else if (!isBlockLevel) {
+                    applyProtection(result, key);
+                }
+                
+                Editor.canvas.add(result);
+                Editor.state.registry[key] = result;
+            }
+        }
+
+        // --- Factories ---
+        // Factories now return Arrays of objects (Ungrouped) for full customization
+
+        async function createStats(b, cfg) {
+            const objs = [];
+            const items = [{v: b.worldLevel, l: '探索等級', k: 'stat_worldLevel'}, {v: b.charNum, l: '幹員', k: 'stat_charNum'}, {v: b.weaponNum, l: '武器', k: 'stat_weaponNum'}, {v: b.docNum, l: '檔案', k: 'stat_docNum'}];
+            items.forEach((d, i) => {
+                const x = i * (cfg.itemWidth + cfg.gap);
+                objs.push(new fabric.Rect({ width: cfg.itemWidth, height: 140, fill: 'rgba(255,255,255,0.1)', rx: 20, ry: 20, left: x, top: 0, data: { key: `${d.k}_bg` } }));
+                objs.push(new fabric.Text(d.v.toString(), { 
+                    left: x + cfg.itemWidth/2, top: 25, fontSize: 56, fill: '#fff', fontWeight: 'bold', originX: 'center', fontFamily: 'Noto Sans TC',
+                    data: { key: d.k }
+                }));
+                objs.push(new fabric.Text(d.l, { left: x + cfg.itemWidth/2, top: 85, fontSize: 28, fill: '#aaa', originX: 'center', fontFamily: 'Noto Sans TC', data: { key: `${d.k}_label` } }));
+            });
+            return new fabric.Group(objs);
+        }
+
+        async function createRectBox(title, content, cfg) {
+            const w = cfg.width || 500;
+            const h = cfg.height || 160;
+            const objs = [];
+            
+            objs.push(new fabric.Rect({ width: w, height: h, fill: 'rgba(255,255,255,0.1)', rx: 20, ry: 20, left: 0, top: 0, data: { key: 'box_bg' } }));
+            objs.push(new fabric.Text(content, { left: 40, top: 30, fontSize: 60, fill: '#fff', fontWeight: 'bold', fontFamily: 'Noto Sans TC', data: { key: 'box_content' } }));
+            objs.push(new fabric.Text(title, { left: 40, top: 100, fontSize: 32, fill: '#aaa', fontFamily: 'Noto Sans TC', data: { key: 'box_title' } }));
+            return new fabric.Group(objs);
+        }
+
+        async function createLevel(val, cfg) {
+            const w = cfg.width || 200;
+            const objs = [];
+            
+            objs.push(new fabric.Rect({ width: w, height: 160, fill: 'rgba(255,255,255,0.1)', rx: 20, ry: 20, left: 0, top: 0, data: { key: 'level_bg' } }));
+            objs.push(new fabric.Text(val.toString(), { left: w/2, top: 25, fontSize: 80, fill: '#fff', fontWeight: 'bold', originX: 'center', fontFamily: 'Noto Sans TC', data: { key: 'level_val' } }));
+            objs.push(new fabric.Text('權限等級', { left: w/2, top: 105, fontSize: 32, fill: '#aaa', originX: 'center', fontFamily: 'Noto Sans TC', data: { key: 'level_label' } }));
+            return new fabric.Group(objs);
+        }
+
+        async function createTitle(cfg, text) {
+            const objs = [];
+            objs.push(new fabric.Rect({ width: 12, height: 35, fill: '#fff', left: 0, top: 10 }));
+            objs.push(new fabric.Rect({ width: 12, height: 50, fill: '#fff', left: 20, top: -5 }));
+            objs.push(new fabric.Rect({ width: 12, height: 25, fill: '#fff', left: 40, top: 15 }));
+            objs.push(new fabric.Text(text || '即時數據', { left: 70, top: 0, fontSize: cfg.fontSize || 50, fill: '#fff', fontWeight: 'bold', fontFamily: 'Noto Sans TC', data: { key: 'title_text' } }));
+            return new fabric.Group(objs);
+        }
+
+        async function createStamina(s, cfg) {
+            const w = cfg.width || 750;
+            const objs = [];
+            
+            objs.push(new fabric.Rect({ width: w, height: 180, fill: 'rgba(255,255,255,0.1)', rx: 20, ry: 20, data: { key: 'stamina_bg' } }));
+            objs.push(new fabric.Text(s.curStamina.toString(), { left: 40, top: 25, fontSize: 75, fill: '#fff', fontWeight: 'bold', fontFamily: 'Noto Sans TC', data: { key: 'stamina_cur' } }));
+            objs.push(new fabric.Text(`/ ${s.maxStamina}`, { left: 40 + 75 /*approx*/ + 15, top: 55, fontSize: 36, fill: '#666', fontFamily: 'Noto Sans TC', data: { key: 'stamina_max' } }));
+            objs.push(new fabric.Text('理智', { left: 40, top: 110, fontSize: 24, fill: '#888', fontFamily: 'Noto Sans TC', data: { key: 'stamina_label' } }));
+            objs.push(new fabric.Text('恢復時間', { left: w - 30, top: 110, fontSize: 24, fill: '#888', textAlign: 'right', originX: 'right', fontFamily: 'Noto Sans TC', data: { key: 'stamina_rec_label' } }));
+            
+            const now = Math.floor(Date.now() / 1000);
+            const maxTs = parseInt(s.maxTs);
+            const curVal = parseInt(s.curStamina);
+            const maxVal = parseInt(s.maxStamina);
+            let recText = '完全恢復';
+            if (maxTs > now && curVal < maxVal) { 
+                const diff = maxTs - now;
+                const h = Math.floor(diff / 3600);
+                const m = Math.floor((diff % 3600) / 60);
+                recText = `${h}小時${m}分`;
+            }
+
+            const pillX = w - 200 - 30;
+            objs.push(new fabric.Rect({ width: 200, height: 50, fill: 'rgba(0,0,0,0.4)', rx: 20, ry: 20, left: pillX, top: 30, data: { key: 'rec_pill_bg' } }));
+            objs.push(new fabric.Text(recText, { fontSize: 30, fill: '#fff', left: pillX + 48, top: 40, fontFamily: 'Noto Sans TC', data: { key: 'rec_text' } }));
+            
+            return new fabric.Group(objs);
+        }
+
+        async function createActivity(d, b, cfg) {
+            const w = cfg.width || 1450;
+            const objs = [];
+
+            objs.push(new fabric.Rect({ width: w, height: 180, fill: 'rgba(255,255,255,0.1)', rx: 20, ry: 20, data: { key: 'activity_bg' } }));
+            objs.push(new fabric.Text(`${d.dailyActivation}/${d.maxDailyActivation}`, { left: w/4, top: 35, fontSize: 60, fill: '#fff', fontWeight: 'bold', originX: 'center', fontFamily: 'Noto Sans TC', data: { key: 'act_daily_val' } }));
+            objs.push(new fabric.Text('活躍度', { left: w/4, top: 100, fontSize: 28, fill: '#888', originX: 'center', fontFamily: 'Noto Sans TC', data: { key: 'act_daily_label' } }));
+            objs.push(new fabric.Text(`${b.curLevel}/${b.maxLevel}`, { left: (w/4)*3, top: 35, fontSize: 60, fill: '#fff', fontWeight: 'bold', originX: 'center', fontFamily: 'Noto Sans TC', data: { key: 'act_bp_val' } }));
+            objs.push(new fabric.Text('通行證等級', { left: (w/4)*3, top: 100, fontSize: 28, fill: '#888', originX: 'center', fontFamily: 'Noto Sans TC', data: { key: 'act_bp_label' } }));
+            
+            return new fabric.Group(objs);
+        }
+
+        // --- Core Logic: Character Grid (Flattened) ---
+        async function createOperatorsGrid(chars, cfg) {
+            const finalObjs = [];
+            const cols = cfg.cols || 10;
+            const gap = cfg.gap || 15;
+            const cw = cfg.charWidth || 210;
+            const ch = cfg.charHeight || 270;
+            
+            const limit = cfg.limit || chars.length; 
+
+            // Common cache for icons
+            const iconCache = {};
+            const loadIcon = async (url) => {
+                if(iconCache[url]) return iconCache[url];
+                const i = await loadImg(url);
+                if(i) iconCache[url] = i;
+                return i;
+            };
+
+            for(let i=0; i<Math.min(chars.length, limit); i++) {
+                const char = chars[i];
+                const rx = (i % cols) * (cw + gap);
+                const ry = Math.floor(i / cols) * (ch + gap);
+                const cardKey = `char_${i}`;
+
+                // 1. Card Shape
+                const r = 15;
+                const pathData = `M ${rx+r} ${ry} L ${rx+cw-r} ${ry} Q ${rx+cw} ${ry} ${rx+cw} ${ry+r} L ${rx+cw} ${ry+cw} L ${rx} ${ry+cw} L ${rx} ${ry+r} Q ${rx} ${ry} ${rx+r} ${ry} Z`;
+                
+                finalObjs.push(new fabric.Path(pathData, { left: rx, top: ry, fill: '#fff', data: { key: `${cardKey}_bg` } }));
+
+                // 2. Avatar
+                const aviUrl = char.charData.avatarSqUrl || char.charData.avatarRtUrl;
+                if(aviUrl) {
+                    const img = await loadImg(aviUrl);
+                    if(img) {
+                        const aviObj = await new Promise(r => img.clone(c => r(c)));
+                        aviObj.set({ 
+                            left: rx, top: ry, 
+                            scaleX: cw / aviObj.width, scaleY: cw / aviObj.height,
+                            data: { key: `${cardKey}_avatar`, src: aviUrl }
+                        });
+                        finalObjs.push(aviObj);
+                    }
+                }
+
+                // 3. Icons (Attribute, Profession, Weapon)
+                const iconSize = 36;
+                const iconPadding = 8;
+                let iconY = ry + iconPadding;
+
+                // Profession
+                const profKey = char.charData.profession?.key?.replace("profession_", "").toLowerCase();
+                if(profKey) {
+                    const icon = await loadIcon(`/assets/prof/${profKey}.jpg`);
+                    if(icon) {
+                        const ci = await new Promise(r => icon.clone(c => r(c)));
+                        ci.set({ left: rx+iconPadding, top: iconY, scaleX: iconSize/ci.width, scaleY: iconSize/ci.height, data: { key: `${cardKey}_prof` } });
+                        finalObjs.push(ci);
+                        iconY += (iconSize + iconPadding);
+                    }
+                }
+
+                // Element/Property
+                const propKey = char.charData.property?.key?.replace("char_property_", "").toLowerCase();
+                if(propKey) {
+                    const icon = await loadIcon(`/assets/element/${propKey}.jpg`);
+                    if(icon) {
+                        const ci = await new Promise(r => icon.clone(c => r(c)));
+                        ci.set({ left: rx+iconPadding, top: iconY, scaleX: iconSize/ci.width, scaleY: iconSize/ci.height, data: { key: `${cardKey}_element` } });
+                        finalObjs.push(ci);
+                        iconY += (iconSize + iconPadding);
+                    }
+                }
+
+                // Weapon Type
+                const weaponKey = char.charData.weaponType?.key?.replace("weapon_type_", "").toLowerCase();
+                if(weaponKey) {
+                    const icon = await loadIcon(`/assets/weapon/black/${weaponKey}.png`);
+                    if(icon) {
+                        const ci = await new Promise(r => icon.clone(c => r(c)));
+                        ci.set({ left: rx+iconPadding, top: iconY, scaleX: iconSize/ci.width, scaleY: iconSize/ci.height, data: { key: `${cardKey}_weapon` } });
+                        finalObjs.push(ci);
+                    }
+                }
+
+                // 4. Level (Fixed Pos: Bottom Left)
+                // Backend: "Lv." at (x+10, y+cw-18 baseline). Font 18
+                // Backend: Number at (x+10+LvW+2, y+cw-18 baseline). Font 28 Bold
+                // Fabric Text originY defaults to top. To match baseline at cw-18:
+                // Top ~= cw - 18 - FontSize roughly? Or just use originY: 'bottom' and top: ry+cw-18.
+                // Let's use originY: 'bottom' for easier alignment.
+                // Note: Fabric bounding box might be slightly different but 'bottom' is safer.
+                
+                finalObjs.push(new fabric.Text('Lv.', { 
+                    left: rx+10, top: ry+cw-18, fontSize: 18, fill: '#fff', stroke: '#000', strokeWidth: 3, fontFamily: 'Noto Sans TC', originY: 'bottom',
+                    data: { key: `${cardKey}_lv_label` } 
+                }));
+
+                const lvLabelW = 28; // Approx width of "Lv." at 18px
+                finalObjs.push(new fabric.Text(`${char.level}`, { 
+                    left: rx+10+lvLabelW+2, top: ry+cw-18, fontSize: 28, fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeWidth: 3, fontFamily: 'Noto Sans TC', originY: 'bottom',
+                    data: { key: `${cardKey}_level` } 
+                }));
+                
+                // 5. Phase Icon (Bottom Right)
+                const phase = Number(char.evolvePhase) || 0;
+                if (phase > 0) {
+                     const phaseBg = await loadIcon(`/assets/phase/bg.png`);
+                     const phaseNum = await loadIcon(`/assets/phase/${phase}.png`);
+                     
+                     if(phaseBg && phaseNum) {
+                         const phaseSize = 32;
+                         const pX = rx + cw - 45;
+                         const pY = ry + cw - 40;
+                         
+                         const pBgObj = await new Promise(r => phaseBg.clone(c => r(c)));
+                         pBgObj.set({ left: pX, top: pY, scaleX: phaseSize/pBgObj.width, scaleY: phaseSize/pBgObj.height });
+                         finalObjs.push(pBgObj);
+                         
+                         const numSize = phaseSize * (204 / 336);
+                         const nX = pX + (phaseSize - numSize) / 2;
+                         const nY = pY + (phaseSize - numSize) / 2;
+                         
+                         const pNumObj = await new Promise(r => phaseNum.clone(c => r(c)));
+                         pNumObj.set({ left: nX, top: nY, scaleX: numSize/pNumObj.width, scaleY: numSize/pNumObj.height });
+                         // Masking in Fabric for simple circle is tricky without Group + ClipPath. 
+                         // But the phase icons are usually pre-masked or look fine overlapping. 
+                         // Backend uses clip. We can try `clipPath` on the object itself if needed, but let's just layer it for now to save complexity.
+                         finalObjs.push(pNumObj);
+                     }
+                }
+
+                // 6. Rarity Bar
+                const rarity = parseInt(char.charData.rarity?.value) || 3;
+                let rColor = '#ccc';
+                if(rarity===6) rColor='#ff7100';
+                if(rarity===5) rColor='#ffcc00';
+                if(rarity===4) rColor='#b380ff';
+                if(rarity===3) rColor='#33c2ff';
+                if(rarity===2) rColor='#b4d945';
+                
+                finalObjs.push(new fabric.Rect({ left: rx, top: ry+cw-6, width: cw, height: 6, fill: rColor, data: { key: `${cardKey}_rarity` } }));
+
+                // 7. Name
+                finalObjs.push(new fabric.Text(char.charData.name, {
+                    left: rx + cw/2, top: ry + cw + 15, fontSize: 26, fontWeight: 'bold', fill: '#fff', fontFamily: 'Noto Sans TC', textAlign: 'center', originX: 'center',
+                    data: { key: `${cardKey}_name` }
+                }));
+            }
+
+            return new fabric.Group(finalObjs, {
+                data: { key: 'operatorsGrid' }
+            });
+        }
+
+        // --- Granular Factories (Ungrouped) ---
+        // (Factories already updated in previous step - no changes needed there)
+
+        const toHex = (c) => {
+            if(!c) return '#ffffff';
+            if(c.startsWith('#')) return c;
+            const ctx = document.createElement('canvas').getContext('2d');
+            ctx.fillStyle = c;
+            return ctx.fillStyle;
+        };
+
+        function fillInspector(obj) {
+            if (!obj) return;
+            
+            const isMulti = obj.type === 'activeSelection';
+            const target = isMulti ? obj.getObjects()[0] : obj;
+            
+            document.getElementById('sel-name').innerText = isMulti ? `多選 (${obj.getObjects().length} 個)` : (obj.data?.key || obj.type);
+            document.getElementById('p-x').value = Math.round(obj.left);
+            document.getElementById('p-y').value = Math.round(obj.top);
+            document.getElementById('p-s').value = parseFloat(obj.scaleX).toFixed(2);
+            document.getElementById('p-rot').value = Math.round(obj.angle || 0);
+            document.getElementById('p-o').value = parseFloat(obj.opacity).toFixed(1);
+            
+            const stylePanel = document.getElementById('style-panel');
+            const gridPanel = document.getElementById('grid-controls');
+            const rowFill = document.getElementById('row-fill');
+            const rowText = document.getElementById('row-text');
+            const rowFS = document.getElementById('row-fontSize');
+            const rowFF = document.getElementById('row-fontFamily');
+            
+            stylePanel.style.display = 'none';
+            gridPanel.style.display = (!isMulti && obj.data?.key === 'operatorsGrid') ? 'block' : 'none';
+            if(gridPanel.style.display === 'block') {
+                const cfg = Editor.state.sessionData.template.elements.operatorsGrid || {};
+                document.getElementById('g-cols').value = cfg.cols || 10;
+                document.getElementById('g-gap').value = cfg.gap || 15;
+                document.getElementById('g-limit').value = cfg.limit || 100;
+            }
+            
+            rowFill.style.display = 'none';
+            rowText.style.display = 'none';
+            rowFS.style.display = 'none';
+            rowFF.style.display = 'none';
+            
+            // Populate Shadow/Border
+            const shadow = target.shadow || {};
+            document.getElementById('p-shadowOffset').value = shadow.offsetX || 0;
+            document.getElementById('p-shadowBlur').value = shadow.blur || 0;
+            document.getElementById('p-strokeWidth').value = target.strokeWidth || 0;
+            document.getElementById('p-stroke').value = toHex(target.stroke || '#000000');
+
+            let showStyle = false;
+            // Text properties
+            if(target.type.includes('text')) {
+                showStyle = true;
+                rowFill.style.display = 'flex';
+                rowText.style.display = isMulti ? 'none' : 'flex';
+                rowFS.style.display = 'flex';
+                rowFF.style.display = 'flex';
+                document.getElementById('p-fill').value = toHex(target.fill); 
+                
+                const key = target.data?.key || '';
+                const isAPI = key === 'name' || key === 'badge' || key === 'box_content' ||
+                              key.startsWith('stat_') || key.startsWith('level_') || key.startsWith('stamina_') || 
+                              key.startsWith('act_') || key.startsWith('char_') || key.includes('_val') || key.includes('_cur') || key.includes('_max');
+                
+                if (isAPI) rowText.style.display = 'none';
+                
+                const textInput = document.getElementById('p-text');
+                textInput.value = target.text || '';
+                textInput.readOnly = isAPI;
+                
+                document.getElementById('p-fontSize').value = target.fontSize;
+                document.getElementById('p-fontFamily').value = target.fontFamily; 
+            } else if (target.set && (target.type === 'rect' || target.type === 'circle' || target.type === 'path' || target.type === 'group')) {
+                showStyle = true;
+                rowFill.style.display = 'flex';
+                document.getElementById('p-fill').value = toHex(target.fill);
+            }
+            if(showStyle) stylePanel.style.display = 'block';
+        }
+
+        // --- Selection Handling & Tab Switching ---
+        Editor.canvas.on('selection:created', (e) => { 
+            if(e.selected[0]) {
+                fillInspector(e.selected[0]);
+                updateLayers();
+            }
+        });
+        Editor.canvas.on('selection:updated', (e) => { 
+            if(e.selected[0]) {
+                fillInspector(e.selected[0]);
+                updateLayers();
+            }
+        });
+        Editor.canvas.on('selection:cleared', () => { 
+            document.getElementById('sel-name').innerText = '無 None';
+            updateLayers();
+        });
+
+        Editor.canvas.on('object:moving', function(e) {
+            const obj = e.target;
+            const snap = 10;
+            const objWidth = obj.getScaledWidth();
+            const objHeight = obj.getScaledHeight();
+            
+            obj.left = Math.max(0, Math.min(obj.left, Editor.canvas.width - objWidth));
+            obj.top = Math.max(0, Math.min(obj.top, Editor.canvas.height - objHeight));
+
+            Editor.canvas.getObjects().forEach(other => {
+                if (other === obj) return;
+                if (Math.abs(obj.left - other.left) < snap) obj.left = other.left;
+                if (Math.abs(obj.top - other.top) < snap) obj.top = other.top;
+            });
+
+            if(Editor.canvas.getActiveObject()) fillInspector(Editor.canvas.getActiveObject());
+        });
+
+        Editor.canvas.on('mouse:dblclick', (e) => {
+            const obj = e.target;
+            if (obj && obj.type === 'group') {
+                const items = obj._objects.slice();
+                obj._restoreObjectsState();
+                Editor.canvas.remove(obj);
+                items.forEach(item => Editor.canvas.add(item));
+                Editor.canvas.requestRenderAll();
+                alert('群組已解散！元素已保持在原位。');
+            }
+        });
+
+        Editor.canvas.on('object:moving', () => { if(Editor.canvas.getActiveObject()) fillInspector(Editor.canvas.getActiveObject()); });
+
+        window.addEventListener('keydown', (e) => {
+            if((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                const active = Editor.canvas.getActiveObject();
+                if(active) {
+                    active.clone(cloned => { Editor.state.clipboard = cloned; });
+                    e.preventDefault();
+                }
+            }
+
+            if((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                if(!Editor.state.clipboard) return;
+                Editor.state.clipboard.clone(cloned => {
+                    cloned.set({ left: cloned.left + 20, top: cloned.top + 20 });
+                    if(cloned.data) cloned.data.key = cloned.data.key + '_copy';
+                    Editor.canvas.add(cloned);
+                    Editor.canvas.setActiveObject(cloned);
+                    Editor.canvas.requestRenderAll();
+                    saveState();
+                    fillInspector(cloned);
+                });
+                e.preventDefault();
+            }
+
+            if((e.ctrlKey || e.metaKey) && e.key === 'g') {
+                const active = Editor.canvas.getActiveObject();
+                if(active && active.type === 'activeSelection') {
+                    active.toGroup();
+                    Editor.canvas.requestRenderAll();
+                    saveState();
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // --- Asset Picker Logic ---
+        let currentPickerMode = 'image'; // 'image' or 'bg'
+        
+        window.openPicker = async (mode) => {
+            currentPickerMode = mode;
+            document.getElementById('asset-picker').style.display = 'flex';
+            const grid = document.getElementById('asset-grid');
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 50px;">正在讀取資源檔案...</div>';
+            
+            try {
+                const res = await fetch('/endfield/api/illustrators');
+                const images = await res.json();
+                
+                grid.innerHTML = '';
+                images.forEach(imgName => {
+                    const div = document.createElement('div');
+                    div.className = 'asset-item';
+                    div.innerHTML = `
+                        <img src="/assets/illustrators/${imgName}" loading="lazy">
+                        <span>${imgName}</span>
+                    `;
+                    div.onclick = () => selectAsset(imgName);
+                    grid.appendChild(div);
+                });
+            } catch (e) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--danger);">讀取失敗: ${e.message}</div>`;
+            }
+        };
+
+        window.closePicker = () => {
+            document.getElementById('asset-picker').style.display = 'none';
+        };
+
+        window.selectAsset = async (name) => {
+            const url = `illustrators/${name}`;
+            closePicker();
+            
+            if (currentPickerMode === 'bg') {
+                await changeBg(url);
+            } else {
+                // Add as image layer
+                const fImg = await loadImg('/assets/' + url);
+                if (fImg) {
+                    fImg.set({
+                        left: 100, top: 100,
+                        data: { key: 'illustrator_' + name.split('.')[0] + '_' + Date.now(), src: '/assets/' + url }
+                    });
+                    
+                    // Most illustrators are tall, let's auto-scale to a reasonable size
+                    const targetHeight = 800;
+                    const scale = targetHeight / fImg.height;
+                    fImg.scale(scale);
+                    
+                    Editor.canvas.add(fImg);
+                    Editor.canvas.setActiveObject(fImg);
+                    Editor.canvas.requestRenderAll();
+                    saveState();
+                    switchTab('inspector');
+                    fillInspector(fImg);
+                }
+            }
+        };
+
+        window.loadDynamicBackgrounds = async () => {
+            const grid = document.getElementById('bg-selector');
+            try {
+                const res = await fetch('/endfield/api/illustrators');
+                const images = await res.json();
+                
+                images.forEach(imgName => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-option';
+                    div.onclick = () => changeBg(`illustrators/${imgName}`);
+                    
+                    div.innerHTML = `
+                        <img src="/assets/illustrators/${imgName}" loading="lazy">
+                        <span>${imgName}</span>
+                    `;
+                    grid.insertBefore(div, grid.lastElementChild); // Insert before "Custom URL"
+                });
+            } catch (e) {
+                console.error('Failed to load dynamic backgrounds', e);
+            }
+        };
+
+        window.togglePanel = (header) => {
+            header.parentElement.classList.toggle('collapsed');
+        };
+
+        window.syncBgUI = () => {
+             const bg = Editor.canvas.backgroundImage;
+             const bgConf = Editor.state.sessionData.template.background || {};
+             
+             // Sync Background Controls
+             const bgScaleEl = document.getElementById('bg-scale');
+             const numBgScaleEl = document.getElementById('num-bg-scale');
+             const bgXEl = document.getElementById('bg-x');
+             const numBgXEl = document.getElementById('num-bg-x');
+             const bgYEl = document.getElementById('bg-y');
+             const numBgYEl = document.getElementById('num-bg-y');
+             
+             if (bg) {
+                 if (bgScaleEl) bgScaleEl.value = bg.scaleX || 1;
+                 if (numBgScaleEl) numBgScaleEl.value = (bg.scaleX || 1).toFixed(2);
+                 if (bgXEl) bgXEl.value = bg.left || 0;
+                 if (numBgXEl) numBgXEl.value = Math.round(bg.left || 0);
+                 if (bgYEl) bgYEl.value = bg.top || 0;
+                 if (numBgYEl) numBgYEl.value = Math.round(bg.top || 0);
+             } else {
+                 // Even if no image, keep sync with saved state if available
+                 if (bgScaleEl) bgScaleEl.value = bgConf.scale || 1;
+                 if (numBgScaleEl) numBgScaleEl.value = (bgConf.scale || 1).toFixed(2);
+                 if (bgXEl) bgXEl.value = bgConf.x || 0;
+                 if (numBgXEl) numBgXEl.value = Math.round(bgConf.x || 0);
+                 if (bgYEl) bgYEl.value = bgConf.y || 0;
+                 if (numBgYEl) numBgYEl.value = Math.round(bgConf.y || 0);
+             }
+             
+             // Sync Background Color
+             const bgColorEl = document.getElementById('bg-fill-color');
+             const bgColorTextEl = document.getElementById('bg-fill-color-text');
+             if (bgColorEl || bgColorTextEl) {
+                 const currentBg = Editor.canvas.backgroundColor;
+                 const finalVal = bgConf.fillColor || (currentBg && typeof currentBg === 'string' ? currentBg : '#000000');
+                 if (bgColorEl) bgColorEl.value = finalVal.startsWith('#') && finalVal.length === 7 ? finalVal : '#000000';
+                 if (bgColorTextEl) bgColorTextEl.value = finalVal;
+             }
+        };
+
+        window.updateBg = async (save = false, source = 'picker') => {
+             let scale, x, y;
+             
+             // Sync Sliders and Inputs
+             if (source === 'scale-range') {
+                 scale = parseFloat(document.getElementById('bg-scale').value);
+                 document.getElementById('num-bg-scale').value = scale;
+             } else if (source === 'scale-num') {
+                 scale = parseFloat(document.getElementById('num-bg-scale').value);
+                 document.getElementById('bg-scale').value = scale;
+             } else {
+                 scale = parseFloat(document.getElementById('bg-scale').value);
+             }
+
+             if (source === 'x-range') {
+                 x = parseInt(document.getElementById('bg-x').value);
+                 document.getElementById('num-bg-x').value = x;
+             } else if (source === 'x-num') {
+                 x = parseInt(document.getElementById('num-bg-x').value);
+                 document.getElementById('bg-x').value = x;
+             } else {
+                 x = parseInt(document.getElementById('bg-x').value);
+             }
+
+             if (source === 'y-range') {
+                 y = parseInt(document.getElementById('bg-y').value);
+                 document.getElementById('num-bg-y').value = y;
+             } else if (source === 'y-num') {
+                 y = parseInt(document.getElementById('num-bg-y').value);
+                 document.getElementById('bg-y').value = y;
+             } else {
+                 y = parseInt(document.getElementById('bg-y').value);
+             }
+             
+             let fillColor;
+             if (source === 'text') {
+                 fillColor = document.getElementById('bg-fill-color-text').value;
+                 // If valid hex, sync picker
+                 if (/^#[0-9a-f]{6}$/i.test(fillColor)) {
+                     document.getElementById('bg-fill-color').value = fillColor;
+                 }
+             } else {
+                 fillColor = document.getElementById('bg-fill-color').value;
+                 document.getElementById('bg-fill-color-text').value = fillColor;
+             }
+             
+             // Update Data
+             if(!Editor.state.sessionData.template.background) Editor.state.sessionData.template.background = { url: '' };
+             Editor.state.sessionData.template.background.fillColor = fillColor;
+             Editor.state.sessionData.template.background.scale = scale;
+             Editor.state.sessionData.template.background.x = x;
+             Editor.state.sessionData.template.background.y = y;
+             
+             Editor.canvas.backgroundColor = fillColor;
+             
+             // Handle Canvas Background Type
+             const bg = Editor.canvas.backgroundImage;
+             if(bg) {
+                 bg.scaleX = scale;
+                 bg.scaleY = scale;
+                 bg.left = x;
+                 bg.top = y;
+             }
+             
+
+             
+             Editor.canvas.requestRenderAll();
+             if(save) saveState();
+        };
+
+        window.resetBgSettings = () => {
+             const bg = Editor.canvas.backgroundImage;
+             if(!bg) return;
+             
+             // Reset to "cover" or default center
+             const ratio = Math.max(Editor.canvas.width / bg.width, Editor.canvas.height / bg.height);
+             
+             // Update UI and State
+             const bgScale = ratio;
+             const bgX = Editor.canvas.width / 2;
+             const bgY = Editor.canvas.height / 2;
+             
+             // Reset background color (will be recalculated from edge)
+             let finalColor = 'rgba(0,0,0,0)';
+             const url = Editor.state.sessionData.template.background?.url;
+             if (url && url !== 'bg.08c7f0.png') {
+                 finalColor = getEdgeAverageColor(bg);
+             }
+             
+             Editor.canvas.backgroundColor = finalColor;
+             
+             // Update Data State
+             if(!Editor.state.sessionData.template.background) Editor.state.sessionData.template.background = { url: '' };
+             Editor.state.sessionData.template.background.fillColor = finalColor;
+             Editor.state.sessionData.template.background.scale = bgScale;
+             Editor.state.sessionData.template.background.x = bgX;
+             Editor.state.sessionData.template.background.y = bgY;
+             
+             // Update UI elements directly (syncBgUI will be called after)
+             document.getElementById('bg-scale').value = bgScale; 
+             document.getElementById('num-bg-scale').value = bgScale.toFixed(2);
+             document.getElementById('bg-x').value = bgX;
+             document.getElementById('num-bg-x').value = Math.round(bgX);
+             document.getElementById('bg-y').value = bgY;
+             document.getElementById('num-bg-y').value = Math.round(bgY);
+
+             const picker = document.getElementById('bg-fill-color');
+             const textInput = document.getElementById('bg-fill-color-text');
+             if (picker) picker.value = finalColor.startsWith('#') && finalColor.length === 7 ? finalColor : '#000000';
+             if (textInput) textInput.value = finalColor;
+
+             // Update Fabric BG
+             bg.set({
+                 scaleX: bgScale, scaleY: bgScale,
+                 left: bgX, top: bgY,
+                 originX: 'center', originY: 'center'
+             });
+             
+             Editor.canvas.requestRenderAll();
+             saveState();
+        };
+
+        window.addText = () => {
+            const t = new fabric.IText('點擊輸入文字 Click to type', {
+                left: 100, top: 100, fontSize: 40, fill: '#ffffff', fontFamily: 'Noto Sans TC',
+                data: { key: 'custom_text_' + Date.now() }
+            });
+            Editor.canvas.add(t);
+            Editor.canvas.setActiveObject(t);
+            Editor.canvas.requestRenderAll();
+            saveState();
+            switchTab('inspector');
+            fillInspector(t);
+        };
+
+        window.addRect = () => {
+            const r = new fabric.Rect({
+                left: 100,
+                top: 100,
+                width: 200,
+                height: 100,
+                fill: 'rgba(255,255,255,0.2)',
+                data: { key: 'custom_rect_' + Date.now() }
+            });
+            Editor.canvas.add(r);
+            Editor.canvas.setActiveObject(r);
+            Editor.canvas.requestRenderAll();
+            saveState();
+            switchTab('inspector');
+            fillInspector(r);
+        };
+
+        window.addImage = () => {
+            const url = prompt('請輸入圖片網址 (URL):');
+            if(!url) return;
+            fabric.Image.fromURL(url, (img) => {
+                img.set({
+                    left: 100, top: 100, scaleX: 0.5, scaleY: 0.5,
+                    data: { key: 'custom_image_' + Date.now(), src: url }
+                });
+                Editor.canvas.add(img);
+                Editor.canvas.setActiveObject(img);
+                Editor.canvas.requestRenderAll();
+                saveState();
+                switchTab('inspector');
+                fillInspector(img);
+            }, { crossOrigin: 'anonymous' });
+        };
+
+        window.changeBg = async (urlOrPath) => {
+            document.getElementById('loading').style.display = 'flex';
+            document.querySelector('#loading p').innerText = 'Updating Background...';
+            
+            
+            let fullUrl = urlOrPath;
+            if (urlOrPath && !urlOrPath.startsWith('http') && !urlOrPath.startsWith('/')) {
+                fullUrl = `/assets/${urlOrPath}`;
+            }
+            
+            const img = await loadImg(fullUrl);
+            if(img) {
+                // Default fit strategy: Cover
+                const ratio = Math.max(Editor.canvas.width / img.width, Editor.canvas.height / img.height);
+                
+                // Extract edge color and set as background
+                let finalColor = 'rgba(0,0,0,0)';
+                if (urlOrPath !== 'bg.08c7f0.png') {
+                    finalColor = getEdgeAverageColor(img);
+                }
+                Editor.canvas.backgroundColor = finalColor;
+                if(!Editor.state.sessionData.template.background) Editor.state.sessionData.template.background = { url: '' };
+                Editor.state.sessionData.template.background.fillColor = finalColor;
+                
+                // Sync UI immediately
+                const picker = document.getElementById('bg-fill-color');
+                const textInput = document.getElementById('bg-fill-color-text');
+                if (picker) picker.value = finalColor.startsWith('#') && finalColor.length === 7 ? finalColor : '#000000';
+                if (textInput) textInput.value = finalColor;
+                
+                Editor.canvas.setBackgroundImage(img, () => {
+                     Editor.canvas.renderAll();
+                     // Reset UI controls to new default defaults
+                     window.syncBgUI(); 
+                }, {
+                    scaleX: ratio, scaleY: ratio, 
+                    originX: 'center', originY: 'center', 
+                    left: Editor.canvas.width/2, top: Editor.canvas.height/2
+                });
+                Editor.state.sessionData.template.background.url = urlOrPath;
+                // Reset saved offsets
+                delete Editor.state.sessionData.template.background.x;
+                delete Editor.state.sessionData.template.background.y;
+                delete Editor.state.sessionData.template.background.scale;
+                
+                
+                saveState();
+            }
+            document.getElementById('loading').style.display = 'none';
+        };
+
+        window.promptBg = () => {
+            const url = prompt('請輸入背景圖片網址 (URL):');
+            if(url) window.changeBg(url);
+        };
+
+        window.align = (type) => {
+            const active = Editor.canvas.getActiveObject();
+            if(!active) return;
+            
+            const width = Editor.canvas.width;
+            const height = Editor.canvas.height;
+            const objWidth = active.getScaledWidth();
+            const objHeight = active.getScaledHeight();
+
+            switch(type) {
+                case 'left': active.set('left', 0); break;
+                case 'center': active.set('left', (width - objWidth) / 2); break;
+                case 'right': active.set('left', width - objWidth); break;
+                case 'top': active.set('top', 0); break;
+                case 'middle': active.set('top', (height - objHeight) / 2); break;
+                case 'bottom': active.set('top', height - objHeight); break;
+            }
+            
+            active.setCoords();
+            Editor.canvas.requestRenderAll();
+            saveState();
+            fillInspector(active);
+        };
+
+        window.resizeCanvas = () => {
+            const w = parseInt(document.getElementById('c-width').value) || 2400;
+            const h = parseInt(document.getElementById('c-height').value) || 1600;
+            Editor.canvas.setWidth(w);
+            Editor.canvas.setHeight(h);
+            if (!Editor.state.sessionData.template.canvas) Editor.state.sessionData.template.canvas = { padding: 80 };
+            Editor.state.sessionData.template.canvas.width = w;
+            Editor.state.sessionData.template.canvas.height = h;
+            autoZoom();
+            Editor.canvas.requestRenderAll();
+            saveState();
+        };
+
+        window.addLine = () => {
+            const line = new fabric.Rect({
+                left: 100, top: 100, width: 400, height: 2, fill: '#ffffff',
+                data: { key: 'custom_line_' + Date.now() }
+            });
+            Editor.canvas.add(line);
+            Editor.canvas.setActiveObject(line);
+            Editor.canvas.requestRenderAll();
+            saveState();
+            switchTab('inspector');
+            fillInspector(line);
+        };
+
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            const tabs = document.querySelectorAll('.tab');
+            if(tab === 'inspector') tabs[0].classList.add('active');
+            if(tab === 'layers') tabs[1].classList.add('active');
+            
+            document.getElementById(tab).classList.add('active');
+        };
+
+        window.mod = () => {
+            const active = Editor.canvas.getActiveObject();
+            if(!active) return;
+
+            const valX = parseFloat(document.getElementById('p-x').value);
+            const valY = parseFloat(document.getElementById('p-y').value);
+            const valS = parseFloat(document.getElementById('p-s').value);
+            const valR = parseFloat(document.getElementById('p-rot').value);
+            const valO = parseFloat(document.getElementById('p-o').value);
+            const valFill = document.getElementById('p-fill').value;
+            const valText = document.getElementById('p-text').value;
+            const valFS = parseInt(document.getElementById('p-fontSize').value);
+            const valFF = document.getElementById('p-fontFamily').value;
+
+            const applyTo = (obj) => {
+                if(obj.type.includes('text')) {
+                    const key = obj.data?.key || '';
+                    const isAPI = ['name', 'badge', 'box_content'].includes(key) ||
+                                  key.startsWith('stat_') || key.startsWith('level_') || key.startsWith('stamina_') || 
+                                  key.startsWith('act_') || key.startsWith('char_') || key.includes('_val') || key.includes('_cur') || key.includes('_max');
+                    
+                    if(!isAPI && valText !== undefined && valText !== null) obj.set('text', valText);
+                    if(valFill) obj.set('fill', valFill);
+                    if(!isNaN(valFS)) obj.set('fontSize', valFS);
+                    if(valFF) obj.set('fontFamily', valFF);
+                } else if (obj.set && (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'path' || obj.type === 'group' || obj.type === 'image')) {
+                    if(valFill) obj.set('fill', valFill);
+                }
+
+                const shadowOffset = parseFloat(document.getElementById('p-shadowOffset').value) || 0;
+                const shadowBlur = parseFloat(document.getElementById('p-shadowBlur').value) || 0;
+                if(shadowOffset !== 0 || shadowBlur !== 0) {
+                    obj.set('shadow', new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: shadowBlur, offsetX: shadowOffset, offsetY: shadowOffset }));
+                } else {
+                    obj.set('shadow', null);
+                }
+
+                const strokeWidth = parseFloat(document.getElementById('p-strokeWidth').value) || 0;
+                const strokeColor = document.getElementById('p-stroke').value;
+                obj.set('stroke', strokeWidth > 0 ? strokeColor : null);
+                obj.set('strokeWidth', strokeWidth);
+            };
+
+            if (active.type === 'activeSelection') {
+                active.getObjects().forEach(applyTo);
+                if(!isNaN(valX)) active.set('left', valX);
+                if(!isNaN(valY)) active.set('top', valY);
+                if(!isNaN(valS)) active.scale(valS);
+                if(!isNaN(valR)) active.set('angle', valR);
+                if(!isNaN(valO)) active.set('opacity', valO);
+            } else {
+                applyTo(active);
+                if(!isNaN(valX)) active.set('left', valX);
+                if(!isNaN(valY)) active.set('top', valY);
+                if(!isNaN(valS)) { active.set('scaleX', valS); active.set('scaleY', valS); }
+                if(!isNaN(valR)) active.set('angle', valR);
+                if(!isNaN(valO)) active.set('opacity', valO);
+            }
+            
+            Editor.canvas.requestRenderAll();
+            saveState();
+        };
+
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            const active = Editor.canvas.getActiveObject();
+            if(!active || document.activeElement.tagName === 'INPUT') return;
+
+            const step = e.shiftKey ? 10 : 1;
+            
+            if(e.key === 'ArrowLeft') { active.left -= step; e.preventDefault(); }
+            if(e.key === 'ArrowRight') { active.left += step; e.preventDefault(); }
+            if(e.key === 'ArrowUp') { active.top -= step; e.preventDefault(); }
+            if(e.key === 'ArrowDown') { active.top += step; e.preventDefault(); }
+            
+            if(e.key === 'Delete' || e.key === 'Backspace') {
+                if(active.type === 'activeSelection') {
+                    active.getObjects().forEach(o => Editor.canvas.remove(o));
+                    Editor.canvas.discardActiveObject();
+                } else {
+                    Editor.canvas.remove(active);
+                }
+                e.preventDefault();
+            }
+
+            if(e.ctrlKey || e.metaKey) {
+                if(e.key === 'z') { undo(); e.preventDefault(); }
+                if(e.key === 'y') { redo(); e.preventDefault(); }
+            }
+
+            if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Delete','Backspace'].includes(e.key)) {
+                Editor.canvas.requestRenderAll();
+                saveState();
+                fillInspector(active);
+            }
+        });
+
+        window.save = async () => {
+            if(!Editor.state.token) return;
+            const btn = document.querySelector('button.success');
+            const oldText = btn.innerText;
+            btn.innerText = '儲存中 Saving...';
+            btn.disabled = true;
+
+            try {
+                const tElements = Editor.state.sessionData.template.elements;
+                Editor.canvas.getObjects().forEach(obj => {
+                    if(obj.data && obj.data.key) {
+                        const key = obj.data.key;
+                        if(tElements[key]) {
+                            tElements[key].x = Math.round(obj.left);
+                            tElements[key].y = Math.round(obj.top);
+                            tElements[key].visible = obj.visible;
+                        }
+                    }
+                });
+                
+                // Save Canvas Dimensions
+                if (!Editor.state.sessionData.template.canvas) Editor.state.sessionData.template.canvas = { padding: 80 };
+                Editor.state.sessionData.template.canvas.width = Editor.canvas.getWidth();
+                Editor.state.sessionData.template.canvas.height = Editor.canvas.getHeight();
+                
+                // Remove redundant root-level dimensions
+                delete Editor.state.sessionData.template.width;
+                delete Editor.state.sessionData.template.height;
+
+                // Save Background Settings
+                const bg = Editor.canvas.backgroundImage;
+                if(bg) {
+                    Editor.state.sessionData.template.background.x = Math.round(bg.left);
+                    Editor.state.sessionData.template.background.y = Math.round(bg.top);
+                    Editor.state.sessionData.template.background.scale = bg.scaleX;
+                }
+                
+                
+                // Update Fabric JSON for full persistence (including custom elements)
+                Editor.state.sessionData.template.fabricJson = Editor.canvas.toJSON(['data']);
+
+                const res = await fetch(`/api/profile/${Editor.state.token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ template: Editor.state.sessionData.template })
+                });
+                
+                const data = await res.json();
+                if(data.success) {
+                    btn.innerText = '儲存成功 Saved!';
+                    setTimeout(() => { btn.innerText = oldText; btn.disabled=false; }, 2000);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch(e) {
+                alert('Save failed: ' + e.message);
+                btn.innerText = oldText;
+                btn.disabled = false;
+            }
+        };
+
+        window.share = async () => {
+            if(!Editor.state.token) return;
+            const btn = document.getElementById('btn-share');
+            const oldText = btn.innerHTML;
+            btn.innerHTML = '分享中...';
+            btn.disabled = true;
+
+            try {
+                // Ensure latest state is in sessionData
+                const tElements = Editor.state.sessionData.template.elements;
+                Editor.canvas.getObjects().forEach(obj => {
+                    if(obj.data && obj.data.key) {
+                        const key = obj.data.key;
+                        if(tElements[key]) {
+                            tElements[key].x = Math.round(obj.left);
+                            tElements[key].y = Math.round(obj.top);
+                            tElements[key].visible = obj.visible;
+                        }
+                    }
+                });
+                
+                if (!Editor.state.sessionData.template.canvas) Editor.state.sessionData.template.canvas = { padding: 80 };
+                Editor.state.sessionData.template.canvas.width = Editor.canvas.getWidth();
+                Editor.state.sessionData.template.canvas.height = Editor.canvas.getHeight();
+                
+                const bg = Editor.canvas.backgroundImage;
+                if(bg) {
+                    Editor.state.sessionData.template.background.x = Math.round(bg.left);
+                    Editor.state.sessionData.template.background.y = Math.round(bg.top);
+                    Editor.state.sessionData.template.background.scale = bg.scaleX;
+                }
+                
+                Editor.state.sessionData.template.fabricJson = Editor.canvas.toJSON(['data']);
+
+                const res = await fetch(`/endfield/api/profile/${Editor.state.token}/share`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ template: Editor.state.sessionData.template })
+                });
+                
+                const data = await res.json();
+                if(data.success) {
+                    const shareId = data.id;
+                    alert(`分享成功！模板 UUID: ${shareId}\n你可以在機器人使用「/個人名片 設定 套用模板 [UUID]」來分享給別人。`);
+                    btn.innerHTML = '已分享 Shared!';
+                    setTimeout(() => { btn.innerHTML = oldText; btn.disabled=false; }, 5000);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch(e) {
+                alert('Share failed: ' + e.message);
+                btn.innerHTML = oldText;
+                btn.disabled = false;
+            }
+        };
+
+        window.resetTemplate = async () => {
+            const confirmed = confirm('⚠️ 確定要重設成預設模板嗎？\n\n這將清除所有自定義佈局，無法復原！\n\nAre you sure you want to reset to the default template?\n\nThis will clear all custom layouts and cannot be undone!');
+            
+            if (!confirmed) return;
+            
+            if(!Editor.state.token) {
+                location.reload();
+                return;
+            }
+
+            const btn = document.querySelector('button.ghost');
+            const oldText = btn.innerText;
+            btn.innerText = '重設中...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/endfield/api/profile/${Editor.state.token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ template: null })
+                });
+                
+                const data = await res.json();
+                if(data.success) {
+                    btn.innerText = '重設成功！';
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch(e) {
+                alert('重設失敗 Reset failed: ' + e.message);
+                btn.innerText = oldText;
+                btn.disabled = false;
+            }
+        };
+
+        window.rerenderGrid = () => {
+             const key = 'operatorsGrid';
+             const old = Editor.state.registry[key];
+             const cfg = Editor.state.sessionData.template.elements[key];
+             
+             const cols = parseInt(document.getElementById('g-cols').value) || 10;
+             const gap = parseInt(document.getElementById('g-gap').value) || 15;
+             const limit = parseInt(document.getElementById('g-limit').value) || 100;
+             
+             cfg.cols = cols;
+             cfg.gap = gap;
+             cfg.limit = limit;
+             
+             // Remove old group (fabricRenderer adds it as a single Group or multi objects depending on version, 
+             // but here Editor.state.registry[key] stores the added object(s))
+             if(old) {
+                 if(Array.isArray(old)) old.forEach(o => Editor.canvas.remove(o));
+                 else Editor.canvas.remove(old);
+             }
+             
+             createOperatorsGrid(Editor.state.sessionData.detail.chars, cfg).then(result => {
+                // createOperatorsGrid returns a fabric.Group (checked line 1115)
+                // We add it via the standardized 'add' function to ensure consistent registration
+                add(key, async () => result, cfg).then(() => {
+                    Editor.canvas.requestRenderAll();
+                    saveState();
+                    updateLayers();
+                });
+             }).catch(err => {
+                 console.error('Grid Rerender Failed:', err);
+                 alert('角色列表重新渲染失敗，請重新整理頁面。');
+             });
+        };
+
+        let layerSortable = null;
+
+        function updateLayers() {
+            const list = document.getElementById('layers-list');
+            if(!list) return;
+            
+            if(!layerSortable) {
+                layerSortable = Sortable.create(list, {
+                    handle: '.layer-handle',
+                    animation: 150,
+                    onEnd: (evt) => {
+                        const objs = Editor.canvas.getObjects();
+                        const count = objs.length;
+                        const oldIdxInList = evt.oldIndex;
+                        const newIdxInList = evt.newIndex;
+                        const oldCanvasIdx = count - 1 - oldIdxInList;
+                        const newCanvasIdx = count - 1 - newIdxInList;
+                        const obj = objs[oldCanvasIdx];
+                        if(oldCanvasIdx === newCanvasIdx) return;
+                        obj.moveTo(newCanvasIdx);
+                        Editor.canvas.requestRenderAll();
+                        saveState();
+                        setTimeout(updateLayers, 50); 
+                    }
+                });
+            }
+            
+            list.innerHTML = '';
+            const objs = [...Editor.canvas.getObjects()].reverse();
+            
+            objs.forEach((obj, i) => {
+                const key = obj.data?.key || obj.type;
+                const div = document.createElement('div');
+                div.className = 'layer-item';
+                if(obj === Editor.canvas.getActiveObject()) div.classList.add('selected');
+                
+                const iconType = obj.type === 'image' ? 'image' : (obj.type === 'text' ? 'text_fields' : 'deployed_code');
+                const visIcon = obj.visible ? 'visibility' : 'visibility_off';
+                const lockIcon = (obj.selectable === false || obj.evented === false) ? 'lock' : 'lock_open';
+                
+                div.innerHTML = `
+                    <span class="material-symbols-outlined layer-handle">drag_indicator</span>
+                    <span class="material-symbols-outlined layer-visibility ${!obj.visible?'hidden':''}">${visIcon}</span>
+                    <span class="material-symbols-outlined layer-lock" style="cursor:pointer; margin-right:4px; font-size:18px;">${lockIcon}</span>
+                    <span class="material-symbols-outlined" style="margin-right:8px; font-size:16px">${iconType}</span>
+                    <span class="layer-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">${key}</span>
+                    <span class="material-symbols-outlined layer-delete" style="cursor:pointer; margin-left:auto; font-size:18px; color:#ff4d4f;" title="Delete Layer">delete</span>
+                `;
+                
+                const deleteBtn = div.querySelector('.layer-delete');
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if(confirm('確定要刪除此圖層嗎？ Are you sure you want to delete this layer?')) {
+                        Editor.canvas.remove(obj);
+                        Editor.canvas.requestRenderAll();
+                        updateLayers();
+                        saveState();
+                    }
+                };
+                
+                const visBtn = div.querySelector('.layer-visibility');
+                visBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    obj.visible = !obj.visible;
+                    Editor.canvas.requestRenderAll();
+                    updateLayers();
+                    saveState();
+                };
+                
+                const lockBtn = div.querySelector('.layer-lock');
+                lockBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const isLocked = obj.selectable === false || obj.evented === false;
+                    obj.selectable = !isLocked;
+                    obj.evented = !isLocked;
+                    if(isLocked && obj === Editor.canvas.getActiveObject()) {
+                        Editor.canvas.discardActiveObject();
+                    }
+                    Editor.canvas.requestRenderAll();
+                    updateLayers();
+                    saveState();
+                };
+                
+                div.onclick = (e) => {
+                     Editor.canvas.setActiveObject(obj);
+                     Editor.canvas.requestRenderAll();
+                     updateLayers(); 
+                     fillInspector(obj);
+                };
+                list.appendChild(div);
+            });
+        }
+
+        // Start with error handling
+        try {
+            init();
+        } catch(e) {
+            console.error('Init failed:', e);
+            document.body.innerHTML += '<div style="color:red;position:fixed;top:0;left:0;z-index:9999;background:black;padding:20px;">Init Error: ' + e.message + '</div>';
+        }
+    </script>
+</body>
+</html>

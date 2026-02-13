@@ -206,6 +206,7 @@ class AutoDailySignSystem {
 		this.stats.total++;
 
 		const hsr = new HonkaiStarRail({
+			uid: parseInt(account.uid),
 			cookie: account.cookie,
 			lang: this.getLanguage(userLang)
 		});
@@ -225,9 +226,9 @@ class AutoDailySignSystem {
 			}
 
 			const todaySign =
-				rewards.awards[info.total_sign_day] || rewards.awards[0];
+				rewards.awards[info.total_sign_day - 1] || rewards.awards[0];
 			const tmrSign =
-				rewards.awards[info.total_sign_day + 1] || rewards.awards[1];
+				rewards.awards[info.total_sign_day] || rewards.awards[1];
 
 			this.stats.success++;
 

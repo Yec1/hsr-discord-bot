@@ -15,6 +15,8 @@ import {
 	Hoyolab
 } from "@yeci226/hoyoapi";
 import { database } from "@/index.js";
+import { loadConfig } from "@/utilities/core/config.js";
+const config = loadConfig();
 
 const BASE_URL = "https://bbs-api-os.hoyolab.com/community/post/wapi/";
 
@@ -555,7 +557,9 @@ export function checkAccount(
 				new EmbedBuilder()
 					.setColor("#FFE9D0")
 					.setTitle("請先通過 Geetest 來繼續使用指令！")
-					.setURL(`https://yeci226.vercel.app/geetest/${userId}`)
+					.setURL(
+						`${(config as any).VERIFY_PUBLIC_URL || "https://verify.yeci.lol/hsr"}/verify?session=${Math.random().toString(36).substring(2, 12)}&userid=${userId}`
+					)
 			],
 			flags: MessageFlags.Ephemeral
 		});

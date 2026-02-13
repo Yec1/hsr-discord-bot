@@ -45,14 +45,6 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 				flags: MessageFlags.Ephemeral
 			});
 
-		if (command.data.name != "account" || command.data.name != "warp") {
-		} else
-			await interaction
-				.deferReply({
-					// flags: MessageFlags.Ephemeral
-				})
-				.catch(() => {});
-
 		const args: any[] = [];
 
 		for (let option of (interaction as any).options.data) {

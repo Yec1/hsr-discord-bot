@@ -49,13 +49,13 @@ export default {
 						},
 						value: "HowToSetUpAccount"
 					},
-					{
-						name: "① Account Login (Recommended)",
-						name_localizations: {
-							"zh-TW": "① 帳密登入 (推薦)"
-						},
-						value: "QuickLink"
-					},
+					// {
+					// 	name: "① Account Login (Recommended)",
+					// 	name_localizations: {
+					// 		"zh-TW": "① 帳密登入 (推薦)"
+					// 	},
+					// 	value: "QuickLink"
+					// },
 					{
 						name: "② Set UID (Manual)",
 						name_localizations: {

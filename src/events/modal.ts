@@ -106,15 +106,64 @@ async function handleAccountLogin(
 				return;
 			}
 
-			const { geetestId, riskType, challenge } = captchaData;
+			console.log(
+				"[Modal] Captcha Data:",
+				JSON.stringify(captchaData, null, 2)
+			);
+			const {
+				geetestId,
+				riskType,
+				risk_type, // Capture the raw v4 string
+				challenge,
+				success,
+				new_captcha,
+				aigisSessionId
+			} = captchaData;
 			const sessionId = Math.random().toString(36).substring(2, 12);
+
+			// If challenge is undefined/empty, it's likely Geetest v4 (mmt_type: 2)
+			// But we should respect the server's original mmt_type (riskType)
+			// when sending data back in the Aigis header.
+			const finalRiskType = riskType;
 			const config = (
 				await import("@/utilities/core/config.js")
 			).loadConfig();
 			const baseUrl =
 				(config as any).VERIFY_PUBLIC_URL ||
 				`http://localhost:${config.WEBSERVER_PORT || 3000}`;
-			const verifyUrl = `${baseUrl}/verify?captchaId=${geetestId}&riskType=${encodeURIComponent(riskType)}&challenge=${challenge}&session=${sessionId}`;
+
+			// Generate a fake challenge UUID if missing (required for v4 init)
+			// Simple UUID v4 generator
+			const generatedChallenge =
+				"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+					/[xy]/g,
+					function (c) {
+						const r = (Math.random() * 16) | 0,
+							v = c == "x" ? r : (r & 0x3) | 0x8;
+						return v.toString(16);
+					}
+				);
+
+			const finalChallenge =
+				challenge && challenge !== "undefined"
+					? challenge
+					: generatedChallenge;
+
+			const params = new URLSearchParams({
+				captchaId: geetestId,
+				challenge: finalChallenge,
+				session: sessionId
+			});
+			if (finalRiskType)
+				params.append("riskType", finalRiskType.toString());
+			if (risk_type) params.append("risk_type", risk_type); // Append the raw v4 string
+			if (success !== undefined)
+				params.append("success", success.toString());
+			if (new_captcha !== undefined)
+				params.append("new_captcha", new_captcha.toString());
+			if (aigisSessionId) params.append("aigisSessionId", aigisSessionId);
+
+			const verifyUrl = `${baseUrl}/verify?${params.toString()}`;
 
 			VerificationServer.onResult(
 				sessionId,
@@ -307,7 +356,7 @@ async function handleAccountEdit(
 	}
 	const uid = fields.getTextInputValue("uid");
 	const data = await requestPlayerDataEnka(uid);
-	if (!data.playerData?.detailInfo?.uid) {
+	if (!(data.playerData?.player?.uid || data.playerData?.detailInfo?.uid)) {
 		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
@@ -366,7 +415,9 @@ async function handleUidSet(
 	const uid = fields.getTextInputValue("account_SetUserIDModalField");
 	try {
 		const data = await requestPlayerDataEnka(uid);
-		if (!data.playerData?.detailInfo?.uid) {
+		if (
+			!(data.playerData?.player?.uid || data.playerData?.detailInfo?.uid)
+		) {
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
