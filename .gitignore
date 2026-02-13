@@ -22,3 +22,5 @@ env.production
 # config
 config.json
 dist/
+
+src/server.ts

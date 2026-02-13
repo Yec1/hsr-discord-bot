@@ -218,7 +218,7 @@
   "20024": {
     "rank": "CombatPowerLightconeRarity3",
     "baseType": "Elation",
-    "en": "Lingering Tears",
+    "en": "Lingering Tear",
     "desc": null,
     "kr": "눈물의 흔적",
     "cn": "残泪",
@@ -1349,6 +1349,15 @@
     "cn": "当她决定看见",
     "jp": "{RUBY_B#かのじょ}彼女{RUBY_E#}が{RUBY_B#み}視{RUBY_E#}ると{RUBY_B#き}決{RUBY_E#}めた{RUBY_B#とき}時{RUBY_E#}"
   },
+  "23056": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Rogue",
+    "en": "The Finale of a Lie",
+    "desc": null,
+    "kr": "거짓말의 종막",
+    "cn": "一场谎言的终幕",
+    "jp": "<unbreak>嘘の終幕</unbreak>"
+  },
   "24000": {
     "rank": "CombatPowerLightconeRarity5",
     "baseType": "Warrior",
@@ -1402,5 +1411,14 @@
     "kr": "기억은 영원히 막을 내리지 않는다",
     "cn": "记忆永不落幕",
     "jp": "{RUBY_B#つ}尽{RUBY_E#}きぬ{RUBY_B#ついおく}追憶{RUBY_E#}"
+  },
+  "24006": {
+    "rank": "CombatPowerLightconeRarity5",
+    "baseType": "Elation",
+    "en": "Elation Brimming With Blessings",
+    "desc": null,
+    "kr": "넘치는 환락의 축복",
+    "cn": "欢愉满溢祝福",
+    "jp": "愉悦溢れる祝福"
   }
 }
