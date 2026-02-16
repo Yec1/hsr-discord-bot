@@ -12,7 +12,7 @@ import {
 	getPoolFourWeap
 } from "./parseJSON.js";
 import { getRandomColor } from "../index.js";
-import trans from "@/assets/translations.json" with { type: "json" };
+import trans from "@/assets/data/translations.json" with { type: "json" };
 import {
 	createCanvas,
 	loadImage,

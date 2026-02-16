@@ -238,6 +238,7 @@ const langs: LanguageStrings = {
 	path_nihility: "虛無",
 	path_abundance: "豐饒",
 	path_remembrance: "記憶",
+	path_elation: "歡愉",
 	profile_FilterPlaceholder: "請選擇屬性/命途進行排序或篩選",
 	profile_SortByLevel: "依等級排序",
 	profile_SortByEidolon: "依命座排序",

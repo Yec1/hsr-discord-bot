@@ -364,6 +364,62 @@ export class JSONManager {
 	}
 
 	/**
+	 * 從數據中枚舉並下載圖標
+	 */
+	async downloadIconsFromData(data: any): Promise<void> {
+		const baseUrl =
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
+		const iconKeys = ["icon", "icon_small"];
+
+		const processItem = async (item: any) => {
+			for (const key of iconKeys) {
+				if (item[key] && typeof item[key] === "string") {
+					const remoteRelativePath = item[key];
+					const iconUrl = baseUrl + remoteRelativePath;
+					// 本地存儲路徑映射：將遠端路徑映射到 src/assets/cache/...
+					const localPath = join(
+						"./src/assets/cache",
+						remoteRelativePath.replace(/\//g, "_")
+					);
+
+					if (!existsSync(localPath)) {
+						// console.log(`[JSON] Downloading icon: ${iconUrl} to ${localPath}`);
+						await this.downloadFile(iconUrl, localPath);
+					}
+				}
+			}
+		};
+
+		if (Array.isArray(data)) {
+			// 控制併發
+			for (const item of data) await processItem(item);
+		} else if (typeof data === "object") {
+			for (const item of Object.values(data)) await processItem(item);
+		}
+	}
+
+	/**
+	 * 下載二進制文件
+	 */
+	private async downloadFile(url: string, filePath: string): Promise<void> {
+		try {
+			const dir = join(filePath, "..");
+			if (!existsSync(dir)) {
+				mkdirSync(dir, { recursive: true });
+			}
+
+			const response = await axios.get(url, {
+				responseType: "arraybuffer",
+				timeout: 10000
+			});
+
+			writeFileSync(filePath, Buffer.from(response.data));
+		} catch (error) {
+			// console.error(`[JSON] Failed to download file from ${url}:`, (error as Error).message);
+		}
+	}
+
+	/**
 	 * 清理資源
 	 */
 	destroy(): void {
@@ -377,71 +433,127 @@ export class JSONManager {
 	}
 }
 
-// 预定义的JSON文件配置
+// 预定义的JSON文件配置（所有 JSON 統一存放在 src/assets/data/）
 export const JSON_CONFIGS = {
 	LIGHT_CONE_RANKS: {
-		localPath: "./src/assets/light_cone_ranks.json",
+		localPath: "./src/assets/data/light_cone_ranks.json",
 		remoteUrl:
 			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cht/light_cone_ranks.json",
 		fileName: "light_cone_ranks.json"
 	},
 	LIGHT_CONE_RANKS_CN: {
-		localPath: "./src/assets/light_cone_ranks_cn.json",
+		localPath: "./src/assets/data/light_cone_ranks_cn.json",
 		remoteUrl:
 			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cn/light_cone_ranks.json",
 		fileName: "light_cone_ranks_cn.json"
 	},
 	LIGHT_CONE_RANKS_EN: {
-		localPath: "./src/assets/light_cone_ranks_en.json",
+		localPath: "./src/assets/data/light_cone_ranks_en.json",
 		remoteUrl:
 			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/en/light_cone_ranks.json",
 		fileName: "light_cone_ranks_en.json"
 	},
 	LIGHT_CONE_NAMES: {
-		localPath: "./src/assets/lightcone.json",
-		remoteUrl: "https://api.hakush.in/hsr/data/lightcone.json",
+		localPath: "./src/assets/data/lightcone.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cht/light_cones.json",
 		fileName: "lightcone.json"
 	},
 	CHARACTER_NAMES_CN: {
-		localPath: "./src/assets/characters_cn.json",
+		localPath: "./src/assets/data/characters_cn.json",
 		remoteUrl:
 			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cn/characters.json",
 		fileName: "characters_cn.json"
 	},
 	CHARACTER_NAMES_EN: {
-		localPath: "./src/assets/characters_en.json",
+		localPath: "./src/assets/data/characters_en.json",
 		remoteUrl:
 			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/en/characters.json",
 		fileName: "characters_en.json"
 	},
 	CHARACTER_NAMES_CHT: {
-		localPath: "./src/assets/characters_cht.json",
+		localPath: "./src/assets/data/characters_cht.json",
 		remoteUrl:
 			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cht/characters.json",
 		fileName: "characters_cht.json"
 	},
 	RELIC_SET: {
-		localPath: "./src/assets/relicset.json",
-		remoteUrl: "https://api.hakush.in/hsr/data/relicset.json",
+		localPath: "./src/assets/data/relicset.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cht/relics.json",
 		fileName: "relicset.json"
 	},
 	BANNERS: {
-		localPath: "./src/assets/banners.json",
+		localPath: "./src/assets/data/banners.json",
 		remoteUrl:
 			"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/master/src/assets/data/banners.json",
 		fileName: "banners.json"
 	},
 	CHAR: {
-		localPath: "./src/assets/char.json",
+		localPath: "./src/assets/data/char.json",
 		remoteUrl:
 			"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/master/src/assets/data/char.json",
 		fileName: "char.json"
 	},
 	WEAPONS: {
-		localPath: "./src/assets/weapons.json",
+		localPath: "./src/assets/data/weapons.json",
 		remoteUrl:
 			"https://raw.githubusercontent.com/mikeli0623/star-rail-warp-sim/master/src/assets/data/weapons.json",
 		fileName: "weapons.json"
+	},
+	PATHS_CN: {
+		localPath: "./src/assets/data/paths_cn.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/cn/paths.json",
+		fileName: "paths_cn.json"
+	},
+	PATHS_EN: {
+		localPath: "./src/assets/data/paths_en.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/en/paths.json",
+		fileName: "paths_en.json"
+	},
+	PATHS_CHT: {
+		localPath: "./src/assets/data/paths_cht.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/cht/paths.json",
+		fileName: "paths_cht.json"
+	},
+	ELEMENTS_CN: {
+		localPath: "./src/assets/data/elements_cn.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/cn/elements.json",
+		fileName: "elements_cn.json"
+	},
+	ELEMENTS_EN: {
+		localPath: "./src/assets/data/elements_en.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/en/elements.json",
+		fileName: "elements_en.json"
+	},
+	ELEMENTS_CHT: {
+		localPath: "./src/assets/data/elements_cht.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/cht/elements.json",
+		fileName: "elements_cht.json"
+	},
+	PROPERTIES_CN: {
+		localPath: "./src/assets/data/properties_cn.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/cn/properties.json",
+		fileName: "properties_cn.json"
+	},
+	PROPERTIES_EN: {
+		localPath: "./src/assets/data/properties_en.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/en/properties.json",
+		fileName: "properties_en.json"
+	},
+	PROPERTIES_CHT: {
+		localPath: "./src/assets/data/properties_cht.json",
+		remoteUrl:
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/cht/properties.json",
+		fileName: "properties_cht.json"
 	}
 };
 
@@ -600,6 +712,161 @@ export async function loadCharacterNamesData(locale: string): Promise<any> {
 		);
 		return null;
 	}
+}
+
+/**
+ * 专门用于加载命途数据的函数
+ */
+export async function loadPathsData(locale: string = "cht"): Promise<any> {
+	const manager = JSONManager.getInstance();
+	let config;
+	switch (locale) {
+		case "cn":
+			config = JSON_CONFIGS.PATHS_CN;
+			break;
+		case "en":
+			config = JSON_CONFIGS.PATHS_EN;
+			break;
+		case "cht":
+		case "tw":
+		default:
+			config = JSON_CONFIGS.PATHS_CHT;
+			break;
+	}
+
+	const data = await manager.loadJSON(config);
+	if (data) {
+		// 異步觸發圖標下載
+		manager
+			.downloadIconsFromData(data)
+			.catch(err =>
+				console.error("[JSON] Failed to download path icons:", err)
+			);
+	}
+	return data;
+}
+
+/**
+ * 专门用于加载属性数据的函数
+ */
+export async function loadElementsData(locale: string = "cht"): Promise<any> {
+	const manager = JSONManager.getInstance();
+	let config;
+	switch (locale) {
+		case "cn":
+			config = JSON_CONFIGS.ELEMENTS_CN;
+			break;
+		case "en":
+			config = JSON_CONFIGS.ELEMENTS_EN;
+			break;
+		case "cht":
+		case "tw":
+		default:
+			config = JSON_CONFIGS.ELEMENTS_CHT;
+			break;
+	}
+
+	const data = await manager.loadJSON(config);
+	if (data) {
+		// 異步觸發圖標下載
+		manager
+			.downloadIconsFromData(data)
+			.catch(err =>
+				console.error("[JSON] Failed to download element icons:", err)
+			);
+	}
+	return data;
+}
+
+/**
+ * 专门用于加载属性(property)数据的函数
+ * @param locale 語言 (tw, cn, en)
+ */
+export async function loadPropertiesData(locale: string = "cht"): Promise<any> {
+	const manager = JSONManager.getInstance();
+	let config;
+	switch (locale) {
+		case "cn":
+			config = JSON_CONFIGS.PROPERTIES_CN;
+			break;
+		case "en":
+			config = JSON_CONFIGS.PROPERTIES_EN;
+			break;
+		case "cht":
+		case "tw":
+		default:
+			config = JSON_CONFIGS.PROPERTIES_CHT;
+			break;
+	}
+
+	const data = await manager.loadJSON(config);
+	if (data) {
+		// 異步觸發圖標下載
+		manager
+			.downloadIconsFromData(data)
+			.catch(err =>
+				console.error("[JSON] Failed to download property icons:", err)
+			);
+	}
+	return data;
+}
+
+/**
+ * 從 properties.json 建立 property_type (number) → property key (string) 的映射
+ * 用於取代硬編碼的 propertyMap
+ */
+export async function buildPropertyMap(
+	locale: string = "cht"
+): Promise<Record<number, string>> {
+	const propertiesData = await loadPropertiesData(locale);
+	if (!propertiesData) return {};
+
+	const map: Record<number, string> = {};
+	// properties.json 的 key 就是 property 名稱（如 "CriticalChance"）
+	// 它的 order 可以作為 number key
+	for (const [key, value] of Object.entries(propertiesData)) {
+		const prop = value as any;
+		if (prop.order !== undefined) {
+			map[prop.order] = key;
+		}
+	}
+	return map;
+}
+
+/**
+ * 從 paths.json 建立 base_type (number) → path text (string) 的映射
+ * 用於取代硬編碼的 pathMap
+ */
+export async function buildPathMap(
+	locale: string = "cht"
+): Promise<Record<number, string>> {
+	const pathsData = await loadPathsData(locale);
+	if (!pathsData) return {};
+
+	// paths.json 格式: { "Warrior": { id: "Warrior", text: "Destruction", ... }, ... }
+	// base_type 數字映射: Warrior=1, Rogue=2, Mage=3, Shaman=4, Warlock=5, Knight=6, Priest=7, Memory=8, Elation=9
+	const internalIdToBaseType: Record<string, number> = {
+		Warrior: 1,
+		Rogue: 2,
+		Mage: 3,
+		Shaman: 4,
+		Warlock: 5,
+		Knight: 6,
+		Priest: 7,
+		Memory: 8,
+		Elation: 9
+	};
+
+	const map: Record<number, string> = {};
+	for (const [internalId, data] of Object.entries(pathsData)) {
+		const pathData = data as any;
+		const baseType = internalIdToBaseType[internalId];
+		if (baseType !== undefined) {
+			// 使用 text (英文名) 作為 value，與現有邏輯一致（如 "Destruction" → lowercase → "destruction"）
+			map[baseType] = (pathData.text || internalId).toLowerCase();
+		}
+	}
+	return map;
 }
 
 export function getJSONManager(): JSONManager {

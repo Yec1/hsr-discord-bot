@@ -231,6 +231,7 @@ export interface LanguageStrings {
 	path_nihility: string;
 	path_abundance: string;
 	path_remembrance: string;
+	path_elation: string;
 	profile_FilterPlaceholder: string;
 	profile_SortByLevel: string;
 	profile_SortByEidolon: string;

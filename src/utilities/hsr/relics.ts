@@ -78,12 +78,12 @@ const propertyTranslate: PropertyTranslate = {
 	20: "WindAddedRatio",
 	22: "QuantumAddedRatio",
 	24: "ImaginaryAddedRatio",
-	27: "HPDelta", // 小�???
-	29: "AttackDelta", // 小攻??
-	31: "DefenceDelta", // 小防�?
-	32: "HPAddedRatio", // 大�???
-	33: "AttackAddedRatio", // 大攻??
-	34: "DefenceAddedRatio", // 大防�?
+	27: "HPDelta", // 小生命
+	29: "AttackDelta", // 小攻击
+	31: "DefenceDelta", // 小防御
+	32: "HPAddedRatio", // 大生命
+	33: "AttackAddedRatio", // 大攻击
+	34: "DefenceAddedRatio", // 大防御
 	51: "SpeedDelta",
 	52: "CriticalChanceBase",
 	53: "CriticalDamageBase",
@@ -95,7 +95,7 @@ const propertyTranslate: PropertyTranslate = {
 };
 
 // 本地文件路徑配置
-const LOCAL_SCORE_FILE_PATH = "./src/assets/score.json";
+const LOCAL_SCORE_FILE_PATH = "./src/assets/data/score.json";
 const REMOTE_SCORE_URL =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailScore/master/score.json";
 
@@ -400,23 +400,64 @@ async function getRelicsScore(
 	if (!charScore) return null;
 
 	let totalScoreN = 0;
+	let validRelicCount = 0;
 
-	// ?�併 relics ??ornaments
-	const allRelics: Relic[] = [
-		...(character.relics || []),
-		...(character.ornaments || [])
-	];
+	// 初始化長度為 6 的空陣列，對應 6 個槽位
+	const allRelics: (Relic | null)[] = [null, null, null, null, null, null];
+
+	// 映射遺器 (Head=1, Hand=2, Body=3, Feet=4) -> index 0-3
+	(character.relics || []).forEach(relic => {
+		const pos = (relic as any).pos || (relic as any).type;
+		if (typeof pos === "number" && pos >= 1 && pos <= 4) {
+			allRelics[pos - 1] = relic;
+		} else if (typeof pos === "string") {
+			const map: Record<string, number> = {
+				HEAD: 0,
+				HAND: 1,
+				BODY: 2,
+				FOOT: 3
+			};
+			const p = pos.toUpperCase();
+			if (map[p] !== undefined) allRelics[map[p]] = relic;
+		}
+	});
+
+	// 映射飾品 (Object=1/5, Neck=2/6) -> index 4-5
+	// 注意：飾品的 pos 通常是 1(位面球) 和 2(連結繩)，對應 index 4 和 5
+	// 但有時也會是 5(位面球) 和 6(連結繩)
+	(character.ornaments || []).forEach(ornament => {
+		const pos = (ornament as any).pos || (ornament as any).type;
+		if (typeof pos === "number") {
+			if (pos >= 1 && pos <= 2) {
+				allRelics[pos + 3] = ornament;
+			} else if (pos === 5 || pos === 6) {
+				allRelics[pos - 1] = ornament;
+			}
+		} else if (typeof pos === "string") {
+			const map: Record<string, number> = {
+				OBJECT: 4,
+				NECK: 5,
+				PLANAR_SPHERE: 4,
+				LINK_ROPE: 5
+			};
+			const p = pos.toUpperCase();
+			if (map[p] !== undefined) allRelics[map[p]] = ornament;
+		}
+	});
 
 	for (let i = 0; i < allRelics.length; i++) {
 		const relic = allRelics[i];
+		// 如果該槽位沒有聖遺物，跳過評分
 		if (!relic) continue;
+
+		// i+1 對應權重表中的槽位編號 (1-6)
 		const mainScore = calculateMainAffixScore(relic, charScore, i + 1);
 		const subScore = calculateSubScore(relic, charScore);
 
-		// SRS-N: 主�??��??��??��???50% ?��???
+		// SRS-N: 主词条归一化得分 * 40% + 副词条归一化得分 * 60%
 		let relicScoreN = mainScore * 0.4 + subScore * 0.6;
 
-		// SRS-M: �?SRS-N ?��??��?平方??
+		// SRS-M: 对 SRS-N 得分取平方根
 		if (scoreType === "SRS-M") {
 			relicScoreN = Math.sqrt(relicScoreN);
 		}
@@ -424,19 +465,25 @@ async function getRelicsScore(
 		totalScoreN += parseFloat(relicScoreN.toString());
 		relic.scoreN = (relicScoreN * 100).toFixed(1);
 		relic.grade = calculateGrade(relic.scoreN);
+		validRelicCount++;
 	}
 
-	const totalGrade = calculateGrade(
-		((totalScoreN * 100) / allRelics.length).toFixed(1)
-	);
+	// 計算總評級：總分 / 有效聖遺物數量 (避免除以 0)
+	// 或者您可以選擇除以 6 (如果是要求滿裝備的評分標準)
+	// 這裡我們維持平均分邏輯
+	const averageScore =
+		validRelicCount > 0
+			? ((totalScoreN * 100) / validRelicCount).toFixed(1)
+			: "0.0";
+	const totalGrade = calculateGrade(averageScore);
 
-	// 將�?算�??��??�到 character 對象�?
-	character.relics = allRelics;
-	(character.relics as any).totalScore = (totalScoreN * 100).toFixed(1);
-	(character.relics as any).totalGrade = totalGrade;
-	(character.relics as any).scoreType = scoreType;
+	// 返回結果
+	const result: any = allRelics;
+	result.totalScore = averageScore;
+	result.totalGrade = totalGrade;
+	result.scoreType = scoreType;
 
-	return character.relics as any;
+	return result;
 }
 
 function calculateMainAffixScore(
@@ -452,19 +499,19 @@ function calculateMainAffixScore(
 	const weight = weights.main[index.toString()]?.[calAffixType!] || 0;
 	const level = Number(relic.level) || 0;
 
-	// SRS ?��?：主词条归�??��???= (等级+1)/16 * ?��?
-	// 0 级到 15 级�??�对应基础??1/16 ??16/16
+	// SRS 评分：主词条归一化得分 = (等级+1)/16 * 权重
+	// 0 级到 15 级分别对应基础分 1/16 到 16/16
 	const score = ((level + 1) / 16) * weight;
 
-	// ?�兼容性�?將�?算�??�添?�到 mainAffix 對象
+	// 为了兼容性，将计算出的权重添加到 mainAffix 对象
 	mainAffix.weight = weight;
 
-	// 如�??��?對象沒�? main_affix，創建�??�兼容�?結�?
+	// 如果从对象没有 main_affix，创建它以兼容旧结构
 	if (!relic.main_affix) {
 		relic.main_affix = {
 			...mainAffix,
 			type: affixType as any,
-			// ?�顯示添?��?要�?字段
+			// 仅显示添加必要的字段
 			name: mainAffix.name || "",
 			propertyName: propertyMap[affixType!] || "",
 			display: mainAffix.value || mainAffix.display || "0",
@@ -480,8 +527,8 @@ function calculateMainAffixScore(
 function calculateSubScore(relic: Relic, weights: Weights): number {
 	const subAffixes = relic.sub_affix || relic.properties || [];
 
-	// SRS ?��?：副词条归�??��??�计�?
-	// ?��?得�? = Σ(?��??�次??+ ?��??�次??* 0.1) * ?��?
+	// SRS 评分：副词条归一化得分计算
+	// 单项得分 = Σ(基础次数 + 强化次数 * 0.1) * 权重
 	let rawScore = subAffixes.reduce((subScore: number, sub: SubAffix) => {
 		const count = Number(sub.count || sub.times || 0);
 
@@ -504,7 +551,7 @@ function calculateSubScore(relic: Relic, weights: Weights): number {
 				...sub,
 				type: subType as any,
 				count: count,
-				step: step, // 添�?step字段以�??��??��?
+				step: step, // 添加step字段以供后续使用
 				name: sub.name || "",
 				propertyName: propertyMap[subType!] || "",
 				display: sub.value || sub.display || "0",
@@ -514,11 +561,11 @@ function calculateSubScore(relic: Relic, weights: Weights): number {
 			});
 		}
 
-		// ?��??�次??+ ?��??�次??* 0.1
+		// 基础次数 + 强化次数 * 0.1
 		return subScore + (count + step * 0.1) * subWeight;
 	}, 0);
 
-	// 归�??��???= ?��?得�? / max
+	// 归一化得分 = 原始得分 / max
 	return rawScore / (weights.max || 1);
 }
 

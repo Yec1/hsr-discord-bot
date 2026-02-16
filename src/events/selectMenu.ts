@@ -37,6 +37,11 @@ import {
 } from "../utilities/index.js";
 import { getSelectMenu } from "../utilities/hsr/selectmenu.js";
 import { createTranslator, toI18nLang } from "../utilities/core/i18n.js";
+import {
+	loadPathsData,
+	loadElementsData,
+	buildPathMap
+} from "../utilities/hsr/jsonManager.js";
 import Queue from "queue";
 
 const drawQueue = new Queue({ autostart: true });
@@ -297,31 +302,21 @@ interface FilterInfo {
 	filters: string[];
 }
 
-function getPathNameByBaseType(baseType: number | undefined): string {
-	const pathMap: Record<number, string> = {
-		1: "destruction",
-		2: "hunt",
-		3: "erudition",
-		4: "harmony",
-		5: "nihility",
-		6: "preservation",
-		7: "abundance",
-		8: "remembrance"
-	};
+async function getPathNameByBaseType(
+	baseType: number | undefined
+): Promise<string> {
+	// 這裡使用 'en' locale 建立 pathMap，因為篩選邏輯內部使用的是英文名稱（如 destruction, hunt）
+	const pathMap = await buildPathMap("en");
 	return pathMap[baseType || 0] || "";
 }
 
-function filterAndSortCharacters(
+async function filterAndSortCharacters(
 	characters: Character[],
-	selected: string[]
-): Character[] {
-	// 如果沒有選擇任何篩選條件，返回所有角色
-	if (selected.length === 0) {
-		return characters;
-	}
+	filters: string[]
+): Promise<Character[]> {
+	if (filters.length === 0) return characters;
 
-	// 分離屬性和命途選項
-	const elementFilters = selected.filter(sel =>
+	const elementFilters = filters.filter(sel =>
 		[
 			"physical",
 			"ice",
@@ -332,20 +327,23 @@ function filterAndSortCharacters(
 			"imaginary"
 		].includes(sel)
 	);
-	const pathFilters = selected.filter(sel =>
+
+	const pathFilters = filters.filter(sel =>
 		[
 			"destruction",
-			"harmony",
-			"erudition",
 			"hunt",
-			"preservation",
+			"erudition",
+			"harmony",
 			"nihility",
+			"preservation",
 			"abundance",
-			"remembrance"
+			"remembrance",
+			"elation"
 		].includes(sel)
 	);
 
 	let result: Character[] = [];
+	const pathMap = await buildPathMap("en");
 
 	// 如果同時選擇了屬性和命途，找同時符合的角色
 	if (elementFilters.length > 0 && pathFilters.length > 0) {
@@ -355,7 +353,7 @@ function filterAndSortCharacters(
 					characters.filter(
 						c =>
 							c.element === element &&
-							getPathNameByBaseType(c.base_type) === path
+							pathMap[c.base_type || 0] === path
 					)
 				);
 			}
@@ -374,9 +372,7 @@ function filterAndSortCharacters(
 		if (pathFilters.length > 0) {
 			for (const path of pathFilters) {
 				result = result.concat(
-					characters.filter(
-						c => getPathNameByBaseType(c.base_type) === path
-					)
+					characters.filter(c => pathMap[c.base_type || 0] === path)
 				);
 			}
 		}
@@ -409,6 +405,8 @@ async function handleProfileFilter(
 
 	try {
 		const requestStartTime = Date.now();
+		const locale = interaction.locale;
+		const userLocale = await getUserLang(interaction.user.id);
 		// 取得原始角色資料
 		const hsr = await getUserHSRData(
 			interaction,
@@ -475,7 +473,7 @@ async function handleProfileFilter(
 		}
 
 		// 排序與篩選
-		let sortedCharacters = filterAndSortCharacters(
+		let sortedCharacters = await filterAndSortCharacters(
 			allCharacters as unknown as Character[],
 			filterSelected
 		);
@@ -569,7 +567,15 @@ async function handleProfileFilter(
 			"profile_SelectCharacter"
 		);
 
-		// 篩選選單，第一個選項為「無篩選」
+		// 獲取動態命途與屬性數據
+		const pathsData = await loadPathsData(
+			userLocale || toI18nLang(locale) || "en"
+		);
+		const elementsData = await loadElementsData(
+			userLocale || toI18nLang(locale) || "en"
+		);
+
+		// 篩選選單
 		const filterOptions = [
 			{
 				label: tr("profile_FilterNone"),
@@ -585,75 +591,67 @@ async function handleProfileFilter(
 				label: tr("profile_SortByEidolon"),
 				value: "sort_eidolon",
 				emoji: "⭐"
-			},
-			{
-				label: tr("element_physical"),
-				value: "physical",
-				emoji: emoji.physical
-			},
-			{ label: tr("element_ice"), value: "ice", emoji: emoji.ice },
-			{
-				label: tr("element_fire"),
-				value: "fire",
-				emoji: emoji.fire
-			},
-			{
-				label: tr("element_lightning"),
-				value: "lightning",
-				emoji: emoji.lightning
-			},
-			{
-				label: tr("element_wind"),
-				value: "wind",
-				emoji: emoji.wind
-			},
-			{
-				label: tr("element_quantum"),
-				value: "quantum",
-				emoji: emoji.quantum
-			},
-			{
-				label: tr("element_imaginary"),
-				value: "imaginary",
-				emoji: emoji.imaginary
-			},
-			{
-				label: tr("path_destruction"),
-				value: "destruction",
-				emoji: emoji.destruction
-			},
-			{
-				label: tr("path_harmony"),
-				value: "harmony",
-				emoji: emoji.harmony
-			},
-			{
-				label: tr("path_erudition"),
-				value: "erudition",
-				emoji: emoji.erudition
-			},
-			{ label: tr("path_hunt"), value: "hunt", emoji: emoji.hunt },
-			{
-				label: tr("path_preservation"),
-				value: "preservation",
-				emoji: emoji.preservation
-			},
-			{
-				label: tr("path_nihility"),
-				value: "nihility",
-				emoji: emoji.nihility
-			},
-			{
-				label: tr("path_abundance"),
-				value: "abundance",
-				emoji: emoji.abundance
-			},
-			{
-				label: tr("path_remembrance"),
-				value: "remembrance",
-				emoji: emoji.remembrance
 			}
 		];
+
+		// 動態添加屬性選項
+		if (elementsData) {
+			Object.values(elementsData).forEach((el: any) => {
+				const elId = el.id.toLowerCase();
+				filterOptions.push({
+					label: tr(`element_${elId}`) || el.name,
+					value: elId,
+					emoji: (emoji as any)[elId] || emoji.physical
+				});
+			});
+		} else {
+			// 回退
+			[
+				"physical",
+				"ice",
+				"fire",
+				"lightning",
+				"wind",
+				"quantum",
+				"imaginary"
+			].forEach(id => {
+				filterOptions.push({
+					label: tr(`element_${id}`),
+					value: id,
+					emoji: (emoji as any)[id] || emoji.physical
+				});
+			});
+		}
+
+		// 動態添加命途選項
+		if (pathsData) {
+			Object.values(pathsData).forEach((path: any) => {
+				const pathId = path.id.toLowerCase();
+				filterOptions.push({
+					label: tr(`path_${pathId}`) || path.name,
+					value: pathId,
+					emoji: (emoji as any)[pathId] || (emoji as any).destruction
+				});
+			});
+		} else {
+			// 回退
+			[
+				"destruction",
+				"harmony",
+				"erudition",
+				"hunt",
+				"preservation",
+				"nihility",
+				"abundance",
+				"remembrance"
+			].forEach(id => {
+				filterOptions.push({
+					label: tr(`path_${id}`),
+					value: id,
+					emoji: (emoji as any)[id] || (emoji as any).destruction
+				});
+			});
+		}
 
 		const filterMenu = new StringSelectMenuBuilder()
 			.setCustomId(`profile_Filter-${userId}-${accountIndex}`)

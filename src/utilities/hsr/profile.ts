@@ -48,7 +48,12 @@ import Queue from "queue";
 import axios from "axios";
 import { writeFile, mkdir, access } from "fs/promises";
 import { existsSync } from "fs";
-import { loadLightConeData } from "./jsonManager.js";
+import {
+	loadLightConeData,
+	buildPathMap,
+	loadPathsData,
+	loadElementsData
+} from "./jsonManager.js";
 
 // 類型定義
 interface PlayerData {
@@ -397,7 +402,7 @@ async function handleCharacterSkin(character: Character): Promise<string> {
 		/*
 		// 請求角色皮膚數據
 		const response = await fetch(
-			`https://api.hakush.in/hsr/data/cn/character/${character.id}.json`
+			`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/cn/characters.json`
 		);
 
 		if (!response.ok) {
@@ -418,7 +423,7 @@ async function handleCharacterSkin(character: Character): Promise<string> {
 		}
 
 		// 構建皮膚圖片URL
-		const skinImageUrl = `https://api.hakush.in/hsr/UI/avatardrawcard/avatarskin/${skinId}.webp`;
+		const skinImageUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_skin/${skinId}.png`;
 
 		// 下載並保存皮膚圖片
 		const skinResponse = await fetch(skinImageUrl);
@@ -486,16 +491,36 @@ async function handleCharacterPortrait(
 	return { imageUrl, fallbackUrl };
 }
 
-const pathMap: { [key: number]: string } = {
-	1: "destruction", // 毀滅
-	2: "hunt", // 巡獵
-	3: "erudition", // 智識
-	4: "harmony", // 同諧
-	5: "nihility", // 虛無
-	6: "preservation", // 存護
-	7: "abundance", // 豐饒
-	8: "remembrance" // 記憶
+// 動態 pathMap：從 StarRailRes paths.json 建立，自動支持新命途
+const FALLBACK_PATH_MAP: Record<number, string> = {
+	1: "destruction",
+	2: "the hunt",
+	3: "erudition",
+	4: "harmony",
+	5: "nihility",
+	6: "preservation",
+	7: "abundance",
+	8: "remembrance",
+	9: "elation"
 };
+let _cachedPathMap: Record<number, string> | null = null;
+async function getPathMap(): Promise<Record<number, string>> {
+	if (_cachedPathMap) return _cachedPathMap;
+	try {
+		const dynamicMap = await buildPathMap("en");
+		if (Object.keys(dynamicMap).length > 0) {
+			_cachedPathMap = dynamicMap;
+			return dynamicMap;
+		}
+	} catch (e) {
+		console.warn(
+			"[Profile] Failed to load dynamic pathMap, using fallback",
+			e
+		);
+	}
+	_cachedPathMap = FALLBACK_PATH_MAP;
+	return FALLBACK_PATH_MAP;
+}
 
 export const propertyMap: { [key: number]: string } = {
 	1: "MaxHP",
@@ -1872,7 +1897,7 @@ async function drawCharacterImage(
 		const characterPathIcon =
 			(typeof character.path === "object" &&
 				character.path?.icon?.toLowerCase()) ||
-			`icon/path/${pathMap[character.base_type || 0]}.png`;
+			`icon/path/${(await getPathMap())[character.base_type || 0]}.png`;
 
 		// 减少基础图片加载数量
 		const imagePaths = [
@@ -1883,16 +1908,70 @@ async function drawCharacterImage(
 		];
 
 		// 限制圣遗物图片数量以提高性能
-		const allRelics = [
-			...(character.relics || []),
-			...(character.ornaments || [])
-		].slice(0, 6); // 限制最多6个圣遗物
+
+		// 修改聖遺物處理邏輯，確保始終顯示 6 個槽位
+		const allRelics: (any | null)[] = [null, null, null, null, null, null];
+
+		// 試著將遺器案部位映射到 0-3
+		(character.relics || []).forEach(relic => {
+			const pos = (relic as any).pos || (relic as any).type;
+			if (typeof pos === "number" && pos >= 1 && pos <= 4) {
+				allRelics[pos - 1] = relic;
+			} else if (typeof pos === "string") {
+				const map: Record<string, number> = {
+					HEAD: 0,
+					HAND: 1,
+					BODY: 2,
+					FOOT: 3
+				};
+				const p = pos.toUpperCase();
+				if (map[p] !== undefined) allRelics[map[p]] = relic;
+			}
+		});
+
+		// 試著將飾品映射到 4-5
+		(character.ornaments || []).forEach(ornament => {
+			const pos = (ornament as any).pos || (ornament as any).type;
+			// 兼容不同的 pos 定義：
+			// 1. pos 1, 2 用於獨立的 ornaments 數組 (相對位置) -> 映射到 4, 5
+			// 2. pos 5, 6 用於全局 relics 定義 (絕對位置) -> 映射到 4, 5
+			if (typeof pos === "number") {
+				if (pos >= 1 && pos <= 2) {
+					allRelics[pos + 3] = ornament;
+				} else if (pos === 5 || pos === 6) {
+					allRelics[pos - 1] = ornament;
+				}
+			} else if (typeof pos === "string") {
+				const map: Record<string, number> = {
+					OBJECT: 4,
+					NECK: 5,
+					PLANAR_SPHERE: 4,
+					LINK_ROPE: 5
+				};
+				const p = pos.toUpperCase();
+				if (map[p] !== undefined) allRelics[map[p]] = ornament;
+			}
+		});
+
+		// 備用邏輯：如果映射全失敗，按原本順序填充
+		if (allRelics.every(r => r === null)) {
+			(character.relics || [])
+				.slice(0, 4)
+				.forEach((r, i) => (allRelics[i] = r));
+			(character.ornaments || [])
+				.slice(0, 2)
+				.forEach((r, i) => (allRelics[i + 4] = r));
+		}
 
 		const relicImagePaths = allRelics.map(relic =>
-			isAllCharacter ? relic.icon : image_Header + "/" + relic.icon
+			relic
+				? isAllCharacter
+					? relic.icon
+					: image_Header + "/" + relic.icon
+				: null
 		);
 
-		imagePaths.push(...relicImagePaths);
+		imagePaths.push(...relicImagePaths.filter(p => p !== null));
 
 		// 使用优化的图片加载函数
 		const imagePromises = imagePaths.map(async url => {
@@ -1905,7 +1984,23 @@ async function drawCharacterImage(
 		});
 
 		const imageResults = await Promise.all(imagePromises);
-		const [bg, element, path, star, ...relicImages] = imageResults;
+		const [bg, element, path, star, ...relicImagesFromPaths] = imageResults;
+
+		// 將下載到的聖遺物圖片重新映射回 allRelics 對應的位置
+		const relicImages: (any | null)[] = [
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		];
+		let pathIdx = 0;
+		allRelics.forEach((relic, i) => {
+			if (relic) {
+				relicImages[i] = relicImagesFromPaths[pathIdx++];
+			}
+		});
 
 		// 優化角色圖片加載 - 優先使用本地文件
 		let characterImageUrl: string;
@@ -1993,7 +2088,7 @@ async function drawCharacterImage(
 			(typeof character.path === "object"
 				? character.path?.name
 				: character.path) ||
-				tr(`path_${pathMap[character.base_type || 0]}`),
+				tr(`path_${(await getPathMap())[character.base_type || 0]}`),
 			130,
 			165
 		);
@@ -2121,11 +2216,12 @@ async function drawCharacterImage(
 			relics_top_y + relics_row_count * (relics_height + relics_padding);
 		const light_cone_gap_top = 5; // 上方間隔
 
-		if (character.light_cone || character.equip) {
+		// 始終繪製光錐框
+		{
 			const light_cone_base_x = relics_left_x;
 			const light_cone_base_y = relics_bottom_y + light_cone_gap_top;
 			const light_cone_width = relics_width;
-			const light_cone_height = 280; // 保持原本高度
+			const light_cone_height = 280;
 			const radius = 10;
 
 			// 繪製 lightcone 背景
@@ -2173,180 +2269,251 @@ async function drawCharacterImage(
 			ctx.restore();
 			ctx.globalAlpha = 1;
 
-			const light_coneResult = await loadImageAsync(
-				character.equip?.icon ||
-					`${image_Header}/icon/light_cone/${character.light_cone?.id}.png`
-			);
-			const light_cone = light_coneResult?.image;
-			// 圖片靠左
-			if (light_cone) {
-				ctx.drawImage(
-					light_cone,
-					light_cone_base_x + 50,
-					light_cone_base_y + 10,
-					128 * 1.25,
-					128 * 1.25
-				);
-			}
+			const hasLightCone = !!(character.light_cone || character.equip);
 
-			// 文字靠右區域內左側（限制名稱寬度，避免覆蓋描述）
-			ctx.textAlign = "left";
-			let lcName = `${character.light_cone?.name || character.equip?.name || ""}`;
-			let nameFont = 28;
-			setupFont(ctx, nameFont, true);
-			// 右側描述區塊起點為 base_x + 268，因此名稱最長寬度需小於 (268 - 30)
-			const maxNameWidth = 268 - 40; // 預留額外邊距
-			while (
-				ctx.measureText(lcName).width > maxNameWidth &&
-				nameFont > 20
-			) {
-				nameFont -= 1;
-				setupFont(ctx, nameFont, true);
-			}
-			// 若字體縮到下限仍超寬，則進行省略號裁切
-			if (ctx.measureText(lcName).width > maxNameWidth) {
-				while (
-					lcName.length > 0 &&
-					ctx.measureText(lcName + "...").width > maxNameWidth
-				) {
-					lcName = lcName.slice(0, -1);
+			if (hasLightCone) {
+				const light_coneResult = await loadImageAsync(
+					character.equip?.icon ||
+						`${image_Header}/icon/light_cone/${character.light_cone?.id}.png`
+				);
+				const light_cone = light_coneResult?.image;
+				// 圖片靠左
+				if (light_cone) {
+					ctx.drawImage(
+						light_cone,
+						light_cone_base_x + 50,
+						light_cone_base_y + 10,
+						128 * 1.25,
+						128 * 1.25
+					);
 				}
-				lcName = lcName + "...";
-			}
-			ctx.fillText(
-				lcName,
-				light_cone_base_x + 30,
-				light_cone_base_y + 200
-			);
 
-			setupFont(ctx, 24, true);
-
-			const romanize = (rank: number) => {
-				const roman = ["I", "II", "III", "IV", "V"];
-				return roman[rank - 1];
-			};
-			const rankText =
-				userLang == "en"
-					? romanize(
-							character.light_cone?.rank ||
-								character.equip?.rank ||
-								1
-						)
-					: character.light_cone?.rank || character.equip?.rank || 1;
-
-			ctx.fillStyle = "white";
-			ctx.fillText(
-				`${tr("level")} ${character.light_cone?.level || character.equip?.level}`,
-				light_cone_base_x + 30,
-				light_cone_base_y + 240
-			);
-			ctx.fillStyle = "#DCC491";
-			ctx.fillText(
-				`${tr("lightConeLevel_Format", {
-					rank: rankText
-				})}`,
-				light_cone_base_x +
-					30 +
-					ctx.measureText(
-						`${tr("level")} ${character.light_cone?.level || character.equip?.level}`
-					).width +
-					15,
-				light_cone_base_y + 240
-			);
-			ctx.fillStyle = "white";
-
-			// 使用专门的光锥数据加载函数，优先使用本地文件
-			let lightConeEffect: any = {};
-			try {
-				lightConeEffect = (await loadLightConeData(userLang)) || {};
-			} catch (error) {
-				console.warn(
-					`Failed to load light_cone_ranks.json for ${userLang}:`,
-					error
+				// 文字靠右區域內左側
+				ctx.textAlign = "left";
+				let lcName = `${character.light_cone?.name || character.equip?.name || ""}`;
+				let nameFont = 28;
+				setupFont(ctx, nameFont, true);
+				const maxNameWidth = 268 - 40;
+				while (
+					ctx.measureText(lcName).width > maxNameWidth &&
+					nameFont > 20
+				) {
+					nameFont -= 1;
+					setupFont(ctx, nameFont, true);
+				}
+				if (ctx.measureText(lcName).width > maxNameWidth) {
+					while (
+						lcName.length > 0 &&
+						ctx.measureText(lcName + "...").width > maxNameWidth
+					) {
+						lcName = lcName.slice(0, -1);
+					}
+					lcName = lcName + "...";
+				}
+				ctx.fillText(
+					lcName,
+					light_cone_base_x + 30,
+					light_cone_base_y + 200
 				);
-			}
-			const currentLightConeEffect =
-				lightConeEffect[character.light_cone?.id || ""] ||
-				lightConeEffect[character.equip?.id || ""];
 
-			if (currentLightConeEffect) {
-				const rank =
-					character.light_cone?.rank || character.equip?.rank || 1;
-				const params = currentLightConeEffect.params[rank - 1];
+				setupFont(ctx, 24, true);
 
-				if (params) {
-					let fixedEffectDesc = currentLightConeEffect.desc
-						.replace(
-							/#(\d+)\[i\]/g,
-							(match: string, p1: string) => {
-								const paramIndex = parseInt(p1) - 1;
-								const param = params[paramIndex];
-								if (param !== undefined) {
-									if (param < 1) {
-										const percentage = (
-											param * 100
-										).toFixed(1);
-										const displayValue =
-											percentage.endsWith(".0")
-												? percentage.slice(0, -2)
-												: percentage;
-										return `[GOLD]${displayValue}%[/GOLD]`;
-									} else {
-										return `[GOLD]${param}[/GOLD]`;
-									}
+				const romanize = (rank: number) => {
+					const roman = ["I", "II", "III", "IV", "V"];
+					return roman[rank - 1];
+				};
+				const rankText =
+					userLang == "en"
+						? romanize(
+								character.light_cone?.rank ||
+									character.equip?.rank ||
+									1
+							)
+						: character.light_cone?.rank ||
+							character.equip?.rank ||
+							1;
+
+				ctx.fillStyle = "white";
+				ctx.fillText(
+					`${tr("level")} ${character.light_cone?.level || character.equip?.level}`,
+					light_cone_base_x + 30,
+					light_cone_base_y + 240
+				);
+				ctx.fillStyle = "#DCC491";
+				ctx.fillText(
+					`${tr("lightConeLevel_Format", {
+						rank: rankText
+					})}`,
+					light_cone_base_x +
+						30 +
+						ctx.measureText(
+							`${tr("level")} ${character.light_cone?.level || character.equip?.level}`
+						).width +
+						15,
+					light_cone_base_y + 240
+				);
+				ctx.fillStyle = "white";
+
+				// 使用专门的光锥数据加载函数
+				let lightConeEffect: any = {};
+				try {
+					lightConeEffect = (await loadLightConeData(userLang)) || {};
+				} catch (error) {
+					console.warn(
+						`Failed to load light_cone_ranks.json for ${userLang}:`,
+						error
+					);
+				}
+				const currentLightConeEffect =
+					lightConeEffect[character.light_cone?.id || ""] ||
+					lightConeEffect[character.equip?.id || ""];
+
+				if (currentLightConeEffect) {
+					const rank =
+						character.light_cone?.rank ||
+						character.equip?.rank ||
+						1;
+					const params = currentLightConeEffect.params[rank - 1];
+
+					// ... (描述渲染邏輯保持不變，但在這裡繼續)
+					if (params) {
+						let description = currentLightConeEffect.desc;
+						params.forEach((param: any, pIndex: number) => {
+							const goldWrapper = (text: string) =>
+								`{{GOLD}}${text}{{/GOLD}}`;
+							description = description.replace(
+								`#${pIndex + 1}[i]%`,
+								goldWrapper(`${(param * 100).toFixed(0)}%`)
+							);
+							description = description.replace(
+								`#${pIndex + 1}[i]`,
+								goldWrapper(`${param.toFixed(0)}`)
+							);
+							description = description.replace(
+								`#${pIndex + 1}[f1]%`,
+								goldWrapper(`${(param * 100).toFixed(1)}%`)
+							);
+							description = description.replace(
+								`#${pIndex + 1}[f1]`,
+								goldWrapper(`${param.toFixed(1)}`)
+							);
+						});
+
+						ctx.textAlign = "left";
+						let descFont = 20;
+						setupFont(ctx, descFont, false);
+
+						const maxDescWidth = relics_width - 268 - 30;
+						const descX = light_cone_base_x + 268;
+
+						// Rich Text 解析與分行
+						// 1. 拆分標記
+						const segments = description
+							.split(/({{GOLD}}.*?{{\/GOLD}})/g)
+							.filter((s: string) => s !== "")
+							.map((part: string) => {
+								if (part.startsWith("{{GOLD}}")) {
+									return {
+										text: part.replace(
+											/{{GOLD}}|{{\/GOLD}}/g,
+											""
+										),
+										isGold: true
+									};
 								}
-								return match;
-							}
-						)
-						.replace(
-							/#(\d+)\[f1\]/g,
-							(match: string, p1: string) => {
-								const paramIndex = parseInt(p1) - 1;
-								const param = params[paramIndex];
-								if (param !== undefined) {
-									if (param >= 1) {
-										return `[GOLD]${param}%[/GOLD]`;
-									} else {
-										const percentage = (
-											param * 100
-										).toFixed(1);
-										const displayValue =
-											percentage.endsWith(".0")
-												? percentage.slice(0, -2)
-												: percentage;
-										return `[GOLD]${displayValue}%[/GOLD]`;
+								return { text: part, isGold: false };
+							});
+
+						// 2. 字符級分行 (支援 CJK)
+						interface CharToken {
+							char: string;
+							isGold: boolean;
+							width: number;
+						}
+						let lines: CharToken[][] = [];
+						let currentLine: CharToken[] = [];
+						let currentLineWidth = 0;
+
+						segments.forEach(
+							(seg: { text: string; isGold: boolean }) => {
+								const chars = seg.text.split("");
+								chars.forEach((char: string) => {
+									const charWidth =
+										ctx.measureText(char).width;
+									if (
+										currentLineWidth + charWidth >
+										maxDescWidth
+									) {
+										lines.push(currentLine);
+										currentLine = [];
+										currentLineWidth = 0;
 									}
-								}
-								return match;
+									currentLine.push({
+										char,
+										isGold: seg.isGold,
+										width: charWidth
+									});
+									currentLineWidth += charWidth;
+								});
 							}
 						);
-					fixedEffectDesc = fixedEffectDesc.replace(
-						/\[\/GOLD\]%/g,
-						"[/GOLD]"
-					);
+						if (currentLine.length > 0) lines.push(currentLine);
 
-					setupFont(ctx, 22, true);
-					const maxWidth = light_cone_width - 285;
-					const lineHeight = 28;
-					const segments = parseSegments(fixedEffectDesc);
-					const lines = wrapSegments(segments, maxWidth, ctx);
-					const totalHeight = lines.length * lineHeight;
-					const blockHeight = light_cone_height - 20;
-					let currentY =
-						light_cone_base_y +
-						(blockHeight - totalHeight) / 2 +
-						35;
-					drawColoredTextLines(
-						lines,
-						light_cone_base_x + 268,
-						currentY,
-						lineHeight,
-						ctx,
-						light_cone_base_y + light_cone_height + 20
-					);
+						// 垂直置中計算
+						const visibleLines = lines.slice(0, 9);
+						const totalTextHeight = visibleLines.length * 25;
+						const descY =
+							light_cone_base_y +
+							(280 - totalTextHeight) / 2 +
+							20;
+
+						visibleLines.forEach((line, lIdx) => {
+							let currentX = descX;
+							line.forEach(token => {
+								ctx.fillStyle = token.isGold
+									? "#DCC491"
+									: "lightgray";
+								ctx.fillText(
+									token.char,
+									currentX,
+									descY + lIdx * 25
+								);
+								currentX += token.width;
+							});
+						});
+					}
 				}
+			} else {
+				// 未裝備光錐的佔位顯示 - 優化設計
+				const centerX = light_cone_base_x + light_cone_width / 2;
+				const centerY = light_cone_base_y + light_cone_height / 2;
+
+				ctx.save();
+				// 繪製虛線邊框
+				ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+				ctx.lineWidth = 2;
+				ctx.setLineDash([10, 10]);
+				ctx.strokeRect(
+					light_cone_base_x + 10,
+					light_cone_base_y + 10,
+					light_cone_width - 20,
+					light_cone_height - 20
+				);
+				ctx.restore();
+
+				ctx.textAlign = "center";
+				ctx.textBaseline = "middle";
+
+				// 繪製 "Empty" 文字或圖標
+				setupFont(ctx, 32, true);
+				ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+				ctx.fillText(tr("None").toUpperCase(), centerX, centerY);
+
+				// 恢復 textBaseline
+				ctx.textBaseline = "alphabetic";
 			}
 		}
+
 		ctx.fillStyle = "white";
 
 		const hasServantSkills =
@@ -2374,12 +2541,15 @@ async function drawCharacterImage(
 					const skillType = skill.type || "";
 					const skillTypeText = skill.type_text || "";
 
-					// 排除憶靈技能
+					// 排除憶靈技能與歡愉技能
 					if (
 						skillType === "MemospriteSkill" ||
 						skillTypeText === "憶靈技" ||
 						skillType === "MemospriteTalent" ||
-						skillTypeText === "憶靈天賦"
+						skillTypeText === "憶靈天賦" ||
+						skillType === "ElationSkill" ||
+						skillTypeText === "歡愉技" ||
+						skillTypeText === "Elation Skill"
 					) {
 						return false;
 					}
@@ -2390,19 +2560,23 @@ async function drawCharacterImage(
 
 				return false;
 			})
-			.slice(0, 5); // 最多只取前5個主要技能
+			.slice(0, 5); // 回復為最多 5 個基本技能
 
 		// 過濾憶靈技能 - 第一個憶靈技和第一個憶靈天賦
 		let foundMemospriteSkill = false;
 		let foundMemospriteTalent = false;
+		let foundElationSkill = false;
 
-		const memospriteSkills = allSkills.filter(skill => {
-			if (!skill.icon || (!skill.type_text && !skill.remake)) {
+		const extraSkills = allSkills.filter(skill => {
+			if (
+				(!skill.icon && !skill.item_url) ||
+				(!skill.type_text && !skill.remake)
+			) {
 				return false;
 			}
 
 			const skillType = skill.type || "";
-			const skillTypeText = skill.type_text || "";
+			const skillTypeText = skill.type_text || skill.remake || "";
 
 			// 憶靈技：只顯示第一個
 			if (skillType === "MemospriteSkill" || skillTypeText === "憶靈技") {
@@ -2425,27 +2599,31 @@ async function drawCharacterImage(
 				return false;
 			}
 
+			// 歡愉技 (Elation Skill)：point_type 為 4
+			if (
+				skill.point_type === 4 ||
+				skillType === "ElationSkill" ||
+				skillTypeText === "歡愉技" ||
+				skillTypeText === "Elation Skill"
+			) {
+				if (!foundElationSkill) {
+					foundElationSkill = true;
+					return true;
+				}
+				return false;
+			}
+
 			return false;
 		});
 
-		// 合併技能列表：主要技能 + 憶靈技能
-		const mainSkills = [...basicSkills, ...memospriteSkills];
+		// 合併技能列表：主要技能 + 額外技能（憶靈/歡愉）
+		const mainSkills = [...basicSkills, ...extraSkills];
 
-		// 計算憶靈技能數量來調整技能排版
-		const memospriteSkillsCount = mainSkills.filter(skill => {
-			const skillType = skill.type || "";
-			const skillTypeText = skill.type_text || "";
-			return (
-				skillType === "MemospriteSkill" ||
-				skillTypeText === "憶靈技" ||
-				skillType === "MemospriteTalent" ||
-				skillTypeText === "憶靈天賦"
-			);
-		}).length;
+		// 計算額外技能數量來調整技能排版
+		const extraSkillsCount = extraSkills.length;
 
 		// 總的額外技能數量
-		const totalExtraSkillsCount =
-			servantSkillsCount + memospriteSkillsCount;
+		const totalExtraSkillsCount = servantSkillsCount + extraSkillsCount;
 		const baseSkillX =
 			totalExtraSkillsCount > 0 ? 650 - totalExtraSkillsCount * 45 : 650;
 
@@ -2498,6 +2676,8 @@ async function drawCharacterImage(
 					displayLabel = originalLabel
 						.replace("Technique", "Tech")
 						.replace("Ultimate", "Ult");
+			} else if (userLang === "tw") {
+				if (originalLabel === "Elation Skill") displayLabel = "歡愉技";
 			}
 			let fontSize = 18;
 			setupFont(ctx, fontSize, true);
@@ -2513,31 +2693,37 @@ async function drawCharacterImage(
 			setupFont(ctx, 16, true);
 			let skillColor = "white";
 
-			// 檢查是否為憶靈技能
+			// 檢查是否為憶靈或歡愉技能 (Extra Skill)
 			const currentSkill = skills[index];
-			const isMemosspriteSkill =
+			const isExtraSkill =
 				currentSkill &&
 				((currentSkill.type_text &&
 					(currentSkill.type_text === "憶靈技" ||
-						currentSkill.type_text === "憶靈天賦")) ||
+						currentSkill.type_text === "憶靈天賦" ||
+						currentSkill.type_text === "歡愉技" ||
+						currentSkill.type_text === "Elation Skill")) ||
 					(skill?.type_text &&
 						(skill.type_text === "憶靈技" ||
-							skill.type_text === "憶靈天賦")));
+							skill.type_text === "憶靈天賦" ||
+							skill.type_text === "歡愉技" ||
+							skill.type_text === "Elation Skill")));
 
-			if (isMemosspriteSkill) {
-				// 憶靈技能使用和 servantSkill 相同的顏色邏輯
-				const memospriteIndex =
+			if (isExtraSkill) {
+				// 額外技能使用和 servantSkill 相同的顏色邏輯
+				const extraIndex =
 					skills
 						.slice(0, index + 1)
 						.filter(
 							s =>
 								s?.type_text === "憶靈技" ||
-								s?.type_text === "憶靈天賦"
+								s?.type_text === "憶靈天賦" ||
+								s?.type_text === "歡愉技" ||
+								s?.type_text === "Elation Skill"
 						).length - 1;
 
-				if (character.rank >= 3 && memospriteIndex === 1)
+				if (character.rank >= 3 && extraIndex === 1)
 					skillColor = "#DCC491";
-				if (character.rank >= 5 && memospriteIndex === 0)
+				if (character.rank >= 5 && extraIndex === 0)
 					skillColor = "#DCC491";
 			} else {
 				// 主要技能的顏色邏輯
@@ -2684,13 +2870,28 @@ async function drawCharacterImage(
 		}
 
 		const relicRenderData = await Promise.all(
-			allRelics.map(async (relic, i) => {
+			allRelics.map(async (relic: any, i) => {
+				if (!relic) {
+					return {
+						relic: null,
+						index: i,
+						icons: {
+							main: null,
+							rarity: null,
+							mainAffix: null,
+							subAffixes: []
+						},
+						score: null
+					};
+				}
+
 				// 處理子屬性圖標
 				const subAffixIconResults = await Promise.all(
-					(relic.sub_affix || relic.properties || []).map(subAff =>
-						loadImageAsync(
-							`./src/assets/image/${subAff.icon?.replace("Icon", "icon") || `icon/property/icon${propertyMap[subAff.property_type]}.png`}`
-						)
+					(relic.sub_affix || relic.properties || []).map(
+						(subAff: any) =>
+							loadImageAsync(
+								`./src/assets/image/${subAff.icon?.replace("Icon", "icon") || `icon/property/icon${propertyMap[subAff.property_type]}.png`}`
+							)
 					)
 				);
 				const subAffixIcons = subAffixIconResults.map(
@@ -2728,7 +2929,8 @@ async function drawCharacterImage(
 			padding = 20;
 
 		relicRenderData.forEach(data => {
-			const { relic, index: i, icons, score } = data;
+			const { index: i, icons, score } = data;
+			const relic: any = data.relic;
 
 			let row = Math.floor(i / 2);
 			let column = i % 2;
@@ -2750,166 +2952,189 @@ async function drawCharacterImage(
 			ctx.restore();
 			ctx.globalAlpha = 1;
 
-			if (icons.main) {
-				ctx.drawImage(icons.main, x + 10, y + 20, 96, 96);
-			}
-			if (icons.rarity) {
-				ctx.drawImage(icons.rarity, x + 15, y + 115, 83.78, 16.75);
-			}
-
-			setupFont(ctx, 20, true);
-			ctx.fillStyle = "white";
-			ctx.textAlign = "center";
-			ctx.fillText(`+${relic.level}`, x + 55, y + 150);
-
-			const mainAff = relic.main_affix?.weight || 0;
-			if (icons.mainAffix) {
-				ctx.drawImage(icons.mainAffix, x + 100, y + 15, 40, 40);
-			}
-			ctx.fillStyle =
-				mainAff >= 0.75
-					? "#F3B664"
-					: mainAff > 0
-						? "#FFFFFF"
-						: "#B6BBC4";
-			ctx.textAlign = "left";
-
-			let text =
-				relic.main_affix?.name ||
-				tr(
-					`property_${relic.main_affix?.propertyName || propertyMap[relic.main_property?.property_type || 0]}`
-				);
-			// 英文環境縮寫關鍵詞，避免過長
-			if (userLang === "en" && typeof text === "string") {
-				text = text
-					.replace(/Critical Damage/g, "Crit DMG")
-					.replace(/Critical Rate/g, "Crit Rate");
-			}
-			if (typeof text !== "string") text = "";
-
-			// 動態調整字體大小以適應寬度
-			const relicTextMaxWidth = 115; // 可用寬度
-			let fontSize = 22;
-			let minFontSize = 12;
-
-			// 找到合適的字體大小
-			while (fontSize > minFontSize) {
-				setupFont(ctx, fontSize, true);
-				const textWidth = ctx.measureText(text).width;
-				if (textWidth <= relicTextMaxWidth) {
-					break;
+			if (relic) {
+				if (icons.main) {
+					ctx.drawImage(icons.main, x + 10, y + 20, 96, 96);
 				}
-				fontSize--;
-			}
+				if (icons.rarity) {
+					ctx.drawImage(icons.rarity, x + 15, y + 115, 83.78, 16.75);
+				}
 
-			// 使用最終確定的字體大小繪製文字
-			setupFont(ctx, fontSize, true);
-			ctx.fillText(text, x + 140, y + 43);
+				setupFont(ctx, 20, true);
+				ctx.fillStyle = "white";
+				ctx.textAlign = "center";
+				ctx.fillText(`+${relic.level}`, x + 55, y + 150);
 
-			ctx.textAlign = "right";
-			setupFont(ctx, 20, true);
-			ctx.fillText(
-				`${relic.main_affix?.display || relic.main_affix?.value || relic.main_property?.value}`,
-				x + 320,
-				y + 43
-			);
+				const mainAff = relic.main_affix?.weight || 0;
+				if (icons.mainAffix) {
+					ctx.drawImage(icons.mainAffix, x + 100, y + 15, 40, 40);
+				}
+				ctx.fillStyle =
+					mainAff >= 0.75
+						? "#F3B664"
+						: mainAff > 0
+							? "#FFFFFF"
+							: "#B6BBC4";
+				ctx.textAlign = "left";
 
-			let affixYStart = 58;
-			const maxWidth = 100;
+				let text =
+					relic.main_affix?.name ||
+					tr(
+						`property_${relic.main_affix?.propertyName || propertyMap[relic.main_property?.property_type || 0]}`
+					);
+				// 英文環境縮寫關鍵詞，避免過長
+				if (userLang === "en" && typeof text === "string") {
+					text = text
+						.replace(/Critical Damage/g, "Crit DMG")
+						.replace(/Critical Rate/g, "Crit Rate");
+				}
+				if (typeof text !== "string") text = "";
 
-			(relic.sub_affix || relic.properties || []).forEach(
-				(subAffix, subIndex) => {
-					if (icons.subAffixes[subIndex]) {
-						ctx.drawImage(
-							icons.subAffixes[subIndex],
-							x + 103,
-							y + affixYStart + subIndex * 34,
-							32,
-							32
-						);
-					}
+				// 動態調整字體大小以適應寬度
+				const relicTextMaxWidth = 115; // 可用寬度
+				let fontSize = 22;
+				let minFontSize = 12;
 
-					let fontSize = 18;
+				// 找到合適的字體大小
+				while (fontSize > minFontSize) {
 					setupFont(ctx, fontSize, true);
-
-					const weight = subAffix.weight || 0;
-					const color =
-						weight >= 0.75
-							? "#F3B664"
-							: weight > 0
-								? "#FFFFFF"
-								: "#B6BBC4";
-					ctx.fillStyle = color;
-					ctx.textAlign = "left";
-
-					let text =
-						subAffix.name ||
-						tr(
-							`property_${subAffix.propertyName || propertyMap[subAffix.property_type]}`
-						);
-					// 英文環境縮寫關鍵詞
-					if (userLang === "en" && typeof text === "string") {
-						text = text
-							.replace(/Critical Damage/g, "CritDMG")
-							.replace(/Critical Rate/g, "CritRATE");
+					const textWidth = ctx.measureText(text).width;
+					if (textWidth <= relicTextMaxWidth) {
+						break;
 					}
-					// 限制名稱最右邊不超過 +count 的左側（+count 中心在 x+230，預留 10px）
-					const nameStartX = x + 137;
-					const nameRightLimit = x + 240; // 與 +count(中心 x+250) 保持約 10px 留白
-					const allowedWidth = Math.max(
-						60,
-						nameRightLimit - nameStartX
-					);
-					let textWidth = ctx.measureText(text).width;
+					fontSize--;
+				}
 
-					while (textWidth > allowedWidth && fontSize > 14) {
-						fontSize -= 1;
-						setupFont(ctx, fontSize, true);
-						textWidth = ctx.measureText(text).width;
-					}
-					if (textWidth > allowedWidth) {
-						// 省略號裁切
-						while (
-							text.length > 0 &&
-							ctx.measureText(text + "...").width > allowedWidth
-						) {
-							text = text.slice(0, -1);
+				// 使用最終確定的字體大小繪製文字
+				setupFont(ctx, fontSize, true);
+				ctx.fillText(text, x + 140, y + 43);
+
+				ctx.textAlign = "right";
+				setupFont(ctx, 20, true);
+				ctx.fillText(
+					`${relic.main_affix?.display || relic.main_affix?.value || relic.main_property?.value}`,
+					x + 320,
+					y + 43
+				);
+
+				let affixYStart = 58;
+				(relic.sub_affix || relic.properties || []).forEach(
+					(subAffix: any, subIndex: number) => {
+						if (icons.subAffixes[subIndex]) {
+							ctx.drawImage(
+								icons.subAffixes[subIndex],
+								x + 103,
+								y + affixYStart + subIndex * 34,
+								32,
+								32
+							);
 						}
-						text = text + "...";
-					}
 
-					ctx.fillText(
-						text,
-						nameStartX,
-						y + affixYStart + 23 + subIndex * 34
-					);
+						let fontSize = 18;
+						setupFont(ctx, fontSize, true);
 
-					ctx.textAlign = "right";
-					setupFont(ctx, 18, true);
-					ctx.fillText(
-						`${subAffix.display || subAffix.value}`,
-						x + 320,
-						y + affixYStart + 25 + subIndex * 34
-					);
+						const weight = subAffix.weight || 0;
+						const color =
+							weight >= 0.75
+								? "#F3B664"
+								: weight > 0
+									? "#FFFFFF"
+									: "#B6BBC4";
+						ctx.fillStyle = color;
+						ctx.textAlign = "left";
 
-					// 疊層顯示優化
-					const count = Number(
-						(subAffix.count || 0) - 1 ||
-							(subAffix.times || 0) - 1 ||
-							0
-					);
-					if (count >= 1) {
-						ctx.font =
-							"16px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-						ctx.textAlign = "center";
+						let text =
+							subAffix.name ||
+							tr(
+								`property_${subAffix.propertyName || propertyMap[subAffix.property_type]}`
+							);
+						// 英文環境縮寫關鍵詞
+						if (userLang === "en" && typeof text === "string") {
+							text = text
+								.replace(/Critical Damage/g, "CritDMG")
+								.replace(/Critical Rate/g, "CritRATE");
+						}
+						// 限制名稱最右邊不超過 +count 的左側
+						const nameStartX = x + 137;
+						const nameRightLimit = x + 240;
+						const allowedWidth = Math.max(
+							60,
+							nameRightLimit - nameStartX
+						);
+						let textWidth = ctx.measureText(text).width;
+
+						while (textWidth > allowedWidth && fontSize > 14) {
+							fontSize -= 1;
+							setupFont(ctx, fontSize, true);
+							textWidth = ctx.measureText(text).width;
+						}
+						if (textWidth > allowedWidth) {
+							while (
+								text.length > 0 &&
+								ctx.measureText(text + "...").width >
+									allowedWidth
+							) {
+								text = text.slice(0, -1);
+							}
+							text = text + "...";
+						}
+
 						ctx.fillText(
-							`+${count}`,
-							x + 250,
+							text,
+							nameStartX,
 							y + affixYStart + 23 + subIndex * 34
 						);
+
+						ctx.textAlign = "right";
+						setupFont(ctx, 18, true);
+						ctx.fillText(
+							`${subAffix.display || subAffix.value}`,
+							x + 320,
+							y + affixYStart + 25 + subIndex * 34
+						);
+
+						// 疊層顯示優化
+						const count = Number(
+							(subAffix.count || 0) - 1 ||
+								(subAffix.times || 0) - 1 ||
+								0
+						);
+						if (count >= 1) {
+							ctx.font =
+								"16px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+							ctx.textAlign = "center";
+							ctx.fillText(
+								`+${count}`,
+								x + 250,
+								y + affixYStart + 23 + subIndex * 34
+							);
+						}
 					}
-				}
-			);
+				);
+			} else {
+				// 未裝備遺器的佔位顯示 - 優化設計
+				const centerX = x + width / 2;
+				const centerY = y + height / 2;
+
+				ctx.save();
+				// 繪製虛線邊框
+				ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+				ctx.lineWidth = 2;
+				ctx.setLineDash([8, 8]);
+				ctx.strokeRect(x + 10, y + 10, width - 20, height - 20);
+				ctx.restore();
+
+				ctx.textAlign = "center";
+				ctx.textBaseline = "middle";
+
+				// 繪製 "Empty" 文字
+				setupFont(ctx, 28, true);
+				ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+				ctx.fillText(tr("None").toUpperCase(), centerX, centerY);
+
+				// 恢復 textBaseline
+				ctx.textBaseline = "alphabetic";
+			}
 
 			if (score) {
 				setupFont(ctx, 22, true);
@@ -3017,7 +3242,7 @@ async function drawAllCharactersImage(
 			);
 
 			// 最多顯示 3 個徽章（單角色頁面空間較小）
-			const displayRecords = anomalyRankRecords.slice(0, 3);
+			const displayRecords = anomalyRankRecords.slice(0, 5);
 			const badgeSize = 60;
 			const badgeSpacing = 6;
 
@@ -3097,23 +3322,43 @@ async function drawAllCharactersImage(
 
 			if (filterInfo.filters.length > 0) {
 				if (statusText) statusText += " | ";
-				const filterLabelMap = {
-					physical: tr("element_physical"),
-					ice: tr("element_ice"),
-					fire: tr("element_fire"),
-					lightning: tr("element_lightning"),
-					wind: tr("element_wind"),
-					quantum: tr("element_quantum"),
-					imaginary: tr("element_imaginary"),
-					destruction: tr("path_destruction"),
-					harmony: tr("path_harmony"),
-					erudition: tr("path_erudition"),
-					hunt: tr("path_hunt"),
-					preservation: tr("path_preservation"),
-					nihility: tr("path_nihility"),
-					abundance: tr("path_abundance"),
-					remembrance: tr("path_remembrance")
-				};
+				// 動態生成 filterLabelMap，自動支持新命途和屬性
+				const filterLabelMap: Record<string, string> = {};
+				try {
+					const [elemData, pathData] = await Promise.all([
+						loadElementsData("cht"),
+						loadPathsData("cht")
+					]);
+					if (elemData) {
+						for (const val of Object.values(elemData) as any[]) {
+							filterLabelMap[val.id.toLowerCase()] = val.name;
+						}
+					}
+					if (pathData) {
+						for (const val of Object.values(pathData) as any[]) {
+							filterLabelMap[val.text.toLowerCase()] = val.name;
+						}
+					}
+				} catch {
+					// 回退到翻譯系統
+					Object.assign(filterLabelMap, {
+						physical: tr("element_physical"),
+						ice: tr("element_ice"),
+						fire: tr("element_fire"),
+						lightning: tr("element_lightning"),
+						wind: tr("element_wind"),
+						quantum: tr("element_quantum"),
+						imaginary: tr("element_imaginary"),
+						destruction: tr("path_destruction"),
+						harmony: tr("path_harmony"),
+						erudition: tr("path_erudition"),
+						hunt: tr("path_hunt"),
+						preservation: tr("path_preservation"),
+						nihility: tr("path_nihility"),
+						abundance: tr("path_abundance"),
+						remembrance: tr("path_remembrance")
+					});
+				}
 				statusText += filterInfo.filters
 					.map(f => (filterLabelMap as any)[f] || f)
 					.join(" / ");
@@ -3171,11 +3416,29 @@ async function drawAllCharactersImage(
 			);
 			const elementIcon = elementIconResult?.image;
 			let pathIconPath = null;
+			const pathMapper: Record<string, string> = {
+				warrior: "destruction",
+				rogue: "hunt",
+				mage: "erudition",
+				priest: "abundance",
+				shaman: "harmony",
+				warlock: "nihility",
+				knight: "preservation",
+				memory: "remembrance",
+				elation: "elation"
+			};
+
 			if (char.base_type) {
-				const pathName = pathMap[char.base_type] || "none";
-				pathIconPath = `./src/assets/image/icon/path/${pathName}.png`;
+				const pathName = (await getPathMap())[char.base_type] || "none";
+				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
 			} else if (char.path) {
-				pathIconPath = `./src/assets/image/icon/path/${(typeof char.path === "string" ? char.path : char.path?.id || "none").toLowerCase()}.png`;
+				const rawPath = (
+					typeof char.path === "string"
+						? char.path
+						: char.path?.id || "none"
+				).toLowerCase();
+				const pathName = pathMapper[rawPath] || rawPath;
+				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
 			} else {
 				pathIconPath = `./src/assets/image/icon/path/none.png`;
 			}

@@ -248,6 +248,7 @@ const langs: LanguageStrings = {
 	path_nihility: "Nihility",
 	path_abundance: "Abundance",
 	path_remembrance: "Remembrance",
+	path_elation: "Elation",
 	profile_FilterPlaceholder: "Please select element/path to sort or filter",
 	profile_SortByLevel: "Sort by Level",
 	profile_SortByEidolon: "Sort by Eidolon",

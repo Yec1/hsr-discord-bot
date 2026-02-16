@@ -593,7 +593,7 @@ async function getCharacterList() {
 
 	try {
 		const response = await fetch(
-			"https://api.hakush.in/hsr/data/character.json"
+			"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/cht/characters.json"
 		);
 		if (!response.ok) {
 			throw new Error(
@@ -624,16 +624,33 @@ async function getCharacterDetail(characterId: string, lang?: string) {
 	try {
 		// 首先尝试获取指定语言版本的数据
 		const response = await fetch(
-			`https://api.hakush.in/hsr/data/${lang || "cn"}/character/${characterId}.json`
+			`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/${lang || "cn"}/characters.json`
 		);
 
 		if (!response.ok) {
 			throw new Error(
-				`Failed to fetch character detail: ${response.status} - ${response.statusText}`
+				`Failed to fetch characters index: ${response.status} - ${response.statusText}`
 			);
 		}
 
-		const characterData = await response.json();
+		const allCharacters = await response.json();
+		let characterData = allCharacters[characterId];
+
+		if (!characterData) {
+			throw new Error(`Character ID ${characterId} not found in data`);
+		}
+
+		// 規格化數據以兼容舊版 TitleCase 字段
+		characterData = {
+			...characterData,
+			Name: characterData.name,
+			Rarity: characterData.rarity,
+			Path: characterData.path,
+			Element: characterData.element,
+			MaxSP: characterData.max_sp,
+			Ranks: characterData.ranks,
+			Skills: characterData.skills
+		};
 
 		// 验证角色数据是否包含必要字段
 		if (!characterData.Name) {
@@ -646,14 +663,15 @@ async function getCharacterDetail(characterId: string, lang?: string) {
 		if (lang !== "en" && characterData.Ranks) {
 			try {
 				const enResponse = await fetch(
-					`https://api.hakush.in/hsr/data/en/character/${characterId}.json`
+					`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/en/characters.json`
 				);
 
 				if (enResponse.ok) {
-					const enCharacterData = await enResponse.json();
-					if (enCharacterData.Ranks) {
-						// 将英文版本的 Ranks 数据合并到当前数据中
-						characterData.Ranks = enCharacterData.Ranks;
+					const allEnCharacters = await enResponse.json();
+					const enCharacterData = allEnCharacters[characterId];
+					if (enCharacterData && enCharacterData.ranks) {
+						// 將英文版本的 ranks 數據合併到當前數據中
+						characterData.Ranks = enCharacterData.ranks;
 					}
 				}
 			} catch (enError) {
@@ -859,7 +877,7 @@ async function createCharacterCanvas(
 
 	// Character Avatar with fade effect - 使用缓存优化
 	const characterAvatar = await getCachedImage(
-		`https://api.hakush.in/hsr/UI/avatardrawcard/${characterId}.webp`
+		`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_drawing/${characterId}.png`
 	);
 	const characterAvatarWidth = 1200;
 	const characterAvatarHeight = 1200;
@@ -1142,7 +1160,7 @@ async function createCharacterCanvas(
 				const imageY = startY + row * (imageHeight + spacing + 25); // 25是文字高度
 
 				// 加载光锥图片（使用缓存）
-				const imageUrl = `https://api.hakush.in/hsr/UI/lightconemediumicon/${lightconeIds[i]}.webp`;
+				const imageUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/light_cone/${lightconeIds[i]}.png`;
 				const image = await getCachedImage(imageUrl);
 
 				// 绘制光锥图片
@@ -1308,7 +1326,7 @@ async function createCharacterCanvas(
 
 			// 主角色头像（使用缓存）
 			const mainCharacterImg = await getCachedImage(
-				`https://api.hakush.in/hsr/UI/avatarroundicon/${team.AvatarID}.webp`
+				`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/character/${team.AvatarID}.png`
 			);
 			ctx.drawImage(
 				mainCharacterImg,
@@ -1396,7 +1414,7 @@ async function createCharacterCanvas(
 				// 成员头像（使用缓存）
 				try {
 					const memberImg = await getCachedImage(
-						`https://api.hakush.in/hsr/UI/avatarroundicon/${team.MemberList[memberIndex]}.webp`
+						`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/character/${team.MemberList[memberIndex]}.png`
 					);
 					ctx.drawImage(
 						memberImg,
@@ -1443,7 +1461,7 @@ async function createCharacterCanvas(
 							// 有替补角色数据，显示角色头像（使用缓存）
 							try {
 								const backupImg = await getCachedImage(
-									`https://api.hakush.in/hsr/UI/avatarroundicon/${backupList[backupIndex]}.webp`
+									`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/character/${backupList[backupIndex]}.png`
 								);
 								ctx.drawImage(
 									backupImg,
@@ -1964,7 +1982,7 @@ async function createCharacterCanvas(
 
 								if (iconId) {
 									// 加载套装图标（使用缓存）
-									const setIconUrl = `https://api.hakush.in/hsr/UI/itemfigures/${iconId}.webp`;
+									const setIconUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/relic/${iconId}.png`;
 									const setIcon =
 										await getCachedImage(setIconUrl);
 
@@ -2037,7 +2055,7 @@ async function createCharacterCanvas(
 
 								if (iconId) {
 									// 加载套装图标（使用缓存）
-									const setIconUrl = `https://api.hakush.in/hsr/UI/itemfigures/${iconId}.webp`;
+									const setIconUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/relic/${iconId}.png`;
 									const setIcon =
 										await getCachedImage(setIconUrl);
 
@@ -2276,18 +2294,22 @@ async function createCharacterCanvas(
 				defaultLevel = 10;
 			else if (skillType === "Maze") defaultLevel = 1;
 
-			// 根据技能类型设置图标URL
+			// 根據技能類型設置圖標 URL (使用 StarRailRes ID 映射)
 			let iconUrl = "";
-			if (skillType === "Normal") {
-				iconUrl = `https://api.hakush.in/hsr/UI/skillicons/SkillIcon_${characterId}_Normal.webp`;
-			} else if (skillType === "BPSkill") {
-				iconUrl = `https://api.hakush.in/hsr/UI/skillicons/SkillIcon_${characterId}_BP.webp`;
-			} else if (skillType === "Ultra") {
-				iconUrl = `https://api.hakush.in/hsr/UI/skillicons/SkillIcon_${characterId}_Ultra.webp`;
-			} else if (skillType === "Maze") {
-				iconUrl = `https://api.hakush.in/hsr/UI/skillicons/SkillIcon_${characterId}_Maze.webp`;
-			} else if (skillType === "Passive") {
-				iconUrl = `https://api.hakush.in/hsr/UI/skillicons/SkillIcon_${characterId}_Passive.webp`;
+			if (Array.isArray(characterData.skills)) {
+				if (skillType === "Normal") {
+					iconUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/skill/${characterData.skills[0]}.png`;
+				} else if (skillType === "BPSkill") {
+					iconUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/skill/${characterData.skills[1]}.png`;
+				} else if (skillType === "Ultra") {
+					iconUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/skill/${characterData.skills[2]}.png`;
+				} else if (skillType === "Talent") {
+					iconUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/skill/${characterData.skills[3]}.png`;
+				} else if (skillType === "Maze") {
+					iconUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/skill/${characterData.skills[4] || characterData.skills[5]}.png`;
+				} else if (skillType === "Passive") {
+					iconUrl = `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/skill/${characterData.skills[3]}.png`;
+				}
 			}
 
 			// 合并同类型技能的描述
@@ -2745,7 +2767,7 @@ async function createCharacterCanvas(
 		try {
 			const pathIconSize = 36;
 			const pathIcon = await getCachedImage(
-				`./src/assets/image/icon/path/${baseTypeToPathMap[characterData.BaseType.toLowerCase() as keyof typeof baseTypeToPathMap]}.png`
+				`./src/assets/image/icon/path/${baseTypeToPathMap[characterData.BaseType.toLowerCase() as keyof typeof baseTypeToPathMap]}Small.png`
 			);
 
 			ctx.drawImage(
