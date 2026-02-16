@@ -35,6 +35,16 @@ clusterManager.extend(
 clusterManager.on("clusterCreate", cluster => {
 	cluster.on("ready", () => {
 		new Logger("分片").info(`已啟動分片 #${cluster.id}`);
+		// 定期輸出記憶體使用量監控
+		setInterval(
+			() => {
+				const memory = process.memoryUsage();
+				new Logger("系統").info(
+					`[Cluster #${cluster.id}] Memory Usage: RSS: ${(memory.rss / 1024 / 1024).toFixed(2)}MB, Heap: ${(memory.heapUsed / 1024 / 1024).toFixed(2)}MB`
+				);
+			},
+			1000 * 60 * 10
+		); // 每 10 分鐘輸出一次
 	});
 
 	cluster.on("reconnecting", () => {

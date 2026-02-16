@@ -385,14 +385,16 @@ async function downloadCharacterPortraits(
 
 // 處理角色皮膚圖片
 async function handleCharacterSkin(character: Character): Promise<string> {
-	const localSkinPath = `./src/assets/image/character_skin/${character.id}.webp`;
+	// const localSkinPath = `./src/assets/image/character_skin/${character.id}.webp`;
 
-	// 如果本地已有皮膚圖片，直接返回
-	if (existsSync(localSkinPath)) {
-		return localSkinPath;
-	}
+	// // 如果本地已有皮膚圖片，直接返回
+	// if (existsSync(localSkinPath)) {
+	// 	return localSkinPath;
+	// }
 
 	try {
+		// [註解] 因為 hakush.in 已失效，暫時停用自動下載皮膚邏輯
+		/*
 		// 請求角色皮膚數據
 		const response = await fetch(
 			`https://api.hakush.in/hsr/data/cn/character/${character.id}.json`
@@ -430,6 +432,8 @@ async function handleCharacterSkin(character: Character): Promise<string> {
 		await writeFile(localSkinPath, Buffer.from(skinImageBuffer));
 
 		return localSkinPath;
+		*/
+		return character?.image || "";
 	} catch (error) {
 		console.warn(
 			`[Skin Handler] Failed to process skin for ${character.id}:`,
@@ -535,6 +539,8 @@ interface LoadImageAsyncFunction {
 	cache?: Map<string, any>;
 }
 
+const MAX_CACHE_SIZE = 150; // 最大快取數量
+
 const loadImageAsync: LoadImageAsyncFunction = async (
 	url: string,
 	fallbackUrl: string | null = null
@@ -542,24 +548,34 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 	try {
 		if (!loadImageAsync.cache) loadImageAsync.cache = new Map();
 
-		// 检查缓存
+		// 檢查快取
 		if (loadImageAsync.cache!.has(url)) {
 			const cachedImage = loadImageAsync.cache!.get(url);
+			// 提升快取優先級 (LRU-like behavior for Map)
+			loadImageAsync.cache!.delete(url);
+			loadImageAsync.cache!.set(url, cachedImage);
 			return {
 				image: cachedImage,
 				usedFallback: false
 			};
 		}
 
-		// 并行检查 fallback 缓存
+		// 下載前檢查快取大小
+		if (loadImageAsync.cache!.size >= MAX_CACHE_SIZE) {
+			// 刪除最舊的快取 (第一個鍵)
+			const firstKey = loadImageAsync.cache!.keys().next().value;
+			if (firstKey) loadImageAsync.cache!.delete(firstKey);
+		}
+
+		// 並行檢查 fallback 快取
 		let fallbackCached = null;
 		if (fallbackUrl && loadImageAsync.cache!.has(fallbackUrl)) {
 			fallbackCached = loadImageAsync.cache!.get(fallbackUrl);
 		}
 
-		// 尝试加载主图片
+		// 嘗試載入主圖片
 		try {
-			// 检查URL是否有效
+			// 檢查URL是否有效
 			if (!url || url.trim() === "") {
 				throw new Error("Invalid URL");
 			}
@@ -568,7 +584,7 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 			loadImageAsync.cache!.set(url, image);
 			return { image, usedFallback: false };
 		} catch (error) {
-			// 如果主图片加载失败，使用缓存的 fallback 或尝试加载 fallback
+			// 如果主圖片載入失敗，使用快取的 fallback 或嘗試載入 fallback
 			if (fallbackCached) {
 				return {
 					image: fallbackCached,
@@ -594,7 +610,7 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 				}
 			}
 
-			// 使用本地默認圖片
+			// 使用本地預設圖片
 			const defaultUrl =
 				"./src/assets/image/icon/property/iconAttack.png";
 			try {
@@ -611,7 +627,7 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 					`Failed to load default image: ${defaultUrl}`,
 					(defaultError as Error).message
 				);
-				// 如果連默認圖片都無法載入，創建一個簡單的空白圖片
+				// 如果連預設圖片都無法載入，創建一個簡單的空白圖片
 				const canvas = createCanvas(64, 64);
 				const ctx = canvas.getContext("2d");
 				ctx.fillStyle = "#666";
@@ -628,7 +644,7 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 		}
 	} catch (error) {
 		console.error(`Unexpected error in loadImageAsync: ${url}`, error);
-		// 创建简单的空白图片作为最后的备用方案
+		// 創建簡單的空白圖片作為最後的備用方案
 		const canvas = createCanvas(64, 64);
 		const ctx = canvas.getContext("2d");
 		ctx.fillStyle = "#666";
