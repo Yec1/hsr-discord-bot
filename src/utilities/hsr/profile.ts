@@ -564,7 +564,13 @@ interface LoadImageAsyncFunction {
 	cache?: Map<string, any>;
 }
 
-const MAX_CACHE_SIZE = 150; // 最大快取數量
+const MAX_CACHE_SIZE = 20; // 最大快取數量
+
+export function clearImageCache(): void {
+	if (loadImageAsync.cache) {
+		loadImageAsync.cache.clear();
+	}
+}
 
 const loadImageAsync: LoadImageAsyncFunction = async (
 	url: string,
@@ -1502,13 +1508,7 @@ async function handleProfileDraw(
 			];
 
 			interaction.editReply({
-				contents: `${tr("CostTime", {
-					requestTime: (
-						(requestEndTime - requestStartTime) /
-						1000
-					).toFixed(2),
-					drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
-				})}`,
+				content: "",
 				embeds: [],
 				components: components,
 				files: [image]

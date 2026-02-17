@@ -775,10 +775,8 @@ export async function handleCharacterAtlas(
 				);
 
 				await interaction.editReply({
-					content: `${tr("CostTime", {
-						requestTime: requestTime,
-						drawTime: drawTime
-					})} `,
+					content: "",
+
 					embeds: [],
 					files: [image]
 				});

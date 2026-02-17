@@ -813,13 +813,8 @@ async function handleForgottenHallDraw(
 
 			// 根據 mode 決定是否顯示選擇菜單
 			const replyData: any = {
-				content: `${tr("CostTime", {
-					requestTime: (
-						(requestEndTime - requestStartTime) /
-						1000
-					).toFixed(2),
-					drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
-				})}`,
+				content: "",
+
 				embeds: [],
 				files: [image]
 			};

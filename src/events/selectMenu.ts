@@ -661,13 +661,7 @@ async function handleProfileFilter(
 			.addOptions(filterOptions);
 
 		await interaction.editReply({
-			content: `${tr("CostTime", {
-				requestTime: (
-					(requestEndTime - requestStartTime) /
-					1000
-				).toFixed(2),
-				drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
-			})}`,
+			content: "",
 			embeds: [],
 			components: [
 				...selectMenus.map(menu =>
@@ -1342,13 +1336,8 @@ async function handleForgottenHall(
 			const commonParams = { s: `${floor?.star_num || 0}` };
 
 			interaction.editReply({
-				content: `${tr("CostTime", {
-					requestTime: (
-						(requestEndTime - requestStartTime) /
-						1000
-					).toFixed(2),
-					drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
-				})}`,
+				content: "",
+
 				embeds: [],
 				files: [image],
 				components: [
@@ -1697,13 +1686,8 @@ async function handleSelectCharacter(
 			);
 
 			interaction.editReply({
-				content: `${tr("CostTime", {
-					requestTime: (
-						(requestEndTime - requestStartTime) /
-						1000
-					).toFixed(2),
-					drawTime: ((drawEndTime - drawStartTime) / 1000).toFixed(2)
-				})}`,
+				content: "",
+
 				embeds: [],
 				components: [
 					...selectMenus.map(menu =>
