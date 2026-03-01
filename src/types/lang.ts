@@ -74,6 +74,12 @@ export interface LanguageStrings {
 	profile_MemoryOfChaosLevel: string;
 	profile_PureFictionLevel: string;
 	profile_Tip: string;
+	profile_MemospriteSkill: string;
+	profile_MemospriteTalent: string;
+	profile_ElationSkill: string;
+	profile_Skill: string;
+	profile_FetchDataFailed: string;
+	profile_DrawFailed: string;
 
 	NoSetAccount: string;
 	AccountNotFound: string;

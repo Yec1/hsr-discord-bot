@@ -76,6 +76,12 @@ const langs: LanguageStrings = {
 	profile_MemoryOfChaosLevel: "混沌回憶進度",
 	profile_PureFictionLevel: "虛構敘事進度",
 	profile_Tip: "※ 可能較低於UID查詢角色評分",
+	profile_MemospriteSkill: "憶靈技",
+	profile_MemospriteTalent: "憶靈天賦",
+	profile_ElationSkill: "歡愉技",
+	profile_Skill: "技能",
+	profile_FetchDataFailed: "無法取得遊戲資料，請檢查帳號設定",
+	profile_DrawFailed: "圖片生成失敗",
 
 	NoSetAccount: "這位開拓者尚未設置帳號，所以無法使用此指令！",
 	AccountNotFound: "找不到這位開拓者！",

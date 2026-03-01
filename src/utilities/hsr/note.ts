@@ -106,17 +106,12 @@ async function handleNoteDraw(
 	}
 }
 
-// 圖片緩存機制
-const noteImageCache = new Map<string, any>();
+// 移除全域圖片快取以節省記憶體
 const noteImageLoadPromises = new Map<string, Promise<any>>();
 
+// 簡化的圖片載入函數，不進行全域快取
 async function loadNoteImage(url: string): Promise<any> {
-	// 檢查緩存
-	if (noteImageCache.has(url)) {
-		return noteImageCache.get(url);
-	}
-
-	// 防止重複加載
+	// 防止重複加載正在進行中的請求
 	if (noteImageLoadPromises.has(url)) {
 		return await noteImageLoadPromises.get(url);
 	}
@@ -129,16 +124,12 @@ async function loadNoteImage(url: string): Promise<any> {
 
 	noteImageLoadPromises.set(url, loadPromise);
 
-	// 30秒後清理 Promise 緩存
+	// 30秒後清理 Promise 標記
 	setTimeout(() => {
 		noteImageLoadPromises.delete(url);
 	}, 30000);
 
-	const result = await loadPromise;
-	if (result) {
-		noteImageCache.set(url, result);
-	}
-	return result;
+	return await loadPromise;
 }
 
 async function drawNoteImage(

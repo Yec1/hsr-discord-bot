@@ -405,17 +405,21 @@ async function getRelicsScore(
 	// 初始化長度為 6 的空陣列，對應 6 個槽位
 	const allRelics: (Relic | null)[] = [null, null, null, null, null, null];
 
-	// 映射遺器 (Head=1, Hand=2, Body=3, Feet=4) -> index 0-3
+	// 映射遺器 (Head=1, Hand=2, Body=3, Feet=4, Sphere=5, Rope=6) -> index 0-5
 	(character.relics || []).forEach(relic => {
 		const pos = (relic as any).pos || (relic as any).type;
-		if (typeof pos === "number" && pos >= 1 && pos <= 4) {
+		if (typeof pos === "number" && pos >= 1 && pos <= 6) {
 			allRelics[pos - 1] = relic;
 		} else if (typeof pos === "string") {
 			const map: Record<string, number> = {
 				HEAD: 0,
 				HAND: 1,
 				BODY: 2,
-				FOOT: 3
+				FOOT: 3,
+				OBJECT: 4,
+				NECK: 5,
+				PLANAR_SPHERE: 4,
+				LINK_ROPE: 5
 			};
 			const p = pos.toUpperCase();
 			if (map[p] !== undefined) allRelics[map[p]] = relic;
@@ -468,9 +472,9 @@ async function getRelicsScore(
 		validRelicCount++;
 	}
 
-	// 計算總評級：總分 / 有效聖遺物數量 (避免除以 0)
-	// 或者您可以選擇除以 6 (如果是要求滿裝備的評分標準)
-	// 這裡我們維持平均分邏輯
+	// 計算總分：所有有效聖遺物的分數相加 (SRS 標準)
+	// 總評級則根據平均分數計算
+	const totalScore = (totalScoreN * 100).toFixed(1);
 	const averageScore =
 		validRelicCount > 0
 			? ((totalScoreN * 100) / validRelicCount).toFixed(1)
@@ -479,7 +483,7 @@ async function getRelicsScore(
 
 	// 返回結果
 	const result: any = allRelics;
-	result.totalScore = averageScore;
+	result.totalScore = totalScore;
 	result.totalGrade = totalGrade;
 	result.scoreType = scoreType;
 
@@ -524,21 +528,72 @@ function calculateMainAffixScore(
 	return score;
 }
 
+/**
+ * 副屬性數值配置 (基於 5 星遺器)
+ * 資料來源: StarRailScore/config/RelicSubAffixConfig.json
+ */
+const SUB_AFFIX_CONFIG: Record<string, { base: number; step: number }> = {
+	HPDelta: { base: 33.87004, step: 4.233755 },
+	AttackDelta: { base: 16.935019, step: 2.116877 },
+	DefenceDelta: { base: 16.935019, step: 2.116877 },
+	HPAddedRatio: { base: 0.03456, step: 0.00432 },
+	AttackAddedRatio: { base: 0.03456, step: 0.00432 },
+	DefenceAddedRatio: { base: 0.0432, step: 0.0054 },
+	SpeedDelta: { base: 2.0, step: 0.3 },
+	CriticalChanceBase: { base: 0.02592, step: 0.00324 },
+	CriticalDamageBase: { base: 0.05184, step: 0.00648 },
+	StatusProbabilityBase: { base: 0.03456, step: 0.00432 },
+	StatusResistanceBase: { base: 0.03456, step: 0.00432 },
+	BreakDamageAddedRatioBase: { base: 0.05184, step: 0.00648 }
+};
+
+/**
+ * 估算副屬性的強化次數 (Roll Count)
+ */
+function estimateRollCount(property: string, value: number): number {
+	const config = SUB_AFFIX_CONFIG[property];
+	if (!config) return 1;
+
+	// 卷數 = 總值 / 平均單次強化值 (base + step)
+	// 平均值為 base + step (90% 檔位)
+	const avgRoll = config.base + config.step;
+	const count = Math.round(value / avgRoll);
+	// 5星遺器單項副屬性最多強化 6 次 (初始 1 + 強化 5)
+	return Math.min(6, Math.max(1, count));
+}
+
 function calculateSubScore(relic: Relic, weights: Weights): number {
 	const subAffixes = relic.sub_affix || relic.properties || [];
 
 	// SRS 评分：副词条归一化得分计算
 	// 单项得分 = Σ(基础次数 + 强化次数 * 0.1) * 权重
 	let rawScore = subAffixes.reduce((subScore: number, sub: SubAffix) => {
-		const count = Number(sub.count || sub.times || 0);
+		const subType = sub.type || sub.property_type;
+		const calSubType = propertyTranslate[subType!] || subType;
+		const subWeight = weights.weight[calSubType!] || 0;
+
+		if (subWeight === 0) return subScore;
+
+		// 獲取強化次數 (count)
+		// 如果沒有 count (如 HoyoAPI)，則根據屬性值進行估算
+		let count = Number(sub.count || sub.times || 0);
+		if (count === 0) {
+			const val =
+				parseFloat(
+					(sub.value || sub.display || "0")
+						.toString()
+						.replace("%", "")
+				) /
+				(sub.display?.includes("%") ||
+				(typeof sub.value === "number" && sub.value < 1)
+					? 100
+					: 1);
+			count = estimateRollCount(calSubType as string, val);
+		}
 
 		let step = 0;
 		if (sub.step !== undefined) step = Number(sub.step || 0);
 		else step = Math.max(0, count - 1);
-
-		const subType = sub.type || sub.property_type;
-		const calSubType = propertyTranslate[subType!] || subType;
-		const subWeight = weights.weight[calSubType!] || 0;
 
 		sub.weight = subWeight;
 
@@ -551,7 +606,7 @@ function calculateSubScore(relic: Relic, weights: Weights): number {
 				...sub,
 				type: subType as any,
 				count: count,
-				step: step, // 添加step字段以供后续使用
+				step: step,
 				name: sub.name || "",
 				propertyName: propertyMap[subType!] || "",
 				display: sub.value || sub.display || "0",

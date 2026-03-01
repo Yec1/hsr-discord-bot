@@ -19,7 +19,8 @@ if (!token) {
 const clusterManager = new ClusterManager(`${__dirname}/index.js`, {
 	totalShards: "auto",
 	totalClusters: "auto",
-	mode: "worker",
+	mode: "process",
+	execArgv: ["--max-old-space-size=1024"],
 	respawn: true,
 	token,
 	restarts: {
@@ -44,7 +45,7 @@ clusterManager.on("clusterCreate", cluster => {
 				);
 			},
 			1000 * 60 * 10
-		); // 每 10 分鐘輸出一次
+		);
 	});
 
 	cluster.on("reconnecting", () => {

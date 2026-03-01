@@ -104,6 +104,7 @@ interface Character {
 	light_cone?: LightCone;
 	equip?: LightCone;
 	skills?: Skill[];
+	skill_trees?: SkillTree[];
 	servant_detail?: {
 		servant_skills: ServantSkill[];
 	};
@@ -170,6 +171,7 @@ interface LightCone {
 }
 
 interface Skill {
+	id?: string;
 	point_type: number;
 	item_url?: string;
 	icon: string;
@@ -177,6 +179,15 @@ interface Skill {
 	type_text?: string;
 	remake?: string;
 	level: number;
+}
+
+interface SkillTree {
+	id: string;
+	level: number;
+	anchor: string;
+	max_level: number;
+	icon: string;
+	parent: string | null;
 }
 
 interface ServantSkill {
@@ -1151,9 +1162,7 @@ async function handleProfileDraw(
 							new EmbedBuilder()
 								.setColor("#E76161")
 								.setTitle(tr("DrawError"))
-								.setDescription(
-									"無法取得遊戲資料，請檢查帳號設定"
-								)
+								.setDescription(tr("profile_FetchDataFailed"))
 								.setThumbnail(
 									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 								)
@@ -1912,17 +1921,23 @@ async function drawCharacterImage(
 		// 修改聖遺物處理邏輯，確保始終顯示 6 個槽位
 		const allRelics: (any | null)[] = [null, null, null, null, null, null];
 
-		// 試著將遺器案部位映射到 0-3
+		// 試著將遺器按部位映射到 0-5
 		(character.relics || []).forEach(relic => {
 			const pos = (relic as any).pos || (relic as any).type;
-			if (typeof pos === "number" && pos >= 1 && pos <= 4) {
+			// 1-4 是常規遺器 (HEAD, HAND, BODY, FOOT)
+			// 5-6 是位面飾品 (PLANAR_SPHERE, LINK_ROPE)
+			if (typeof pos === "number" && pos >= 1 && pos <= 6) {
 				allRelics[pos - 1] = relic;
 			} else if (typeof pos === "string") {
 				const map: Record<string, number> = {
 					HEAD: 0,
 					HAND: 1,
 					BODY: 2,
-					FOOT: 3
+					FOOT: 3,
+					OBJECT: 4,
+					NECK: 5,
+					PLANAR_SPHERE: 4,
+					LINK_ROPE: 5
 				};
 				const p = pos.toUpperCase();
 				if (map[p] !== undefined) allRelics[map[p]] = relic;
@@ -2522,7 +2537,79 @@ async function drawCharacterImage(
 			? character.servant_detail?.servant_skills?.length || 0
 			: 0;
 
-		const allSkills = character.skills || [];
+		let allSkills = [...(character.skills || [])];
+
+		// 處理 Mihomo API 資料結構中的特殊技能 (憶靈/歡愉)
+		if (character.skill_trees && character.skill_trees.length > 0) {
+			character.skill_trees.forEach(treeNode => {
+				const nodeId = treeNode.id.toString();
+				const icon = treeNode.icon;
+
+				// 1. 補齊已有技能但沒圖示的情況 (如歡愉技 150220 -> 1502420)
+				if (nodeId.endsWith("420") || icon?.includes("_elation")) {
+					const existingElation = allSkills.find(
+						s =>
+							s.type_text === tr("profile_ElationSkill") ||
+							s.type_text === "Elation Skill" ||
+							s.id?.toString().endsWith("20")
+					);
+					if (existingElation && !existingElation.icon) {
+						existingElation.icon = icon;
+					} else if (!existingElation) {
+						// 如果 skills 陣列中完全沒有歡愉技，則從技能樹補入
+						allSkills.push({
+							id: nodeId,
+							level: treeNode.level || 1,
+							icon: icon,
+							type_text: tr("profile_ElationSkill"),
+							point_type: 4
+						} as any);
+					}
+				}
+
+				// 2. 處理憶靈技能 (通常僅存在於 skill_trees 中，ID 以 301/302 結尾)
+				if (
+					nodeId.endsWith("301") ||
+					icon?.includes("memosprite_skill")
+				) {
+					if (
+						!allSkills.some(
+							s =>
+								s.icon === icon ||
+								s.type_text === tr("profile_MemospriteSkill")
+						)
+					) {
+						allSkills.push({
+							id: nodeId,
+							level: treeNode.level || 1,
+							icon: icon,
+							type_text: tr("profile_MemospriteSkill"),
+							point_type: 10 // 自定義標記
+						} as any);
+					}
+				}
+				if (
+					nodeId.endsWith("302") ||
+					icon?.includes("memosprite_talent")
+				) {
+					if (
+						!allSkills.some(
+							s =>
+								s.icon === icon ||
+								s.type_text === tr("profile_MemospriteTalent")
+						)
+					) {
+						allSkills.push({
+							id: nodeId,
+							level: treeNode.level || 1,
+							icon: icon,
+							type_text: tr("profile_MemospriteTalent"),
+							point_type: 11 // 自定義標記
+						} as any);
+					}
+				}
+			});
+		}
 
 		// 過濾主要技能（普攻、戰技、終結技、天賦、秘技）- 最多5個
 		const basicSkills = allSkills
@@ -2544,11 +2631,11 @@ async function drawCharacterImage(
 					// 排除憶靈技能與歡愉技能
 					if (
 						skillType === "MemospriteSkill" ||
-						skillTypeText === "憶靈技" ||
+						skillTypeText === tr("profile_MemospriteSkill") ||
 						skillType === "MemospriteTalent" ||
-						skillTypeText === "憶靈天賦" ||
+						skillTypeText === tr("profile_MemospriteTalent") ||
 						skillType === "ElationSkill" ||
-						skillTypeText === "歡愉技" ||
+						skillTypeText === tr("profile_ElationSkill") ||
 						skillTypeText === "Elation Skill"
 					) {
 						return false;
@@ -2579,7 +2666,10 @@ async function drawCharacterImage(
 			const skillTypeText = skill.type_text || skill.remake || "";
 
 			// 憶靈技：只顯示第一個
-			if (skillType === "MemospriteSkill" || skillTypeText === "憶靈技") {
+			if (
+				skillType === "MemospriteSkill" ||
+				skillTypeText === tr("profile_MemospriteSkill")
+			) {
 				if (!foundMemospriteSkill) {
 					foundMemospriteSkill = true;
 					return true;
@@ -2590,7 +2680,7 @@ async function drawCharacterImage(
 			// 憶靈天賦：只顯示第一個
 			if (
 				skillType === "MemospriteTalent" ||
-				skillTypeText === "憶靈天賦"
+				skillTypeText === tr("profile_MemospriteTalent")
 			) {
 				if (!foundMemospriteTalent) {
 					foundMemospriteTalent = true;
@@ -2603,7 +2693,7 @@ async function drawCharacterImage(
 			if (
 				skill.point_type === 4 ||
 				skillType === "ElationSkill" ||
-				skillTypeText === "歡愉技" ||
+				skillTypeText === tr("profile_ElationSkill") ||
 				skillTypeText === "Elation Skill"
 			) {
 				if (!foundElationSkill) {
@@ -2644,7 +2734,8 @@ async function drawCharacterImage(
 
 				return loadImageAsync(imageUrl).then(skillImageResult => ({
 					skillImage: skillImageResult?.image,
-					type_text: skill.type_text || skill.remake || "技能",
+					type_text:
+						skill.type_text || skill.remake || tr("profile_Skill"),
 					level: skill.level || 1
 				}));
 			})
@@ -2677,7 +2768,8 @@ async function drawCharacterImage(
 						.replace("Technique", "Tech")
 						.replace("Ultimate", "Ult");
 			} else if (userLang === "tw") {
-				if (originalLabel === "Elation Skill") displayLabel = "歡愉技";
+				if (originalLabel === "Elation Skill")
+					displayLabel = tr("profile_ElationSkill");
 			}
 			let fontSize = 18;
 			setupFont(ctx, fontSize, true);
@@ -2698,14 +2790,16 @@ async function drawCharacterImage(
 			const isExtraSkill =
 				currentSkill &&
 				((currentSkill.type_text &&
-					(currentSkill.type_text === "憶靈技" ||
-						currentSkill.type_text === "憶靈天賦" ||
-						currentSkill.type_text === "歡愉技" ||
+					(currentSkill.type_text === tr("profile_MemospriteSkill") ||
+						currentSkill.type_text ===
+							tr("profile_MemospriteTalent") ||
+						currentSkill.type_text === tr("profile_ElationSkill") ||
 						currentSkill.type_text === "Elation Skill")) ||
 					(skill?.type_text &&
-						(skill.type_text === "憶靈技" ||
-							skill.type_text === "憶靈天賦" ||
-							skill.type_text === "歡愉技" ||
+						(skill.type_text === tr("profile_MemospriteSkill") ||
+							skill.type_text ===
+								tr("profile_MemospriteTalent") ||
+							skill.type_text === tr("profile_ElationSkill") ||
 							skill.type_text === "Elation Skill")));
 
 			if (isExtraSkill) {
@@ -2715,9 +2809,11 @@ async function drawCharacterImage(
 						.slice(0, index + 1)
 						.filter(
 							s =>
-								s?.type_text === "憶靈技" ||
-								s?.type_text === "憶靈天賦" ||
-								s?.type_text === "歡愉技" ||
+								s?.type_text ===
+									tr("profile_MemospriteSkill") ||
+								s?.type_text ===
+									tr("profile_MemospriteTalent") ||
+								s?.type_text === tr("profile_ElationSkill") ||
 								s?.type_text === "Elation Skill"
 						).length - 1;
 
@@ -3160,7 +3256,7 @@ async function drawCharacterImage(
 			errorCtx.fillStyle = "white";
 			errorCtx.font = "48px Arial";
 			errorCtx.textAlign = "center";
-			errorCtx.fillText("圖片生成失敗", 960, 540);
+			errorCtx.fillText(tr("profile_DrawFailed"), 960, 540);
 			return errorCanvas.toBuffer("image/webp");
 		} catch (fallbackError) {
 			console.error("Failed to create error image:", fallbackError);
@@ -3675,82 +3771,25 @@ function drawColoredTextLines(
 	}
 }
 
-// 添加图片预加载缓存
-const preloadedImages = new Map<string, any>();
-const imageLoadPromises = new Map<string, Promise<any>>();
+// 移除圖片預加載緩存，改為即時載入以節省記憶體
 
-// 预加载常用图片
+// 移除預加載功能
 async function preloadCommonImages(): Promise<void> {
-	const commonImages = [
-		"./src/assets/image/warp/bg.jpg",
-		"./src/assets/image/icon/deco/Star4.png",
-		"./src/assets/image/icon/deco/Star5.png",
-		"./src/assets/image/icon/property/iconAttack.png",
-		"./src/assets/image/icon/element/physical.png",
-		"./src/assets/image/icon/element/fire.png",
-		"./src/assets/image/icon/element/ice.png",
-		"./src/assets/image/icon/element/lightning.png",
-		"./src/assets/image/icon/element/wind.png",
-		"./src/assets/image/icon/element/quantum.png",
-		"./src/assets/image/icon/element/imaginary.png"
-	];
-
-	const promises = commonImages.map(async url => {
-		try {
-			const result = await loadImageAsync(url);
-			if (result.image) {
-				preloadedImages.set(url, result.image);
-			}
-		} catch (error) {
-			console.warn(`Failed to preload image: ${url}`, error);
-		}
-	});
-
-	await Promise.all(promises);
+	return;
 }
 
-// 优化的图片加载函数
+// 簡化的圖片載入函數，不進行全域緩存
 const loadImageOptimized = async (
 	url: string,
 	fallbackUrl?: string | null
 ): Promise<any> => {
-	// 检查预加载缓存
-	if (preloadedImages.has(url)) {
-		return preloadedImages.get(url);
+	try {
+		const result = await loadImageAsync(url, fallbackUrl);
+		return result.image;
+	} catch (error) {
+		console.warn(`Failed to load image: ${url}`, error);
+		return null;
 	}
-
-	// 检查常规缓存
-	if (loadImageAsync.cache?.has(url)) {
-		return loadImageAsync.cache.get(url);
-	}
-
-	// 防止重复加载同一图片
-	if (imageLoadPromises.has(url)) {
-		return await imageLoadPromises.get(url);
-	}
-
-	// 创建加载Promise并缓存
-	const loadPromise = loadImageAsync(url, fallbackUrl)
-		.then(result => {
-			if (result.image) {
-				preloadedImages.set(url, result.image);
-			}
-			return result.image;
-		})
-		.catch(error => {
-			console.warn(`Failed to load image: ${url}`, error);
-			// 返回null而不是抛出错误，让调用者处理
-			return null;
-		});
-
-	imageLoadPromises.set(url, loadPromise);
-
-	// 清理Promise缓存（避免内存泄漏）
-	setTimeout(() => {
-		imageLoadPromises.delete(url);
-	}, 30000); // 30秒后清理
-
-	return await loadPromise;
 };
 
 export {

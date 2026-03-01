@@ -515,7 +515,14 @@ GlobalFonts.registerFromPath(
 	"PingFang"
 );
 
-const imageCache = new Map<string, Image>();
+// 移除全域圖片快取以節省記憶體
+async function getCachedImage(path: string): Promise<Image | null> {
+	try {
+		return await loadImage(path);
+	} catch (error) {
+		return null;
+	}
+}
 
 // 圖片路徑常量
 const IMAGE_PATHS = {
@@ -626,48 +633,11 @@ function getBackgroundColor(mode: number): string {
 }
 
 async function preloadImages(): Promise<void> {
-	try {
-		const imagesToPreload = [
-			...Object.values(IMAGE_PATHS.BACKGROUNDS),
-			...Object.values(IMAGE_PATHS.BLOCKS),
-			...Object.values(IMAGE_PATHS.BOSS_CARD),
-			...Object.values(IMAGE_PATHS.HELL_BOSS_CARD),
-			...Object.values(IMAGE_PATHS.CHARACTERS),
-			...Object.values(IMAGE_PATHS.UI)
-		];
-
-		// 並行預載圖片以提高效率
-		const preloadPromises = imagesToPreload.map(async path => {
-			if (!imageCache.has(path)) {
-				try {
-					const image = await loadImage(path);
-					imageCache.set(path, image);
-				} catch (error) {
-					console.warn(`Failed to preload image: ${path}`, error);
-				}
-			}
-		});
-
-		await Promise.allSettled(preloadPromises);
-	} catch (error) {
-		console.error("Error preloading images:", error);
-	}
+	// 移除預加載以免佔用記憶體
+	return;
 }
 
 preloadImages();
-
-async function getCachedImage(path: string): Promise<Image | null> {
-	if (!imageCache.has(path)) {
-		try {
-			const image = await loadImage(path);
-			imageCache.set(path, image);
-			return image;
-		} catch (error) {
-			return null;
-		}
-	}
-	return imageCache.get(path) || null;
-}
 
 async function handleForgottenHallDraw(
 	interaction: CommandInteraction,

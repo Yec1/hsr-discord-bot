@@ -76,6 +76,13 @@ const langs: LanguageStrings = {
 	profile_MemoryOfChaosLevel: "Memory of Chaos Progress",
 	profile_PureFictionLevel: "Pure Fiction Progress",
 	profile_Tip: "※ May be lower than UID query character rating",
+	profile_MemospriteSkill: "Memosprite Skill",
+	profile_MemospriteTalent: "Memosprite Talent",
+	profile_ElationSkill: "Elation Skill",
+	profile_Skill: "Skill",
+	profile_FetchDataFailed:
+		"Unable to retrieve game data, please check account settings",
+	profile_DrawFailed: "Image generation failed",
 
 	NoSetAccount:
 		"This Trailblazer has not set up an account, so this command cannot be used!",

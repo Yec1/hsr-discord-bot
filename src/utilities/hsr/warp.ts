@@ -92,17 +92,12 @@ const image_Header =
 const sleep = (time: number): Promise<void> =>
 	new Promise(res => setTimeout(res, time));
 
-// 圖片緩存機制
-const warpImageCache = new Map<string, Canvas | Image>();
+// 移除全域圖片快取以節省記憶體
 const warpImageLoadPromises = new Map<string, Promise<Canvas | Image>>();
 
+// 簡化的圖片載入函數，不進行全域快取
 async function loadImageAsync(url: string): Promise<Canvas | Image> {
-	// 檢查緩存
-	if (warpImageCache.has(url)) {
-		return warpImageCache.get(url)!;
-	}
-
-	// 防止重複加載
+	// 防止重複加載正在進行中的請求
 	if (warpImageLoadPromises.has(url)) {
 		return await warpImageLoadPromises.get(url)!;
 	}
@@ -110,9 +105,7 @@ async function loadImageAsync(url: string): Promise<Canvas | Image> {
 	// 創建加載 Promise
 	const loadPromise = (async () => {
 		try {
-			const image = await loadImage(url);
-			warpImageCache.set(url, image);
-			return image;
+			return await loadImage(url);
 		} catch {
 			// 創建一個簡單的空白圖片作為最後的備用方案
 			const canvas = createCanvas(64, 64);
@@ -123,14 +116,13 @@ async function loadImageAsync(url: string): Promise<Canvas | Image> {
 			ctx.font = "12px 'URW DIN Arabic'";
 			ctx.textAlign = "center";
 			ctx.fillText("加載失敗", 32, 32);
-			warpImageCache.set(url, canvas);
 			return canvas;
 		}
 	})();
 
 	warpImageLoadPromises.set(url, loadPromise);
 
-	// 30秒後清理 Promise 緩存
+	// 30秒後清理 Promise 標記
 	setTimeout(() => {
 		warpImageLoadPromises.delete(url);
 	}, 30000);
@@ -138,11 +130,9 @@ async function loadImageAsync(url: string): Promise<Canvas | Image> {
 	return await loadPromise;
 }
 
-// 清理 warp 圖片緩存
+// 移除清理函數，因為不再有全域快取
 function clearWarpImageCache(): void {
-	warpImageCache.clear();
 	warpImageLoadPromises.clear();
-	console.log("[Warp Image Cache] All warp image caches cleared");
 }
 
 async function fetchWarpData(
