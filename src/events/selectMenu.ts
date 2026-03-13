@@ -246,13 +246,6 @@ interface GameInfo {
 	level: number;
 }
 
-interface CookieObject {
-	ltoken: string;
-	ltuid: string;
-	cookieToken: string;
-	accountMid: string;
-}
-
 interface LeaderboardData {
 	id: string;
 	score: Array<{
@@ -1064,32 +1057,6 @@ async function handleAccountAction(
 			);
 		} else if (type == "cookie") {
 			const userAccountCookie = accountData?.cookie || "";
-			const cookieObject: CookieObject = {
-				ltoken: "",
-				ltuid: "",
-				cookieToken: "",
-				accountMid: ""
-			};
-
-			const keyMap: Record<string, keyof CookieObject> = {
-				ltoken_v2: "ltoken",
-				ltuid_v2: "ltuid",
-				cookie_token_v2: "cookieToken",
-				account_mid_v2: "accountMid"
-			};
-
-			userAccountCookie
-				.split("; ")
-				.reduce((obj: CookieObject, cookie: string) => {
-					const [key, value] = cookie.split("=");
-					if (key && key in keyMap && value) {
-						const mappedKey = keyMap[key];
-						if (mappedKey) {
-							obj[mappedKey] = value;
-						}
-					}
-					return obj;
-				}, cookieObject);
 
 			await interaction.showModal(
 				new ModalBuilder()
@@ -1098,51 +1065,16 @@ async function handleAccountAction(
 					.addComponents(
 						new ActionRowBuilder<TextInputBuilder>().addComponents(
 							new TextInputBuilder()
-								.setCustomId("ltoken")
-								.setLabel("ltoken_2")
-								.setPlaceholder("v2_...")
-								.setValue(cookieObject.ltoken || "")
-								.setStyle(TextInputStyle.Short)
-								.setRequired(false)
-								.setMinLength(0)
-								.setMaxLength(1000)
-						),
-						new ActionRowBuilder<TextInputBuilder>().addComponents(
-							new TextInputBuilder()
-								.setCustomId("ltuid")
-								.setLabel("ltuid_v2")
-								.setPlaceholder("30...")
-								.setValue(cookieObject.ltuid || "")
-								.setStyle(TextInputStyle.Short)
-								.setRequired(false)
-								.setMinLength(0)
-								.setMaxLength(30)
-						),
-						new ActionRowBuilder<TextInputBuilder>().addComponents(
-							new TextInputBuilder()
-								.setCustomId("cookieToken")
-								.setLabel(
-									tr("Optional") + " " + "cookie_token_v2"
+								.setCustomId("cookie")
+								.setLabel("Cookie")
+								.setPlaceholder(
+									"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
 								)
-								.setPlaceholder("v2_...")
-								.setValue(cookieObject.cookieToken || "")
-								.setStyle(TextInputStyle.Short)
-								.setRequired(false)
-								.setMinLength(0)
-								.setMaxLength(1000)
-						),
-						new ActionRowBuilder<TextInputBuilder>().addComponents(
-							new TextInputBuilder()
-								.setCustomId("accountMid")
-								.setLabel(
-									tr("Optional") + " " + "account_mid_v2"
-								)
-								.setPlaceholder("1lyq...")
-								.setValue(cookieObject.accountMid || "")
-								.setStyle(TextInputStyle.Short)
-								.setRequired(false)
-								.setMinLength(0)
-								.setMaxLength(30)
+								.setValue(userAccountCookie)
+								.setStyle(TextInputStyle.Paragraph)
+								.setRequired(true)
+								.setMinLength(1)
+								.setMaxLength(4000)
 						)
 					)
 			);
@@ -1176,32 +1108,6 @@ async function handleAccountAction(
 	} else if (interaction.customId == "account_SetUserCookieSelect") {
 		const accountIndex = value;
 		const userAccountCookie = account[parseInt(accountIndex)]?.cookie || "";
-		const cookieObject: CookieObject = {
-			ltoken: "",
-			ltuid: "",
-			cookieToken: "",
-			accountMid: ""
-		};
-
-		const keyMap: Record<string, keyof CookieObject> = {
-			ltoken_v2: "ltoken",
-			ltuid_v2: "ltuid",
-			cookie_token_v2: "cookieToken",
-			account_mid_v2: "accountMid"
-		};
-
-		userAccountCookie
-			.split("; ")
-			.reduce((obj: CookieObject, cookie: string) => {
-				const [key, value] = cookie.split("=");
-				if (key && key in keyMap && value) {
-					const mappedKey = keyMap[key];
-					if (mappedKey) {
-						obj[mappedKey] = value;
-					}
-				}
-				return obj;
-			}, cookieObject);
 
 		await interaction.showModal(
 			new ModalBuilder()
@@ -1210,47 +1116,16 @@ async function handleAccountAction(
 				.addComponents(
 					new ActionRowBuilder<TextInputBuilder>().addComponents(
 						new TextInputBuilder()
-							.setCustomId("ltoken")
-							.setLabel("ltoken_2")
-							.setPlaceholder("v2_...")
-							.setValue(cookieObject.ltoken || "")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(false)
-							.setMinLength(0)
-							.setMaxLength(1000)
-					),
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("ltuid")
-							.setLabel("ltuid_v2")
-							.setPlaceholder("30...")
-							.setValue(cookieObject.ltuid || "")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(false)
-							.setMinLength(0)
-							.setMaxLength(30)
-					),
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("cookieToken")
-							.setLabel(tr("Optional") + " " + "cookie_token_v2")
-							.setPlaceholder("v2_...")
-							.setValue(cookieObject.cookieToken || "")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(false)
-							.setMinLength(0)
-							.setMaxLength(1000)
-					),
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("accountMid")
-							.setLabel(tr("Optional") + " " + "account_mid_v2")
-							.setPlaceholder("1lyq...")
-							.setValue(cookieObject.accountMid || "")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(false)
-							.setMinLength(0)
-							.setMaxLength(30)
+							.setCustomId("cookie")
+							.setLabel("Cookie")
+							.setPlaceholder(
+								"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
+							)
+							.setValue(userAccountCookie)
+							.setStyle(TextInputStyle.Paragraph)
+							.setRequired(true)
+							.setMinLength(1)
+							.setMaxLength(4000)
 					)
 				)
 		);

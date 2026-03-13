@@ -109,7 +109,7 @@ const langs: LanguageStrings = {
 	account_NoAccount: "尚未設置帳號",
 	account_HowToSetUpAccount: "❓ 如何設定帳號",
 	account_HowToSetUpAccountDesc:
-		"1. 使用 /account 指令\n2. 選擇 `① 帳密登入` 或 `② 設定 UID` 及 `③ 設定 Cookie`\n### 🔥 如何取得 Cookie\n1. 開啟 [Hoyolab](https://www.hoyolab.com/) 網頁\n2. 登入帳號後按下 `F12` 或者 `Ctrl + Shift + I` 打開開發者工具\n3. 切換至 `Application` 選擇左邊的 `Cookie`\n4. 複製 `ltoken_v2` 和 `ltuid_v2` 的分別填到欄位中",
+		"1. 到 [崩壞：星穹鐵道官方兌換頁面](https://hsr.hoyoverse.com/gift) 登入\n2. 按下 `F12` 或 `Ctrl + Shift + I` 打開開發者工具並切換至 `Network` (網路) 分頁\n3. 輸入 `STARRAILGIFT` 並點選一次兌換碼兌換\n4. 在搜尋框搜尋 `webExchangeCdkeyRisk` 並點選\n5. 在 `Request Headers` (請求標頭) 裡面找到 `Cookie` 欄位並**整串複製**\n6. 使用 `/account` 指令選擇「設定帳號 (Cookie)」並貼入",
 	account_CookieSetSuccess: "Cookie 已綁定至 <z>！",
 	account_CookieSetFailed: "Cookie 綁定失敗",
 	account_CookieSetFailedDesc: "請確認 Cookie 是否正確",
@@ -224,7 +224,8 @@ const langs: LanguageStrings = {
 	redeem_NoCode: "所有兌換碼已兌換完畢",
 	redeem_SystemBusy: "系統繁忙，請稍後再試",
 	redeem_CookieTokenInvalid: "CookieToken 過期了，請重新設定",
-	redeem_NoCookie: "尚未設定 CookieToken 或 AccountMid",
+	redeem_NoCookie:
+		"尚未設定可用的兌換 Token，請到帳號設定填入 cookie_token_v2 或 account_mid_v2",
 	autoRedeem_Off: "已關閉自動兌換",
 	autoRedeem_On: "已開啟自動兌換",
 	autoRedeem_Tag: "兌換時提及：<z>",

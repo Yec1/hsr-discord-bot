@@ -112,7 +112,7 @@ const langs: LanguageStrings = {
 	account_NoAccount: "No account set yet",
 	account_HowToSetUpAccount: "❓ How to Set Up Account",
 	account_HowToSetUpAccountDesc:
-		"1. Use the /account command\n2. Select `① Account Login` or `② Set UID` and `③ Set Cookie`\n### 🔥 How to get the Cookie\n1. Open [Hoyolab](https://www.hoyolab.com/)\n2. After logging in, press `F12` or `Ctrl + Shift + I` to open Developer Tools\n3. Switch to `Application` and select `Cookie` on the left\n4. Copy `ltoken_v2` and `ltuid_v2` and fill them in the fields",
+		"1. Go to the [Honkai: Star Rail official redemption page](https://hsr.hoyoverse.com/gift) and sign in\n2. Press `F12` or `Ctrl + Shift + I` to open Developer Tools, then switch to the `Network` tab\n3. Enter `STARRAILGIFT` and redeem once\n4. Search for `webExchangeCdkeyRisk` and click it\n5. In `Request Headers`, find the `Cookie` field and **copy the entire string**\n6. Use the `/account` command, select \"Set Account (Cookie)\", and paste it\n7. Reference image: image/image.png",
 	account_CookieSetSuccess: "Cookie bound to <z>!",
 	account_CookieSetFailed: "Cookie binding failed",
 	account_CookieSetFailedDesc: "Please check if the Cookie is correct",
@@ -235,7 +235,8 @@ const langs: LanguageStrings = {
 	redeem_NoCode: "All redeem codes have been redeemed",
 	redeem_SystemBusy: "System busy, please try again later",
 	redeem_CookieTokenInvalid: "CookieToken has expired, please reset",
-	redeem_NoCookie: "CookieToken or AccountMid has not been set yet",
+	redeem_NoCookie:
+		"No valid redeem token found. Please set cookie_token_v2 or account_mid_v2 in account settings",
 	autoRedeem_Off: "Auto-redeem is turned off",
 	autoRedeem_On: "Automatic redemption is turned on",
 	autoRedeem_Tag: "Mention when redeeming: <z>",

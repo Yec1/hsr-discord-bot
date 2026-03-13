@@ -33,6 +33,20 @@ interface ProgressEmbedData {
 	tr: (key: string, params?: any) => string;
 }
 
+function getCookieFieldValue(cookie: string, key: string): string {
+	const match = cookie.match(new RegExp(`(?:^|;\\s*)${key}=([^;]*)`));
+	return (match?.[1] || "").trim();
+}
+
+function hasValidRedeemToken(cookie: string): boolean {
+	return Boolean(
+		getCookieFieldValue(cookie, "cookie_token_v2") ||
+			getCookieFieldValue(cookie, "cookie_token") ||
+			getCookieFieldValue(cookie, "account_mid_v2") ||
+			getCookieFieldValue(cookie, "ltmid_v2")
+	);
+}
+
 export default {
 	data: new SlashCommandBuilder()
 		.setName("codes")
@@ -529,10 +543,7 @@ export default {
 						await database.get(`${targetUser.id}.account`)
 					)[accountIndex];
 
-					if (
-						userAccount.cookie.includes("cookie_token_v2") ||
-						userAccount.cookie.includes("account_mid_v2")
-					) {
+					if (hasValidRedeemToken(userAccount.cookie || "")) {
 						failedReply(
 							interaction,
 							`${userAccount.uid} ${tr("redeem_CookieTokenInvalid")}`
@@ -555,10 +566,7 @@ export default {
 			const userAccount = await database.get(
 				`${interaction.user.id}.account`
 			);
-			if (
-				!userAccount[0].cookie.includes("cookie_token_v2") &&
-				!userAccount[0].cookie.includes("account_mid_v2")
-			) {
+			if (!hasValidRedeemToken(userAccount[0]?.cookie || "")) {
 				return failedReply(interaction, tr("redeem_NoCookie"));
 			}
 

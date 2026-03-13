@@ -572,8 +572,6 @@ function calculateSubScore(relic: Relic, weights: Weights): number {
 		const calSubType = propertyTranslate[subType!] || subType;
 		const subWeight = weights.weight[calSubType!] || 0;
 
-		if (subWeight === 0) return subScore;
-
 		// 獲取強化次數 (count)
 		// 如果沒有 count (如 HoyoAPI)，則根據屬性值進行估算
 		let count = Number(sub.count || sub.times || 0);
@@ -615,6 +613,8 @@ function calculateSubScore(relic: Relic, weights: Weights): number {
 					`icon/property/icon${propertyMap[subType!]}.png`
 			});
 		}
+
+		if (subWeight === 0) return subScore;
 
 		// 基础次数 + 强化次数 * 0.1
 		return subScore + (count + step * 0.1) * subWeight;

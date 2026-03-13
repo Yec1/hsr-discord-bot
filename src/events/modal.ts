@@ -509,13 +509,14 @@ async function handleCookieSet(
 		});
 		return;
 	}
-	const ltoken = `ltoken_v2=${fields.getTextInputValue("ltoken")}; ` || "";
-	const ltuid = `ltuid_v2=${fields.getTextInputValue("ltuid")}; ` || "";
-	const cookieToken =
-		`cookie_token_v2=${fields.getTextInputValue("cookieToken")}; ` || "";
-	const accountMid =
-		`account_mid_v2=${fields.getTextInputValue("accountMid")}; ` || "";
-	const cookie = ltoken + ltuid + cookieToken + accountMid;
+	const cookieRaw = fields.getTextInputValue("cookie") || "";
+	const cookie = cookieRaw
+		.replace(/^cookie\s*:\s*/i, "")
+		.replace(/\r?\n/g, " ")
+		.split(";")
+		.map((part: string) => part.trim())
+		.filter(Boolean)
+		.join("; ");
 	const account: Account[] =
 		(await database.get(`${interaction.user.id}.account`)) ?? [];
 

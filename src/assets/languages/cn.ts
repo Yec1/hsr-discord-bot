@@ -109,7 +109,7 @@ const langs: LanguageStrings = {
 	account_NoAccount: "尚未设置帐号",
 	account_HowToSetUpAccount: "❓ 如何设定帐号",
 	account_HowToSetUpAccountDesc:
-		"1. 使用 /account 指令\n2. 选择 `① 帐密登入` 或 `② 设定 UID` 及 `③ 设定 Cookie`\n### 🔥 如何取得 Cookie\n1. 开启 [Hoyolab](https://www.hoyolab.com/) 网页\n2. 登入帐号后按下 `F12` 或者 `Ctrl + Shift + I` 打开开发者工具\n3. 切换至 `Application` 选择左边的 `Cookie`\n4. 复制 `ltoken_v2` 和 `ltuid_v2` 的分别填到栏位中",
+		"1. 到 [崩坏：星穹铁道官方兑换页面](https://hsr.hoyoverse.com/gift) 登录\n2. 按下 `F12` 或 `Ctrl + Shift + I` 打开开发者工具并切换到 `Network`（网络）分页\n3. 输入 `STARRAILGIFT` 并点击一次兑换\n4. 在搜索框搜索 `webExchangeCdkeyRisk` 并点击\n5. 在 `Request Headers`（请求标头）里找到 `Cookie` 栏位并**整串复制**\n6. 使用 `/account` 指令选择“设定帐号 (Cookie)”并贴上\n7. 参考图片：image/image.png",
 	account_CookieSetSuccess: "Cookie 已绑定至 <z>！",
 	account_CookieSetFailed: "Cookie 绑定失败",
 	account_CookieSetFailedDesc: "请确认 Cookie 是否正确",
