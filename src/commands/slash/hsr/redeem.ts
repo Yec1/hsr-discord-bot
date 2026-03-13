@@ -41,9 +41,9 @@ function getCookieFieldValue(cookie: string, key: string): string {
 function hasValidRedeemToken(cookie: string): boolean {
 	return Boolean(
 		getCookieFieldValue(cookie, "cookie_token_v2") ||
-			getCookieFieldValue(cookie, "cookie_token") ||
-			getCookieFieldValue(cookie, "account_mid_v2") ||
-			getCookieFieldValue(cookie, "ltmid_v2")
+		getCookieFieldValue(cookie, "cookie_token") ||
+		getCookieFieldValue(cookie, "account_mid_v2") ||
+		getCookieFieldValue(cookie, "ltmid_v2")
 	);
 }
 

@@ -112,7 +112,7 @@ const langs: LanguageStrings = {
 	account_NoAccount: "No account set yet",
 	account_HowToSetUpAccount: "❓ How to Set Up Account",
 	account_HowToSetUpAccountDesc:
-		"1. Go to the [Honkai: Star Rail official redemption page](https://hsr.hoyoverse.com/gift) and sign in\n2. Press `F12` or `Ctrl + Shift + I` to open Developer Tools, then switch to the `Network` tab\n3. Enter `STARRAILGIFT` and redeem once\n4. Search for `webExchangeCdkeyRisk` and click it\n5. In `Request Headers`, find the `Cookie` field and **copy the entire string**\n6. Use the `/account` command, select \"Set Account (Cookie)\", and paste it\n7. Reference image: image/image.png",
+		'1. Go to the [Honkai: Star Rail official redemption page](https://hsr.hoyoverse.com/gift) and sign in\n2. Press `F12` or `Ctrl + Shift + I` to open Developer Tools, then switch to the `Network` tab\n3. Enter `STARRAILGIFT` and redeem once\n4. Search for `webExchangeCdkeyRisk` and click it\n5. In `Request Headers`, find the `Cookie` field and **copy the entire string**\n6. Use the `/account` command, select "Set Account (Cookie)", and paste it\n7. Reference image: image/image.png',
 	account_CookieSetSuccess: "Cookie bound to <z>!",
 	account_CookieSetFailed: "Cookie binding failed",
 	account_CookieSetFailedDesc: "Please check if the Cookie is correct",

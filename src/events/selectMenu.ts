@@ -1037,26 +1037,41 @@ async function handleAccountAction(
 		const accountData = account[parseInt(accountIndex || "0")];
 
 		if (type == "uid") {
+			const uidInput = new TextInputBuilder()
+				.setCustomId("uid")
+				.setLabel(tr("account_SetUserIDDesc"))
+				.setPlaceholder("e.g. 809279679")
+				.setStyle(TextInputStyle.Short)
+				.setRequired(true)
+				.setMinLength(9)
+				.setMaxLength(10);
+
+			if (accountData?.uid) uidInput.setValue(accountData.uid);
+
 			await interaction.showModal(
 				new ModalBuilder()
 					.setCustomId(`accountEdit-${accountIndex}`)
 					.setTitle(tr("account_SetUserID"))
 					.addComponents(
 						new ActionRowBuilder<TextInputBuilder>().addComponents(
-							new TextInputBuilder()
-								.setCustomId("uid")
-								.setLabel(tr("account_SetUserIDDesc"))
-								.setValue(accountData?.uid || "")
-								.setPlaceholder("e.g. 809279679")
-								.setStyle(TextInputStyle.Short)
-								.setRequired(true)
-								.setMinLength(9)
-								.setMaxLength(10)
+							uidInput
 						)
 					)
 			);
 		} else if (type == "cookie") {
 			const userAccountCookie = accountData?.cookie || "";
+			const cookieInput = new TextInputBuilder()
+				.setCustomId("cookie")
+				.setLabel("Cookie")
+				.setPlaceholder(
+					"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
+				)
+				.setStyle(TextInputStyle.Paragraph)
+				.setRequired(true)
+				.setMinLength(1)
+				.setMaxLength(4000);
+
+			if (userAccountCookie) cookieInput.setValue(userAccountCookie);
 
 			await interaction.showModal(
 				new ModalBuilder()
@@ -1064,17 +1079,7 @@ async function handleAccountAction(
 					.setTitle(tr("account_SetUserCookie"))
 					.addComponents(
 						new ActionRowBuilder<TextInputBuilder>().addComponents(
-							new TextInputBuilder()
-								.setCustomId("cookie")
-								.setLabel("Cookie")
-								.setPlaceholder(
-									"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
-								)
-								.setValue(userAccountCookie)
-								.setStyle(TextInputStyle.Paragraph)
-								.setRequired(true)
-								.setMinLength(1)
-								.setMaxLength(4000)
+							cookieInput
 						)
 					)
 			);
@@ -1108,6 +1113,18 @@ async function handleAccountAction(
 	} else if (interaction.customId == "account_SetUserCookieSelect") {
 		const accountIndex = value;
 		const userAccountCookie = account[parseInt(accountIndex)]?.cookie || "";
+		const cookieInput = new TextInputBuilder()
+			.setCustomId("cookie")
+			.setLabel("Cookie")
+			.setPlaceholder(
+				"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
+			)
+			.setStyle(TextInputStyle.Paragraph)
+			.setRequired(true)
+			.setMinLength(1)
+			.setMaxLength(4000);
+
+		if (userAccountCookie) cookieInput.setValue(userAccountCookie);
 
 		await interaction.showModal(
 			new ModalBuilder()
@@ -1115,17 +1132,7 @@ async function handleAccountAction(
 				.setTitle(tr("account_SetUserCookie"))
 				.addComponents(
 					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("cookie")
-							.setLabel("Cookie")
-							.setPlaceholder(
-								"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
-							)
-							.setValue(userAccountCookie)
-							.setStyle(TextInputStyle.Paragraph)
-							.setRequired(true)
-							.setMinLength(1)
-							.setMaxLength(4000)
+						cookieInput
 					)
 				)
 		);
