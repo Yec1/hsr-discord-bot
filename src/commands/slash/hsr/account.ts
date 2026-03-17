@@ -1,4 +1,5 @@
 import {
+	AttachmentBuilder,
 	ChatInputCommandInteraction,
 	SlashCommandBuilder,
 	EmbedBuilder,
@@ -121,16 +122,21 @@ export default {
 
 		switch (command) {
 			case "HowToSetUpAccount":
+					const guideImage = new AttachmentBuilder(
+						"./src/assets/image/image.png",
+						{
+							name: "cookie-guide.png"
+						}
+					);
 				await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setTitle(tr("account_HowToSetUpAccount"))
 							.setColor(getRandomColor() as any)
 							.setDescription(tr("account_HowToSetUpAccountDesc"))
-							.setImage(
-								"https://media.discordapp.net/attachments/1149960935654559835/1185194443322687528/cookieT.png"
-							)
+								.setImage("attachment://cookie-guide.png")
 					],
+						files: [guideImage],
 					flags: MessageFlags.Ephemeral
 				});
 				return;
