@@ -109,7 +109,7 @@ const langs: LanguageStrings = {
 	account_NoAccount: "尚未設置帳號",
 	account_HowToSetUpAccount: "❓ 如何設定帳號",
 	account_HowToSetUpAccountDesc:
-		"1. 到 [崩壞：星穹鐵道官方兌換頁面](https://hsr.hoyoverse.com/gift) 登入\n2. 按下 `F12` 或 `Ctrl + Shift + I` 打開開發者工具並切換至 `Network` (網路) 分頁\n3. 輸入 `STARRAILGIFT` 並點選一次兌換碼兌換\n4. 在搜尋框搜尋 `webExchangeCdkeyRisk` 並點選\n5. 在 `Headers` 分頁中找到 `Cookie` 欄位並**整串複製**\n6. 使用 `/account` 指令選擇「設定帳號 (Cookie)」並貼入\n7. 參考下方圖片",
+		"1. 點擊此連結進入兌換頁面並先登入：https://hsr.hoyoverse.com/gift?code=abc\n2. 按下 `F12` 或 `Ctrl + Shift + I` 開啟開發者工具\n3. 在頁面上嘗試兌換一次（代碼可無效）\n4. 切換到 `Network` 分頁並搜尋 `webExchangeCdkeyRisk`\n5. 點進該請求後，在 `Headers` 往下找到 `Request Headers`\n6. 複製 `Cookie` 欄位的完整字串，使用 `/account` 選「設定帳號 (Cookie)」貼上",
 	account_CookieSetSuccess: "Cookie 已綁定至 <z>！",
 	account_CookieSetFailed: "Cookie 綁定失敗",
 	account_CookieSetFailedDesc: "請確認 Cookie 是否正確",

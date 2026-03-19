@@ -700,6 +700,88 @@ export async function updateCookie(
 	await database.set(accountKey, account);
 }
 
+export async function autoRefreshCookie(
+	userId: string,
+	accountIndex: number,
+	cookie: string
+): Promise<{ success: boolean; message: string; newCookie?: string }> {
+	try {
+		const accountKey = `${userId}.account`;
+		const accounts = await database.get(accountKey);
+		const uid = accounts?.[accountIndex]?.uid;
+
+		const verifyUrl =
+			"https://passport-api-sg.hoyoverse.com/account/ma-passport/token/verifyCookieToken";
+
+		const response = await fetch(verifyUrl, {
+			method: "POST",
+			headers: {
+				accept: "*/*",
+				"accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"content-type": "application/json",
+				origin: "https://hsr.hoyoverse.com",
+				referer: "https://hsr.hoyoverse.com/",
+				"user-agent":
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+				cookie,
+				"x-rpc-app_id": "c9oqaq3s3gu8",
+				"x-rpc-client_type": "4",
+				"x-rpc-game_biz": "hkrpg_global"
+			},
+			body: JSON.stringify({})
+		});
+
+		const result = (await response.json()) as any;
+		if (result?.code === 200 || result?.retcode === 0) {
+			if (uid) {
+				await database.delete(`${uid}.cookieExpired`);
+				await database.delete(`${uid}.needsCookieUpdate`);
+				await database.delete(`${uid}.lastCookieRefreshAttempt`);
+			}
+
+			return { success: true, message: "Cookie 驗證成功" };
+		}
+
+		const refreshResult = await updateCookie(userId, accountIndex, cookie);
+		if (!(refreshResult as any)?.error) {
+			if (uid) {
+				await database.delete(`${uid}.cookieExpired`);
+				await database.delete(`${uid}.needsCookieUpdate`);
+				await database.delete(`${uid}.lastCookieRefreshAttempt`);
+			}
+
+			const refreshedAccounts = await database.get(accountKey);
+			const newCookie = refreshedAccounts?.[accountIndex]?.cookie;
+			return {
+				success: true,
+				message: "Cookie 已自動刷新",
+				newCookie
+			};
+		}
+
+		if (uid) {
+			await database.set(`${uid}.needsCookieUpdate`, true);
+		}
+
+		return {
+			success: false,
+			message:
+				(refreshResult as any)?.message || "Cookie 刷新失敗"
+		};
+	} catch (error: any) {
+		const accounts = await database.get(`${userId}.account`);
+		const uid = accounts?.[accountIndex]?.uid;
+		if (uid) {
+			await database.set(`${uid}.needsCookieUpdate`, true);
+		}
+
+		return {
+			success: false,
+			message: error.message
+		};
+	}
+}
+
 export function getRandomColor(): string {
 	const letters = "0123456789ABCDEF";
 	let color = "#";

@@ -122,21 +122,21 @@ export default {
 
 		switch (command) {
 			case "HowToSetUpAccount":
-					const guideImage = new AttachmentBuilder(
-						"./src/assets/image/image.png",
-						{
-							name: "cookie-guide.png"
-						}
-					);
+				const guideImage = new AttachmentBuilder(
+					"./src/assets/image/image.png",
+					{
+						name: "cookie-guide.png"
+					}
+				);
 				await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
 							.setTitle(tr("account_HowToSetUpAccount"))
 							.setColor(getRandomColor() as any)
 							.setDescription(tr("account_HowToSetUpAccountDesc"))
-								.setImage("attachment://cookie-guide.png")
+							.setImage("attachment://cookie-guide.png")
 					],
-						files: [guideImage],
+					files: [guideImage],
 					flags: MessageFlags.Ephemeral
 				});
 				return;

@@ -1,13 +1,12 @@
 import { client, cluster, database } from "@/index.js";
 import { Client, EmbedBuilder } from "discord.js";
-import { HonkaiStarRail, LanguageEnum } from "@yeci226/hoyoapi";
 import Logger from "@/utilities/core/logger.js";
 import { createTranslator } from "@/utilities/core/i18n.js";
 import {
 	getUserLang,
 	getRandomColor,
 	getRedeemCodes,
-	updateCookie
+	autoRefreshCookie
 } from "@/utilities/index.js";
 
 // Constants
@@ -15,20 +14,16 @@ const CONFIG = {
 	TAIPEI_TIMEZONE: "Asia/Taipei",
 	API_TIMEOUT: 10000,
 	REDEEM_DELAY: 3000,
-	MAX_RETRIES: 3,
+	COOKIE_REFRESH_RETRY_INTERVAL: 6 * 60 * 60 * 1000,
 	DEFAULT_LANGUAGE: "en",
 	ERROR_CODES: {
 		ALREADY_CLAIMED: -2017,
 		CODE_CLAIMED: -2018,
 		CODE_INVALID: -2001,
-		CODE_EXPIRED: -2006
+		CODE_EXPIRED: -2006,
+		COOKIE_EXPIRED_VERIFY: -100,
+		RISK_CONTROL_BLOCKED: -502
 	}
-};
-
-const LANGUAGE_MAPPING: { [key: string]: LanguageEnum } = {
-	tw: LanguageEnum.TRADIIONAL_CHINESE,
-	cn: LanguageEnum.SIMPLIFIED_CHINESE,
-	default: LanguageEnum.ENGLISH
 };
 
 interface RedeemCode {
@@ -43,6 +38,7 @@ interface RedeemResult {
 		success: boolean;
 		alreadyClaimed: boolean;
 		invalid: boolean;
+		riskBlocked: boolean;
 		tokenInvalid: boolean;
 		failed?: boolean;
 	};
@@ -68,6 +64,7 @@ interface ProcessAccountResult {
 	nickname: string;
 	description: string;
 	hasSuccess: boolean;
+	hasResults: boolean;
 }
 
 interface AutoRedeemStats {
@@ -102,10 +99,6 @@ class AutoRedeemSystem {
 		};
 	}
 
-	getLanguage(locale: string): LanguageEnum {
-		return (LANGUAGE_MAPPING[locale] || LANGUAGE_MAPPING.default) as any;
-	}
-
 	async sleep(ms: number): Promise<void> {
 		return new Promise(resolve => setTimeout(resolve, ms));
 	}
@@ -127,33 +120,50 @@ class AutoRedeemSystem {
 		}
 	}
 
-	async withRetry<T>(
-		operation: () => Promise<T>,
-		maxRetries = 3
-	): Promise<T> {
-		for (let attempt = 1; attempt <= maxRetries; attempt++) {
-			try {
-				return await operation();
-			} catch (error) {
-				if (attempt === maxRetries) throw error;
-				await new Promise(resolve =>
-					setTimeout(resolve, 1000 * attempt)
-				);
-			}
-		}
-		throw new Error("Max retries exceeded");
+
+	async shouldRetryCookieRefresh(uid: string): Promise<boolean> {
+		const lastAttempt = await this.db.get(`${uid}.lastCookieRefreshAttempt`);
+		if (!lastAttempt) return true;
+		const elapsed = Date.now() - Number(lastAttempt);
+		return elapsed >= CONFIG.COOKIE_REFRESH_RETRY_INTERVAL;
+	}
+
+	async markCookieRefreshAttempt(uid: string): Promise<void> {
+		await this.db.set(`${uid}.lastCookieRefreshAttempt`, Date.now());
 	}
 
 	async processCode(
-		hsr: HonkaiStarRail,
 		code: RedeemCode,
-		userRedeemedCodes: string[],
-		uid: string
+		account: Account,
+		userId: string
 	): Promise<RedeemResult> {
 		try {
-			const result = await this.withRetry(() =>
-				hsr.redeem.claim(code.code)
-			);
+			const uid = account.uid;
+			let region = "prod_official_asia";
+			if (uid.startsWith("6")) region = "prod_official_usa";
+			else if (uid.startsWith("7")) region = "prod_official_eur";
+			else if (uid.startsWith("8")) region = "prod_official_asia";
+			else if (uid.startsWith("9")) region = "prod_official_cht";
+
+			const url =
+				"https://sg-hkrpg-api.hoyoverse.com/common/apicdkey/api/webExchangeCdkeyRisk";
+			const params = new URLSearchParams({
+				uid: String(uid),
+				region,
+				lang: "zh-tw",
+				cdkey: code.code,
+				game_biz: "hkrpg_global",
+				t: String(Date.now())
+			});
+
+			const response = await fetch(`${url}?${params.toString()}`, {
+				method: "POST",
+				headers: {
+					cookie: account.cookie
+				}
+			});
+
+			const result = (await response.json()) as any;
 
 			const status = {
 				success: result.retcode === 0 || result.message === "OK",
@@ -163,17 +173,18 @@ class AutoRedeemSystem {
 				].includes(result.retcode),
 				invalid: [
 					CONFIG.ERROR_CODES.CODE_INVALID,
-					CONFIG.ERROR_CODES.CODE_EXPIRED
+					CONFIG.ERROR_CODES.CODE_EXPIRED,
+					-2003
 				].includes(result.retcode),
-				tokenInvalid: result.retcode === -1071
+				riskBlocked:
+					result.retcode === CONFIG.ERROR_CODES.RISK_CONTROL_BLOCKED,
+				tokenInvalid: [CONFIG.ERROR_CODES.COOKIE_EXPIRED_VERIFY, -1071].includes(
+					result.retcode
+				)
 			};
 
-			if (status.success || status.alreadyClaimed || status.invalid) {
-				userRedeemedCodes.push(code.code);
-			}
-
 			if (status.tokenInvalid) {
-				await this.db.set(`${uid}.cookieExpired`, true);
+				await this.db.set(`${account.uid}.cookieExpired`, true);
 			}
 
 			return { code, status, message: result.message };
@@ -184,6 +195,7 @@ class AutoRedeemSystem {
 					success: false,
 					alreadyClaimed: false,
 					invalid: false,
+					riskBlocked: false,
 					tokenInvalid: false,
 					failed: true
 				},
@@ -203,17 +215,10 @@ class AutoRedeemSystem {
 			invalid: number;
 			failed: number;
 		};
+		hasResults: boolean;
 	} {
 		const description: string[] = [];
 		const stats = { success: 0, alreadyClaimed: 0, invalid: 0, failed: 0 };
-
-		// 如果没有结果，返回默认描述
-		if (!results || results.length === 0) {
-			return {
-				description: `ℹ️ 沒有需要兌換的禮包碼`,
-				stats
-			};
-		}
 
 		results.forEach(result => {
 			const { code, status } = result;
@@ -233,24 +238,16 @@ class AutoRedeemSystem {
 				);
 				stats.invalid++;
 			} else {
-				description.push(
-					`❌ **${code.code}** - (${tr("redeem_Failed")})`
-				);
+				// 失敗類型（包含 Cookie 待刷新、風控等）不推播到頻道
 				stats.failed++;
 			}
 		});
 
-		if (description.length > 0) {
-			description.push(`\n### ${tr("redeem_RedeemStats")}`);
-			description.push(`✅ ${tr("redeem_Success")}: ${stats.success}`);
-			description.push(
-				`ℹ️ ${tr("redeem_Already")}: ${stats.alreadyClaimed}`
-			);
-			description.push(`⚠️ ${tr("redeem_Invalid")}: ${stats.invalid}`);
-			description.push(`❌ ${tr("redeem_Failed")}: ${stats.failed}`);
-		}
-
-		return { description: description.join("\n"), stats };
+		return {
+			description: description.join("\n"),
+			stats,
+			hasResults: description.length > 0
+		};
 	}
 
 	async processAccount(
@@ -260,134 +257,115 @@ class AutoRedeemSystem {
 	): Promise<ProcessAccountResult | null> {
 		const { userId, userLang, tr, accountIndex, accountNickname } = context;
 
-		const isCookieExpired = await this.db.get(
-			`${account.uid}.cookieExpired`
-		);
+		const isCookieExpired = await this.db.get(`${account.uid}.cookieExpired`);
 		if (isCookieExpired) {
-			// this.logger.info(
-			// 	`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 已標記為過期，跳過處理`
-			// );
-			return null;
+			const shouldRetry = await this.shouldRetryCookieRefresh(account.uid);
+			if (!shouldRetry) {
+				this.logger.info(
+					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 刷新冷卻中，跳過本次刷新嘗試`
+				);
+				return {
+					uid: account.uid,
+					nickname: accountNickname,
+					description: "",
+					hasSuccess: false,
+					hasResults: false
+				};
+			}
+
+			await this.markCookieRefreshAttempt(account.uid);
+			const refreshResult = await autoRefreshCookie(
+				userId,
+				accountIndex,
+				account.cookie
+			);
+
+			if (!refreshResult.success) {
+				return {
+					uid: account.uid,
+					nickname: accountNickname,
+					description: "",
+					hasSuccess: false,
+					hasResults: false
+				};
+			}
+
+			const refreshedAccounts = await this.db.get(`${userId}.account`);
+			if (!refreshedAccounts?.[accountIndex]) {
+				return {
+					uid: account.uid,
+					nickname: accountNickname,
+					description: "",
+					hasSuccess: false,
+					hasResults: false
+				};
+			}
+
+			account = refreshedAccounts[accountIndex];
 		}
 
-		const hsr = new HonkaiStarRail({
-			uid: parseInt(account.uid),
-			cookie: account.cookie,
-			lang: this.getLanguage(userLang)
-		});
-
-		let userRedeemedCodes =
+		const userRedeemedCodes: string[] =
 			(await this.db.get(`${account.uid}.redeemedCodes`)) || [];
+		const redeemedCodeSet = new Set(userRedeemedCodes);
 		const unRedeemedCodes = codes.filter(
-			code => !userRedeemedCodes.includes(code.code)
+			code => !redeemedCodeSet.has(code.code)
 		);
 
-		// this.logger.info(
-		// 	`[用戶 ${userId}] [帳號 #${accountIndex}] 檢查到 ${codes.length} 個禮包碼，其中 ${unRedeemedCodes.length} 個未兌換`
-		// );
-
-		// 檢查是否需要更新Cookie（無論是否有未兌換的禮包碼）
-		const lastCookieRefresh =
-			(await this.db.get(`${account.uid}.lastCookieRefresh`)) || 0;
-		const currentTime = Date.now();
-		const oneDayInMs = 24 * 60 * 60 * 1000; // 24小时的毫秒数
-		const shouldRefreshCookie =
-			currentTime - lastCookieRefresh >= oneDayInMs;
-
 		if (!unRedeemedCodes || unRedeemedCodes.length === 0) {
-			try {
-				// 如果距离上次刷新已经过了24小时，则刷新Cookie
-				if (shouldRefreshCookie) {
-					// 確保 account.cookie 是字符串類型
-					if (!account.cookie || typeof account.cookie !== "string") {
-						// this.logger.error(
-						// 	`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 格式無效: ${typeof account.cookie}`
-						// );
-						return null;
-					}
-
-					await updateCookie(userId, accountIndex, account.cookie);
-					await this.db.set(
-						`${account.uid}.lastCookieRefresh`,
-						currentTime
-					);
-					// this.logger.success(
-					// 	`[用戶 ${userId}] [帳號 #${accountIndex}] 沒有未兌換的禮包碼，已刷新Cookie以防止過期`
-					// );
-				} else {
-					// this.logger.info(
-					// 	`[用戶 ${userId}] [帳號 #${accountIndex}] 沒有未兌換的禮包碼，且Cookie最近已刷新，跳過`
-					// );
-				}
-			} catch (error) {
-				this.logger.error(
-					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 刷新失敗: ${(error as any).message}`
-				);
-			}
 			return {
 				uid: account.uid,
 				nickname: accountNickname,
 				description: `ℹ️ ${tr("redeem_Already")}: ${codes.length} 個禮包碼已全部兌換`,
-				hasSuccess: false
+				hasSuccess: false,
+				hasResults: true
 			};
 		}
 
-		// this.logger.info(
-		// 	`[用戶 ${userId}] [帳號 #${accountIndex}] 發現 ${unRedeemedCodes.length} 個未兌換的禮包碼，開始兌換`
-		// );
-
 		const results: RedeemResult[] = [];
-		let hasSuccessfulRedeem = false;
 
 		for (const code of unRedeemedCodes) {
 			try {
 				this.stats.total++;
-				// this.logger.info(
-				// 	`[用戶 ${userId}] [帳號 #${accountIndex}] 正在兌換: ${code.code}`
-				// );
-				const result = await this.processCode(
-					hsr,
-					code,
-					userRedeemedCodes,
-					account.uid
-				);
+				const result = await this.processCode(code, account, userId);
+
+				if (
+					result.status &&
+					!result.status.failed &&
+					(result.status.success ||
+						result.status.alreadyClaimed ||
+						result.status.invalid)
+				) {
+					redeemedCodeSet.add(code.code);
+				}
+
+				if (!result.status.tokenInvalid) {
+					await this.db.delete(`${account.uid}.cookieExpired`);
+				}
+
 				if (result.status.tokenInvalid) {
-					// this.logger.warn(
-					// 	`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 已過期，跳過兌換流程`
-					// );
 					await this.db.set(`${account.uid}.cookieExpired`, true);
 					return {
 						uid: account.uid,
 						nickname: accountNickname,
-						description: `❌ Cookie 已過期，無法兌換禮包碼`,
-						hasSuccess: false
+						description: "",
+						hasSuccess: false,
+						hasResults: false
 					};
 				}
 
-				if (result.status.success) {
-					// this.logger.success(
-					// 	`[用戶 ${userId}] [帳號 #${accountIndex}] 兌換成功: ${code.code}`
-					// );
-					hasSuccessfulRedeem = true;
-				} else if (result.status.alreadyClaimed) {
-					// this.logger.info(
-					// 	`[用戶 ${userId}] [帳號 #${accountIndex}] 已經兌換過: ${code.code}`
-					// );
-				} else if (result.status.invalid) {
-					// this.logger.warn(
-					// 	`[用戶 ${userId}] [帳號 #${accountIndex}] 無效的禮包碼: ${code.code}`
-					// );
-				} else {
-					// this.logger.error(
-					// 	`[用戶 ${userId}] [帳號 #${accountIndex}] 兌換失敗: ${code.code} - ${result.message}`
-					// );
-					await this.db.set(`${account.uid}.cookieExpired`, true);
+				if (result.status.riskBlocked) {
+					await this.db.delete(`${account.uid}.cookieExpired`);
+					return {
+						uid: account.uid,
+						nickname: accountNickname,
+						description: "",
+						hasSuccess: false,
+						hasResults: false
+					};
 				}
 
 				results.push(result);
-				await new Promise(resolve =>
-					setTimeout(resolve, CONFIG.REDEEM_DELAY)
-				);
+				await this.sleep(CONFIG.REDEEM_DELAY);
 			} catch (error) {
 				this.logger.error(
 					`[用戶 ${userId}] [帳號 #${accountIndex}] 兌換出錯: ${code.code} - ${(error as any).message}`
@@ -395,37 +373,11 @@ class AutoRedeemSystem {
 			}
 		}
 
-		// 更新Cookie的邏輯：無論是否有成功兌換，都定期更新Cookie
-		try {
-			if (hasSuccessfulRedeem || shouldRefreshCookie) {
-				// 確保 account.cookie 是字符串類型
-				if (!account.cookie || typeof account.cookie !== "string") {
-					this.logger.error(
-						`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 格式無效: ${typeof account.cookie}`
-					);
-					return null;
-				}
-
-				await updateCookie(userId, accountIndex, account.cookie);
-				await this.db.set(
-					`${account.uid}.lastCookieRefresh`,
-					currentTime
-				);
-				// 	this.logger.success(
-				// 	`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 更新成功`
-				// );
-			}
-		} catch (error) {
-			this.logger.error(
-				`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 更新失敗: ${(error as any).message}`
-			);
-		}
-
 		await this.db.set(`${account.uid}.redeemedCodes`, [
-			...new Set(userRedeemedCodes)
+			...redeemedCodeSet
 		]);
 
-		const { description, stats } = this.formatResults(results, tr);
+		const { description, stats, hasResults } = this.formatResults(results, tr);
 
 		Object.entries(stats).forEach(([key, value]) => {
 			this.stats[key as keyof AutoRedeemStats] += value;
@@ -433,9 +385,10 @@ class AutoRedeemSystem {
 
 		return {
 			uid: account.uid,
-			nickname: accountNickname,
+			nickname: accountNickname || account.nickname || String(account.uid),
 			description,
-			hasSuccess: stats.success > 0
+			hasSuccess: stats.success > 0,
+			hasResults
 		};
 	}
 
@@ -445,11 +398,16 @@ class AutoRedeemSystem {
 			tr: (key: string, params?: any) => string;
 			tag: string;
 			description: string;
+			hasSuccess: boolean;
 		}
 	): Promise<void> {
 		const embed = new EmbedBuilder()
 			.setColor(getRandomColor() as any)
-			.setTitle(data.tr("Auto") + data.tr("redeem_SuccessDesc"))
+			.setTitle(
+				data.hasSuccess
+					? data.tr("Auto") + data.tr("redeem_SuccessDesc")
+					: data.tr("Auto") + data.tr("redeem_RedeemStats")
+			)
 			.setDescription(data.description)
 			.setThumbnail(
 				"https://static.wikia.nocookie.net/houkai-star-rail/images/d/d9/Item_Stellar_Jade.png/revision/latest?cb=20230722074903"
@@ -542,6 +500,25 @@ export default async function autoRedeem(): Promise<void> {
 					`用戶 ${userId} 有 ${accounts.length} 個帳號需要處理`
 				);
 
+				// 預檢查：先嘗試刷新已標記過期的 Cookie
+				for (let i = 0; i < accounts.length; i++) {
+					const account = accounts[i];
+					if (!account || !account.uid || !account.cookie) continue;
+
+					const isCookieExpired = await (system as any).db.get(
+						`${account.uid}.cookieExpired`
+					);
+					if (!isCookieExpired) continue;
+
+					const shouldRetry = await system.shouldRetryCookieRefresh(
+						account.uid
+					);
+					if (!shouldRetry) continue;
+
+					await system.markCookieRefreshAttempt(account.uid);
+					await autoRefreshCookie(userId, i, account.cookie);
+				}
+
 				const accountPromises = accounts.map(
 					async (account: Account, index: number) => {
 						if (!account || !account.uid || !account.cookie) {
@@ -595,24 +572,33 @@ export default async function autoRedeem(): Promise<void> {
 							).value
 					);
 
-				// 如果有成功的兑换，发送消息
-				if (successfulResults.some(result => result.hasSuccess)) {
+				const visibleResults = successfulResults.filter(
+					result => result.hasResults && Boolean(result.description?.trim())
+				);
+
+				if (visibleResults.length > 0) {
 					const channelId = redeemData[userId]?.channelId || "";
 					const tag =
 						redeemData[userId]?.tag === "true"
 							? `<@${userId}>`
 							: "";
 					const tr = createTranslator(userLang);
+					const hasSuccess = visibleResults.some(
+						result => result.hasSuccess
+					);
 
-					const description = successfulResults
-						.filter(result => result.hasSuccess)
-						.map(result => result.description)
+					const description = visibleResults
+						.map(
+							result =>
+								`## ${result.nickname || result.uid} (${result.uid})\n${result.description}`
+						)
 						.join("\n\n");
 
 					await system.sendRedeemMessage(channelId, {
 						tr,
 						tag,
-						description
+						description,
+						hasSuccess
 					});
 				}
 
