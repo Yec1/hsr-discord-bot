@@ -120,9 +120,10 @@ class AutoRedeemSystem {
 		}
 	}
 
-
 	async shouldRetryCookieRefresh(uid: string): Promise<boolean> {
-		const lastAttempt = await this.db.get(`${uid}.lastCookieRefreshAttempt`);
+		const lastAttempt = await this.db.get(
+			`${uid}.lastCookieRefreshAttempt`
+		);
 		if (!lastAttempt) return true;
 		const elapsed = Date.now() - Number(lastAttempt);
 		return elapsed >= CONFIG.COOKIE_REFRESH_RETRY_INTERVAL;
@@ -178,9 +179,10 @@ class AutoRedeemSystem {
 				].includes(result.retcode),
 				riskBlocked:
 					result.retcode === CONFIG.ERROR_CODES.RISK_CONTROL_BLOCKED,
-				tokenInvalid: [CONFIG.ERROR_CODES.COOKIE_EXPIRED_VERIFY, -1071].includes(
-					result.retcode
-				)
+				tokenInvalid: [
+					CONFIG.ERROR_CODES.COOKIE_EXPIRED_VERIFY,
+					-1071
+				].includes(result.retcode)
 			};
 
 			if (status.tokenInvalid) {
@@ -257,9 +259,13 @@ class AutoRedeemSystem {
 	): Promise<ProcessAccountResult | null> {
 		const { userId, userLang, tr, accountIndex, accountNickname } = context;
 
-		const isCookieExpired = await this.db.get(`${account.uid}.cookieExpired`);
+		const isCookieExpired = await this.db.get(
+			`${account.uid}.cookieExpired`
+		);
 		if (isCookieExpired) {
-			const shouldRetry = await this.shouldRetryCookieRefresh(account.uid);
+			const shouldRetry = await this.shouldRetryCookieRefresh(
+				account.uid
+			);
 			if (!shouldRetry) {
 				this.logger.info(
 					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 刷新冷卻中，跳過本次刷新嘗試`
@@ -317,7 +323,7 @@ class AutoRedeemSystem {
 				nickname: accountNickname,
 				description: `ℹ️ ${tr("redeem_Already")}: ${codes.length} 個禮包碼已全部兌換`,
 				hasSuccess: false,
-				hasResults: true
+				hasResults: false
 			};
 		}
 
@@ -373,11 +379,12 @@ class AutoRedeemSystem {
 			}
 		}
 
-		await this.db.set(`${account.uid}.redeemedCodes`, [
-			...redeemedCodeSet
-		]);
+		await this.db.set(`${account.uid}.redeemedCodes`, [...redeemedCodeSet]);
 
-		const { description, stats, hasResults } = this.formatResults(results, tr);
+		const { description, stats, hasResults } = this.formatResults(
+			results,
+			tr
+		);
 
 		Object.entries(stats).forEach(([key, value]) => {
 			this.stats[key as keyof AutoRedeemStats] += value;
@@ -385,7 +392,8 @@ class AutoRedeemSystem {
 
 		return {
 			uid: account.uid,
-			nickname: accountNickname || account.nickname || String(account.uid),
+			nickname:
+				accountNickname || account.nickname || String(account.uid),
 			description,
 			hasSuccess: stats.success > 0,
 			hasResults
@@ -573,7 +581,8 @@ export default async function autoRedeem(): Promise<void> {
 					);
 
 				const visibleResults = successfulResults.filter(
-					result => result.hasResults && Boolean(result.description?.trim())
+					result =>
+						result.hasResults && Boolean(result.description?.trim())
 				);
 
 				if (visibleResults.length > 0) {

@@ -717,7 +717,8 @@ export async function autoRefreshCookie(
 			method: "POST",
 			headers: {
 				accept: "*/*",
-				"accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"accept-language":
+					"zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
 				"content-type": "application/json",
 				origin: "https://hsr.hoyoverse.com",
 				referer: "https://hsr.hoyoverse.com/",
@@ -765,8 +766,7 @@ export async function autoRefreshCookie(
 
 		return {
 			success: false,
-			message:
-				(refreshResult as any)?.message || "Cookie 刷新失敗"
+			message: (refreshResult as any)?.message || "Cookie 刷新失敗"
 		};
 	} catch (error: any) {
 		const accounts = await database.get(`${userId}.account`);
