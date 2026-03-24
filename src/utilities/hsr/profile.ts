@@ -1142,104 +1142,95 @@ async function handleProfileDraw(
 				withResponse: true
 			});
 
-			const requestStartTime = Date.now();
-
 			// 如果目標玩家已經綁定帳號 使用hoyoapi 獲取資料
 			let playerData: PlayerData | null = null;
 			let playerActivity: PlayerActivity | null = null;
 			let characters: Character[] | null = null;
-			if (allCharacters) {
+			let useAllCharacters = allCharacters;
+			if (useAllCharacters) {
 				const hsr = await getUserHSRData(
 					interaction,
 					tr,
 					user.id,
-					accountIndex
+					accountIndex,
+					{ suppressErrorReply: true }
 				);
 
 				if (!hsr) {
-					return interaction.editReply({
-						embeds: [
-							new EmbedBuilder()
-								.setColor("#E76161")
-								.setTitle(tr("DrawError"))
-								.setDescription(tr("profile_FetchDataFailed"))
-								.setThumbnail(
-									"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-								)
-						],
-						withResponse: true
-					});
-				}
+					useAllCharacters = false;
+				} else {
+					const data = await hsr.record.records();
+					const gameInfo = await getUserGameInfo(hsr.cookie as any);
+					playerData = {
+						player: {
+							nickname: gameInfo.nickname,
+							uid: gameInfo.uid,
+							level: gameInfo.level,
+							avatar: { icon: (data as any).cur_head_icon_url }
+						},
+						characters: []
+					};
 
-				const data = await hsr.record.records();
-				const gameInfo = await getUserGameInfo(hsr.cookie as any);
-				playerData = {
-					player: {
-						nickname: gameInfo.nickname,
-						uid: gameInfo.uid,
-						level: gameInfo.level,
-						avatar: { icon: (data as any).cur_head_icon_url }
-					},
-					characters: []
-				};
+					// 獲取完整的角色數據，包括 relics 和 ornaments
+					characters = (await hsr.record.characters()) as any;
 
-				// 獲取完整的角色數據，包括 relics 和 ornaments
-				characters = (await hsr.record.characters()) as any;
+					// 為 saveLeaderboard 準備完整的 playerData
+					const fullPlayerData: PlayerData = {
+						player: {
+							nickname: gameInfo.nickname,
+							uid: gameInfo.uid,
+							level: gameInfo.level,
+							avatar: { icon: (data as any).cur_head_icon_url }
+						},
+						characters: characters || []
+					};
 
-				// 為 saveLeaderboard 準備完整的 playerData
-				const fullPlayerData: PlayerData = {
-					player: {
-						nickname: gameInfo.nickname,
-						uid: gameInfo.uid,
-						level: gameInfo.level,
-						avatar: { icon: (data as any).cur_head_icon_url }
-					},
-					characters: characters || []
-				};
-
-				// 異步計算並保存 relic score，不阻塞圖片繪製
-				saveLeaderboard(fullPlayerData).catch(error => {
-					console.error(
-						"[Leaderboard] Error updating leaderboard:",
-						error
-					);
-				});
-
-				// 異步批量下載角色頭像，不阻塞圖片繪製
-				if (characters && characters.length > 0) {
-					// 下載角色頭像
-					downloadCharacterPortraits(characters).catch(error => {
-						console.warn(
-							"[Character Portrait] Background download failed:",
+					// 異步計算並保存 relic score，不阻塞圖片繪製
+					saveLeaderboard(fullPlayerData).catch(error => {
+						console.error(
+							"[Leaderboard] Error updating leaderboard:",
 							error
 						);
 					});
 
-					// 註解掉遺器圖片下載
-					// const relicIds = characters
-					// 	.flatMap((char: Character) => [
-					// 		...(char.relics || []).map(
-					// 			(relic: Relic) => relic.id
-					// 		),
-					// 		...(char.ornaments || []).map(
-					// 			(ornament: Relic) => ornament.id
-					// 		)
-					// 	])
-					// 	.filter(
-					// 		(id: string, index: number, arr: string[]) =>
-					// 			arr.indexOf(id) === index
-					// 	); // 去重
+					// 異步批量下載角色頭像，不阻塞圖片繪製
+					if (characters && characters.length > 0) {
+						// 下載角色頭像
+						downloadCharacterPortraits(characters).catch(error => {
+							console.warn(
+								"[Character Portrait] Background download failed:",
+								error
+							);
+						});
 
-					// if (relicIds.length > 0) {
-					// 	downloadImages("relic", relicIds).catch(error => {
-					// 		console.warn(
-					// 			"[Relic Images] Background download failed:",
-					// 			error
-					// 		);
-					// 	});
-					// }
+						// 註解掉遺器圖片下載
+						// const relicIds = characters
+						// 	.flatMap((char: Character) => [
+						// 		...(char.relics || []).map(
+						// 			(relic: Relic) => relic.id
+						// 		),
+						// 		...(char.ornaments || []).map(
+						// 			(ornament: Relic) => ornament.id
+						// 		)
+						// 	])
+						// 	.filter(
+						// 		(id: string, index: number, arr: string[]) =>
+						// 			arr.indexOf(id) === index
+						// 	); // 去重
+
+						// if (relicIds.length > 0) {
+						// 	downloadImages("relic", relicIds).catch(error => {
+						// 		console.warn(
+						// 			"[Relic Images] Background download failed:",
+						// 			error
+						// 		);
+						// 	});
+						// }
+					}
 				}
-			} else {
+			}
+
+			if (!useAllCharacters) {
 				const {
 					status: reqPlayerDataStatus,
 					playerData: reqPlayerData
@@ -1347,7 +1338,7 @@ async function handleProfileDraw(
 			const requestEndTime = Date.now();
 			const drawStartTime = Date.now();
 			let imageBuffer: Buffer | null = null;
-			if (allCharacters && characters) {
+			if (useAllCharacters && characters) {
 				// 預設按五星優先排序
 				const defaultSortedCharacters = characters.sort((a, b) => {
 					// 先按五星優先排序
@@ -1383,7 +1374,7 @@ async function handleProfileDraw(
 				characters.map(character => {
 					// 安全地获取元素ID
 					let elementId: string;
-					if (allCharacters) {
+					if (useAllCharacters) {
 						// 对于 allCharacters 模式，element 可能是字符串
 						elementId =
 							typeof character.element === "string"
@@ -1405,7 +1396,7 @@ async function handleProfileDraw(
 					return {
 						emoji: (emoji as any)[elementKey] || emoji.physical,
 						label: `${character.name}`,
-						value: `${playerData?.player.uid}-${user.id}-${accountIndex}-${allCharacters}-${character.id}`
+						value: `${playerData?.player.uid}-${user.id}-${accountIndex}-${useAllCharacters}-${character.id}`
 					};
 				}),
 				tr("profile_SelectCharacter"),
@@ -1511,7 +1502,7 @@ async function handleProfileDraw(
 				...selectMenus.map(menu =>
 					new ActionRowBuilder().addComponents(menu)
 				),
-				...(allCharacters
+				...(useAllCharacters
 					? [new ActionRowBuilder().addComponents(filterMenu)]
 					: [])
 			];

@@ -476,7 +476,10 @@ export async function getUserHSRData(
 	interaction: Interaction,
 	tr: (key: string, params?: any) => string,
 	userId: string,
-	accountIndex: number
+	accountIndex: number,
+	options?: {
+		suppressErrorReply?: boolean;
+	}
 ): Promise<HonkaiStarRail | null> {
 	const [cookie, userLang, uid] = await Promise.all([
 		getUserCookie(userId, accountIndex),
@@ -508,6 +511,20 @@ export async function getUserHSRData(
 
 	const lang = resolveLang(userLang, interaction);
 
+	const isCookieAuthError = (err: any): boolean => {
+		const code =
+			err instanceof HoyoAPIError
+				? err.code
+				: (err?.code ?? err?.retcode);
+		const message = `${err?.message || ""}`.toLowerCase();
+
+		return (
+			code === 10001 ||
+			message.includes("please login") ||
+			message.includes("login")
+		);
+	};
+
 	try {
 		const hsr = new HonkaiStarRail({
 			cookie: cookie || "",
@@ -518,22 +535,55 @@ export async function getUserHSRData(
 
 		return hsr;
 	} catch (error: any) {
-		const isHoyoAPIError = error instanceof HoyoAPIError;
-		const errorCode = isHoyoAPIError ? error.code : error;
+		// Cookie 授權失效時先嘗試自動刷新，再重試一次。
+		if (cookie && isCookieAuthError(error)) {
+			const refreshResult = await autoRefreshCookie(
+				userId,
+				accountIndex,
+				cookie
+			);
 
-		checkAccount(
-			interaction,
-			tr,
-			userId,
-			isHoyoAPIError && error.code == 10035
-				? { ErrorCode: error.code }
-				: {
-						hasCookie: cookie != null,
-						Lang: lang,
-						hasUid: uid != null,
-						ErrorCode: errorCode
-					}
-		);
+			if (refreshResult.success) {
+				const retryCookie =
+					refreshResult.newCookie ||
+					(await getUserCookie(userId, accountIndex)) ||
+					cookie;
+
+				try {
+					const retryHsr = new HonkaiStarRail({
+						cookie: retryCookie,
+						lang: lang as any,
+						uid: parseInt(uid || "")
+					});
+					await retryHsr.record.note();
+
+					return retryHsr;
+				} catch (retryError: any) {
+					error = retryError;
+				}
+			}
+		}
+
+		const isHoyoAPIError = error instanceof HoyoAPIError;
+		const errorCode = isHoyoAPIError
+			? error.code
+			: (error?.code ?? error?.retcode ?? error?.message ?? error);
+
+		if (!options?.suppressErrorReply) {
+			checkAccount(
+				interaction,
+				tr,
+				userId,
+				isHoyoAPIError && error.code == 10035
+					? { ErrorCode: error.code }
+					: {
+							hasCookie: Boolean(cookie),
+							Lang: lang,
+							hasUid: uid != null,
+							ErrorCode: errorCode
+					  }
+			);
+		}
 		return null;
 	}
 }
@@ -610,6 +660,55 @@ export async function updateCookie(
 	accountIndex: number,
 	cookieObj: string
 ): Promise<CookieUpdateResponse | void> {
+	const parseCookie = (
+		cookie: string,
+		options: {
+			whitelist?: string[];
+			blacklist?: string[];
+			separator?: string;
+		} = {}
+	): string => {
+		const { whitelist = [], blacklist = [], separator = ";" } = options;
+
+		if (!cookie) return "";
+
+		const cookieMap = Object.fromEntries(
+			cookie
+				.split(separator)
+				.map(item => item.trim())
+				.filter(Boolean)
+				.map(item => {
+					const equalIdx = item.indexOf("=");
+					if (equalIdx === -1) return [item, ""];
+					return [
+						item.slice(0, equalIdx),
+						item.slice(equalIdx + 1)
+					];
+				})
+		);
+
+		if (whitelist.length) {
+			return Object.keys(cookieMap)
+				.filter(
+					key =>
+						whitelist.includes(key) && cookieMap[key] !== undefined
+				)
+				.map(key => `${key}=${cookieMap[key]}`)
+				.join(`${separator} `);
+		}
+
+		if (blacklist.length) {
+			return Object.keys(cookieMap)
+				.filter(key => !blacklist.includes(key))
+				.map(key => `${key}=${cookieMap[key]}`)
+				.join(`${separator} `);
+		}
+
+		return Object.keys(cookieMap)
+			.map(key => `${key}=${cookieMap[key]}`)
+			.join(`${separator} `);
+	};
+
 	// 檢查 cookieObj 是否為有效的字符串
 	if (!cookieObj || typeof cookieObj !== "string") {
 		throw new Error(
@@ -620,20 +719,49 @@ export async function updateCookie(
 	const webAPI =
 		"https://webapi-os.account.hoyoverse.com/Api/fetch_cookie_accountinfo";
 	const parsedCookie = Object.fromEntries(
-		cookieObj
-			.split("; ")
+		parseCookie(cookieObj)
+			.split(";")
+			.map(item => item.trim())
 			.filter(Boolean)
-			.map(cookie => cookie.split("="))
+			.map(item => {
+				const equalIdx = item.indexOf("=");
+				if (equalIdx === -1) return [item, ""];
+				return [
+					item.slice(0, equalIdx),
+					item.slice(equalIdx + 1)
+				];
+			})
 	);
 
-	const cookie = [
-		`cookie_token_v2=${parsedCookie.cookie_token_v2}`,
-		`account_id_v2=${parsedCookie.ltuid_v2}`
-	].join("; ");
+	const cookieForRefresh = parseCookie(cookieObj, {
+		whitelist: ["cookie_token_v2", "account_id_v2", "ltuid_v2", "ltoken_v2"]
+	});
+
+	const hasToken = cookieForRefresh.includes("cookie_token_v2=");
+	const hasId =
+		cookieForRefresh.includes("ltuid_v2=") ||
+		cookieForRefresh.includes("account_id_v2=");
+
+	if (!hasToken || !hasId) {
+		return {
+			error: true,
+			message: "Cookie 資訊不完整（缺少 token 或 ID）"
+		};
+	}
+
+	let finalCookieForRefresh = cookieForRefresh;
+	const ltuidMatch = cookieForRefresh.match(/ltuid_v2=([^;]+)/);
+	const accountIdMatch = cookieForRefresh.match(/account_id_v2=([^;]+)/);
+
+	if (!accountIdMatch && ltuidMatch) {
+		finalCookieForRefresh = `${cookieForRefresh}; account_id_v2=${ltuidMatch[1]}`;
+	} else if (!ltuidMatch && accountIdMatch) {
+		finalCookieForRefresh = `${cookieForRefresh}; ltuid_v2=${accountIdMatch[1]}`;
+	}
 
 	const response = await fetch(webAPI, {
 		method: "GET",
-		headers: { Cookie: cookie }
+		headers: { Cookie: finalCookieForRefresh }
 	});
 
 	if (!response.ok) {
@@ -659,6 +787,10 @@ export async function updateCookie(
 		};
 
 	const newCookieToken = responseData.data.cookie_info.cookie_token;
+	const newAccountId =
+		responseData.data.cookie_info.account_id ||
+		parsedCookie.account_id_v2 ||
+		parsedCookie.ltuid_v2;
 	const accountKey = `${userId}.account`;
 	const account: UserAccount[] | null = await database.get(accountKey);
 
@@ -666,36 +798,26 @@ export async function updateCookie(
 		throw new Error("Account not found");
 	}
 
-	let originalCookie = account[accountIndex].cookie
-		.split("; ")
-		.filter(Boolean);
-
-	let cookieTokenV2Exists = false;
-
-	const updatedCookie = originalCookie.map(item => {
-		if (item.startsWith("cookie_token_v2=")) {
-			cookieTokenV2Exists = true;
-			return `cookie_token_v2=${newCookieToken}`;
-		}
-		return item;
+	const baseCookie = parseCookie(account[accountIndex].cookie || cookieObj, {
+		blacklist: [
+			"cookie_token_v2",
+			"account_id_v2",
+			"cookie_token",
+			"account_id",
+			"ltuid"
+		]
 	});
 
-	if (!cookieTokenV2Exists) {
-		const finalCookie: string[] = [];
-		let inserted = false;
+	const rebuiltCookie = [
+		baseCookie,
+		`cookie_token_v2=${newCookieToken}`,
+		newAccountId ? `account_id_v2=${newAccountId}` : "",
+		newAccountId ? `ltuid_v2=${newAccountId}` : ""
+	]
+		.filter(Boolean)
+		.join("; ");
 
-		for (const item of updatedCookie) {
-			finalCookie.push(item);
-			if (!inserted && item.startsWith("ltuid_v2=")) {
-				finalCookie.push(`cookie_token_v2=${newCookieToken}`);
-				inserted = true;
-			}
-		}
-
-		account[accountIndex].cookie = finalCookie.join("; ");
-	} else {
-		account[accountIndex].cookie = updatedCookie.join("; ");
-	}
+	account[accountIndex].cookie = parseCookie(rebuiltCookie);
 
 	await database.set(accountKey, account);
 }
@@ -705,10 +827,103 @@ export async function autoRefreshCookie(
 	accountIndex: number,
 	cookie: string
 ): Promise<{ success: boolean; message: string; newCookie?: string }> {
+	const parseCookieMap = (cookieStr: string): Record<string, string> => {
+		return Object.fromEntries(
+			cookieStr
+				.split(";")
+				.map(item => item.trim())
+				.filter(Boolean)
+				.map(item => {
+					const equalIdx = item.indexOf("=");
+					if (equalIdx === -1) return [item, ""];
+					return [
+						item.slice(0, equalIdx),
+						item.slice(equalIdx + 1)
+					];
+				})
+		);
+	};
+
+	const extractLifecycleId = (rawValue: string | undefined): string => {
+		if (!rawValue) return "";
+
+		try {
+			const decoded = decodeURIComponent(rawValue);
+			const parsed = JSON.parse(decoded);
+			return `${parsed?.value || ""}`;
+		} catch {
+			try {
+				const parsed = JSON.parse(rawValue);
+				return `${parsed?.value || ""}`;
+			} catch {
+				return "";
+			}
+		}
+	};
+
 	try {
 		const accountKey = `${userId}.account`;
 		const accounts = await database.get(accountKey);
 		const uid = accounts?.[accountIndex]?.uid;
+		const cookieMap = parseCookieMap(cookie);
+		const deviceFp = cookieMap.DEVICEFP || "";
+		const deviceId =
+			cookieMap._HYVUUID ||
+			cookieMap._MHYUUID ||
+			`web-${Date.now()}`;
+		const lifecycleId = extractLifecycleId(
+			cookieMap.HYV_LOGIN_PLATFORM_LIFECYCLE_ID
+		);
+
+		const verifyLTokenUrl =
+			"https://passport-api-sg.hoyolab.com/account/ma-passport/token/verifyLToken";
+		const verifyLTokenResponse = await fetch(verifyLTokenUrl, {
+			method: "POST",
+			headers: {
+				accept: "*/*",
+				"accept-language":
+					"zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"content-type": "application/json",
+				origin: "https://act.hoyolab.com",
+				referer: "https://act.hoyolab.com/",
+				"user-agent":
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+				cookie,
+				"x-rpc-age_gate": "true",
+				"x-rpc-aigis_v4": "true",
+				"x-rpc-app_id": "c9oqaq3s3gu8",
+				"x-rpc-client_type": "4",
+				"x-rpc-device_fp": deviceFp,
+				"x-rpc-device_id": deviceId,
+				"x-rpc-device_model": "Chrome 146.0.0.0",
+				"x-rpc-device_name": "Chrome 146.0.0.0",
+				"x-rpc-device_os": "Windows 10 64-bit",
+				"x-rpc-domain_redirect": "true",
+				"x-rpc-game_biz": "hkrpg_global",
+				"x-rpc-language": "zh-tw",
+				"x-rpc-lifecycle_id": lifecycleId,
+				"x-rpc-referrer":
+					"https://act.hoyolab.com/app/community-game-records-sea/rpg/index.html",
+				"x-rpc-sdk_version": "2.49.0",
+				"x-rpc-source": "v2.webLogin"
+			},
+			body: JSON.stringify({})
+		});
+
+		const verifyLTokenResult =
+			(await verifyLTokenResponse.json()) as any;
+		if (
+			verifyLTokenResult?.code === 200 ||
+			verifyLTokenResult?.retcode === 0
+		) {
+			if (uid) {
+				await database.delete(`${uid}.cookieExpired`);
+				await database.delete(`${uid}.needsCookieUpdate`);
+				await database.delete(`${uid}.lastCookieRefreshAttempt`);
+			}
+
+			return { success: true, message: "Cookie 驗證成功 (verifyLToken)" };
+		}
 
 		const verifyUrl =
 			"https://passport-api-sg.hoyoverse.com/account/ma-passport/token/verifyCookieToken";
