@@ -25,6 +25,137 @@ interface AnomalyRankRecord {
 	challengeTime: number; // 挑戰時間戳
 }
 
+const ANOMALY_BADGE_AUTO_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+function toUnixTimestamp(time?: {
+	year?: number;
+	month?: number;
+	day?: number;
+	hour?: number;
+	minute?: number;
+} | null): number {
+	if (!time?.year || !time?.month || !time?.day) return 0;
+	const date = new Date(
+		time.year,
+		time.month - 1,
+		time.day,
+		time.hour || 0,
+		time.minute || 0
+	);
+	return Math.floor(date.getTime() / 1000);
+}
+
+async function tryAutoSyncCurrentAnomalyBadge(
+	interaction: any,
+	tr: any,
+	user: any,
+	uid: string,
+	accountIndex: number
+): Promise<void> {
+	if (!uid) return;
+
+	const nowSec = Math.floor(Date.now() / 1000);
+	const nowMs = Date.now();
+	const recordsKey = `${uid}.anomalyRankIcon`;
+	const roundKey = `${uid}.anomalyRoundNum`;
+	const syncAtKey = `${uid}.anomalyBadgeAutoSyncAt`;
+
+	const existingRecords =
+		((await database.get(recordsKey)) as AnomalyRankRecord[]) || [];
+	const validRecords = existingRecords.filter(
+		record => record?.expireTime > nowSec
+	);
+
+	if (validRecords.length !== existingRecords.length) {
+		await database.set(recordsKey, validRecords);
+	}
+
+	if (validRecords.length > 0) return;
+
+	const lastSyncAt = (await database.get(syncAtKey)) as number | null;
+	if (
+		typeof lastSyncAt === "number" &&
+		nowMs - lastSyncAt < ANOMALY_BADGE_AUTO_SYNC_INTERVAL_MS
+	) {
+		return;
+	}
+
+	await database.set(syncAtKey, nowMs);
+
+	try {
+		const hsr = await getUserHSRData(
+			interaction,
+			tr,
+			user.id,
+			accountIndex,
+			{ suppressErrorReply: true }
+		);
+
+		if (!hsr) return;
+
+		const anomalyRes = (await hsr.record.forgottenHall(
+			4 as any,
+			1 as any
+		)) as any;
+		const challengePeakRecords = anomalyRes?.challenge_peak_records;
+
+		if (!Array.isArray(challengePeakRecords) || !challengePeakRecords.length) {
+			return;
+		}
+
+		const latestRecord = [...challengePeakRecords].sort((a, b) => {
+			return (
+				toUnixTimestamp(b?.group?.end_time) -
+				toUnixTimestamp(a?.group?.end_time)
+			);
+		})[0];
+
+		if (!latestRecord?.boss_record?.has_challenge_record) return;
+
+		const expireTime = toUnixTimestamp(latestRecord.group?.end_time);
+		if (!expireTime || expireTime <= nowSec) return;
+
+		const roundNum = latestRecord?.boss_record?.round_num;
+		if (typeof roundNum === "number") {
+			const anomalyRecord: AnomalyRoundRecord = {
+				roundNum,
+				expireTime
+			};
+			await database.set(roundKey, anomalyRecord);
+		}
+
+		const rankIcon = latestRecord?.boss_record?.challenge_peak_rank_icon;
+		if (!rankIcon) return;
+
+		const rankRecord: AnomalyRankRecord = {
+			mazeId: latestRecord?.boss_info?.maze_id || 0,
+			groupName: latestRecord?.group?.name_mi18n || "",
+			rankIcon,
+			rankIconType:
+				latestRecord?.boss_record?.challenge_peak_rank_icon_type || "",
+			expireTime,
+			challengeTime: toUnixTimestamp(
+				latestRecord?.boss_record?.challenge_time
+			)
+		};
+
+		const upsertRecords = [...validRecords];
+		const existingIndex = upsertRecords.findIndex(
+			record => record.mazeId === rankRecord.mazeId
+		);
+
+		if (existingIndex >= 0) {
+			upsertRecords[existingIndex] = rankRecord;
+		} else {
+			upsertRecords.push(rankRecord);
+		}
+
+		await database.set(recordsKey, upsertRecords);
+	} catch (error) {
+		console.warn("[Profile] Auto sync anomaly badge failed:", error);
+	}
+}
+
 // 獲取異常仲裁圖標路徑
 function getAnomalyIconPath(roundNum: number): string | null {
 	if (roundNum === 0) return "./src/assets/image/226004.png";
@@ -1142,11 +1273,20 @@ async function handleProfileDraw(
 				withResponse: true
 			});
 
+			await tryAutoSyncCurrentAnomalyBadge(
+				interaction,
+				tr,
+				user,
+				uid,
+				accountIndex
+			);
+
 			// 如果目標玩家已經綁定帳號 使用hoyoapi 獲取資料
 			let playerData: PlayerData | null = null;
 			let playerActivity: PlayerActivity | null = null;
 			let characters: Character[] | null = null;
 			let useAllCharacters = allCharacters;
+			let cookieExpiredFallbackNotice = false;
 			if (useAllCharacters) {
 				const hsr = await getUserHSRData(
 					interaction,
@@ -1157,6 +1297,10 @@ async function handleProfileDraw(
 				);
 
 				if (!hsr) {
+					const needsCookieUpdate = await database.get(
+						`${uid}.needsCookieUpdate`
+					);
+					cookieExpiredFallbackNotice = Boolean(needsCookieUpdate);
 					useAllCharacters = false;
 				} else {
 					const data = await hsr.record.records();
@@ -1508,7 +1652,9 @@ async function handleProfileDraw(
 			];
 
 			interaction.editReply({
-				content: "",
+				content: cookieExpiredFallbackNotice
+					? tr("profile_CookieExpiredFallbackToUid")
+					: "",
 				embeds: [],
 				components: components,
 				files: [image]
@@ -1894,10 +2040,30 @@ async function drawCharacterImage(
 			(typeof character.element === "object" &&
 				character.element?.icon?.toLowerCase()) ||
 			`element/${(typeof character.element === "object" ? character.element?.id : character.element) || "physical"}.png`;
-		const characterPathIcon =
-			(typeof character.path === "object" &&
-				character.path?.icon?.toLowerCase()) ||
-			`icon/path/${(await getPathMap())[character.base_type || 0]}.png`;
+		const pathMapper: Record<string, string> = {
+			warrior: "destruction",
+			rogue: "hunt",
+			mage: "erudition",
+			priest: "abundance",
+			shaman: "harmony",
+			warlock: "nihility",
+			knight: "preservation",
+			memory: "remembrance",
+			elation: "elation"
+		};
+		const rawPathId = (
+			typeof character.path === "string"
+				? character.path
+				: character.path?.id ||
+					(await getPathMap())[character.base_type || 0] ||
+					"none"
+		).toLowerCase();
+		const normalizedPathId = pathMapper[rawPathId] || rawPathId;
+		const characterPathIcon = isAllCharacter
+			? `icon/path/${normalizedPathId}Small.png`
+			: (typeof character.path === "object" &&
+					character.path?.icon?.toLowerCase()) ||
+				`icon/path/${(await getPathMap())[character.base_type || 0]}.png`;
 
 		// 减少基础图片加载数量
 		const imagePaths = [

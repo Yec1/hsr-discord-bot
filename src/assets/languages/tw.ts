@@ -76,6 +76,8 @@ const langs: LanguageStrings = {
 	profile_MemoryOfChaosLevel: "混沌回憶進度",
 	profile_PureFictionLevel: "虛構敘事進度",
 	profile_Tip: "※ 可能較低於UID查詢角色評分",
+	profile_CookieExpiredFallbackToUid:
+		"Cookie 已過期，目前改用 UID 查詢，無法取得全部角色資料。請重新設定 Cookie 以使用完整角色查詢。",
 	profile_MemospriteSkill: "憶靈技",
 	profile_MemospriteTalent: "憶靈天賦",
 	profile_ElationSkill: "歡愉技",

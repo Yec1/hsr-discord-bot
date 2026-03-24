@@ -74,6 +74,7 @@ export interface LanguageStrings {
 	profile_MemoryOfChaosLevel: string;
 	profile_PureFictionLevel: string;
 	profile_Tip: string;
+	profile_CookieExpiredFallbackToUid: string;
 	profile_MemospriteSkill: string;
 	profile_MemospriteTalent: string;
 	profile_ElationSkill: string;

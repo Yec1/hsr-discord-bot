@@ -581,7 +581,7 @@ export async function getUserHSRData(
 							Lang: lang,
 							hasUid: uid != null,
 							ErrorCode: errorCode
-					  }
+						}
 			);
 		}
 		return null;
@@ -660,55 +660,6 @@ export async function updateCookie(
 	accountIndex: number,
 	cookieObj: string
 ): Promise<CookieUpdateResponse | void> {
-	const parseCookie = (
-		cookie: string,
-		options: {
-			whitelist?: string[];
-			blacklist?: string[];
-			separator?: string;
-		} = {}
-	): string => {
-		const { whitelist = [], blacklist = [], separator = ";" } = options;
-
-		if (!cookie) return "";
-
-		const cookieMap = Object.fromEntries(
-			cookie
-				.split(separator)
-				.map(item => item.trim())
-				.filter(Boolean)
-				.map(item => {
-					const equalIdx = item.indexOf("=");
-					if (equalIdx === -1) return [item, ""];
-					return [
-						item.slice(0, equalIdx),
-						item.slice(equalIdx + 1)
-					];
-				})
-		);
-
-		if (whitelist.length) {
-			return Object.keys(cookieMap)
-				.filter(
-					key =>
-						whitelist.includes(key) && cookieMap[key] !== undefined
-				)
-				.map(key => `${key}=${cookieMap[key]}`)
-				.join(`${separator} `);
-		}
-
-		if (blacklist.length) {
-			return Object.keys(cookieMap)
-				.filter(key => !blacklist.includes(key))
-				.map(key => `${key}=${cookieMap[key]}`)
-				.join(`${separator} `);
-		}
-
-		return Object.keys(cookieMap)
-			.map(key => `${key}=${cookieMap[key]}`)
-			.join(`${separator} `);
-	};
-
 	// 檢查 cookieObj 是否為有效的字符串
 	if (!cookieObj || typeof cookieObj !== "string") {
 		throw new Error(
@@ -719,49 +670,25 @@ export async function updateCookie(
 	const webAPI =
 		"https://webapi-os.account.hoyoverse.com/Api/fetch_cookie_accountinfo";
 	const parsedCookie = Object.fromEntries(
-		parseCookie(cookieObj)
+		cookieObj
 			.split(";")
 			.map(item => item.trim())
 			.filter(Boolean)
 			.map(item => {
 				const equalIdx = item.indexOf("=");
 				if (equalIdx === -1) return [item, ""];
-				return [
-					item.slice(0, equalIdx),
-					item.slice(equalIdx + 1)
-				];
+				return [item.slice(0, equalIdx), item.slice(equalIdx + 1)];
 			})
 	);
 
-	const cookieForRefresh = parseCookie(cookieObj, {
-		whitelist: ["cookie_token_v2", "account_id_v2", "ltuid_v2", "ltoken_v2"]
-	});
-
-	const hasToken = cookieForRefresh.includes("cookie_token_v2=");
-	const hasId =
-		cookieForRefresh.includes("ltuid_v2=") ||
-		cookieForRefresh.includes("account_id_v2=");
-
-	if (!hasToken || !hasId) {
-		return {
-			error: true,
-			message: "Cookie 資訊不完整（缺少 token 或 ID）"
-		};
-	}
-
-	let finalCookieForRefresh = cookieForRefresh;
-	const ltuidMatch = cookieForRefresh.match(/ltuid_v2=([^;]+)/);
-	const accountIdMatch = cookieForRefresh.match(/account_id_v2=([^;]+)/);
-
-	if (!accountIdMatch && ltuidMatch) {
-		finalCookieForRefresh = `${cookieForRefresh}; account_id_v2=${ltuidMatch[1]}`;
-	} else if (!ltuidMatch && accountIdMatch) {
-		finalCookieForRefresh = `${cookieForRefresh}; ltuid_v2=${accountIdMatch[1]}`;
-	}
+	const cookie = [
+		`cookie_token_v2=${parsedCookie.cookie_token_v2}`,
+		`account_id_v2=${parsedCookie.ltuid_v2}`
+	].join("; ");
 
 	const response = await fetch(webAPI, {
 		method: "GET",
-		headers: { Cookie: finalCookieForRefresh }
+		headers: { Cookie: cookie }
 	});
 
 	if (!response.ok) {
@@ -787,10 +714,6 @@ export async function updateCookie(
 		};
 
 	const newCookieToken = responseData.data.cookie_info.cookie_token;
-	const newAccountId =
-		responseData.data.cookie_info.account_id ||
-		parsedCookie.account_id_v2 ||
-		parsedCookie.ltuid_v2;
 	const accountKey = `${userId}.account`;
 	const account: UserAccount[] | null = await database.get(accountKey);
 
@@ -798,26 +721,36 @@ export async function updateCookie(
 		throw new Error("Account not found");
 	}
 
-	const baseCookie = parseCookie(account[accountIndex].cookie || cookieObj, {
-		blacklist: [
-			"cookie_token_v2",
-			"account_id_v2",
-			"cookie_token",
-			"account_id",
-			"ltuid"
-		]
+	let originalCookie = account[accountIndex].cookie
+		.split("; ")
+		.filter(Boolean);
+
+	let cookieTokenV2Exists = false;
+
+	const updatedCookie = originalCookie.map(item => {
+		if (item.startsWith("cookie_token_v2=")) {
+			cookieTokenV2Exists = true;
+			return `cookie_token_v2=${newCookieToken}`;
+		}
+		return item;
 	});
 
-	const rebuiltCookie = [
-		baseCookie,
-		`cookie_token_v2=${newCookieToken}`,
-		newAccountId ? `account_id_v2=${newAccountId}` : "",
-		newAccountId ? `ltuid_v2=${newAccountId}` : ""
-	]
-		.filter(Boolean)
-		.join("; ");
+	if (!cookieTokenV2Exists) {
+		const finalCookie: string[] = [];
+		let inserted = false;
 
-	account[accountIndex].cookie = parseCookie(rebuiltCookie);
+		for (const item of updatedCookie) {
+			finalCookie.push(item);
+			if (!inserted && item.startsWith("ltuid_v2=")) {
+				finalCookie.push(`cookie_token_v2=${newCookieToken}`);
+				inserted = true;
+			}
+		}
+
+		account[accountIndex].cookie = finalCookie.join("; ");
+	} else {
+		account[accountIndex].cookie = updatedCookie.join("; ");
+	}
 
 	await database.set(accountKey, account);
 }
@@ -836,10 +769,7 @@ export async function autoRefreshCookie(
 				.map(item => {
 					const equalIdx = item.indexOf("=");
 					if (equalIdx === -1) return [item, ""];
-					return [
-						item.slice(0, equalIdx),
-						item.slice(equalIdx + 1)
-					];
+					return [item.slice(0, equalIdx), item.slice(equalIdx + 1)];
 				})
 		);
 	};
@@ -868,9 +798,7 @@ export async function autoRefreshCookie(
 		const cookieMap = parseCookieMap(cookie);
 		const deviceFp = cookieMap.DEVICEFP || "";
 		const deviceId =
-			cookieMap._HYVUUID ||
-			cookieMap._MHYUUID ||
-			`web-${Date.now()}`;
+			cookieMap._HYVUUID || cookieMap._MHYUUID || `web-${Date.now()}`;
 		const lifecycleId = extractLifecycleId(
 			cookieMap.HYV_LOGIN_PLATFORM_LIFECYCLE_ID
 		);
@@ -910,8 +838,7 @@ export async function autoRefreshCookie(
 			body: JSON.stringify({})
 		});
 
-		const verifyLTokenResult =
-			(await verifyLTokenResponse.json()) as any;
+		const verifyLTokenResult = (await verifyLTokenResponse.json()) as any;
 		if (
 			verifyLTokenResult?.code === 200 ||
 			verifyLTokenResult?.retcode === 0
