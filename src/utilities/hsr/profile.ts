@@ -27,13 +27,15 @@ interface AnomalyRankRecord {
 
 const ANOMALY_BADGE_AUTO_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
-function toUnixTimestamp(time?: {
-	year?: number;
-	month?: number;
-	day?: number;
-	hour?: number;
-	minute?: number;
-} | null): number {
+function toUnixTimestamp(
+	time?: {
+		year?: number;
+		month?: number;
+		day?: number;
+		hour?: number;
+		minute?: number;
+	} | null
+): number {
 	if (!time?.year || !time?.month || !time?.day) return 0;
 	const date = new Date(
 		time.year,
@@ -99,7 +101,10 @@ async function tryAutoSyncCurrentAnomalyBadge(
 		)) as any;
 		const challengePeakRecords = anomalyRes?.challenge_peak_records;
 
-		if (!Array.isArray(challengePeakRecords) || !challengePeakRecords.length) {
+		if (
+			!Array.isArray(challengePeakRecords) ||
+			!challengePeakRecords.length
+		) {
 			return;
 		}
 
