@@ -3,6 +3,7 @@ import { Events, ActivityType } from "discord.js";
 import Logger from "@/utilities/core/logger.js";
 import autoDailySign from "@/utilities/hsr/autoDaily.js";
 import autoRedeem from "@/utilities/hsr/autoRedeem.js";
+import autoMimo from "@/utilities/hsr/autoMimo.js";
 import { setupLeaderboardMaintenance } from "@/utilities/hsr/profile.js";
 import schedule from "node-schedule";
 
@@ -35,12 +36,14 @@ client.once(Events.ClientReady, async () => {
 	if (cluster.id == 0) {
 		autoDailySign();
 		autoRedeem();
+		autoMimo();
 		setupLeaderboardMaintenance();
 
 		if (!hourlyJob) {
 			hourlyJob = schedule.scheduleJob("0 * * * *", function () {
 				autoDailySign();
 				autoRedeem();
+				autoMimo();
 			});
 		}
 

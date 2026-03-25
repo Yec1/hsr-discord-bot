@@ -242,7 +242,13 @@ const langs: LanguageStrings = {
 	autoRedeem_Off: "Auto-redeem is turned off",
 	autoRedeem_On: "Automatic redemption is turned on",
 	autoRedeem_Tag: "Mention when redeeming: <z>",
-
+	automimo_On: "Auto Mimo tasks turned on",
+	automimo_Off: "Auto Mimo tasks turned off",
+	automimo_Desc:
+		"The bot will check and complete Mimo tasks for you every hour.\nMention status: `<z>`",
+	mimo_Title: "Mimo Travel Tasks Completed",
+	mimo_Success:
+		"Successfully completed <count> Mimo tasks and claimed points for your account!",
 	element_physical: "Physical",
 	element_ice: "Ice",
 	element_fire: "Fire",

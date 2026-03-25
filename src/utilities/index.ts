@@ -479,6 +479,7 @@ export async function getUserHSRData(
 	accountIndex: number,
 	options?: {
 		suppressErrorReply?: boolean;
+		validationType?: "record" | "daily";
 	}
 ): Promise<HonkaiStarRail | null> {
 	const [cookie, userLang, uid] = await Promise.all([
@@ -531,7 +532,12 @@ export async function getUserHSRData(
 			lang: lang as any,
 			uid: parseInt(uid || "")
 		});
-		await hsr.record.note();
+
+		if (options?.validationType === "daily") {
+			await hsr.daily.info();
+		} else {
+			await hsr.record.note();
+		}
 
 		return hsr;
 	} catch (error: any) {
@@ -555,7 +561,12 @@ export async function getUserHSRData(
 						lang: lang as any,
 						uid: parseInt(uid || "")
 					});
-					await retryHsr.record.note();
+
+					if (options?.validationType === "daily") {
+						await retryHsr.daily.info();
+					} else {
+						await retryHsr.record.note();
+					}
 
 					return retryHsr;
 				} catch (retryError: any) {
@@ -682,13 +693,19 @@ export async function updateCookie(
 	);
 
 	const cookie = [
-		`cookie_token_v2=${parsedCookie.cookie_token_v2}`,
-		`account_id_v2=${parsedCookie.ltuid_v2}`
-	].join("; ");
+		`ltoken_v2=${parsedCookie.ltoken_v2}`,
+		`ltuid_v2=${parsedCookie.ltuid_v2}`,
+		parsedCookie.ltmid_v2 ? `ltmid_v2=${parsedCookie.ltmid_v2}` : ""
+	]
+		.filter(Boolean)
+		.join("; ");
 
 	const response = await fetch(webAPI, {
 		method: "GET",
-		headers: { Cookie: cookie }
+		headers: {
+			Cookie: cookie,
+			"x-rpc-signgame": "hkrpg"
+		}
 	});
 
 	if (!response.ok) {
@@ -833,6 +850,7 @@ export async function autoRefreshCookie(
 				"x-rpc-referrer":
 					"https://act.hoyolab.com/app/community-game-records-sea/rpg/index.html",
 				"x-rpc-sdk_version": "2.49.0",
+				"x-rpc-signgame": "hkrpg",
 				"x-rpc-source": "v2.webLogin"
 			},
 			body: JSON.stringify({})
@@ -869,7 +887,8 @@ export async function autoRefreshCookie(
 				cookie,
 				"x-rpc-app_id": "c9oqaq3s3gu8",
 				"x-rpc-client_type": "4",
-				"x-rpc-game_biz": "hkrpg_global"
+				"x-rpc-game_biz": "hkrpg_global",
+				"x-rpc-signgame": "hkrpg"
 			},
 			body: JSON.stringify({})
 		});

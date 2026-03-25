@@ -222,6 +222,11 @@ export interface LanguageStrings {
 	autoRedeem_Off: string;
 	autoRedeem_On: string;
 	autoRedeem_Tag: string;
+	automimo_On: string;
+	automimo_Off: string;
+	automimo_Desc: string;
+	mimo_Title: string;
+	mimo_Success: string;
 
 	element_physical: string;
 	element_ice: string;

@@ -8,7 +8,8 @@ import {
 	getUserCookie,
 	getUserLang,
 	getUserUid,
-	getRandomColor
+	getRandomColor,
+	autoRefreshCookie
 } from "@/utilities/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
 
@@ -278,8 +279,110 @@ class AutoDailySignSystem {
 						)
 				]
 			});
-		} catch (error) {
-			const errorMessage = (error as Error).message;
+		} catch (error: any) {
+			let errorMessage = error.message || "";
+			const code = error.code ?? error.retcode;
+
+			// 如果是 Cookie 相關錯誤，嘗試刷新一次
+			if (code === 10001 || this.isSkippableError(errorMessage)) {
+				const refreshResult = await autoRefreshCookie(
+					userId,
+					accountIndex,
+					account.cookie
+				);
+
+				if (refreshResult.success) {
+					const newCookie =
+						refreshResult.newCookie ||
+						(await getUserCookie(userId, accountIndex)) ||
+						account.cookie;
+
+					// 重試一次
+					const retryHsr = new HonkaiStarRail({
+						uid: parseInt(account.uid),
+						cookie: newCookie,
+						lang: this.getLanguage(userLang)
+					});
+
+					try {
+						const [info, reward, rewards] = (await Promise.all([
+							retryHsr.daily.info(),
+							retryHsr.daily.reward(),
+							retryHsr.daily.rewards()
+						])) as any;
+
+						const result =
+							(await retryHsr.daily.claim()) as SignResult;
+
+						if (
+							result.code === -5003 ||
+							result.info.is_sign === true
+						) {
+							this.stats.signed++;
+							return;
+						}
+
+						const todaySign =
+							rewards.awards[info.total_sign_day - 1] ||
+							rewards.awards[0];
+						const tmrSign =
+							rewards.awards[info.total_sign_day] ||
+							rewards.awards[1];
+
+						this.stats.success++;
+
+						await this.sendSuccessMessage(channelId, {
+							content: tag,
+							embeds: [
+								new EmbedBuilder()
+									.setColor(getRandomColor() as any)
+									.setTitle(
+										`${account.uid} ${tr("Auto")}${tr("daily_SignSuccess")} (Refreshed)`
+									)
+									.setThumbnail(todaySign?.icon)
+									.setDescription(
+										`${tr("daily_Description", {
+											a: `\`${todaySign?.name}x${todaySign?.cnt}\``
+										})}${
+											info.month_last_day
+												? ""
+												: `\n\n<@${userId}> ${tr(
+														"daily_DescriptionTmr",
+														{
+															b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
+														}
+													)}`
+										}`
+									)
+									.addFields(
+										{
+											name: `${reward.month} ${tr("daily_Month")}`,
+											value: "\u200b",
+											inline: true
+										},
+										{
+											name: tr("daily_SignedDay", {
+												z: `\`${info.total_sign_day}\``
+											}),
+											value: "\u200b",
+											inline: true
+										},
+										{
+											name: tr("daily_MissedDay", {
+												z: `\`${info.sign_cnt_missed}\``
+											}),
+											value: "\u200b",
+											inline: true
+										}
+									)
+							]
+						});
+						return;
+					} catch (retryError: any) {
+						errorMessage = retryError.message;
+					}
+				}
+			}
 
 			if (this.isSkippableError(errorMessage)) {
 				throw new Error(errorMessage);

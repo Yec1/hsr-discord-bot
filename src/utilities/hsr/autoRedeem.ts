@@ -160,7 +160,10 @@ class AutoRedeemSystem {
 			const response = await fetch(`${url}?${params.toString()}`, {
 				method: "POST",
 				headers: {
-					cookie: account.cookie
+					cookie: account.cookie,
+					"x-rpc-signgame": "hkrpg",
+					"x-rpc-app_id": "c9oqaq3s3gu8",
+					"x-rpc-client_type": "4"
 				}
 			});
 

@@ -257,7 +257,8 @@ export default {
 			interaction,
 			tr,
 			user.id,
-			parseInt(accountIndex)
+			parseInt(accountIndex),
+			{ validationType: "daily" }
 		);
 		if (!hsr) return;
 

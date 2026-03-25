@@ -206,6 +206,7 @@ function parseCookie(cookie: string): string {
 	let res = "";
 	if (parsedCookie.ltoken_v2) res += `ltoken_v2=${parsedCookie.ltoken_v2}; `;
 	if (parsedCookie.ltuid_v2) res += `ltuid_v2=${parsedCookie.ltuid_v2}; `;
+	if (parsedCookie.ltmid_v2) res += `ltmid_v2=${parsedCookie.ltmid_v2}; `;
 	if (parsedCookie.cookie_token_v2)
 		res += `cookie_token_v2=${parsedCookie.cookie_token_v2}; `;
 	if (parsedCookie.account_mid_v2)

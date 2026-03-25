@@ -22,7 +22,7 @@ export function createTranslator(lang: string) {
 
 	return function i18n(
 		string: string,
-		options?: Record<string, string>,
+		options?: Record<string, string | number>,
 		...args: any[]
 	): string {
 		let str =
