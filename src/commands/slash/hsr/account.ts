@@ -50,26 +50,12 @@ export default {
 						},
 						value: "HowToSetUpAccount"
 					},
-					// {
-					// 	name: "① Account Login (Recommended)",
-					// 	name_localizations: {
-					// 		"zh-TW": "① 帳密登入 (推薦)"
-					// 	},
-					// 	value: "QuickLink"
-					// },
 					{
-						name: "② Set UID (Manual)",
+						name: "🔗 Bind Account via Cookie",
 						name_localizations: {
-							"zh-TW": "② 設定 UID (手動)"
+							"zh-TW": "🔗 綁定帳號 (直接提報 Cookie)"
 						},
-						value: "SetUserID"
-					},
-					{
-						name: "③ Set Cookie (Manual)",
-						name_localizations: {
-							"zh-TW": "③ 設定 Cookie (手動)"
-						},
-						value: "SetUserCookie"
+						value: "BindAccountByCookie"
 					},
 					{
 						name: "🔸 View configured account",
@@ -140,78 +126,24 @@ export default {
 					flags: MessageFlags.Ephemeral
 				});
 				return;
-			case "QuickLink":
+			case "BindAccountByCookie":
 				await interaction.showModal(
 					new ModalBuilder()
-						.setCustomId("account_LoginAccountModal")
-						.setTitle(tr("account_QuickLinkModal"))
+						.setCustomId("cookie_set_new")
+						.setTitle(tr("account_SetCookieModal")) // you can reuse translations if exists
 						.addComponents(
 							new ActionRowBuilder<TextInputBuilder>().addComponents(
 								new TextInputBuilder()
-									.setCustomId(
-										"account_LoginAccountModalField"
+									.setCustomId("cookie")
+									.setLabel("Cookie")
+									.setPlaceholder(
+										"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
 									)
-									.setLabel(tr("account_LoginAccountDesc"))
-									.setPlaceholder("example@gmail.com")
-									.setStyle(TextInputStyle.Short)
-									.setRequired(true)
-							),
-							new ActionRowBuilder<TextInputBuilder>().addComponents(
-								new TextInputBuilder()
-									.setCustomId(
-										"account_LoginAccountModalField2"
-									)
-									.setLabel(tr("account_LoginAccountDesc2"))
-									.setPlaceholder("mypassword")
-									.setStyle(TextInputStyle.Short)
+									.setStyle(TextInputStyle.Paragraph)
 									.setRequired(true)
 							)
 						)
 				);
-				return;
-			case "SetUserID":
-				await interaction.showModal(
-					new ModalBuilder()
-						.setCustomId("account_SetUserIDModal")
-						.setTitle(tr("account_SetUserID"))
-						.addComponents(
-							new ActionRowBuilder<TextInputBuilder>().addComponents(
-								new TextInputBuilder()
-									.setCustomId("account_SetUserIDModalField")
-									.setLabel(tr("account_SetUserIDDesc"))
-									.setPlaceholder("e.g. 809279679")
-									.setStyle(TextInputStyle.Short)
-									.setRequired(true)
-									.setMinLength(9)
-									.setMaxLength(10)
-							)
-						)
-				);
-				return;
-			case "SetUserCookie":
-				if (!hasAccount)
-					return failedReply(interaction, tr("account_NoAccount"));
-				interaction.reply({
-					components: [
-						new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-							new StringSelectMenuBuilder()
-								.setPlaceholder(
-									tr("account_SelectAccountSetCookie")
-								)
-								.setCustomId("account_SetUserCookieSelect")
-								.setMinValues(1)
-								.setMaxValues(1)
-								.addOptions(
-									accounts.map((account, index) => ({
-										emoji: emoji.avatarIcon,
-										label: `${account.uid} ${account.nickname ? `- ${account.nickname}` : ""}`,
-										value: `${index}`
-									}))
-								)
-						)
-					],
-					flags: MessageFlags.Ephemeral
-				} as any);
 				return;
 			case "ViewAccount":
 				interaction.editReply({

@@ -438,7 +438,20 @@ async function handleProfileFilter(
 			});
 			return;
 		}
-		const gameInfo = await getUserGameInfo(userCookie);
+		let gameInfo: { uid: string; nickname: string; level: number };
+		try {
+			gameInfo = await getUserGameInfo(userCookie);
+		} catch (e) {
+			console.warn(
+				"[SelectMenu] getUserGameInfo failed, using fallback:",
+				(e as Error).message
+			);
+			gameInfo = {
+				uid: String(hsr.uid || ""),
+				nickname: (data as any)?.role?.nickname || String(hsr.uid || ""),
+				level: (data as any)?.role?.level || 0
+			};
+		}
 		const allCharacters = data.avatar_list;
 		const playerData: PlayerData = {
 			player: {
@@ -1008,83 +1021,35 @@ async function handleAccountAction(
 	}
 
 	if (customId == "account_EditAccountSelect") {
-		await interaction.update({}).catch(() => {});
 		const accountIndex = value;
-		interaction.editReply({
-			components: [
-				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-					new StringSelectMenuBuilder()
-						.setPlaceholder(tr("account_SelectAccountEdit"))
-						.setCustomId("account_EditAccountSelectType")
-						.setMinValues(1)
-						.setMaxValues(1)
-						.addOptions(
-							{
-								label: "UID",
-								value: `uid-${accountIndex}`
-							},
-							{
-								label: "Cookie",
-								value: `cookie-${accountIndex}`
-							}
-						)
-				)
-			]
-		});
-		return;
-	} else if (customId == "account_EditAccountSelectType") {
-		const [type, accountIndex] = value.split("-");
 		const accountData = account[parseInt(accountIndex || "0")];
 
-		if (type == "uid") {
-			const uidInput = new TextInputBuilder()
-				.setCustomId("uid")
-				.setLabel(tr("account_SetUserIDDesc"))
-				.setPlaceholder("e.g. 809279679")
-				.setStyle(TextInputStyle.Short)
-				.setRequired(true)
-				.setMinLength(9)
-				.setMaxLength(10);
+		const userAccountCookie = accountData?.cookie || "";
+		const cookieInput = new TextInputBuilder()
+			.setCustomId("cookie")
+			.setLabel("Cookie")
+			.setPlaceholder(
+				"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
+			)
+			.setStyle(TextInputStyle.Paragraph)
+			.setRequired(true)
+			.setMinLength(1)
+			.setMaxLength(4000);
 
-			if (accountData?.uid) uidInput.setValue(accountData.uid);
+		if (userAccountCookie) cookieInput.setValue(userAccountCookie);
 
-			await interaction.showModal(
-				new ModalBuilder()
-					.setCustomId(`accountEdit-${accountIndex}`)
-					.setTitle(tr("account_SetUserID"))
-					.addComponents(
-						new ActionRowBuilder<TextInputBuilder>().addComponents(
-							uidInput
-						)
+		await interaction.showModal(
+			new ModalBuilder()
+				.setCustomId(`cookie_set-${accountIndex}`)
+				.setTitle(tr("account_SetUserCookie"))
+				.addComponents(
+					new ActionRowBuilder<TextInputBuilder>().addComponents(
+						cookieInput
 					)
-			);
-		} else if (type == "cookie") {
-			const userAccountCookie = accountData?.cookie || "";
-			const cookieInput = new TextInputBuilder()
-				.setCustomId("cookie")
-				.setLabel("Cookie")
-				.setPlaceholder(
-					"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
 				)
-				.setStyle(TextInputStyle.Paragraph)
-				.setRequired(true)
-				.setMinLength(1)
-				.setMaxLength(4000);
-
-			if (userAccountCookie) cookieInput.setValue(userAccountCookie);
-
-			await interaction.showModal(
-				new ModalBuilder()
-					.setCustomId(`cookie_set-${accountIndex}`)
-					.setTitle(tr("account_SetUserCookie"))
-					.addComponents(
-						new ActionRowBuilder<TextInputBuilder>().addComponents(
-							cookieInput
-						)
-					)
-			);
-		}
-	} else if (interaction.customId == "account_DeleteAccountSelect") {
+		);
+		return;
+	} else if (customId == "account_DeleteAccountSelect") {
 		await interaction.update({}).catch(() => {});
 		const accountIndex = value;
 		const accounts =
@@ -1110,32 +1075,6 @@ async function handleAccountAction(
 			components: []
 		});
 		return;
-	} else if (interaction.customId == "account_SetUserCookieSelect") {
-		const accountIndex = value;
-		const userAccountCookie = account[parseInt(accountIndex)]?.cookie || "";
-		const cookieInput = new TextInputBuilder()
-			.setCustomId("cookie")
-			.setLabel("Cookie")
-			.setPlaceholder(
-				"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
-			)
-			.setStyle(TextInputStyle.Paragraph)
-			.setRequired(true)
-			.setMinLength(1)
-			.setMaxLength(4000);
-
-		if (userAccountCookie) cookieInput.setValue(userAccountCookie);
-
-		await interaction.showModal(
-			new ModalBuilder()
-				.setCustomId(`cookie_set-${accountIndex}`)
-				.setTitle(tr("account_SetUserCookie"))
-				.addComponents(
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						cookieInput
-					)
-				)
-		);
 	}
 }
 
@@ -1361,7 +1300,20 @@ async function handleSelectCharacter(
 
 				characters = (await hsr.record.characters()) as any;
 				const data = await hsr.record.records();
-				const gameInfo = await getUserGameInfo(hsr.cookie as any);
+				let gameInfo: { uid: string; nickname: string; level: number };
+				try {
+					gameInfo = await getUserGameInfo(hsr.cookie as any);
+				} catch (e) {
+					console.warn(
+						"[SelectMenu] getUserGameInfo failed, using fallback:",
+						(e as Error).message
+					);
+					gameInfo = {
+						uid: String(hsr.uid || uid || ""),
+						nickname: (data as any)?.role?.nickname || String(hsr.uid || uid || ""),
+						level: (data as any)?.role?.level || 0
+					};
+				}
 
 				playerData = {
 					player: {

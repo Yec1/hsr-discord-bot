@@ -1309,7 +1309,20 @@ async function handleProfileDraw(
 					useAllCharacters = false;
 				} else {
 					const data = await hsr.record.records();
-					const gameInfo = await getUserGameInfo(hsr.cookie as any);
+					let gameInfo: { uid: string; nickname: string; level: number };
+					try {
+						gameInfo = await getUserGameInfo(hsr.cookie as any);
+					} catch (e) {
+						console.warn(
+							"[Profile] getUserGameInfo failed, using fallback:",
+							(e as Error).message
+						);
+						gameInfo = {
+							uid: String(hsr.uid || uid),
+							nickname: (data as any)?.role?.nickname || uid,
+							level: (data as any)?.role?.level || 0
+						};
+					}
 					playerData = {
 						player: {
 							nickname: gameInfo.nickname,

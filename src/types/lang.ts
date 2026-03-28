@@ -108,6 +108,7 @@ export interface LanguageStrings {
 	account_HowToSetUpAccount: string;
 	account_HowToSetUpAccountDesc: string;
 	account_CookieSetSuccess: string;
+	account_InvalidIndex: string;
 	account_CookieSetFailed: string;
 	account_CookieSetFailedDesc: string;
 	account_DeletedSuccess: string;

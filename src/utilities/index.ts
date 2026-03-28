@@ -965,20 +965,49 @@ export async function replyOrfollowUp(
 
 export async function getUserGameInfo(
 	cookie: string,
-	gameName: string = "Honkai: Star Rail"
+	gameId: number = 6 // 6 = Honkai: Star Rail
 ): Promise<GameInfo> {
-	const hoyolab = new Hoyolab({ cookie });
+	try {
+		const hoyolab = new Hoyolab({ cookie });
 
-	const gameRecord = await hoyolab.gameRecordCard();
-	const filteredData = (gameRecord as unknown as any[]).filter(
-		(item: any) => item.game_name === gameName
-	);
+		const gameRecord = await hoyolab.gameRecordCard();
+		const recordList = gameRecord as unknown as any[];
 
-	return {
-		uid: filteredData[0].game_role_id,
-		nickname: filteredData[0].nickname,
-		level: filteredData[0].level
-	};
+		if (!Array.isArray(recordList) || recordList.length === 0) {
+			throw new Error("gameRecordCard 回傳空資料");
+		}
+
+		// 優先用 game_id 過濾，fallback 用 game_biz
+		let matched = recordList.find(
+			(item: any) => item.game_id === gameId
+		);
+
+		if (!matched) {
+			// fallback: 嘗試用 game_biz 過濾
+			matched = recordList.find(
+				(item: any) =>
+					item.game_biz === "hkrpg_global" ||
+					item.game_biz === "hkrpg_cn"
+			);
+		}
+
+		if (!matched) {
+			throw new Error(
+				`找不到 game_id=${gameId} 的遊戲紀錄 (共 ${recordList.length} 筆)`
+			);
+		}
+
+		return {
+			uid: matched.game_role_id,
+			nickname: matched.nickname,
+			level: matched.level
+		};
+	} catch (error: any) {
+		console.error(
+			`[getUserGameInfo] 取得遊戲資訊失敗: ${error.message}`
+		);
+		throw error;
+	}
 }
 
 // 快取管理函數

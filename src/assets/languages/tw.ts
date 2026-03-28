@@ -112,7 +112,8 @@ const langs: LanguageStrings = {
 	account_HowToSetUpAccount: "❓ 如何設定帳號",
 	account_HowToSetUpAccountDesc:
 		"1. 點擊此連結進入兌換頁面並先登入：https://hsr.hoyoverse.com/gift?code=abc\n2. 按下 `F12` 或 `Ctrl + Shift + I` 開啟開發者工具\n3. 在頁面上嘗試兌換一次（代碼可無效）\n4. 切換到 `Network` 分頁並搜尋 `webExchangeCdkeyRisk`\n5. 點進該請求後，在 `Headers` 往下找到 `Request Headers`\n6. 複製 `Cookie` 欄位的完整字串，使用 `/account` 選「設定帳號 (Cookie)」貼上",
-	account_CookieSetSuccess: "Cookie 已綁定至 <z>！",
+	account_CookieSetSuccess: "綁定成功！歡迎開拓者 <z>",
+	account_InvalidIndex: "無效的帳號索引",
 	account_CookieSetFailed: "Cookie 綁定失敗",
 	account_CookieSetFailedDesc: "請確認 Cookie 是否正確",
 	account_DeletedSuccess: "已解除綁定帳號",
