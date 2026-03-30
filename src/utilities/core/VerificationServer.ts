@@ -73,8 +73,8 @@ export class VerificationServer {
 						message.result
 					);
 				}
-			} catch (e) {
-				// Ignore
+			} catch (e: any) {
+				VerificationServer.logger.error(`JSON Parse Error: ${e.message}`);
 			}
 		});
 

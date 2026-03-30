@@ -7,6 +7,7 @@ import {
 import axios from "axios";
 import { join, extname } from "path";
 import { readdir } from "fs/promises";
+import crypto from "crypto";
 import emoji from "@/assets/emoji.js";
 import {
 	HonkaiStarRail,
@@ -479,7 +480,7 @@ export async function getUserHSRData(
 	accountIndex: number,
 	options?: {
 		suppressErrorReply?: boolean;
-		validationType?: "record" | "daily";
+		validationType?: "record" | "daily" | "none";
 	}
 ): Promise<HonkaiStarRail | null> {
 	const [cookie, userLang, uid] = await Promise.all([
@@ -533,10 +534,13 @@ export async function getUserHSRData(
 			uid: parseInt(uid || "")
 		});
 
-		if (options?.validationType === "daily") {
-			await hsr.daily.info();
-		} else {
+		if (options?.validationType === "none") {
+			// 不進行 API 驗證
+		} else if (options?.validationType === "record") {
 			await hsr.record.note();
+		} else {
+			// 預設為 daily 驗證 (較寬鬆，不需要便箋權限)
+			await hsr.daily.info();
 		}
 
 		return hsr;
@@ -562,10 +566,13 @@ export async function getUserHSRData(
 						uid: parseInt(uid || "")
 					});
 
-					if (options?.validationType === "daily") {
-						await retryHsr.daily.info();
-					} else {
+					if (options?.validationType === "none") {
+						// 不進行 API 驗證
+					} else if (options?.validationType === "record") {
 						await retryHsr.record.note();
+					} else {
+						// 預設為 daily 驗證
+						await retryHsr.daily.info();
 					}
 
 					return retryHsr;
@@ -772,6 +779,136 @@ export async function updateCookie(
 	await database.set(accountKey, account);
 }
 
+function generateDynamicSecret(): string {
+	const salt = "IZPgfb0dRPtBeLuFkdDznSZ6f4wWt6y2"; // app_login salt
+	const t = Math.floor(Date.now() / 1000);
+	let r = "";
+	const chars =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	for (let i = 0; i < 6; i++) {
+		r += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+	const hash = crypto
+		.createHash("md5")
+		.update(`salt=${salt}&t=${t}&r=${r}`)
+		.digest("hex");
+	return `${t},${r},${hash}`;
+}
+
+export async function updateTokensBySToken(
+	userId: string,
+	accountIndex: number,
+	cookieMap: Record<string, string>,
+	originalCookieArray: string[],
+	uid?: string
+): Promise<{ success: boolean; message: string; newCookie?: string }> {
+	const stoken = cookieMap.stoken_v2;
+	const mid = cookieMap.ltmid_v2 || cookieMap.mid;
+
+	if (!stoken || !mid) {
+		return {
+			success: false,
+			message: "Missing stoken_v2 or mid in cookie parameters"
+		};
+	}
+
+	const url =
+		"https://sg-public-api.hoyoverse.com/account/ma-passport/token/getBySToken";
+
+	// We piece together the cookie for the request
+	// (usually stoken_v2 and mid are enough for this endpoint)
+	const requestCookie = `stoken_v2=${stoken}; mid=${mid};`;
+
+	const response = await fetch(url, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			ds: generateDynamicSecret(),
+			"x-rpc-app_id": "c9oqaq3s3gu8",
+			Cookie: requestCookie
+		},
+		body: JSON.stringify({ dst_token_types: [2, 4] }) // 2: ltoken_v2, 4: cookie_token_v2
+	});
+
+	if (!response.ok) {
+		return {
+			success: false,
+			message: `Failed to fetch updated tokens: HTTP ${response.status}`
+		};
+	}
+
+	let data: any;
+	try {
+		data = await response.json();
+	} catch (e) {
+		return { success: false, message: "Failed to parse JSON response" };
+	}
+
+	if (data?.retcode !== 0 || !data?.data?.tokens) {
+		return {
+			success: false,
+			message: `API Error: ${data?.message || data?.retcode}`
+		};
+	}
+
+	let ltoken = "";
+	let cookieToken = "";
+
+	for (const tokenObj of data.data.tokens) {
+		if (tokenObj.token_type === 2) ltoken = tokenObj.token;
+		if (tokenObj.token_type === 4) cookieToken = tokenObj.token;
+	}
+
+	if (!ltoken && !cookieToken) {
+		return {
+			success: false,
+			message: "No valid tokens found in the response"
+		};
+	}
+
+	// Update original cookie parts
+	let hasLtoken = false;
+	let hasCookieToken = false;
+
+	const updatedCookieArray = originalCookieArray.map(item => {
+		if (item.startsWith("ltoken_v2=") && ltoken) {
+			hasLtoken = true;
+			return `ltoken_v2=${ltoken}`;
+		}
+		if (item.startsWith("cookie_token_v2=") && cookieToken) {
+			hasCookieToken = true;
+			return `cookie_token_v2=${cookieToken}`;
+		}
+		return item;
+	});
+
+	if (!hasLtoken && ltoken) updatedCookieArray.push(`ltoken_v2=${ltoken}`);
+	if (!hasCookieToken && cookieToken)
+		updatedCookieArray.push(`cookie_token_v2=${cookieToken}`);
+
+	const finalCookie = updatedCookieArray.join("; ");
+
+	const accountKey = `${userId}.account`;
+	const account: UserAccount[] | null = await database.get(accountKey);
+
+	if (account && account[accountIndex]) {
+		account[accountIndex].cookie = finalCookie;
+		await database.set(accountKey, account);
+
+		if (uid) {
+			await database.delete(`${uid}.cookieExpired`);
+			await database.delete(`${uid}.needsCookieUpdate`);
+			await database.delete(`${uid}.lastCookieRefreshAttempt`);
+		}
+	}
+
+	return {
+		success: true,
+		message: "Token refreshed using stoken_v2",
+		newCookie: finalCookie
+	};
+}
+
 export async function autoRefreshCookie(
 	userId: string,
 	accountIndex: number,
@@ -856,20 +993,39 @@ export async function autoRefreshCookie(
 			body: JSON.stringify({})
 		});
 
-		const verifyLTokenResult = (await verifyLTokenResponse.json()) as any;
-		if (
-			verifyLTokenResult?.code === 200 ||
-			verifyLTokenResult?.retcode === 0
-		) {
+		const verifyResult = await verifyLTokenResponse.json() as any;
+		if (verifyResult?.code === 200 || verifyResult?.retcode === 0) {
 			if (uid) {
 				await database.delete(`${uid}.cookieExpired`);
 				await database.delete(`${uid}.needsCookieUpdate`);
 				await database.delete(`${uid}.lastCookieRefreshAttempt`);
 			}
-
 			return { success: true, message: "Cookie 驗證成功 (verifyLToken)" };
 		}
 
+		console.warn(`[autoRefreshCookie] [user=${userId}] verifyLToken 失敗: code=${verifyResult?.retcode ?? verifyResult?.code}, msg=${verifyResult?.message}`);
+
+		// 如果驗證失敗，且有 stoken_v2，則嘗試透過 stoken_v2 強制更新 Token
+		if (cookieMap.stoken_v2 && (cookieMap.ltmid_v2 || cookieMap.mid)) {
+			const originalCookieArray = cookie
+				.split("; ")
+				.filter(Boolean);
+			const stokenResult = await updateTokensBySToken(
+				userId,
+				accountIndex,
+				cookieMap,
+				originalCookieArray,
+				uid
+			);
+			if (stokenResult.success) {
+				return stokenResult;
+			}
+			console.warn(`[autoRefreshCookie] [user=${userId}] stoken_v2 刷新失敗: ${stokenResult.message}`);
+		} else {
+			console.warn(`[autoRefreshCookie] [user=${userId}] 無 stoken_v2 可刷新，cookie fields: ${Object.keys(cookieMap).join(", ")}`);
+		}
+
+		// 以下為相容方案：如果沒有 stoken，或發生某些意外，仍然嘗試驗證與刷新
 		const verifyUrl =
 			"https://passport-api-sg.hoyoverse.com/account/ma-passport/token/verifyCookieToken";
 
@@ -900,7 +1056,6 @@ export async function autoRefreshCookie(
 				await database.delete(`${uid}.needsCookieUpdate`);
 				await database.delete(`${uid}.lastCookieRefreshAttempt`);
 			}
-
 			return { success: true, message: "Cookie 驗證成功" };
 		}
 
@@ -911,7 +1066,6 @@ export async function autoRefreshCookie(
 				await database.delete(`${uid}.needsCookieUpdate`);
 				await database.delete(`${uid}.lastCookieRefreshAttempt`);
 			}
-
 			const refreshedAccounts = await database.get(accountKey);
 			const newCookie = refreshedAccounts?.[accountIndex]?.cookie;
 			return {
@@ -970,8 +1124,7 @@ export async function getUserGameInfo(
 	try {
 		const hoyolab = new Hoyolab({ cookie });
 
-		const gameRecord = await hoyolab.gameRecordCard();
-		const recordList = gameRecord as unknown as any[];
+		const recordList = await hoyolab.gameRecordCard();
 
 		if (!Array.isArray(recordList) || recordList.length === 0) {
 			throw new Error("gameRecordCard 回傳空資料");

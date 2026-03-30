@@ -114,7 +114,7 @@ const langs: LanguageStrings = {
 	account_NoAccount: "No account set yet",
 	account_HowToSetUpAccount: "❓ How to Set Up Account",
 	account_HowToSetUpAccountDesc:
-		'1. Open this redemption link and sign in first: [https://hsr.hoyoverse.com/gift?code=abc](https://hsr.hoyoverse.com/gift?code=abc)\n2. Press `F12` or `Ctrl + Shift + I` to open Developer Tools\n3. Attempt to redeem once on the page (the code can be invalid)\n4. Go to the `Network` tab and search for `webExchangeCdkeyRisk`\n5. Open that request, then in `Headers` scroll to `Request Headers`\n6. Copy the full `Cookie` value and paste it via `/account` -> "Set Account (Cookie)"',
+		"### 🔥 How to get your Cookie\n1. Open [Hoyolab](https://www.hoyolab.com/) and log in\n2. Press `F12` or `Ctrl + Shift + I` to open Developer Tools\n3. Go to `Application` → `Cookies` → `https://www.hoyolab.com` on the left\n4. Find the following fields and copy their values: `ltoken_v2`, `ltuid_v2`, `cookie_token_v2`, `account_mid_v2`\n5. Fill them into the respective fields!",
 	account_CookieSetSuccess: "Binding successful! Welcome, Trailblazer <z>",
 	account_InvalidIndex: "Invalid account index",
 	account_CookieSetFailed: "Cookie binding failed",

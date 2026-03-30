@@ -227,6 +227,40 @@
 			.retry-btn:hover {
 				background-color: #d89f00;
 			}
+			.input-group { margin-bottom: 1.5rem; text-align: left; }
+			.input-group label { display: block; font-size: 0.9rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+			.input-group input {
+				width: 100%;
+				background: rgba(0,0,0,0.3);
+				border: 1px solid var(--glass-border);
+				border-radius: 0.75rem;
+				padding: 0.75rem 1rem;
+				color: var(--text-main);
+				font-family: inherit;
+				font-size: 1.4rem;
+				letter-spacing: 0.3em;
+				text-align: center;
+				outline: none;
+				transition: border-color 0.2s;
+			}
+			.input-group input:focus { border-color: var(--primary); }
+			.btn-submit {
+				width: 100%;
+				padding: 0.85rem;
+				border-radius: 9999px;
+				border: none;
+				background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+				color: white;
+				font-family: inherit;
+				font-size: 1rem;
+				font-weight: 600;
+				cursor: pointer;
+				transition: opacity 0.2s, transform 0.2s;
+			}
+			.btn-submit:hover { opacity: 0.9; transform: scale(1.02); }
+			.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+			.email-status { margin-top: 1rem; font-size: 0.95rem; min-height: 24px; }
+			.email-status.error { color: #f87171; }
 		</style>
 	</head>
 	<body>
@@ -247,6 +281,18 @@
 						class="status-msg"
 						style="display: none"
 					></div>
+				</div>
+
+				<div id="email-input-ui" style="display:none;">
+					<div class="logo" style="font-size:1.8rem">電子郵件驗證</div>
+					<div class="subtitle">驗證碼已發送至您的電子郵件，請輸入 6 位數驗證碼</div>
+					<div id="email-error" class="email-status error" style="display:none;margin-bottom:1rem;"></div>
+					<div class="input-group">
+						<label>驗證碼</label>
+						<input id="email-code-input" type="text" maxlength="6" placeholder="000000" autocomplete="one-time-code" inputmode="numeric" />
+					</div>
+					<button class="btn-submit" id="email-submit-btn" onclick="submitEmailCode()">確認送出</button>
+					<div id="email-status" class="email-status"></div>
 				</div>
 
 				<div id="success-ui" class="success-area">
@@ -296,7 +342,8 @@
 			const successParam = params.get("success");
 			const newCaptchaParam = params.get("new_captcha");
 			const aigisSessionId = params.get("aigisSessionId");
-			const userid = params.get("userid"); // Added for game record verification
+			const userid = params.get("userid"); // Discord userId
+			const useV4 = params.get("use_v4") === "true";
 
 			console.log("[Verification] Params:", {
 				captchaId,
@@ -309,17 +356,18 @@
 				userid
 			});
 
-			if (!captchaId || !riskType || !challenge) {
-				if (userid) {
-					// Game record verification logic (retcode 10035)
-					console.log("[Verification] UserID present, fetching MMT data...");
-					fetchMmtAndInit(userid);
-				} else {
-					statusText.textContent =
-						"❌ 參數缺失，請重新從 Discord 發起指令";
-					statusText.style.display = "block";
-					loadingSpinner.style.display = "none";
-				}
+			if (!captchaId || !riskType) {
+				statusText.textContent =
+					"❌ 參數缺失，請重新從 Discord 發起指令";
+				statusText.style.display = "block";
+				loadingSpinner.style.display = "none";
+			} else if (useV4 || riskType === "2") {
+				// v4 geetest — captchaId 即可，不需要 challenge
+				initVerification();
+			} else if (!challenge) {
+				// v3 但 challenge 缺失，從 MMT 端點補取
+				console.log("[Verification] v3 challenge 缺失，自動補請求...");
+				fetchMmtAndInit(userid);
 			} else {
 				initVerification();
 			}
@@ -386,13 +434,13 @@
 			}
 
 			function initVerification() {
-				// Decision logic for Geetest version based on Aigis riskType (mmt_type)
-				// 1 = Geetest v3, 2 = Geetest v4
-				// Version detection: Challenge length 32 is v3, anything else (or missing) is likely v4
+				// use_v4 param takes priority; fallback to riskType and challenge heuristics
 				let version = 4;
-				if (challenge && challenge.length === 32 && challenge !== "undefined") {
+				if (useV4) {
+					version = 4;
+				} else if (challenge && challenge.length === 32 && challenge !== "undefined") {
 					version = 3;
-				} else if (riskType === "1" && (!challenge || challenge.length === 32)) {
+				} else if (riskType === "1") {
 					version = 3;
 				} else if (riskType === "2") {
 					version = 4;
@@ -409,17 +457,17 @@
 							product: "float",
 							https: true,
 							riskType: riskTypeData,
-							userInfo: JSON.stringify({ session_id: aigisSessionId })
+							userInfo: JSON.stringify({ session_id: aigisSessionId }),
+							apiServers: ["gcaptcha4.captchami.com"]
 						},
 						function (captchaObj) {
 							loadingSpinner.style.display = "none";
 							captchaObj.appendTo("#captcha");
 							captchaObj.onSuccess(() => {
 								const result = captchaObj.getValidate();
-								// Inject context data for backend login.ts
+								// Inject captcha_id if not already present (required by HoYo)
+								if (!result.captcha_id) result.captcha_id = captchaId;
 								result.session_id = aigisSessionId;
-								result.risk_type = riskTypeData;
-								result.riskType = riskType;
 								handleCallback(result);
 							});
 							captchaObj.onError(err => {
@@ -492,44 +540,128 @@
 			}
 
 			function handleCallback(result) {
-				if (sessionId) {
-					statusText.textContent = "正在同步結果...";
-					statusText.style.display = "block";
+				if (!sessionId) { showError(result, "找不到 Session ID，請複製代碼"); return; }
 
-					fetch("/callback", {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json"
-						},
-						body: JSON.stringify({
-							sessionId: sessionId,
-							result: result
-						})
+				statusText.textContent = "正在同步結果...";
+				statusText.style.display = "block";
+
+				fetch("/callback", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ sessionId, result })
+				})
+					.then(res => res.json())
+					.then(data => {
+						if (data.success) {
+							statusText.textContent = "驗證中，請稍候...";
+							pollStatus();
+						} else {
+							showError(result);
+						}
 					})
-						.then(res => res.json())
-						.then(data => {
-							if (data.success) {
-								showSuccess();
-							} else {
-								showError(result);
-							}
-						})
-						.catch(err => showError(result));
-				} else {
-					showError(result, "找不到 Session ID，請複製代碼");
+					.catch(() => showError(result));
+			}
+
+			let pollTimer = null;
+
+			function pollStatus() {
+				let elapsed = 0;
+				pollTimer = setInterval(async () => {
+					elapsed += 1000;
+					if (elapsed > 90000) {
+						clearInterval(pollTimer);
+						showError(null, "等待逾時，請重新從 Discord 發起指令");
+						return;
+					}
+					try {
+						const res = await fetch(`/session-status/${sessionId}`);
+						const data = await res.json();
+						if (data.status === "done") {
+							clearInterval(pollTimer);
+							showSuccess();
+						} else if (data.status === "needs_email_verify") {
+							clearInterval(pollTimer);
+							showEmailInput(data.error);
+						} else if (data.status === "error") {
+							clearInterval(pollTimer);
+							showError(null, data.message || "驗證失敗");
+						}
+						// "processing" → keep polling
+					} catch (e) { /* ignore, keep polling */ }
+				}, 1000);
+			}
+
+			function showEmailInput(errorMsg) {
+				document.getElementById("captcha").style.display = "none";
+				loadingSpinner.style.display = "none";
+				statusText.style.display = "none";
+				const emailUi = document.getElementById("email-input-ui");
+				emailUi.style.display = "block";
+				if (errorMsg) {
+					const errEl = document.getElementById("email-error");
+					errEl.textContent = `❌ ${errorMsg}`;
+					errEl.style.display = "block";
+				}
+				setTimeout(() => document.getElementById("email-code-input").focus(), 100);
+			}
+
+			document.addEventListener("DOMContentLoaded", () => {
+				const codeInput = document.getElementById("email-code-input");
+				if (codeInput) codeInput.addEventListener("keydown", e => { if (e.key === "Enter") submitEmailCode(); });
+			});
+
+			async function submitEmailCode() {
+				const code = document.getElementById("email-code-input").value.trim();
+				const statusEl = document.getElementById("email-status");
+				const errEl = document.getElementById("email-error");
+				const btn = document.getElementById("email-submit-btn");
+
+				if (!code || code.length < 6) {
+					statusEl.textContent = "❌ 請輸入完整的 6 位數驗證碼";
+					statusEl.className = "email-status error";
+					return;
+				}
+
+				btn.disabled = true;
+				errEl.style.display = "none";
+				statusEl.textContent = "正在驗證...";
+				statusEl.className = "email-status";
+
+				try {
+					const res = await fetch("/callback", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ sessionId, result: { code } })
+					});
+					const data = await res.json();
+					if (data.success) {
+						statusEl.textContent = "驗證中，請稍候...";
+						pollStatus();
+					} else {
+						statusEl.textContent = `❌ ${data.message || "傳送失敗，請重試"}`;
+						statusEl.className = "email-status error";
+						btn.disabled = false;
+					}
+				} catch (e) {
+					statusEl.textContent = "❌ 連線失敗，請重試";
+					statusEl.className = "email-status error";
+					btn.disabled = false;
 				}
 			}
 
 			function showSuccess() {
 				mainUi.style.display = "none";
+				document.getElementById("email-input-ui").style.display = "none";
 				successUi.style.display = "block";
 			}
 
 			function showError(result, msg = "連線失敗，請手動複製") {
 				statusText.textContent = `❌ ${msg}`;
 				statusText.style.display = "block";
-				manualArea.style.display = "block";
-				outJson.textContent = JSON.stringify(result, null, 2);
+				if (result) {
+					manualArea.style.display = "block";
+					outJson.textContent = JSON.stringify(result, null, 2);
+				}
 			}
 		</script>
 	</body>

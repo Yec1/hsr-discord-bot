@@ -111,7 +111,7 @@ const langs: LanguageStrings = {
 	account_NoAccount: "尚未设置帐号",
 	account_HowToSetUpAccount: "❓ 如何设定帐号",
 	account_HowToSetUpAccountDesc:
-		"1. 点击此链接进入兑换页面并先登录：[https://hsr.hoyoverse.com/gift?code=abc](https://hsr.hoyoverse.com/gift?code=abc)\n2. 按下 `F12` 或 `Ctrl + Shift + I` 打开开发者工具\n3. 在页面上尝试兑换一次（兑换码可无效）\n4. 切换到 `Network` 分页并搜索 `webExchangeCdkeyRisk`\n5. 点进该请求后，在 `Headers` 往下找到 `Request Headers`\n6. 复制 `Cookie` 栏位的完整字符串，使用 `/account` 选“设定帐号 (Cookie)”贴上",
+		"### 🔥 如何获取 Cookie\n1. 开启 [Hoyolab](https://www.hoyolab.com/) 网页并登录帐号\n2. 按下 `F12` 或 `Ctrl + Shift + I` 打开开发者工具\n3. 切换至 `Application` 选择左边的 `Cookies` → `https://www.hoyolab.com`\n4. 找到以下字段并复制其值：`ltoken_v2`、`ltuid_v2`、`cookie_token_v2`、`account_mid_v2`\n5. 将它们填入各个字段即可！",
 	account_CookieSetSuccess: "绑定成功！欢迎开拓者 <z>",
 	account_InvalidIndex: "无效的帐号索引",
 	account_CookieSetFailed: "Cookie 绑定失败",

@@ -77,6 +77,13 @@ export default {
 							"zh-TW": "❌ 刪除已設定帳號"
 						},
 						value: "DeleteAccount"
+					},
+					{
+						name: "🔐 Bind Account via Password (Recommended)",
+						name_localizations: {
+							"zh-TW": "🔐 綁定帳號 (帳密登入 - 推薦)"
+						},
+						value: "BindAccountByPassword"
 					}
 				)
 		),
@@ -130,16 +137,59 @@ export default {
 				await interaction.showModal(
 					new ModalBuilder()
 						.setCustomId("cookie_set_new")
-						.setTitle(tr("account_SetCookieModal")) // you can reuse translations if exists
+						.setTitle(tr("account_SetUserCookie"))
 						.addComponents(
 							new ActionRowBuilder<TextInputBuilder>().addComponents(
 								new TextInputBuilder()
-									.setCustomId("cookie")
-									.setLabel("Cookie")
-									.setPlaceholder(
-										"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
-									)
-									.setStyle(TextInputStyle.Paragraph)
+									.setCustomId("ltoken_v2")
+									.setLabel("ltoken_v2")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(true)
+							),
+							new ActionRowBuilder<TextInputBuilder>().addComponents(
+								new TextInputBuilder()
+									.setCustomId("ltuid_v2")
+									.setLabel("ltuid_v2")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(true)
+							),
+							new ActionRowBuilder<TextInputBuilder>().addComponents(
+								new TextInputBuilder()
+									.setCustomId("cookie_token_v2")
+									.setLabel("cookie_token_v2")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(true)
+							),
+							new ActionRowBuilder<TextInputBuilder>().addComponents(
+								new TextInputBuilder()
+									.setCustomId("account_mid_v2")
+									.setLabel("account_mid_v2")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(true)
+							)
+						)
+				);
+				return;
+			case "BindAccountByPassword":
+				await interaction.showModal(
+					new ModalBuilder()
+						.setCustomId("cookie_login_password")
+						.setTitle(tr("account_QuickLinkModal"))
+						.addComponents(
+							new ActionRowBuilder<TextInputBuilder>().addComponents(
+								new TextInputBuilder()
+									.setCustomId("account")
+									.setLabel(tr("account_LoginAccountModalField"))
+									.setPlaceholder("example@email.com")
+									.setStyle(TextInputStyle.Short)
+									.setRequired(true)
+							),
+							new ActionRowBuilder<TextInputBuilder>().addComponents(
+								new TextInputBuilder()
+									.setCustomId("password")
+									.setLabel(tr("account_LoginAccountDesc2"))
+									.setPlaceholder("******")
+									.setStyle(TextInputStyle.Short)
 									.setRequired(true)
 							)
 						)

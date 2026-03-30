@@ -65,7 +65,8 @@ export default {
 				interaction,
 				tr,
 				targetUser.id,
-				parseInt(accountIndex)
+				parseInt(accountIndex),
+				{ validationType: "record" }
 			);
 			if (hsr == null) return;
 

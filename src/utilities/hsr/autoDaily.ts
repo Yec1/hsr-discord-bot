@@ -149,16 +149,18 @@ class AutoDailySignSystem {
 	async processDailySign(
 		userId: string,
 		dailyData: DailyData
-	): Promise<void> {
+	): Promise<boolean> {
 		const accounts = await this.db.get(`${userId}.account`);
 		if (!accounts || !Array.isArray(accounts) || accounts.length === 0) {
-			return;
+			return false;
 		}
 
 		const userLang = (await getUserLang(userId)) || CONFIG.DEFAULT_LANGUAGE;
 		const tr = createTranslator(userLang);
 		const channelId = dailyData[userId]?.channelId || "";
 		const tag = dailyData[userId]?.tag === "true" ? `<@${userId}>` : "";
+
+		const successBefore = this.stats.success + this.stats.signed;
 
 		for (
 			let accountIndex = 0;
@@ -193,6 +195,8 @@ class AutoDailySignSystem {
 				}
 			}
 		}
+
+		return this.stats.success + this.stats.signed > successBefore;
 	}
 
 	async performSignIn(
@@ -581,11 +585,13 @@ export default async function autoDailySign(
 		}
 
 		try {
-			await system.processDailySign(userId, dailyData);
-			await (system as any).db.set(
-				`lastSignedDate:${userId}`,
-				userDateKey
-			);
+			const processed = await system.processDailySign(userId, dailyData);
+			if (processed) {
+				await (system as any).db.set(
+					`lastSignedDate:${userId}`,
+					userDateKey
+				);
+			}
 		} catch (error) {
 			(system as any).logger.error(
 				`處理用戶 ${userId} 時發生錯誤: ${(error as Error).message}`
