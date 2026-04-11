@@ -306,20 +306,6 @@
 					>
 				</div>
 
-				<div
-					id="manual-area"
-					style="
-						display: none;
-						margin-top: 2rem;
-						border-top: 1px solid var(--glass-border);
-						padding-top: 2rem;
-					"
-				>
-					<p style="font-size: 0.9rem; color: #f87171">
-						自動傳送失敗，請手動複製代碼：
-					</p>
-					<pre id="out-json" class="error-pre"></pre>
-				</div>
 
 				<div class="footer">Powered by Verification Hub</div>
 			</div>
@@ -330,8 +316,6 @@
 			const loadingSpinner = document.getElementById("loading-spinner");
 			const mainUi = document.getElementById("main-ui");
 			const successUi = document.getElementById("success-ui");
-			const manualArea = document.getElementById("manual-area");
-			const outJson = document.getElementById("out-json");
 
 			const params = new URLSearchParams(window.location.search);
 			const captchaId = params.get("captchaId");
@@ -356,11 +340,17 @@
 				userid
 			});
 
-			if (!captchaId || !riskType) {
+			if (!sessionId) {
 				statusText.textContent =
 					"❌ 參數缺失，請重新從 Discord 發起指令";
 				statusText.style.display = "block";
 				loadingSpinner.style.display = "none";
+			} else if (!captchaId) {
+				// Email-verify-first mode: no captcha params, start polling for status
+				loadingSpinner.style.display = "none";
+				statusText.textContent = "⏳ 等待驗證狀態...";
+				statusText.style.display = "block";
+				pollStatus();
 			} else if (useV4 || riskType === "2") {
 				// v4 geetest — captchaId 即可，不需要 challenge
 				initVerification();
@@ -582,6 +572,9 @@
 						} else if (data.status === "needs_email_verify") {
 							clearInterval(pollTimer);
 							showEmailInput(data.error);
+						} else if (data.status === "needs_geetest") {
+							clearInterval(pollTimer);
+							reinitGeetest(data);
 						} else if (data.status === "error") {
 							clearInterval(pollTimer);
 							showError(null, data.message || "驗證失敗");
@@ -597,11 +590,19 @@
 				statusText.style.display = "none";
 				const emailUi = document.getElementById("email-input-ui");
 				emailUi.style.display = "block";
+				// Reset button and status text in case this is a re-display after a retry
+				document.getElementById("email-submit-btn").disabled = false;
+				const statusEl = document.getElementById("email-status");
+				statusEl.textContent = "";
+				statusEl.className = "email-status";
+				const errEl = document.getElementById("email-error");
 				if (errorMsg) {
-					const errEl = document.getElementById("email-error");
 					errEl.textContent = `❌ ${errorMsg}`;
 					errEl.style.display = "block";
+				} else {
+					errEl.style.display = "none";
 				}
+				document.getElementById("email-code-input").value = "";
 				setTimeout(() => document.getElementById("email-code-input").focus(), 100);
 			}
 
@@ -649,19 +650,82 @@
 				}
 			}
 
+			function reinitGeetest(data) {
+				// Hide email UI, restore main UI with fresh captcha slot
+				document.getElementById("email-input-ui").style.display = "none";
+				mainUi.style.display = "block";
+				const captchaEl = document.getElementById("captcha");
+				captchaEl.innerHTML = "";
+				captchaEl.style.display = "flex";
+				loadingSpinner.style.display = "none";
+				statusText.textContent = "請完成人機驗證...";
+				statusText.style.display = "block";
+
+				const useV4Reinit = data.use_v4 === "true" || data.riskType === "2";
+				if (useV4Reinit) {
+					window.initGeetest4({
+						captchaId: data.captchaId,
+						language: "zho-tw",
+						product: "float",
+						https: true,
+						riskType: data.risk_type,
+						userInfo: JSON.stringify({ session_id: data.aigisSessionId }),
+						apiServers: ["gcaptcha4.captchami.com"]
+					}, (captchaObj) => {
+						statusText.style.display = "none";
+						captchaObj.appendTo("#captcha");
+						captchaObj.onSuccess(() => {
+							const result = captchaObj.getValidate();
+							if (!result.captcha_id) result.captcha_id = data.captchaId;
+							result.session_id = data.aigisSessionId;
+							handleCallback(result);
+						});
+						captchaObj.onError(err => {
+							statusText.textContent = `❌ Geetest v4 載入失敗: ${err.msg || "網路錯誤"}`;
+							statusText.style.display = "block";
+						});
+					});
+				} else {
+					window.initGeetest({
+						gt: data.captchaId,
+						challenge: data.challenge,
+						offline: false,
+						new_captcha: data.new_captcha === "1" || data.new_captcha === "true",
+						product: "popup",
+						width: "100%",
+						language: "zh-tw",
+						api_server: "api.geetest.com",
+						https: true
+					}, (captchaObj) => {
+						statusText.style.display = "none";
+						captchaObj.appendTo("#captcha");
+						captchaObj.onSuccess(() => {
+							const validate = captchaObj.getValidate();
+							handleCallback({
+								geetest_challenge: validate.geetest_challenge,
+								geetest_validate: validate.geetest_validate,
+								geetest_seccode: validate.geetest_seccode,
+								session_id: data.aigisSessionId,
+								riskType: data.riskType
+							});
+						});
+						captchaObj.onError(err => {
+							statusText.textContent = `❌ Geetest v3 載入失敗: ${err.msg || "未知錯誤"}`;
+							statusText.style.display = "block";
+						});
+					});
+				}
+			}
+
 			function showSuccess() {
 				mainUi.style.display = "none";
 				document.getElementById("email-input-ui").style.display = "none";
 				successUi.style.display = "block";
 			}
 
-			function showError(result, msg = "連線失敗，請手動複製") {
+			function showError(result, msg = "驗證失敗，請重新從 Discord 發起指令") {
 				statusText.textContent = `❌ ${msg}`;
 				statusText.style.display = "block";
-				if (result) {
-					manualArea.style.display = "block";
-					outJson.textContent = JSON.stringify(result, null, 2);
-				}
 			}
 		</script>
 	</body>

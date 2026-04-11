@@ -119,6 +119,7 @@ const langs: LanguageStrings = {
 	account_InvalidIndex: "Invalid account index",
 	account_CookieSetFailed: "Cookie binding failed",
 	account_CookieSetFailedDesc: "Please check if the Cookie is correct",
+	account_CookieInvalidOrExpired: "Cookie is expired or invalid. Please obtain a fresh Cookie and try again.",
 	account_DeletedSuccess: "Account unlinked successfully",
 	account_LimitExceeded: "You can set up to `5` accounts!",
 	account_AlreadySet: "You have already set <z>!",

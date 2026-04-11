@@ -74,6 +74,7 @@ async function tryAutoSyncCurrentAnomalyBadge(
 
 	if (validRecords.length > 0) return;
 
+	/*
 	const lastSyncAt = (await database.get(syncAtKey)) as number | null;
 	if (
 		typeof lastSyncAt === "number" &&
@@ -81,6 +82,7 @@ async function tryAutoSyncCurrentAnomalyBadge(
 	) {
 		return;
 	}
+	*/
 
 	await database.set(syncAtKey, nowMs);
 
@@ -150,8 +152,10 @@ async function tryAutoSyncCurrentAnomalyBadge(
 		);
 
 		if (existingIndex >= 0) {
+			console.log(`[Profile] Sync: Updating existing mazeId ${rankRecord.mazeId}`);
 			upsertRecords[existingIndex] = rankRecord;
 		} else {
+			console.log(`[Profile] Sync: Adding NEW mazeId ${rankRecord.mazeId}`);
 			upsertRecords.push(rankRecord);
 		}
 

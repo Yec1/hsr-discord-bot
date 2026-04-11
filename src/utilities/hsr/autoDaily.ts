@@ -388,7 +388,26 @@ class AutoDailySignSystem {
 				}
 			}
 
-			if (this.isSkippableError(errorMessage)) {
+			const isTokenError = this.isSkippableError(errorMessage);
+			const displayError = isTokenError
+				? "Token 已過期或請求異常"
+				: errorMessage;
+
+			await this.sendErrorMessage(channelId, {
+				content: tag,
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#E76161")
+						.setTitle(
+							`${tr("Auto")}${tr("daily_Failed")}`
+						)
+						.setDescription(
+							`- \`${account.uid}\`: ${displayError}`
+						)
+				]
+			});
+
+			if (isTokenError) {
 				throw new Error(errorMessage);
 			} else {
 				throw new Error(`API 錯誤: ${errorMessage}`);
@@ -416,6 +435,30 @@ class AutoDailySignSystem {
 		} catch (error) {
 			this.logger.error(
 				`發送訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
+			);
+		}
+	}
+
+	async sendErrorMessage(
+		channelId: string,
+		messageData: MessageData
+	): Promise<void> {
+		try {
+			await cluster.broadcastEval(
+				async (c: any, context: any) => {
+					const channel = c.channels.cache.get(context.channelId);
+					if (channel) {
+						await channel.send(context.messageData).catch(() => {});
+					}
+				},
+				{
+					context: { channelId, messageData },
+					timeout: CONFIG.API_TIMEOUT
+				}
+			);
+		} catch (error) {
+			this.logger.error(
+				`發送錯誤訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
 			);
 		}
 	}

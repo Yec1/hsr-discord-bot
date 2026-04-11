@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "c:\\Users\\shawn\\桌面\\Programming\\bots\\hsr-discord-bot\\node_modules\\@yeci226\\hoyoapi\\src\\client\\auth",
+      "C:\\Users\\shawn\\桌面\\Programming\\hoyoapi\\src\\client\\auth",
+      "c:\\Users\\shawn\\桌面\\Programming\\bots\\hsr-discord-bot\\node_modules\\@yeci226\\hoyoapi\\dist\\cjs\\client\\auth",
+      "C:\\Users\\shawn\\桌面\\Programming\\hoyoapi\\dist\\cjs\\client\\auth"
+    ]
+  }
+}

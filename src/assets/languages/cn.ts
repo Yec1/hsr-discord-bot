@@ -116,6 +116,7 @@ const langs: LanguageStrings = {
 	account_InvalidIndex: "无效的帐号索引",
 	account_CookieSetFailed: "Cookie 绑定失败",
 	account_CookieSetFailedDesc: "请确认 Cookie 是否正确",
+	account_CookieInvalidOrExpired: "Cookie 已过期或无效，请重新取得有效的 Cookie 后再试。",
 	account_DeletedSuccess: "已解除绑定帐号",
 	account_LimitExceeded: "最多只能设定至多 `5` 个帐号！",
 	account_AlreadySet: "您已经设定过 <z> 了！",

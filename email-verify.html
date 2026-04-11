@@ -184,6 +184,10 @@
 							clearInterval(timer);
 							document.getElementById("main-ui").style.display = "none";
 							document.getElementById("success-ui").style.display = "block";
+						} else if (data.status === "needs_geetest_in_discord") {
+							clearInterval(timer);
+							document.getElementById("status-text").innerHTML = `✅ 驗證碼確認成功！<br>請回到 Discord 點擊「前往驗證」按鈕完成人機驗證後即可登入。`;
+							document.getElementById("status-text").className = "status success";
 						} else if (data.status === "needs_email_verify" && data.error) {
 							clearInterval(timer);
 							document.getElementById("status-text").textContent = `❌ ${data.error}`;

@@ -111,6 +111,7 @@ export interface LanguageStrings {
 	account_InvalidIndex: string;
 	account_CookieSetFailed: string;
 	account_CookieSetFailedDesc: string;
+	account_CookieInvalidOrExpired: string;
 	account_DeletedSuccess: string;
 	account_LimitExceeded: string;
 	account_AlreadySet: string;
