@@ -204,20 +204,12 @@ export default {
 								name: tr("account_ListOfAccount", {
 									Username: interaction.user.username
 								}),
-								iconURL: `${interaction.user.displayAvatarURL({
-									size: 4096
-								})}`
+								iconURL: interaction.user.displayAvatarURL({ size: 4096 })
 							})
-							.addFields(
-								...accounts.map(account => ({
-									name: `${emoji.avatarIcon} ${account.uid} ${account.nickname ? `- ${account.nickname}` : ""}`,
-									value: `${
-										account.cookie
-											? `🔗 \`${tr("account_Linked")}\``
-											: `❌ \`${tr("account_NotLinked")}\``
-									}`,
-									inline: true
-								}))
+							.setDescription(
+								(accounts as Account[]).map((account: Account) =>
+									`${emoji.avatarIcon} **${account.uid}**${account.nickname ? ` — ${account.nickname}` : ""}  ${account.cookie ? `🔗 \`${tr("account_Linked")}\`` : `❌ \`${tr("account_NotLinked")}\``}`
+								).join("\n") || `❌ \`${tr("account_NoAccount")}\``
 							)
 					]
 				});

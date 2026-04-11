@@ -249,25 +249,31 @@ export default {
 			const userRedeemedCodes =
 				(await database.get(`${uid}.redeemedCodes`)) || [];
 
+			const unredeemedCodes = codes.filter(c => !userRedeemedCodes.includes(c.code));
+			const redeemedCodes = codes.filter(c => userRedeemedCodes.includes(c.code));
+
+			const descLines: string[] = [];
+			if (unredeemedCodes.length > 0) {
+				descLines.push("**未兌換**");
+				descLines.push(...unredeemedCodes.map(c => `❌ \`${c.code}\``));
+			}
+			if (redeemedCodes.length > 0) {
+				if (descLines.length > 0) descLines.push("");
+				descLines.push("**已兌換**");
+				descLines.push(...redeemedCodes.map(c => `✅ ~~${c.code}~~`));
+			}
+			if (codes.length === 0) {
+				descLines.push("目前沒有可用的兌換碼");
+			}
+
 			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setTimestamp()
 						.setColor(getRandomColor() as any)
 						.setTitle("當前可用兌換碼")
-						.setFooter({
-							text: "使用機器人兌換過的禮包碼才會顯示已兌換"
-						})
-						.setDescription(
-							`${codes
-								.map((code, index) => {
-									const redeemed = userRedeemedCodes.includes(
-										code.code
-									);
-									return `${index}. ${code.code} ${redeemed ? "`✅已兌換`" : "`❌未兌換`"}`;
-								})
-								.join("\n")}`
-						)
+						.setFooter({ text: "使用機器人兌換過的禮包碼才會顯示已兌換" })
+						.setDescription(descLines.join("\n"))
 				]
 			});
 		} else if (subcommand == "redeemall") {

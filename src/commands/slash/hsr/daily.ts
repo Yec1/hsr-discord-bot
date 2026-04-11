@@ -274,39 +274,32 @@ export default {
 				embeds: [
 					new EmbedBuilder()
 						.setColor("#E76161")
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-						.setTitle(`${tr("daily_Failed")} ${tr("daily_Signed")}`)
+						.setTitle(tr("daily_Signed"))
 				]
 			});
 
 		interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
-					.setColor(getRandomColor() as any)
+					.setColor("#A2CDB0")
 					.setTitle(tr("daily_SignSuccess"))
 					.setThumbnail(todaySign?.icon || null)
 					.setDescription(
-						`${tr("daily_Description", { a: `\`${todaySign?.name}x${todaySign?.cnt}\`` })}${info.month_last_day ? "" : `\n\n${tr("daily_DescriptionTmr", { b: `\`${tmrSign?.name}x${tmrSign?.cnt}\`` })}`}`
+						`${tr("daily_Description", { a: `**${todaySign?.name}** x${todaySign?.cnt}` })}${info.month_last_day ? "" : `\n${tr("daily_DescriptionTmr", { b: `**${tmrSign?.name}** x${tmrSign?.cnt}` })}`}`
 					)
 					.addFields(
 						{
-							name: `${reward.month} ${tr("daily_Month")}`,
+							name: tr("daily_Month"),
+							value: `\`${reward.month}\` 月`,
+							inline: true
+						},
+						{
+							name: tr("daily_SignedDay", { z: `\`${info.total_sign_day}\`` }),
 							value: "\u200b",
 							inline: true
 						},
 						{
-							name: tr("daily_SignedDay", {
-								z: "`" + info.total_sign_day + "`"
-							}),
-							value: "\u200b",
-							inline: true
-						},
-						{
-							name: tr("daily_MissedDay", {
-								z: "`" + info.sign_cnt_missed + "`"
-							}),
+							name: tr("daily_MissedDay", { z: `\`${info.sign_cnt_missed}\`` }),
 							value: "\u200b",
 							inline: true
 						}

@@ -23,6 +23,15 @@ import type { TranslationFunction } from "@/types/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
 const config = loadConfig();
 
+function withTimeout<T>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> {
+	return Promise.race([
+		promise,
+		new Promise<T>((_, reject) =>
+			setTimeout(() => reject(new Error(errorMsg)), ms)
+		),
+	]);
+}
+
 interface Account {
 	uid: string;
 	cookie: string;
@@ -86,13 +95,17 @@ async function handleNewCookieSet(
 	}
 
 	try {
-		const gameInfo = await getUserGameInfo(cookie);
+		const gameInfo = await withTimeout(
+			getUserGameInfo(cookie),
+			20000,
+			"驗證超時，請稍後再試"
+		);
 		const uid = gameInfo.uid;
 
 		// Validate the cookie works for daily check-in (not just game record lookup)
 		try {
 			const hsr = new HonkaiStarRail({ cookie, uid: parseInt(uid) });
-			await hsr.daily.info();
+			await withTimeout(hsr.daily.info(), 20000, "驗證超時，請稍後再試");
 		} catch (dailyError: any) {
 			await interaction.editReply({
 				embeds: [
@@ -209,12 +222,16 @@ async function handleCookieSet(
 	}
 
 	try {
-		const gameInfo = await getUserGameInfo(cookie);
+		const gameInfo = await withTimeout(
+			getUserGameInfo(cookie),
+			20000,
+			"驗證超時，請稍後再試"
+		);
 
 		// Validate the cookie works for daily check-in
 		try {
 			const hsr = new HonkaiStarRail({ cookie, uid: parseInt(gameInfo.uid) });
-			await hsr.daily.info();
+			await withTimeout(hsr.daily.info(), 20000, "驗證超時，請稍後再試");
 		} catch (dailyError: any) {
 			await interaction.editReply({
 				embeds: [

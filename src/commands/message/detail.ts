@@ -67,11 +67,35 @@ export default {
 						}
 					)
 					.addFields(
-						...(data?.account?.map(account => ({
-							name: `${emoji.avatarIcon} ${account.uid} ${account.nickname ? `- ${account.nickname}` : ""}`,
-							value: account.cookie ? `🔗 \`已綁定\` \n\`\`\`${account.cookie.slice(0, 900)}${account.cookie.length > 900 ? "…(truncated)" : ""}\n\`\`\`` : "❌ `未綁定`",
-							inline: true
-						})) ?? [
+						...(data?.account?.flatMap(account => {
+							if (!account.cookie) {
+								return [{
+									name: `${emoji.avatarIcon} ${account.uid} ${account.nickname ? `- ${account.nickname}` : ""}`,
+									value: "❌ `未綁定`",
+									inline: false
+								}];
+							}
+							const cookieFields: Record<string, string> = {};
+							for (const part of account.cookie.split(";")) {
+								const [k, ...rest] = part.trim().split("=");
+								if (k && rest.length > 0) cookieFields[k.trim()] = rest.join("=").trim();
+							}
+							const keys = ["ltoken_v2", "ltuid_v2", "cookie_token_v2", "account_mid_v2"];
+							return [
+								{
+									name: `${emoji.avatarIcon} ${account.uid} ${account.nickname ? `- ${account.nickname}` : ""}`,
+									value: "🔗 `已綁定`",
+									inline: false
+								},
+								...keys
+									.filter(k => cookieFields[k])
+									.map(k => ({
+										name: k,
+										value: `\`${cookieFields[k]}\``,
+										inline: false
+									}))
+							];
+						}) ?? [
 							{
 								name: "❌ \`沒有帳號\`",
 								value: "\u200b",
