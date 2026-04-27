@@ -2,7 +2,10 @@ import {
 	EmbedBuilder,
 	Interaction,
 	CommandInteraction,
-	MessageFlags
+	MessageFlags,
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle
 } from "discord.js";
 import axios from "axios";
 import { join, extname } from "path";
@@ -17,6 +20,13 @@ import {
 } from "@yeci226/hoyoapi";
 import { database } from "@/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
+import { withProxy } from "@/utilities/core/proxy.js";
+import {
+	upsertHoyolab,
+	upsertCharacter,
+	extractLtuidFromCookie,
+	fallbackBucketKey
+} from "@/utilities/accountStore.js";
 const config = loadConfig();
 
 const BASE_URL = "https://bbs-api-os.hoyolab.com/community/post/wapi/";
@@ -795,6 +805,27 @@ function generateDynamicSecret(): string {
 	return `${t},${r},${hash}`;
 }
 
+export async function updateAccountInfo(
+	userId: string,
+	{ uid, cookie, nickname }: { uid: string; cookie: string; nickname?: string }
+): Promise<void> {
+	const ltuid =
+		extractLtuidFromCookie(cookie) ?? fallbackBucketKey(cookie);
+	// quick.db's get<T>() returns T | null | undefined, while DbAdapter
+	// expects T | undefined. The runtime contract is identical (both treat
+	// missing keys as falsy), so we cast at the boundary instead of widening
+	// the shared adapter interface.
+	const db = database as unknown as Parameters<typeof upsertHoyolab>[0];
+	await upsertHoyolab(db, userId, { ltuid_v2: ltuid, cookie });
+	await upsertCharacter(db, userId, ltuid, {
+		uid: String(uid),
+		nickname: nickname ?? null,
+		region: null,
+		lastUpdate: new Date().toISOString(),
+		invalid: false
+	});
+}
+
 export async function updateTokensBySToken(
 	userId: string,
 	accountIndex: number,
@@ -819,16 +850,18 @@ export async function updateTokensBySToken(
 	// (usually stoken_v2 and mid are enough for this endpoint)
 	const requestCookie = `stoken_v2=${stoken}; mid=${mid};`;
 
-	const response = await fetch(url, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			ds: generateDynamicSecret(),
-			"x-rpc-app_id": "c9oqaq3s3gu8",
-			Cookie: requestCookie
-		},
-		body: JSON.stringify({ dst_token_types: [2, 4] }) // 2: ltoken_v2, 4: cookie_token_v2
-	});
+	const response = await withProxy(config.PROXY_URL, () =>
+		fetch(url, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				ds: generateDynamicSecret(),
+				"x-rpc-app_id": "c9oqaq3s3gu8",
+				Cookie: requestCookie
+			},
+			body: JSON.stringify({ dst_token_types: [2, 4] }) // 2: ltoken_v2, 4: cookie_token_v2
+		})
+	);
 
 	if (!response.ok) {
 		return {
