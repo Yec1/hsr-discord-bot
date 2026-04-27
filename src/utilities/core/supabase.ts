@@ -44,12 +44,39 @@ function decryptString(encrypted: string): string {
 	return Buffer.concat([decipher.update(enc), decipher.final()]).toString("utf8");
 }
 
+/**
+ * Per-game card extracted from Hoyolab `getGameRecordCard` and persisted
+ * by web-login. Mirror of `web-login/lib/enrichment-types.ts:EnrichedGameCard`.
+ * Duplicated here (not shared) — bots are independent repos. Keep in sync
+ * if the web-side shape changes.
+ */
+export interface EnrichedGameCard {
+	game_id: number;
+	game_role_id: string;
+	nickname: string;
+	level: number;
+	region: string;
+	region_name: string;
+	game_name?: string;
+	logo?: string;
+	background_image?: string;
+	background_image_v2?: string;
+	data?: { name: string; value: string }[];
+}
+
+export interface EnrichedData {
+	ltuid_v2: string;
+	cards: EnrichedGameCard[];
+	fetched_at: string;
+}
+
 export interface PendingLoginRow {
 	id: number;
 	discord_id: string;
 	ltuid_v2: string;
 	encrypted_cookies: string;
 	hoyo_account: Record<string, unknown> | null;
+	enriched: EnrichedData | null;
 	created_at: string;
 }
 
@@ -60,7 +87,9 @@ export async function fetchPendingLogins(
 	if (!sb) return [];
 	const { data, error } = await sb
 		.from("pending_logins")
-		.select("id, discord_id, ltuid_v2, encrypted_cookies, hoyo_account, created_at")
+		.select(
+			"id, discord_id, ltuid_v2, encrypted_cookies, hoyo_account, enriched, created_at"
+		)
 		.eq("discord_id", discordUserId)
 		.eq("bot_id", "hsr")
 		.eq("status", "pending")
