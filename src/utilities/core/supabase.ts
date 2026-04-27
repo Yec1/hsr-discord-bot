@@ -80,6 +80,13 @@ export interface PendingLoginRow {
 	created_at: string;
 }
 
+const BOT_ID = "hsr" as const;
+
+/**
+ * Fetch all pending logins for this Discord user that HSR hasn't consumed yet
+ * and haven't expired. One row per Hoyoverse login is shared across all bots
+ * (HSR/ZZZ); each bot tracks its own consumption via `consumed_by_bots[]`.
+ */
 export async function fetchPendingLogins(
 	discordUserId: string
 ): Promise<PendingLoginRow[]> {
@@ -88,27 +95,47 @@ export async function fetchPendingLogins(
 	const { data, error } = await sb
 		.from("pending_logins")
 		.select(
-			"id, discord_id, ltuid_v2, encrypted_cookies, hoyo_account, enriched, created_at"
+			"id, discord_id, ltuid_v2, encrypted_cookies, hoyo_account, enriched, created_at, consumed_by_bots"
 		)
 		.eq("discord_id", discordUserId)
-		.eq("bot_id", "hsr")
-		.eq("status", "pending")
+		.gt("expires_at", new Date().toISOString())
 		.order("created_at", { ascending: true });
 	if (error) {
 		logger.error(`fetchPendingLogins: ${error.message}`);
 		return [];
 	}
-	return (data ?? []) as PendingLoginRow[];
+	return ((data ?? []) as (PendingLoginRow & { consumed_by_bots: string[] | null })[])
+		.filter(r => !(r.consumed_by_bots ?? []).includes(BOT_ID));
 }
 
+/**
+ * Mark this bot as having consumed the row, and shorten expiry to 1h.
+ */
 export async function markConsumed(id: number): Promise<void> {
 	const sb = await getClient();
 	if (!sb) return;
+	const { data: row, error: readErr } = await sb
+		.from("pending_logins")
+		.select("consumed_by_bots")
+		.eq("id", id)
+		.single();
+	if (readErr) {
+		logger.warn(`markConsumed(${id}) read: ${readErr.message}`);
+		return;
+	}
+	const current: string[] = (row?.consumed_by_bots as string[] | null) ?? [];
+	if (current.includes(BOT_ID)) return;
+	const next = [...current, BOT_ID];
+	const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 	const { error } = await sb
 		.from("pending_logins")
-		.update({ status: "consumed", consumed_at: new Date().toISOString() })
+		.update({
+			consumed_by_bots: next,
+			consumed_at: new Date().toISOString(),
+			expires_at: expiresAt
+		})
 		.eq("id", id);
-	if (error) logger.warn(`markConsumed(${id}): ${error.message}`);
+	if (error) logger.warn(`markConsumed(${id}) write: ${error.message}`);
 }
 
 export { decryptString };
