@@ -129,3 +129,51 @@ export async function loadAccounts(
 	await db.delete(`${userId}.account`);
 	return { hoyolabs };
 }
+
+/**
+ * Persist `store` and synchronously rewrite the legacy
+ * `<userId>.account` flat array so that all 30+ existing direct
+ * readers (`database.get(`${userId}.account`)`) continue to see
+ * up-to-date data without needing to switch to the new API.
+ *
+ * Mirror shape per entry: `{ uid, cookie, nickname, lastUpdate, invalid }`
+ * — matches what legacy callers already destructure.
+ */
+export async function saveAccounts(
+	db: DbAdapter,
+	userId: string,
+	store: AccountStore
+): Promise<void> {
+	await db.set(`${userId}.hoyolabs`, store.hoyolabs);
+	await syncLegacyMirror(db, userId, store);
+}
+
+async function syncLegacyMirror(
+	db: DbAdapter,
+	userId: string,
+	store: AccountStore
+): Promise<void> {
+	const flat: Array<{
+		uid: string;
+		cookie: string;
+		nickname: string | null;
+		lastUpdate: string;
+		invalid: boolean;
+	}> = [];
+	for (const h of store.hoyolabs) {
+		for (const c of h.characters) {
+			flat.push({
+				uid: c.uid,
+				cookie: h.cookie,
+				nickname: c.nickname,
+				lastUpdate: c.lastUpdate,
+				invalid: c.invalid || h.invalid
+			});
+		}
+	}
+	if (flat.length === 0) {
+		await db.delete(`${userId}.account`);
+	} else {
+		await db.set(`${userId}.account`, flat);
+	}
+}

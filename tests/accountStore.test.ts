@@ -159,3 +159,61 @@ describe("loadAccounts (lazy migration)", () => {
 		expect(db._dump()).toEqual(before);
 	});
 });
+
+import { saveAccounts, type AccountStore } from "@/utilities/accountStore";
+
+describe("saveAccounts (writes hoyolabs + legacy mirror)", () => {
+	it("writes hoyolabs and a flattened legacy `.account` mirror", async () => {
+		const db = createFakeDb();
+		const store: AccountStore = {
+			hoyolabs: [
+				{
+					ltuid_v2: "11111111",
+					cookie: COOKIE_A,
+					hoyolabName: "X",
+					lastUpdate: "2026-04-27T00:00:00.000Z",
+					invalid: false,
+					characters: [
+						{ uid: "800000001", nickname: "A1", region: "prod_official_asia", lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false },
+						{ uid: "800000002", nickname: "A2", region: "prod_official_asia", lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false }
+					]
+				},
+				{
+					ltuid_v2: "22222222",
+					cookie: COOKIE_B,
+					hoyolabName: null,
+					lastUpdate: "2026-04-27T00:00:00.000Z",
+					invalid: false,
+					characters: [
+						{ uid: "700000001", nickname: "B1", region: null, lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false }
+					]
+				}
+			]
+		};
+
+		await saveAccounts(db, "u1", store);
+
+		// New shape preserved
+		expect(await db.get("u1.hoyolabs")).toEqual(store.hoyolabs);
+
+		// Legacy mirror flattened with cookie denormalized onto each char
+		const mirror = (await db.get("u1.account")) as any[];
+		expect(mirror).toHaveLength(3);
+		expect(mirror.map(m => m.uid).sort()).toEqual([
+			"700000001",
+			"800000001",
+			"800000002"
+		]);
+		for (const m of mirror) {
+			expect(typeof m.cookie).toBe("string");
+			expect(m.cookie.length).toBeGreaterThan(0);
+		}
+	});
+
+	it("removes the legacy mirror when store is empty", async () => {
+		const db = createFakeDb({ u1: { account: [{ uid: "1" }], hoyolabs: [] } });
+		await saveAccounts(db, "u1", { hoyolabs: [] });
+		expect(await db.has("u1.account")).toBe(false);
+		expect(await db.get("u1.hoyolabs")).toEqual([]);
+	});
+});
