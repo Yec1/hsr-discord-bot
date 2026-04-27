@@ -30,6 +30,16 @@ export interface Character {
 	region: string | null;
 	lastUpdate: string;
 	invalid: boolean;
+	// Plan C — optional rich fields populated from web-login enriched payload.
+	// All optional so legacy characters (and rows where enrichment failed)
+	// continue to round-trip without modification.
+	level?: number;
+	region_name?: string;
+	cover?: string;
+	logo?: string;
+	game_name?: string;
+	stats?: { name: string; value: string }[];
+	enrichedAt?: string;
 }
 
 export interface Hoyolab {

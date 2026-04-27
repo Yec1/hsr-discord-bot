@@ -160,7 +160,7 @@ describe("loadAccounts (lazy migration)", () => {
 	});
 });
 
-import { saveAccounts, type AccountStore } from "@/utilities/accountStore";
+import { saveAccounts, type AccountStore, type Character } from "@/utilities/accountStore";
 
 describe("saveAccounts (writes hoyolabs + legacy mirror)", () => {
 	it("writes hoyolabs and a flattened legacy `.account` mirror", async () => {
@@ -404,5 +404,71 @@ describe("write API", () => {
 		const mirror = (await db.get("u1.account")) as any[];
 		expect(mirror).toHaveLength(1);
 		expect(mirror[0]).toMatchObject({ uid: "800000001", cookie: COOKIE_A, nickname: "A1" });
+	});
+});
+
+describe("Plan C — extended Character fields", () => {
+	it("persists and reloads optional level/cover/logo/stats/region_name/game_name/enrichedAt", async () => {
+		const db = createFakeDb();
+		const userId = "u-planc-1";
+		// Seed via upsertHoyolab + upsertCharacter
+		await upsertHoyolab(db, userId, {
+			ltuid_v2: "L1",
+			cookie: "ltuid_v2=L1; ltoken_v2=tok",
+			hoyolabName: null
+		});
+		const char: Character = {
+			uid: "800111111",
+			nickname: "Sloop",
+			region: "prod_official_usa",
+			lastUpdate: "2026-04-27T00:00:00.000Z",
+			invalid: false,
+			level: 70,
+			region_name: "America",
+			cover: "https://example.com/cover.png",
+			logo: "https://example.com/logo.png",
+			game_name: "Honkai: Star Rail",
+			stats: [
+				{ name: "Active days", value: "120" },
+				{ name: "Avatars", value: "45" },
+				{ name: "Light Cones", value: "80" },
+				{ name: "Achievements", value: "320" }
+			],
+			enrichedAt: "2026-04-27T00:00:00.000Z"
+		};
+		await upsertCharacter(db, userId, "L1", char);
+
+		const round = await getCharacter(db, userId, "800111111");
+		expect(round).not.toBeNull();
+		expect(round!.character.level).toBe(70);
+		expect(round!.character.region_name).toBe("America");
+		expect(round!.character.cover).toBe("https://example.com/cover.png");
+		expect(round!.character.logo).toBe("https://example.com/logo.png");
+		expect(round!.character.game_name).toBe("Honkai: Star Rail");
+		expect(round!.character.stats).toHaveLength(4);
+		expect(round!.character.stats![2]).toEqual({ name: "Light Cones", value: "80" });
+		expect(round!.character.enrichedAt).toBe("2026-04-27T00:00:00.000Z");
+	});
+
+	it("legacy character without optional fields still round-trips", async () => {
+		const db = createFakeDb();
+		const userId = "u-planc-2";
+		await upsertHoyolab(db, userId, {
+			ltuid_v2: "L2",
+			cookie: "c",
+			hoyolabName: null
+		});
+		const legacy: Character = {
+			uid: "800222222",
+			nickname: "OldNick",
+			region: null,
+			lastUpdate: "2026-01-01T00:00:00.000Z",
+			invalid: false
+		};
+		await upsertCharacter(db, userId, "L2", legacy);
+		const round = await getCharacter(db, userId, "800222222");
+		expect(round!.character.level).toBeUndefined();
+		expect(round!.character.cover).toBeUndefined();
+		expect(round!.character.stats).toBeUndefined();
 	});
 });
