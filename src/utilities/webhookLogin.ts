@@ -2,17 +2,30 @@
  * Web-login finalizer (HSR).
  *
  * `drainPendingLogins` pulls unconsumed rows from Supabase (queued by the
- * web-login Next.js app) and binds them to local accounts. Called lazily
- * from `/account` and other entry points.
+ * web-login Next.js app) and routes each row to one of three paths:
+ *
+ *   1. `bindFromEnriched` — row has `enriched` payload AND a card for HSR
+ *      (game_id = 6). Fast path: no Hoyolab API call. Writes a rich
+ *      Character row with level/cover/stats from the card.
+ *
+ *   2. `bindHoyolabOnly` — row has `enriched` but no HSR card. Stores the
+ *      Hoyolab record (with cookie) and zero characters. No DM. No counted
+ *      slot against the 5-account limit.
+ *
+ *   3. `bindCookieToUser` — legacy fallback for rows without `enriched`
+ *      (pre-Plan-B rows + any row where web-side enrichment failed).
+ *      Calls `getUserGameInfo`.
  */
 import { database, client } from "@/index.js";
 import { getUserGameInfo, updateAccountInfo } from "@/utilities/index.js";
+import { upsertHoyolab, upsertCharacter, type Character } from "@/utilities/accountStore.js";
 import { getConfig } from "@/utilities/core/config.js";
 import Logger from "@/utilities/core/logger.js";
 import {
 	fetchPendingLogins,
 	markConsumed,
-	decryptString
+	decryptString,
+	type EnrichedGameCard
 } from "@/utilities/core/supabase.js";
 
 interface Account {
@@ -28,13 +41,36 @@ export interface BindResult {
 }
 
 const log = new Logger("WebLogin");
+const HSR_GAME_ID = 6;
+
+async function checkAccountLimit(discordUserId: string): Promise<void> {
+	const config = getConfig();
+	if (config.DEVIDS.includes(discordUserId)) return;
+	const accounts: Account[] = (await database.get(`${discordUserId}.account`)) || [];
+	if (accounts.length >= 5) {
+		throw new Error("Account limit (5) exceeded");
+	}
+}
+
+async function notifyBound(discordUserId: string, uid: string, nickname?: string): Promise<void> {
+	try {
+		const user = await client.users.fetch(discordUserId);
+		await user.send(
+			`✅ Your Hoyoverse account has been linked to **HSR Bot**!\nUID: \`${uid}\`${nickname ? ` — ${nickname}` : ""}`
+		);
+		log.info(`[bind] DM sent to ${discordUserId}`);
+	} catch (e) {
+		log.info(
+			`DM to ${discordUserId} failed (likely DMs disabled): ${(e as Error).message}`
+		);
+	}
+}
 
 export async function bindCookieToUser(
 	discordUserId: string,
 	cookieStr: string
 ): Promise<BindResult> {
 	log.info(`[bind] start user=${discordUserId} cookieLen=${cookieStr.length}`);
-	const config = getConfig();
 	let gameInfo: Awaited<ReturnType<typeof getUserGameInfo>>;
 	try {
 		gameInfo = await getUserGameInfo(cookieStr);
@@ -47,23 +83,12 @@ export async function bindCookieToUser(
 
 	const accounts: Account[] =
 		(await database.get(`${discordUserId}.account`)) || [];
-	log.info(`[bind] existing accounts=${accounts.length} for user=${discordUserId}`);
-
 	const existingIndex = accounts.findIndex(acc => acc.uid === uid);
 	let updated = false;
-
 	if (existingIndex !== -1) {
 		updated = true;
-		log.info(`[bind] updating existing slot index=${existingIndex} uid=${uid}`);
 	} else {
-		if (
-			!config.DEVIDS.includes(discordUserId) &&
-			accounts.length >= 5
-		) {
-			log.warn(`[bind] account limit reached for user=${discordUserId}`);
-			throw new Error("Account limit (5) exceeded");
-		}
-		log.info(`[bind] appending new account uid=${uid} totalNow=${accounts.length + 1}`);
+		await checkAccountLimit(discordUserId);
 	}
 
 	await updateAccountInfo(discordUserId, {
@@ -73,24 +98,75 @@ export async function bindCookieToUser(
 	});
 	log.info(`[bind] updateAccountInfo OK key=${discordUserId}.account uid=${uid}`);
 
-	try {
-		const user = await client.users.fetch(discordUserId);
-		await user.send(
-			`✅ Your Hoyoverse account has been linked to **HSR Bot**!\nUID: \`${uid}\`${gameInfo.nickname ? ` — ${gameInfo.nickname}` : ""}`
-		);
-		log.info(`[bind] DM sent to ${discordUserId}`);
-	} catch (e) {
-		log.info(`DM to ${discordUserId} failed (likely DMs disabled): ${(e as Error).message}`);
-	}
+	await notifyBound(discordUserId, uid, gameInfo.nickname);
 
 	return { uid, nickname: gameInfo.nickname, updated };
 }
 
-/**
- * Pull queued web-logins from Supabase and bind them. Called from
- * command entry points (e.g. /account) so the bot picks up logins
- * without needing an inbound HTTP webhook.
- */
+export async function bindFromEnriched(
+	discordUserId: string,
+	ltuid_v2: string,
+	cookieStr: string,
+	card: EnrichedGameCard,
+	fetchedAt: string
+): Promise<BindResult> {
+	log.info(
+		`[bindFromEnriched] start user=${discordUserId} uid=${card.game_role_id} ltuid=${ltuid_v2}`
+	);
+
+	const uid = String(card.game_role_id);
+
+	// Mirror legacy account-limit semantics: only enforce when adding a NEW slot.
+	const existing: Account[] =
+		(await database.get(`${discordUserId}.account`)) || [];
+	const isNew = !existing.some(a => a.uid === uid);
+	if (isNew) await checkAccountLimit(discordUserId);
+
+	const cover = card.background_image_v2 || card.background_image || undefined;
+	const character: Character = {
+		uid,
+		nickname: card.nickname ?? null,
+		region: card.region ?? null,
+		lastUpdate: new Date().toISOString(),
+		invalid: false,
+		level: card.level,
+		region_name: card.region_name,
+		stats: (card.data ?? []).slice(0, 4),
+		enrichedAt: fetchedAt,
+		...(cover !== undefined ? { cover } : {}),
+		...(card.logo !== undefined ? { logo: card.logo } : {}),
+		...(card.game_name !== undefined ? { game_name: card.game_name } : {})
+	};
+
+	await upsertHoyolab(database as any, discordUserId, {
+		ltuid_v2,
+		cookie: cookieStr,
+		hoyolabName: null
+	});
+	await upsertCharacter(database as any, discordUserId, ltuid_v2, character);
+	log.info(`[bindFromEnriched] OK uid=${uid} updated=${!isNew}`);
+
+	await notifyBound(discordUserId, uid, card.nickname);
+
+	return { uid, nickname: card.nickname, updated: !isNew };
+}
+
+export async function bindHoyolabOnly(
+	discordUserId: string,
+	ltuid_v2: string,
+	cookieStr: string
+): Promise<void> {
+	log.info(
+		`[bindHoyolabOnly] storing hoyolab record (no HSR card) user=${discordUserId} ltuid=${ltuid_v2}`
+	);
+	await upsertHoyolab(database as any, discordUserId, {
+		ltuid_v2,
+		cookie: cookieStr,
+		hoyolabName: null
+	});
+	// No character row, no DM, no slot consumed.
+}
+
 export async function drainPendingLogins(
 	discordUserId: string
 ): Promise<BindResult[]> {
@@ -117,12 +193,31 @@ export async function drainPendingLogins(
 			await markConsumed(row.id);
 			continue;
 		}
+
+		const enriched = row.enriched;
+		const card = enriched?.cards.find(c => c.game_id === HSR_GAME_ID) ?? null;
+
 		try {
-			const res = await bindCookieToUser(discordUserId, cookieStr);
-			log.info(`[drain] bind OK row=${row.id} uid=${res.uid} updated=${res.updated}`);
-			out.push(res);
+			if (card && enriched) {
+				log.info(`[drain] route=enriched row=${row.id}`);
+				const res = await bindFromEnriched(
+					discordUserId,
+					row.ltuid_v2,
+					cookieStr,
+					card,
+					enriched.fetched_at
+				);
+				out.push(res);
+			} else if (enriched) {
+				log.info(`[drain] route=hoyolabOnly row=${row.id} (no HSR card in enriched)`);
+				await bindHoyolabOnly(discordUserId, row.ltuid_v2, cookieStr);
+			} else {
+				log.info(`[drain] route=legacy row=${row.id} (no enriched payload)`);
+				const res = await bindCookieToUser(discordUserId, cookieStr);
+				out.push(res);
+			}
 		} catch (e: any) {
-			log.error(`[drain] bindCookieToUser FAILED row=${row.id}: ${e?.message ?? e}`);
+			log.error(`[drain] bind FAILED row=${row.id}: ${e?.message ?? e}`);
 		}
 		await markConsumed(row.id);
 		log.info(`[drain] markConsumed row=${row.id}`);
