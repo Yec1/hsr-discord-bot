@@ -105,6 +105,9 @@ export interface LanguageStrings {
 	account_SetUserIDDesc: string;
 	account_SetUserCookie: string;
 	account_NoAccount: string;
+	account_WebLoginTitle: string;
+	account_WebLoginDesc: string;
+	account_WebLoginButton: string;
 	account_HowToSetUpAccount: string;
 	account_HowToSetUpAccountDesc: string;
 	account_CookieSetSuccess: string;

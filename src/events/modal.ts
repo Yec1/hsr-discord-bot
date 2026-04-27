@@ -9,6 +9,7 @@ import {
 	ButtonInteraction
 } from "discord.js";
 import { AuthClient, HonkaiStarRail } from "@yeci226/hoyoapi";
+import type { IAuthLoginResult } from "@yeci226/hoyoapi";
 import { VerificationServer } from "@/utilities/core/VerificationServer.js";
 import { sessionStatuses } from "@/server.js";
 import { randomUUID } from "node:crypto";
@@ -22,6 +23,35 @@ import { createTranslator, toI18nLang } from "@/utilities/core/i18n.js";
 import type { TranslationFunction } from "@/types/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
 const config = loadConfig();
+
+/**
+ * Call the Vercel proxy to perform loginByPassword.
+ * Falls back to direct AuthClient call if PROXY_API_URL is not set.
+ */
+async function proxyLoginByPassword(opts: {
+	account: string;
+	password: string;
+	aigisHeaderObject?: string;
+	deviceId?: string;
+}): Promise<IAuthLoginResult> {
+	const proxyUrl = config.PROXY_API_URL;
+	if (proxyUrl) {
+		const res = await fetch(`${proxyUrl}/api/login`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${config.PROXY_API_TOKEN}`,
+			},
+			body: JSON.stringify(opts),
+		});
+		const data = await res.json() as IAuthLoginResult;
+		return data;
+	}
+	// Fallback: direct call (no IP protection)
+	const { AuthClient } = await import("@yeci226/hoyoapi");
+	const auth = new AuthClient();
+	return auth.loginByPassword(opts);
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> {
 	return Promise.race([
@@ -72,7 +102,7 @@ async function handleNewCookieSet(
 	const ltuidV2 = fields.getTextInputValue("ltuid_v2").trim();
 	const cookieTokenV2 = fields.getTextInputValue("cookie_token_v2").trim();
 	const accountMidV2 = fields.getTextInputValue("account_mid_v2").trim();
-	const cookie = `ltoken_v2=${ltokenV2}; ltuid_v2=${ltuidV2}; cookie_token_v2=${cookieTokenV2}; account_mid_v2=${accountMidV2}`;
+	const cookie = `ltoken_v2=${ltokenV2}; ltuid_v2=${ltuidV2}; cookie_token_v2=${cookieTokenV2}; account_mid_v2=${accountMidV2}; account_id_v2=${accountMidV2}; ltmid_v2=${accountMidV2}`;
 
 	if (await database.has(`${interaction.user.id}.account`)) {
 		const accounts: Account[] =
@@ -203,7 +233,7 @@ async function handleCookieSet(
 	const ltuidV2 = fields.getTextInputValue("ltuid_v2").trim();
 	const cookieTokenV2 = fields.getTextInputValue("cookie_token_v2").trim();
 	const accountMidV2 = fields.getTextInputValue("account_mid_v2").trim();
-	const cookie = `ltoken_v2=${ltokenV2}; ltuid_v2=${ltuidV2}; cookie_token_v2=${cookieTokenV2}; account_mid_v2=${accountMidV2}`;
+	const cookie = `ltoken_v2=${ltokenV2}; ltuid_v2=${ltuidV2}; cookie_token_v2=${cookieTokenV2}; account_mid_v2=${accountMidV2}; account_id_v2=${accountMidV2}; ltmid_v2=${accountMidV2}`;
 	const account: Account[] =
 		(await database.get(`${interaction.user.id}.account`)) ?? [];
 
@@ -308,11 +338,10 @@ async function handlePasswordLogin(
 	const account = authArgs?.account || (fields as any).getTextInputValue("account") || "";
 	const password = authArgs?.password || (fields as any).getTextInputValue("password") || "";
 
-	const auth = new AuthClient();
-	const result = await auth.loginByPassword({
+	const result = await proxyLoginByPassword({
 		account,
 		password,
-		aigisHeaderObject: aigisHeader,
+		...(aigisHeader !== undefined && { aigisHeaderObject: aigisHeader }),
 		...(authArgs?.deviceId !== undefined && { deviceId: authArgs.deviceId }),
 	});
 

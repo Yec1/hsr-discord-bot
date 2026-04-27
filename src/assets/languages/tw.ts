@@ -109,6 +109,10 @@ const langs: LanguageStrings = {
 	account_SetUserIDDesc: "遊戲內的 UID",
 	account_SetUserCookie: "設定 Cookie",
 	account_NoAccount: "尚未設置帳號",
+	account_WebLoginTitle: "🔗 綁定你的 Hoyoverse 帳號",
+	account_WebLoginDesc:
+		"點擊下方按鈕前往安全的網頁綁定你的 Hoyoverse 帳號。\n你的帳密只會輸入在安全網頁上，絕對不會經過 Discord。\n\n系統會先請你驗證 Discord 身分，再輸入 Hoyoverse 信箱與密碼。",
+	account_WebLoginButton: "開啟網頁登入",
 	account_HowToSetUpAccount: "❓ 如何設定帳號",
 	account_HowToSetUpAccountDesc:
 		"### 🔥 如何取得 Cookie\n1. 開啟 [Hoyolab](https://www.hoyolab.com/) 網頁並登入帳號\n2. 按下 `F12` 或 `Ctrl + Shift + I` 打開開發者工具\n3. 切換至 `Application` 選擇左邊的 `Cookies` → `https://www.hoyolab.com`\n4. 找到以下欄位並複製其值：`ltoken_v2`、`ltuid_v2`、`cookie_token_v2`、`account_mid_v2`\n5. 將它們填入各個欄位即可！",
@@ -116,7 +120,8 @@ const langs: LanguageStrings = {
 	account_InvalidIndex: "無效的帳號索引",
 	account_CookieSetFailed: "Cookie 綁定失敗",
 	account_CookieSetFailedDesc: "請確認 Cookie 是否正確",
-	account_CookieInvalidOrExpired: "Cookie 已過期或無效，請重新取得有效的 Cookie 後再試。",
+	account_CookieInvalidOrExpired:
+		"Cookie 已過期或無效，請重新取得有效的 Cookie 後再試。",
 	account_DeletedSuccess: "已解除綁定帳號",
 	account_LimitExceeded: "最多只能設定至多 `5` 個帳號！",
 	account_AlreadySet: "您已經設定過 <z> 了！",

@@ -112,6 +112,10 @@ const langs: LanguageStrings = {
 	account_SetUserIDDesc: "UID in the game",
 	account_SetUserCookie: "Set Cookie",
 	account_NoAccount: "No account set yet",
+	account_WebLoginTitle: "🔗 Link Your Hoyoverse Account",
+	account_WebLoginDesc:
+		"Click the button below to securely link your Hoyoverse account.\nYour credentials are entered on the secure web page — never through Discord.\n\nYou will be asked to verify your Discord identity first, then enter your Hoyoverse email/password.",
+	account_WebLoginButton: "Open Web Login",
 	account_HowToSetUpAccount: "❓ How to Set Up Account",
 	account_HowToSetUpAccountDesc:
 		"### 🔥 How to get your Cookie\n1. Open [Hoyolab](https://www.hoyolab.com/) and log in\n2. Press `F12` or `Ctrl + Shift + I` to open Developer Tools\n3. Go to `Application` → `Cookies` → `https://www.hoyolab.com` on the left\n4. Find the following fields and copy their values: `ltoken_v2`, `ltuid_v2`, `cookie_token_v2`, `account_mid_v2`\n5. Fill them into the respective fields!",

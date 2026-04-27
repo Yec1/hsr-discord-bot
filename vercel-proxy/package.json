@@ -1,0 +1,8 @@
+{
+  "name": "hsr-bot-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@yeci226/hoyoapi": "^1.3.8"
+  }
+}

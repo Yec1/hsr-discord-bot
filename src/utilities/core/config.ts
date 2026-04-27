@@ -22,10 +22,15 @@ interface Config {
 	PROXY_API_URL?: string;
 	/** Bearer token to authenticate with the Vercel proxy */
 	PROXY_API_TOKEN?: string;
-	/** Shared secret for the /webhook/login endpoint (web-login app sends as Bearer) */
-	WEBHOOK_SECRET?: string;
 	/** Public URL of the web-login app (Vercel), used in /account button */
 	WEB_LOGIN_URL?: string;
+	/** Supabase project URL — used to pull pending logins from web-login */
+	SUPABASE_URL?: string;
+	/** Supabase service_role key (server-side only) */
+	SUPABASE_SERVICE_ROLE_KEY?: string;
+	/** AES-256-CBC key used to decrypt cookies pulled from Supabase.
+	 *  Must match SESSION_SECRET in the web-login .env. */
+	WEB_LOGIN_SESSION_SECRET?: string;
 }
 
 let config: Config | null = null;

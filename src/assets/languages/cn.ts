@@ -109,6 +109,10 @@ const langs: LanguageStrings = {
 	account_SetUserIDDesc: "游戏内的 UID",
 	account_SetUserCookie: "设定 Cookie",
 	account_NoAccount: "尚未设置帐号",
+	account_WebLoginTitle: "🔗 绑定你的 Hoyoverse 帐号",
+	account_WebLoginDesc:
+		"点击下方按钮前往安全的网页绑定你的 Hoyoverse 帐号。\n你的账密只会输入在安全网页上，绝对不会经过 Discord。\n\n系统会先请你验证 Discord 身分，再输入 Hoyoverse 邮箱与密码。",
+	account_WebLoginButton: "开启网页登入",
 	account_HowToSetUpAccount: "❓ 如何设定帐号",
 	account_HowToSetUpAccountDesc:
 		"### 🔥 如何获取 Cookie\n1. 开启 [Hoyolab](https://www.hoyolab.com/) 网页并登录帐号\n2. 按下 `F12` 或 `Ctrl + Shift + I` 打开开发者工具\n3. 切换至 `Application` 选择左边的 `Cookies` → `https://www.hoyolab.com`\n4. 找到以下字段并复制其值：`ltoken_v2`、`ltuid_v2`、`cookie_token_v2`、`account_mid_v2`\n5. 将它们填入各个字段即可！",

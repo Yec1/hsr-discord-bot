@@ -8,5 +8,9 @@
 	"ERRWEBHOOK": "Error Webhook URL",
 	"AUTHTOKEN": "Your Auth Token",
 	"WEBSERVER_PORT": 3000,
-	"DEVIDS": ["YOUR DISCORD ID"]
+	"DEVIDS": ["YOUR DISCORD ID"],
+	"PROXY_API_URL": "https://your-project.vercel.app",
+	"PROXY_API_TOKEN": "your-secret-token",
+	"WEBHOOK_SECRET": "shared-secret-with-web-login-app",
+	"WEB_LOGIN_URL": "https://your-web-login.vercel.app"
 }

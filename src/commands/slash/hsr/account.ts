@@ -17,6 +17,7 @@ import { TranslationFunction } from "@/types/index.js";
 import emoji from "@/assets/emoji.js";
 import { database } from "@/index.js";
 import { getConfig } from "@/utilities/core/config.js";
+import { drainPendingLogins } from "@/utilities/webhookLogin.js";
 
 interface Account {
 	uid: string;
@@ -108,6 +109,19 @@ export default {
 	): Promise<void> {
 		const command = interaction.options.getString("options");
 		const userId = interaction.user.id;
+
+		// Pull any pending web-logins from Supabase before reading local DB.
+		// Fast no-op when Supabase is unconfigured or queue is empty.
+		try {
+			const bound = await drainPendingLogins(userId);
+			if (bound.length > 0) {
+				console.log(`[/account] drain bound ${bound.length} account(s) for ${userId}`);
+			}
+		} catch (e: any) {
+			console.error(`[/account] drainPendingLogins threw: ${e?.message ?? e}`);
+			/* never block /account on a queue read */
+		}
+
 		const accountKey = `${userId}.account`;
 		const hasAccount = await database.has(accountKey);
 
@@ -216,20 +230,23 @@ export default {
 						"Web login is not configured on this bot."
 					);
 				}
-				const url = `${webLoginUrl.replace(/\/$/, "")}/login?botId=hsr`;
+				// Map Discord interaction locale → web app locale (en | zh-TW)
+				const rawLocale = String(interaction.locale ?? "").toLowerCase();
+				const webLang =
+					rawLocale === "zh-tw" || rawLocale === "zh-cn" || rawLocale === "zh"
+						? "zh-TW"
+						: "en";
+				const langQs = webLang === "en" ? "" : `&lang=${webLang}`;
+				const url = `${webLoginUrl.replace(/\/$/, "")}/login?botId=hsr${langQs}`;
 				const button = new ButtonBuilder()
-					.setLabel("Open Web Login")
+					.setLabel(tr("account_WebLoginButton"))
 					.setURL(url)
 					.setStyle(ButtonStyle.Link);
 				await interaction.reply({
 					embeds: [
 						new EmbedBuilder()
-							.setTitle("🔗 Link Your Hoyoverse Account")
-							.setDescription(
-								"Click the button below to securely link your Hoyoverse account.\n" +
-									"Your credentials are entered on the secure web page — never through Discord.\n\n" +
-									"You will be asked to verify your Discord identity first, then enter your Hoyoverse email/password."
-							)
+							.setTitle(tr("account_WebLoginTitle"))
+							.setDescription(tr("account_WebLoginDesc"))
 							.setColor(getRandomColor() as any)
 					],
 					components: [
