@@ -109,6 +109,11 @@ const langs: LanguageStrings = {
 	account_SetUserIDDesc: "遊戲內的 UID",
 	account_SetUserCookie: "設定 Cookie",
 	account_NoAccount: "尚未設置帳號",
+	account_View_Region: "區域",
+	account_View_LastSync: "上次同步 %s",
+	account_View_Linked: "已綁定",
+	account_View_LvShort: "等級",
+	account_View_NoStats: "（尚無資料）",
 	account_WebLoginTitle: "🔗 綁定你的 Hoyoverse 帳號",
 	account_WebLoginDesc:
 		"點擊下方按鈕前往安全的網頁綁定你的 Hoyoverse 帳號。\n你的帳密只會輸入在安全網頁上，絕對不會經過 Discord。\n\n系統會先請你驗證 Discord 身分，再輸入 Hoyoverse 信箱與密碼。",

@@ -105,6 +105,11 @@ export interface LanguageStrings {
 	account_SetUserIDDesc: string;
 	account_SetUserCookie: string;
 	account_NoAccount: string;
+	account_View_Region: string;
+	account_View_LastSync: string;
+	account_View_Linked: string;
+	account_View_LvShort: string;
+	account_View_NoStats: string;
 	account_WebLoginTitle: string;
 	account_WebLoginDesc: string;
 	account_WebLoginButton: string;

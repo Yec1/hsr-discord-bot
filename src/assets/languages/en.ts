@@ -112,6 +112,11 @@ const langs: LanguageStrings = {
 	account_SetUserIDDesc: "UID in the game",
 	account_SetUserCookie: "Set Cookie",
 	account_NoAccount: "No account set yet",
+	account_View_Region: "Region",
+	account_View_LastSync: "last sync %s",
+	account_View_Linked: "Linked",
+	account_View_LvShort: "Lv",
+	account_View_NoStats: "(No stats yet)",
 	account_WebLoginTitle: "🔗 Link Your Hoyoverse Account",
 	account_WebLoginDesc:
 		"Click the button below to securely link your Hoyoverse account.\nYour credentials are entered on the secure web page — never through Discord.\n\nYou will be asked to verify your Discord identity first, then enter your Hoyoverse email/password.",
