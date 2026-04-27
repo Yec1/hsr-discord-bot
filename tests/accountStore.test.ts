@@ -217,3 +217,79 @@ describe("saveAccounts (writes hoyolabs + legacy mirror)", () => {
 		expect(await db.get("u1.hoyolabs")).toEqual([]);
 	});
 });
+
+import {
+	getHoyolabs,
+	getHoyolabByLtuid,
+	getAllCharacters,
+	getCharacter
+} from "@/utilities/accountStore";
+
+describe("read API", () => {
+	const seedStore: AccountStore = {
+		hoyolabs: [
+			{
+				ltuid_v2: "11111111",
+				cookie: COOKIE_A,
+				hoyolabName: "Hoyo1",
+				lastUpdate: "2026-04-27T00:00:00.000Z",
+				invalid: false,
+				characters: [
+					{ uid: "800000001", nickname: "A1", region: "asia", lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false },
+					{ uid: "800000002", nickname: "A2", region: "asia", lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false }
+				]
+			},
+			{
+				ltuid_v2: "22222222",
+				cookie: COOKIE_B,
+				hoyolabName: null,
+				lastUpdate: "2026-04-27T00:00:00.000Z",
+				invalid: false,
+				characters: [
+					{ uid: "700000001", nickname: "B1", region: "america", lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false }
+				]
+			}
+		]
+	};
+
+	function seed() {
+		return createFakeDb({ u1: { hoyolabs: seedStore.hoyolabs } });
+	}
+
+	it("getHoyolabs returns all", async () => {
+		const db = seed();
+		expect(await getHoyolabs(db, "u1")).toHaveLength(2);
+	});
+
+	it("getHoyolabByLtuid finds match", async () => {
+		const db = seed();
+		const h = await getHoyolabByLtuid(db, "u1", "22222222");
+		expect(h?.cookie).toBe(COOKIE_B);
+	});
+
+	it("getHoyolabByLtuid returns null when missing", async () => {
+		const db = seed();
+		expect(await getHoyolabByLtuid(db, "u1", "99999999")).toBeNull();
+	});
+
+	it("getAllCharacters flattens with ltuid + cookie attached", async () => {
+		const db = seed();
+		const all = await getAllCharacters(db, "u1");
+		expect(all).toHaveLength(3);
+		const a1 = all.find(c => c.uid === "800000001")!;
+		expect(a1.ltuid_v2).toBe("11111111");
+		expect(a1.cookie).toBe(COOKIE_A);
+	});
+
+	it("getCharacter returns char + parent hoyolab", async () => {
+		const db = seed();
+		const r = await getCharacter(db, "u1", "700000001");
+		expect(r?.character.uid).toBe("700000001");
+		expect(r?.hoyolab.ltuid_v2).toBe("22222222");
+	});
+
+	it("getCharacter returns null when uid missing", async () => {
+		const db = seed();
+		expect(await getCharacter(db, "u1", "0")).toBeNull();
+	});
+});

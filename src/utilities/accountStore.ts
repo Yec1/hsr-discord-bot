@@ -177,3 +177,49 @@ async function syncLegacyMirror(
 		await db.set(`${userId}.account`, flat);
 	}
 }
+
+// ---------- Reads ----------
+
+export async function getHoyolabs(
+	db: DbAdapter,
+	userId: string
+): Promise<Hoyolab[]> {
+	const store = await loadAccounts(db, userId);
+	return store.hoyolabs;
+}
+
+export async function getHoyolabByLtuid(
+	db: DbAdapter,
+	userId: string,
+	ltuid_v2: string
+): Promise<Hoyolab | null> {
+	const hs = await getHoyolabs(db, userId);
+	return hs.find(h => h.ltuid_v2 === ltuid_v2) ?? null;
+}
+
+export async function getAllCharacters(
+	db: DbAdapter,
+	userId: string
+): Promise<Array<Character & { ltuid_v2: string; cookie: string }>> {
+	const hs = await getHoyolabs(db, userId);
+	const out: Array<Character & { ltuid_v2: string; cookie: string }> = [];
+	for (const h of hs) {
+		for (const c of h.characters) {
+			out.push({ ...c, ltuid_v2: h.ltuid_v2, cookie: h.cookie });
+		}
+	}
+	return out;
+}
+
+export async function getCharacter(
+	db: DbAdapter,
+	userId: string,
+	uid: string
+): Promise<{ character: Character; hoyolab: Hoyolab } | null> {
+	const hs = await getHoyolabs(db, userId);
+	for (const h of hs) {
+		const c = h.characters.find(ch => ch.uid === String(uid));
+		if (c) return { character: c, hoyolab: h };
+	}
+	return null;
+}
