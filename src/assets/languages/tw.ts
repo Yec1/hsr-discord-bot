@@ -110,7 +110,7 @@ const langs: LanguageStrings = {
 	account_SetUserCookie: "設定 Cookie",
 	account_NoAccount: "尚未設置帳號",
 	account_View_Region: "區域",
-	account_View_LastSync: "上次同步 %s",
+	account_View_LastSync: "上次同步 {time}",
 	account_View_Linked: "已綁定",
 	account_View_LvShort: "等級",
 	account_View_NoStats: "（尚無資料）",

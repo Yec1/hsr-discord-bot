@@ -18,6 +18,57 @@ import emoji from "@/assets/emoji.js";
 import { database } from "@/index.js";
 import { getConfig } from "@/utilities/core/config.js";
 import { drainPendingLogins } from "@/utilities/webhookLogin.js";
+import { getAllCharacters, type Character, type Hoyolab } from "@/utilities/accountStore.js";
+
+function formatRelativeFromIso(iso: string | undefined): string {
+	if (!iso) return "—";
+	const t = Date.parse(iso);
+	if (Number.isNaN(t)) return "—";
+	const diffSec = Math.floor((Date.now() - t) / 1000);
+	if (diffSec < 60) return `${diffSec}s ago`;
+	if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+	if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+	return `${Math.floor(diffSec / 86400)}d ago`;
+}
+
+function buildCharacterEmbed(
+	character: Character,
+	_hoyolab: Hoyolab,
+	tr: TranslationFunction
+): EmbedBuilder {
+	const titleGame = character.game_name ?? "Honkai: Star Rail";
+	const lvLabel = tr("account_View_LvShort");
+	const titleLevel = character.level !== undefined ? `${lvLabel} ${character.level}` : "";
+	const title = titleLevel ? `${titleGame} · ${titleLevel}` : titleGame;
+	const nickname = character.nickname ?? "";
+	const description = `${nickname ? `**${nickname}** · ` : ""}UID \`${character.uid}\``;
+
+	const embed = new EmbedBuilder()
+		.setColor(getRandomColor() as any)
+		.setTitle(title)
+		.setDescription(description);
+
+	if (character.logo) embed.setThumbnail(character.logo);
+	if (character.cover) embed.setImage(character.cover);
+
+	const regionVal = character.region_name ?? character.region ?? "—";
+	embed.addFields({ name: tr("account_View_Region"), value: regionVal, inline: true });
+
+	const stats = character.stats ?? [];
+	if (stats.length > 0) {
+		for (const s of stats.slice(0, 4)) {
+			embed.addFields({ name: s.name || "—", value: s.value || "—", inline: true });
+		}
+	}
+
+	const linked = tr("account_View_Linked");
+	const lastSync = character.enrichedAt
+		? ` · ${tr("account_View_LastSync", { time: formatRelativeFromIso(character.enrichedAt) })}`
+		: "";
+	embed.setFooter({ text: `🔗 ${linked}${lastSync}` });
+
+	return embed;
+}
 
 interface Account {
 	uid: string;
@@ -258,31 +309,54 @@ export default {
 				});
 				return;
 			}
-			case "ViewAccount":
-				interaction.editReply({
-					embeds: [
-						new EmbedBuilder()
-							.setColor(getRandomColor() as any)
-							.setAuthor({
-								name: tr("account_ListOfAccount", {
-									Username: interaction.user.username
-								}),
-								iconURL: interaction.user.displayAvatarURL({
-									size: 4096
+			case "ViewAccount": {
+				const characters = await getAllCharacters(database as any, userId);
+				if (characters.length === 0) {
+					interaction.editReply({
+						embeds: [
+							new EmbedBuilder()
+								.setColor(getRandomColor() as any)
+								.setAuthor({
+									name: tr("account_ListOfAccount", {
+										Username: interaction.user.username
+									}),
+									iconURL: interaction.user.displayAvatarURL({
+										size: 4096
+									})
 								})
-							})
-							.setDescription(
-								(accounts as Account[])
-									.map(
-										(account: Account) =>
-											`${emoji.avatarIcon} **${account.uid}**${account.nickname ? ` — ${account.nickname}` : ""}  ${account.cookie ? `🔗 \`${tr("account_Linked")}\`` : `❌ \`${tr("account_NotLinked")}\``}`
-									)
-									.join("\n") ||
-									`❌ \`${tr("account_NoAccount")}\``
-							)
-					]
+								.setDescription(`❌ \`${tr("account_NoAccount")}\``)
+						]
+					});
+					return;
+				}
+
+				const embeds = characters.slice(0, 10).map(c => {
+					// getAllCharacters returns Character & { ltuid_v2, cookie } — split for builder
+					const { ltuid_v2, cookie, ...charOnly } = c;
+					const hoyolab: Hoyolab = {
+						ltuid_v2,
+						cookie,
+						hoyolabName: null,
+						lastUpdate: charOnly.lastUpdate,
+						invalid: charOnly.invalid,
+						characters: []
+					};
+					return buildCharacterEmbed(charOnly as Character, hoyolab, tr);
 				});
+
+				// Lead author embed if user has > 0 characters — keep the username header.
+				if (embeds.length > 0) {
+					embeds[0]!.setAuthor({
+						name: tr("account_ListOfAccount", {
+							Username: interaction.user.username
+						}),
+						iconURL: interaction.user.displayAvatarURL({ size: 4096 })
+					});
+				}
+
+				interaction.editReply({ embeds });
 				return;
+			}
 			case "EditAccount":
 				interaction.editReply({
 					components: [

@@ -113,7 +113,7 @@ const langs: LanguageStrings = {
 	account_SetUserCookie: "Set Cookie",
 	account_NoAccount: "No account set yet",
 	account_View_Region: "Region",
-	account_View_LastSync: "last sync %s",
+	account_View_LastSync: "last sync {time}",
 	account_View_Linked: "Linked",
 	account_View_LvShort: "Lv",
 	account_View_NoStats: "(No stats yet)",
