@@ -17,6 +17,15 @@ interface Config {
 	AUTHTOKEN: string;
 	WEBSERVER_PORT: number;
 	DEVIDS: string[];
+	PROXY_URL?: string;
+	/** Vercel proxy API base URL, e.g. https://your-project.vercel.app */
+	PROXY_API_URL?: string;
+	/** Bearer token to authenticate with the Vercel proxy */
+	PROXY_API_TOKEN?: string;
+	/** Shared secret for the /webhook/login endpoint (web-login app sends as Bearer) */
+	WEBHOOK_SECRET?: string;
+	/** Public URL of the web-login app (Vercel), used in /account button */
+	WEB_LOGIN_URL?: string;
 }
 
 let config: Config | null = null;

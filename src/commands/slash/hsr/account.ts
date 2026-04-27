@@ -8,12 +8,15 @@ import {
 	TextInputBuilder,
 	TextInputStyle,
 	StringSelectMenuBuilder,
+	ButtonBuilder,
+	ButtonStyle,
 	MessageFlags
 } from "discord.js";
 import { failedReply, getRandomColor } from "@/utilities/index.js";
 import { TranslationFunction } from "@/types/index.js";
 import emoji from "@/assets/emoji.js";
 import { database } from "@/index.js";
+import { getConfig } from "@/utilities/core/config.js";
 
 interface Account {
 	uid: string;
@@ -84,6 +87,13 @@ export default {
 							"zh-TW": "🔐 綁定帳號 (帳密登入 - 推薦)"
 						},
 						value: "BindAccountByPassword"
+					},
+					{
+						name: "🌐 Bind Account via Web Login (Most Secure)",
+						name_localizations: {
+							"zh-TW": "🌐 綁定帳號 (網頁登入 - 最安全)"
+						},
+						value: "BindAccountByWebLogin"
 					}
 				)
 		),
@@ -163,7 +173,7 @@ export default {
 							new ActionRowBuilder<TextInputBuilder>().addComponents(
 								new TextInputBuilder()
 									.setCustomId("account_mid_v2")
-									.setLabel("account_mid_v2")
+									.setLabel("ltmid_v2")
 									.setStyle(TextInputStyle.Short)
 									.setRequired(true)
 							)
@@ -179,7 +189,9 @@ export default {
 							new ActionRowBuilder<TextInputBuilder>().addComponents(
 								new TextInputBuilder()
 									.setCustomId("account")
-									.setLabel(tr("account_LoginAccountModalField"))
+									.setLabel(
+										tr("account_LoginAccountModalField")
+									)
 									.setPlaceholder("example@email.com")
 									.setStyle(TextInputStyle.Short)
 									.setRequired(true)
@@ -195,6 +207,40 @@ export default {
 						)
 				);
 				return;
+			case "BindAccountByWebLogin": {
+				const config = getConfig();
+				const webLoginUrl = config.WEB_LOGIN_URL;
+				if (!webLoginUrl) {
+					return failedReply(
+						interaction,
+						"Web login is not configured on this bot."
+					);
+				}
+				const url = `${webLoginUrl.replace(/\/$/, "")}/login?botId=hsr`;
+				const button = new ButtonBuilder()
+					.setLabel("Open Web Login")
+					.setURL(url)
+					.setStyle(ButtonStyle.Link);
+				await interaction.reply({
+					embeds: [
+						new EmbedBuilder()
+							.setTitle("🔗 Link Your Hoyoverse Account")
+							.setDescription(
+								"Click the button below to securely link your Hoyoverse account.\n" +
+									"Your credentials are entered on the secure web page — never through Discord.\n\n" +
+									"You will be asked to verify your Discord identity first, then enter your Hoyoverse email/password."
+							)
+							.setColor(getRandomColor() as any)
+					],
+					components: [
+						new ActionRowBuilder<ButtonBuilder>().addComponents(
+							button
+						) as any
+					],
+					flags: MessageFlags.Ephemeral
+				});
+				return;
+			}
 			case "ViewAccount":
 				interaction.editReply({
 					embeds: [
@@ -204,12 +250,18 @@ export default {
 								name: tr("account_ListOfAccount", {
 									Username: interaction.user.username
 								}),
-								iconURL: interaction.user.displayAvatarURL({ size: 4096 })
+								iconURL: interaction.user.displayAvatarURL({
+									size: 4096
+								})
 							})
 							.setDescription(
-								(accounts as Account[]).map((account: Account) =>
-									`${emoji.avatarIcon} **${account.uid}**${account.nickname ? ` — ${account.nickname}` : ""}  ${account.cookie ? `🔗 \`${tr("account_Linked")}\`` : `❌ \`${tr("account_NotLinked")}\``}`
-								).join("\n") || `❌ \`${tr("account_NoAccount")}\``
+								(accounts as Account[])
+									.map(
+										(account: Account) =>
+											`${emoji.avatarIcon} **${account.uid}**${account.nickname ? ` — ${account.nickname}` : ""}  ${account.cookie ? `🔗 \`${tr("account_Linked")}\`` : `❌ \`${tr("account_NotLinked")}\``}`
+									)
+									.join("\n") ||
+									`❌ \`${tr("account_NoAccount")}\``
 							)
 					]
 				});
