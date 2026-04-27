@@ -293,3 +293,116 @@ describe("read API", () => {
 		expect(await getCharacter(db, "u1", "0")).toBeNull();
 	});
 });
+
+import {
+	upsertHoyolab,
+	upsertCharacter,
+	removeHoyolab,
+	markCharacterInvalid,
+	markHoyolabInvalid,
+	backfillHoyolabName
+} from "@/utilities/accountStore";
+
+describe("write API", () => {
+	it("upsertHoyolab inserts a new hoyolab", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		const hs = await getHoyolabs(db, "u1");
+		expect(hs).toHaveLength(1);
+		expect(hs[0]).toMatchObject({
+			ltuid_v2: "11111111",
+			cookie: COOKIE_A,
+			hoyolabName: null,
+			invalid: false,
+			characters: []
+		});
+	});
+
+	it("upsertHoyolab updates cookie and clears invalid on existing", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		await markHoyolabInvalid(db, "u1", "11111111", true);
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_B, hoyolabName: "Renamed" });
+		const h = (await getHoyolabByLtuid(db, "u1", "11111111"))!;
+		expect(h.cookie).toBe(COOKIE_B);
+		expect(h.hoyolabName).toBe("Renamed");
+		expect(h.invalid).toBe(false);
+	});
+
+	it("upsertCharacter inserts and then updates a character on a hoyolab", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		await upsertCharacter(db, "u1", "11111111", {
+			uid: "800000001", nickname: "A1", region: "asia",
+			lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false
+		});
+		await upsertCharacter(db, "u1", "11111111", {
+			uid: "800000001", nickname: "A1-Renamed", region: "asia",
+			lastUpdate: "2026-04-27T01:00:00.000Z", invalid: false
+		});
+		const h = (await getHoyolabByLtuid(db, "u1", "11111111"))!;
+		expect(h.characters).toHaveLength(1);
+		expect(h.characters[0]!.nickname).toBe("A1-Renamed");
+	});
+
+	it("upsertCharacter throws if hoyolab missing", async () => {
+		const db = createFakeDb();
+		await expect(
+			upsertCharacter(db, "u1", "deadbeef", {
+				uid: "1", nickname: null, region: null,
+				lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false
+			})
+		).rejects.toThrow(/hoyolab/i);
+	});
+
+	it("removeHoyolab drops the hoyolab and its characters", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		await upsertHoyolab(db, "u1", { ltuid_v2: "22222222", cookie: COOKIE_B });
+		await removeHoyolab(db, "u1", "11111111");
+		const hs = await getHoyolabs(db, "u1");
+		expect(hs).toHaveLength(1);
+		expect(hs[0]!.ltuid_v2).toBe("22222222");
+	});
+
+	it("markCharacterInvalid flips the flag", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		await upsertCharacter(db, "u1", "11111111", {
+			uid: "800000001", nickname: "A", region: null,
+			lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false
+		});
+		await markCharacterInvalid(db, "u1", "800000001", true);
+		const r = await getCharacter(db, "u1", "800000001");
+		expect(r?.character.invalid).toBe(true);
+	});
+
+	it("markHoyolabInvalid flips the flag", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		await markHoyolabInvalid(db, "u1", "11111111", true);
+		const h = await getHoyolabByLtuid(db, "u1", "11111111");
+		expect(h?.invalid).toBe(true);
+	});
+
+	it("backfillHoyolabName sets name when null, no-ops when already set", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		await backfillHoyolabName(db, "u1", "11111111", "FirstName");
+		expect((await getHoyolabByLtuid(db, "u1", "11111111"))?.hoyolabName).toBe("FirstName");
+		await backfillHoyolabName(db, "u1", "11111111", "OtherName");
+		expect((await getHoyolabByLtuid(db, "u1", "11111111"))?.hoyolabName).toBe("FirstName");
+	});
+
+	it("write API keeps legacy mirror in sync", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		await upsertCharacter(db, "u1", "11111111", {
+			uid: "800000001", nickname: "A1", region: "asia",
+			lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false
+		});
+		const mirror = (await db.get("u1.account")) as any[];
+		expect(mirror).toHaveLength(1);
+		expect(mirror[0]).toMatchObject({ uid: "800000001", cookie: COOKIE_A, nickname: "A1" });
+	});
+});

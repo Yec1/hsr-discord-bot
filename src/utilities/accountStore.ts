@@ -223,3 +223,115 @@ export async function getCharacter(
 	}
 	return null;
 }
+// ---------- Writes ----------
+
+function nowIso() {
+	return new Date().toISOString();
+}
+
+export async function upsertHoyolab(
+	db: DbAdapter,
+	userId: string,
+	patch: { ltuid_v2: string; cookie: string; hoyolabName?: string | null }
+): Promise<Hoyolab> {
+	const store = await loadAccounts(db, userId);
+	const idx = store.hoyolabs.findIndex(h => h.ltuid_v2 === patch.ltuid_v2);
+	let h: Hoyolab;
+	if (idx === -1) {
+		h = {
+			ltuid_v2: patch.ltuid_v2,
+			cookie: patch.cookie,
+			hoyolabName: patch.hoyolabName ?? null,
+			lastUpdate: nowIso(),
+			invalid: false,
+			characters: []
+		};
+		store.hoyolabs.push(h);
+	} else {
+		h = store.hoyolabs[idx]!;
+		h.cookie = patch.cookie;
+		h.invalid = false;
+		h.lastUpdate = nowIso();
+		if (patch.hoyolabName !== undefined) h.hoyolabName = patch.hoyolabName;
+	}
+	await saveAccounts(db, userId, store);
+	return h;
+}
+
+export async function upsertCharacter(
+	db: DbAdapter,
+	userId: string,
+	ltuid_v2: string,
+	character: Character
+): Promise<void> {
+	const store = await loadAccounts(db, userId);
+	const h = store.hoyolabs.find(x => x.ltuid_v2 === ltuid_v2);
+	if (!h) {
+		throw new Error(
+			`upsertCharacter: hoyolab ltuid_v2=${ltuid_v2} not found for user=${userId}`
+		);
+	}
+	const i = h.characters.findIndex(c => c.uid === character.uid);
+	if (i === -1) h.characters.push(character);
+	else h.characters[i] = character;
+	h.lastUpdate = nowIso();
+	await saveAccounts(db, userId, store);
+}
+
+export async function removeHoyolab(
+	db: DbAdapter,
+	userId: string,
+	ltuid_v2: string
+): Promise<void> {
+	const store = await loadAccounts(db, userId);
+	store.hoyolabs = store.hoyolabs.filter(h => h.ltuid_v2 !== ltuid_v2);
+	await saveAccounts(db, userId, store);
+}
+
+export async function markCharacterInvalid(
+	db: DbAdapter,
+	userId: string,
+	uid: string,
+	invalid: boolean
+): Promise<void> {
+	const store = await loadAccounts(db, userId);
+	for (const h of store.hoyolabs) {
+		const c = h.characters.find(ch => ch.uid === String(uid));
+		if (c) {
+			c.invalid = invalid;
+			await saveAccounts(db, userId, store);
+			return;
+		}
+	}
+}
+
+export async function markHoyolabInvalid(
+	db: DbAdapter,
+	userId: string,
+	ltuid_v2: string,
+	invalid: boolean
+): Promise<void> {
+	const store = await loadAccounts(db, userId);
+	const h = store.hoyolabs.find(x => x.ltuid_v2 === ltuid_v2);
+	if (!h) return;
+	h.invalid = invalid;
+	await saveAccounts(db, userId, store);
+}
+
+/**
+ * Set hoyolabName only if it is currently null. Best-effort backfill from
+ * opportunistic API calls (e.g. during daily check). No-op if the name
+ * is already set, so manual edits (when added later) are not clobbered.
+ */
+export async function backfillHoyolabName(
+	db: DbAdapter,
+	userId: string,
+	ltuid_v2: string,
+	name: string
+): Promise<void> {
+	const store = await loadAccounts(db, userId);
+	const h = store.hoyolabs.find(x => x.ltuid_v2 === ltuid_v2);
+	if (!h || h.hoyolabName != null) return;
+	h.hoyolabName = name;
+	await saveAccounts(db, userId, store);
+}
