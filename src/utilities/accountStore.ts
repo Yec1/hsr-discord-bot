@@ -47,9 +47,11 @@ export interface AccountStore {
 
 /** Subset of quick.db API the store relies on. */
 export interface DbAdapter {
-	get<T = unknown>(key: string): Promise<T | undefined> | T | undefined;
-	set<T = unknown>(key: string, value: T): Promise<void> | void;
-	delete(key: string): Promise<void> | void;
+	get<T = unknown>(
+		key: string
+	): Promise<T | null | undefined> | T | null | undefined;
+	set<T = unknown>(key: string, value: T): Promise<unknown> | unknown;
+	delete(key: string): Promise<unknown> | unknown;
 	has(key: string): Promise<boolean> | boolean;
 }
 

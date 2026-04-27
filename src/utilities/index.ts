@@ -811,13 +811,8 @@ export async function updateAccountInfo(
 ): Promise<void> {
 	const ltuid =
 		extractLtuidFromCookie(cookie) ?? fallbackBucketKey(cookie);
-	// quick.db's get<T>() returns T | null | undefined, while DbAdapter
-	// expects T | undefined. The runtime contract is identical (both treat
-	// missing keys as falsy), so we cast at the boundary instead of widening
-	// the shared adapter interface.
-	const db = database as unknown as Parameters<typeof upsertHoyolab>[0];
-	await upsertHoyolab(db, userId, { ltuid_v2: ltuid, cookie });
-	await upsertCharacter(db, userId, ltuid, {
+	await upsertHoyolab(database, userId, { ltuid_v2: ltuid, cookie });
+	await upsertCharacter(database, userId, ltuid, {
 		uid: String(uid),
 		nickname: nickname ?? null,
 		region: null,
