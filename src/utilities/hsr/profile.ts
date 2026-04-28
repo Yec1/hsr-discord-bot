@@ -733,10 +733,10 @@ export function clearImageCache(): void {
 }
 
 const MIHOMO_CDN_BASE = "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
-const EIDOLON_ICON_SIZE = 36;
+const EIDOLON_ICON_SIZE = 48;
 const EIDOLON_ICON_GAP = 6;
 /** Total width occupied by all 6 eidolon icons + gaps */
-export const EIDOLON_BLOCK_WIDTH = 6 * EIDOLON_ICON_SIZE + 5 * EIDOLON_ICON_GAP; // 246
+export const EIDOLON_BLOCK_WIDTH = 6 * EIDOLON_ICON_SIZE + 5 * EIDOLON_ICON_GAP; // 318
 
 /**
  * Draws 6 eidolon icons horizontally.
@@ -753,12 +753,14 @@ async function drawEidolonIcons(
 	ctx: any,
 	rankIcons: string[],
 	unlockedCount: number,
-	x: number,
-	baselineY: number
+	centerX: number,
+	centerY: number
 ): Promise<void> {
 	const size = EIDOLON_ICON_SIZE;
 	const gap = EIDOLON_ICON_GAP;
-	const top = baselineY - size / 2; // vertically centre on baseline
+	// Calculate left edge so icons are centred on centerX
+	const x = centerX - EIDOLON_BLOCK_WIDTH / 2;
+	const top = centerY - size / 2;
 
 	for (let i = 0; i < 6; i++) {
 		const iconX = x + i * (size + gap);
@@ -2399,6 +2401,17 @@ async function drawCharacterImage(
 
 		ctx.fillText(character.name, 120, 100);
 
+		// 绘制等级（跟在名字后面）
+		const nameWidth = ctx.measureText(character.name).width;
+		setupFont(ctx, 28, false);
+		ctx.fillStyle = "rgba(255,255,255,0.75)";
+		ctx.fillText(
+			`${tr("level")} ${character.level}`,
+			120 + nameWidth + 10,
+			100
+		);
+		ctx.fillStyle = "white";
+
 		// 绘制元素和命途图标
 		if (element) {
 			ctx.drawImage(element, 50, 50, 64, 64);
@@ -2423,30 +2436,26 @@ async function drawCharacterImage(
 			ctx.drawImage(star, 50, 185, 160, 32);
 		}
 
-		ctx.textAlign = "center";
+		ctx.textAlign = "left";
 
-		// 绘制命座图标和等级信息
+		// 绘制命座图标（置中於左側面板 centerX=210）
+		const PANEL_CENTER_X = 210;
+		const EIDOLON_CENTER_Y = 270;
 		if (character.rank_icons && character.rank_icons.length >= 6) {
-			await drawEidolonIcons(ctx, character.rank_icons, character.rank, 210, 270);
+			await drawEidolonIcons(ctx, character.rank_icons, character.rank, PANEL_CENTER_X, EIDOLON_CENTER_Y);
 		} else {
 			// Fallback: original text if rank_icons not available
 			setupFont(ctx, 26, true);
 			ctx.fillStyle = "#DCC491";
+			ctx.textAlign = "center";
 			ctx.fillText(
 				`${tr("Eidolon", { rank: character.rank })}`,
-				210,
-				270
+				PANEL_CENTER_X,
+				EIDOLON_CENTER_Y
 			);
 			ctx.fillStyle = "white";
+			ctx.textAlign = "left";
 		}
-
-		setupFont(ctx, 28, true);
-		ctx.fillStyle = "white";
-		ctx.fillText(
-			`${tr("level")} ${character.level}`,
-			210 + EIDOLON_BLOCK_WIDTH + 20,
-			270
-		);
 
 		// 优化属性渲染
 		let result = [];
