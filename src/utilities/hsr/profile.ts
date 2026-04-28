@@ -216,6 +216,7 @@ interface Character {
 	name: string;
 	level: number;
 	rank: number;
+	rank_icons?: string[];
 	rarity: number;
 	icon: string;
 	preview?: string;
@@ -266,6 +267,8 @@ interface Property {
 	base: string;
 	add: string;
 	final: string;
+	icon?: string;
+	name?: string;
 }
 
 interface Relic {
@@ -413,7 +416,13 @@ interface TextSegment {
 
 const db = database;
 
-const drawQueue = new Queue({ autostart: true });
+const drawQueue = new Queue({ autostart: true, concurrency: 1 });
+// 移除預設 error handler（它會呼叫 end() 停止整個 queue）
+// 改為只記錄錯誤，讓 queue 繼續執行後續任務
+drawQueue.removeEventListener("error", (drawQueue as any)._errorHandler);
+drawQueue.addEventListener("error", (evt: any) => {
+	console.error("[DrawQueue] Task error (queue continues):", evt?.detail?.error);
+});
 
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master";
@@ -762,7 +771,18 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 				throw new Error("Invalid URL");
 			}
 
-			const image = await loadImage(url);
+			// 對遠端 URL，先用 axios 下載成 Buffer 再傳給 loadImage
+			// 避免 @napi-rs/canvas 的 native HTTP client 在雲端伺服器上被 GitHub CDN RST
+			let imageSource: string | Buffer = url;
+			if (url.startsWith("http://") || url.startsWith("https://")) {
+				const response = await axios.get(url, {
+					responseType: "arraybuffer",
+					timeout: 15000
+				});
+				imageSource = Buffer.from(response.data);
+			}
+
+			const image = await loadImage(imageSource);
 			loadImageAsync.cache!.set(url, image);
 			return { image, usedFallback: false };
 		} catch (error) {
@@ -777,7 +797,15 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 			if (fallbackUrl && fallbackUrl.trim() !== "") {
 				try {
 					if (!loadImageAsync.cache!.has(fallbackUrl)) {
-						const fallbackImage = await loadImage(fallbackUrl);
+						let fallbackSource: string | Buffer = fallbackUrl;
+						if (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://")) {
+							const fbResponse = await axios.get(fallbackUrl, {
+								responseType: "arraybuffer",
+								timeout: 15000
+							});
+							fallbackSource = Buffer.from(fbResponse.data);
+						}
+						const fallbackImage = await loadImage(fallbackSource);
 						loadImageAsync.cache!.set(fallbackUrl, fallbackImage);
 					}
 					return {
@@ -1270,7 +1298,7 @@ async function handleProfileDraw(
 
 	const drawTask = async () => {
 		try {
-			interaction.editReply({
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setTitle(tr("Searching"))
@@ -1278,9 +1306,8 @@ async function handleProfileDraw(
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
 						)
-				],
-				withResponse: true
-			});
+				]
+			}).catch(() => {});
 
 			await tryAutoSyncCurrentAnomalyBadge(
 				interaction,
@@ -1673,17 +1700,39 @@ async function handleProfileDraw(
 					: [])
 			];
 
-			interaction.editReply({
-				content: cookieExpiredFallbackNotice
-					? tr("profile_CookieExpiredFallbackToUid")
-					: "",
-				embeds: [],
-				components: components,
-				files: [image]
-			});
+			// 上傳圖片，加入 retry 避免 Discord connection reset
+			const uploadWithRetry = async (retries = 3): Promise<void> => {
+				for (let attempt = 1; attempt <= retries; attempt++) {
+					try {
+						await interaction.editReply({
+							content: cookieExpiredFallbackNotice
+								? tr("profile_CookieExpiredFallbackToUid")
+								: "",
+							embeds: [],
+							components: components,
+							files: [image]
+						});
+						return;
+					} catch (uploadError: any) {
+						const isSocketError =
+							uploadError?.code === "UND_ERR_SOCKET" ||
+							uploadError?.message?.includes("other side closed") ||
+							uploadError?.message?.includes("socket hang up");
+						if (isSocketError && attempt < retries) {
+							console.warn(
+								`[Profile] Upload attempt ${attempt} failed (socket error), retrying...`
+							);
+							await new Promise(res => setTimeout(res, 1000 * attempt));
+							continue;
+						}
+						throw uploadError;
+					}
+				}
+			};
+			await uploadWithRetry();
 		} catch (error) {
 			console.error(error);
-			interaction.editReply({
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setColor("#E76161")
@@ -1692,9 +1741,8 @@ async function handleProfileDraw(
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
-				],
-				withResponse: true
-			});
+				]
+			}).catch(() => {});
 		}
 	};
 
@@ -1847,7 +1895,12 @@ async function drawMainImage(
 				const badgeX = badgeStartX + i * (badgeSize + badgeSpacing);
 
 				try {
-					const badgeIcon = await loadImage(record.rankIcon);
+					let badgeSource: string | Buffer = record.rankIcon;
+					if (record.rankIcon?.startsWith("http://") || record.rankIcon?.startsWith("https://")) {
+						const badgeResponse = await axios.get(record.rankIcon, { responseType: "arraybuffer", timeout: 15000 });
+						badgeSource = Buffer.from(badgeResponse.data);
+					}
+					const badgeIcon = await loadImage(badgeSource);
 					if (badgeIcon) {
 						ctx.drawImage(
 							badgeIcon,
@@ -2368,9 +2421,16 @@ async function drawCharacterImage(
 			result = Object.values(attributesWithAdditions);
 		} else {
 			result = (character.properties || []).map(property => {
-				const iconFile = `icon/property/icon${propertyMap[property.property_type]}.png`;
+				// 優先使用 API 提供的 icon（支援 elation_dmg / Joy 等新屬性）
+				const iconFile = property.icon
+					? property.icon
+					: `icon/property/icon${propertyMap[property.property_type]}.png`;
+				// 優先使用 API 提供的 name（支援歡愉傷等新屬性名稱）
+				const name = property.name
+					? property.name
+					: tr(`property_${propertyMap[property.property_type]}`);
 				return {
-					name: tr(`property_${propertyMap[property.property_type]}`),
+					name,
 					base: property.base,
 					add: property.add,
 					final: property.final,
@@ -3537,7 +3597,12 @@ async function drawAllCharactersImage(
 				const badgeY = startY;
 
 				try {
-					const badgeIcon = await loadImage(record.rankIcon);
+					let badgeSource: string | Buffer = record.rankIcon;
+					if (record.rankIcon?.startsWith("http://") || record.rankIcon?.startsWith("https://")) {
+						const badgeResponse = await axios.get(record.rankIcon, { responseType: "arraybuffer", timeout: 15000 });
+						badgeSource = Buffer.from(badgeResponse.data);
+					}
+					const badgeIcon = await loadImage(badgeSource);
 					if (badgeIcon) {
 						ctx.drawImage(
 							badgeIcon,
