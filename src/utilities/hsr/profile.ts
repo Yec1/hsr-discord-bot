@@ -2426,7 +2426,7 @@ async function drawCharacterImage(
 		ctx.textAlign = "center";
 
 		// 绘制命座图标和等级信息
-		if (character.rank_icons && character.rank_icons.length === 6) {
+		if (character.rank_icons && character.rank_icons.length >= 6) {
 			await drawEidolonIcons(ctx, character.rank_icons, character.rank, 210, 270);
 		} else {
 			// Fallback: original text if rank_icons not available
