@@ -441,6 +441,19 @@ async function getRelicsScore(
 	const effectivePropertyNames = new Set<string>();
 	const effectiveStats = new Map<string, EffectiveStat>();
 
+	// 根據 score.json 的角色權重定義，將 >= 0.75 的詞條類型預先加入 effectivePropertyNames
+	// 這樣即使遺器沒有該副詞條，左側屬性面板也會標金色
+	if (charScore.weight) {
+		for (const [statKey, weightVal] of Object.entries(charScore.weight)) {
+			if ((weightVal as number) >= 0.75) {
+				const iconKey = subTypeToIconKey[statKey] || statKey;
+				if (iconKey) {
+					effectivePropertyNames.add(iconKey);
+				}
+			}
+		}
+	}
+
 	// 初始化長度為 6 的空陣列，對應 6 個槽位
 	const allRelics: (Relic | null)[] = [null, null, null, null, null, null];
 

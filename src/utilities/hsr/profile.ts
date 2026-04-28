@@ -2924,8 +2924,8 @@ async function drawCharacterImage(
 						ctx.textAlign = "left";
 						const maxDescWidth = relics_width - 268 - 30;
 						const descX = light_cone_base_x + 268;
-						// 光錐框可用高度（扣掉名稱與等級行已佔的空間）
-						const descAreaHeight = light_cone_height - 60;
+						// 光錐框可用高度（扣掉名稱與等級行已佔的空間，預留上下各 20px 邊距）
+						const descAreaHeight = light_cone_height - 80;
 
 						// interface 定義
 						interface WordToken { word: string; isGold: boolean; }
@@ -2951,39 +2951,68 @@ async function drawCharacterImage(
 							setupFont(ctx, descFont, false);
 
 							// --- 分行邏輯 ---
-							const wordTokens2: WordToken[] = [];
-							segments.forEach((seg: { text: string; isGold: boolean }) => {
-								const parts = seg.text.split(/(\s+)/);
-								parts.forEach((part: string) => {
-									if (part !== "") wordTokens2.push({ word: part, isGold: seg.isGold });
-								});
+						const wordTokens2: WordToken[] = [];
+						segments.forEach((seg: { text: string; isGold: boolean }) => {
+							const parts = seg.text.split(/(\s+)/);
+							parts.forEach((part: string) => {
+								if (part !== "") wordTokens2.push({ word: part, isGold: seg.isGold });
 							});
+						});
 
-							const spW = ctx.measureText(" ").width;
-							let lns: CharToken[][] = [];
-							let curLine: CharToken[] = [];
-							let curW = 0;
+						const isCJK = (ch: string) => /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/.test(ch);
 
-							wordTokens2.forEach((token: WordToken) => {
-								const isSp = /^\s+$/.test(token.word);
-								const tokW = isSp ? spW * token.word.length : ctx.measureText(token.word).width;
-								if (!isSp && curW > 0 && curW + tokW > maxDescWidth) {
-									while (curLine.length > 0 && /\s/.test(curLine[curLine.length - 1]!.char)) {
-										curW -= curLine[curLine.length - 1]!.width;
-										curLine.pop();
-									}
-									lns.push(curLine);
-									curLine = [];
-									curW = 0;
-								}
-								if (isSp && curW === 0) return;
-								token.word.split("").forEach((char: string) => {
-									const cw = ctx.measureText(char).width;
+						const spW = ctx.measureText(" ").width;
+						let lns: CharToken[][] = [];
+						let curLine: CharToken[] = [];
+						let curW = 0;
+
+						const pushLine = () => {
+							// 去掉行尾空白
+							while (curLine.length > 0 && /\s/.test(curLine[curLine.length - 1]!.char)) {
+								curW -= curLine[curLine.length - 1]!.width;
+								curLine.pop();
+							}
+							lns.push(curLine);
+							curLine = [];
+							curW = 0;
+						};
+
+						wordTokens2.forEach((token: WordToken) => {
+							const isSp = /^\s+$/.test(token.word);
+							if (isSp) {
+								if (curW === 0) return; // 行首空白略過
+								const spChars = token.word.split("");
+								spChars.forEach((char: string) => {
+									const cw = spW;
 									curLine.push({ char, isGold: token.isGold, width: cw });
 									curW += cw;
 								});
+								return;
+							}
+
+							// 非空白 token：逐字元處理
+							token.word.split("").forEach((char: string) => {
+								const cw = ctx.measureText(char).width;
+								if (isCJK(char)) {
+									// CJK 字元：每個字都可以換行
+									if (curW > 0 && curW + cw > maxDescWidth) {
+										pushLine();
+									}
+									curLine.push({ char, isGold: token.isGold, width: cw });
+									curW += cw;
+								} else {
+									// 非 CJK（英文/數字）：先累積整個字元，超寬才換行
+									// 這裡直接加字元，超過時換行（單字元級別，避免英文單字被切斷的問題
+									// 由於已在 wordTokens2 層面保留了完整單詞，單詞超過一行時才會在字元層換行）
+									if (curW > 0 && curW + cw > maxDescWidth) {
+										pushLine();
+									}
+									curLine.push({ char, isGold: token.isGold, width: cw });
+									curW += cw;
+								}
 							});
-							if (curLine.length > 0) lns.push(curLine);
+						});
+						if (curLine.length > 0) lns.push(curLine);
 
 							const neededHeight = lns.length * lineHeight;
 							if (neededHeight <= descAreaHeight) {
@@ -3005,6 +3034,17 @@ async function drawCharacterImage(
 							(light_cone_height - totalTextHeight) / 2 +
 							10;
 
+						// Clip 文字繪製區域，防止溢出光錐框
+						ctx.save();
+						ctx.beginPath();
+						ctx.rect(
+							descX,
+							light_cone_base_y + 10,
+							maxDescWidth,
+							light_cone_height - 20
+						);
+						ctx.clip();
+
 						visibleLines.forEach((line, lIdx) => {
 							let currentX = descX;
 							line.forEach(token => {
@@ -3019,6 +3059,8 @@ async function drawCharacterImage(
 								currentX += token.width;
 							});
 						});
+
+						ctx.restore();
 					}
 				}
 			} else {
