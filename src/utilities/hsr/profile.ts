@@ -2425,28 +2425,26 @@ async function drawCharacterImage(
 
 		ctx.textAlign = "center";
 
-		// 绘制命座和等级信息
-		setupFont(ctx, 26, true);
-		ctx.fillStyle = "#DCC491";
-		ctx.fillText(
-			`${tr("Eidolon", {
-				rank: character.rank
-			})}`,
-			210,
-			270
-		);
-		ctx.fillStyle = "white";
+		// 绘制命座图标和等级信息
+		if (character.rank_icons && character.rank_icons.length === 6) {
+			await drawEidolonIcons(ctx, character.rank_icons, character.rank, 210, 270);
+		} else {
+			// Fallback: original text if rank_icons not available
+			setupFont(ctx, 26, true);
+			ctx.fillStyle = "#DCC491";
+			ctx.fillText(
+				`${tr("Eidolon", { rank: character.rank })}`,
+				210,
+				270
+			);
+			ctx.fillStyle = "white";
+		}
 
 		setupFont(ctx, 28, true);
+		ctx.fillStyle = "white";
 		ctx.fillText(
 			`${tr("level")} ${character.level}`,
-			210 +
-				ctx.measureText(
-					`${tr("Eidolon", {
-						rank: character.rank
-					})}`
-				).width +
-				20,
+			210 + EIDOLON_BLOCK_WIDTH + 20,
 			270
 		);
 
