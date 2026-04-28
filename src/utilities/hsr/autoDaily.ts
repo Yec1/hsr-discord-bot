@@ -121,13 +121,18 @@ class AutoDailySignSystem {
 	isSkippableError(errorMessage: string): boolean {
 		const skipPatterns = [
 			"尚未登入",
+			"尚未登录",
 			"Not logged in",
 			"未登入",
+			"未登录",
 			"登入失敗",
+			"登录失败",
 			"Login failed",
 			"Cookie 已過期",
+			"Cookie 已过期",
 			"Cookie expired",
 			"無效的 Cookie",
+			"无效的 Cookie",
 			"Invalid cookie"
 		];
 

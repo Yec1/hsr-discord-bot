@@ -1293,7 +1293,7 @@ async function handleSelectCharacter(
 			const allCharactersBool = allCharacters == "true" ? true : false;
 
 			// 獲取用戶語言
-			const userLang = (await getUserLang(userId || "")) || "tw";
+			const userLang = (await getUserLang(userId || "")) || toI18nLang(interaction.locale) || "tw";
 
 			let playerData: PlayerData | null = null;
 			let playerActivity = null;

@@ -415,6 +415,7 @@ const languageMapping: Record<string, LanguageEnum> = {
 	jp: LanguageEnum.JAPANESE,
 	kr: LanguageEnum.KOREAN,
 	fr: LanguageEnum.FRENCH,
+	en: LanguageEnum.ENGLISH,
 	default: LanguageEnum.ENGLISH
 };
 
@@ -426,10 +427,12 @@ export async function setupDefaultLang(
 		"zh-TW": "tw",
 		"zh-CN": "cn",
 		ja: "jp",
-		ko: "kr"
+		ko: "kr",
+		"en-US": "en",
+		"en-GB": "en"
 	};
 
-	const langCode = langMap[userSystemLang] || userSystemLang;
+	const langCode = langMap[userSystemLang] || (userSystemLang.startsWith("zh") ? "tw" : "en");
 
 	if (languageMapping[langCode])
 		await database.set(`${userId}.locale`, langCode);

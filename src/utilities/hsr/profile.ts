@@ -2652,16 +2652,19 @@ async function drawCharacterImage(
 			const panelW = 450;
 			const chipIconSize = 26;
 
+			// 圓形總計徽章 (右側)
+			const badgeR = 30;
+			const badgeCX = panelX + panelW - badgeR - 2;
+			const badgeCY = panelY + 36;
+			// chip 列表可用右邊界：徽章左側留 10px 間距
+			const chipRightLimit = badgeCX - badgeR - 10;
+
 			// 標題
 			setupFont(ctx, 18, true);
 			ctx.textAlign = "left";
 			ctx.fillStyle = "rgba(255,255,255,0.55)";
 			ctx.fillText(tr("profile_EffectiveStatsTitle"), panelX, panelY + 16);
 
-			// 圓形總計徽章 (右側)
-			const badgeR = 30;
-			const badgeCX = panelX + panelW - badgeR - 2;
-			const badgeCY = panelY + 36;
 			ctx.save();
 			ctx.beginPath();
 			ctx.arc(badgeCX, badgeCY, badgeR, 0, Math.PI * 2);
@@ -2680,41 +2683,59 @@ async function drawCharacterImage(
 			ctx.fillText(tr("profile_EffectiveStatsTotal"), badgeCX, badgeCY + 14);
 			ctx.textBaseline = "alphabetic";
 
-			// 屬性 chip 橫排
+			// 屬性 chip 多行排列
 			const chipStartX = panelX;
-			const chipY = panelY + 28;
+			const chipLineHeight = chipIconSize + 6;
 			const chipSpacing = 8;
 			let chipX = chipStartX;
+			let chipRow = 0;
 			const stats = [...relicsScore.effectiveStats.entries()];
 			for (const [iconKey, stat] of stats) {
+				// 預先計算此 chip 的寬度
+				let localName = (tr as any)(`property_${iconKey}`) || stat.name;
+				if (typeof localName === "string") {
+					localName = localName
+						.replace(/Critical Damage/gi, "Crit DMG")
+						.replace(/Critical Rate/gi, "Crit Rate")
+						.replace(/Break Effect/gi, "Break")
+						.replace(/Effect Hit Rate/gi, "EHR")
+						.replace(/Effect RES/gi, "RES")
+						.replace(/Outgoing Healing/gi, "Healing")
+						.replace(/Energy Regen Rate/gi, "Energy")
+						.replace(/ DMG Boost$/gi, " DMG");
+				}
+				setupFont(ctx, 17, true);
+				const rollsStr = `${stat.rolls}`;
+				const chipW = chipIconSize + 2 + ctx.measureText(localName).width + 2 + ctx.measureText(rollsStr).width + chipSpacing;
+
+				// 若超出右邊界則換行（只在第一行，不超過2行）
+				if (chipRow === 0 && chipX + chipW > chipRightLimit) {
+					chipRow = 1;
+					chipX = chipStartX;
+				}
+
+				const chipY = panelY + 28 + chipRow * chipLineHeight;
+
 				// icon
-				const iconResult = await loadImageAsync(
-					`./src/assets/image/${stat.icon}`
-				);
+				const iconResult = await loadImageAsync(`./src/assets/image/${stat.icon}`);
 				if (iconResult?.image) {
 					ctx.drawImage(iconResult.image, chipX, chipY, chipIconSize, chipIconSize);
 				}
 				chipX += chipIconSize + 2;
 
-				// name (優先用翻譯 key，否則 fallback 到 stat.name)
-				const localName = (tr as any)(`property_${iconKey}`) || stat.name;
-				setupFont(ctx, 17, true);
 				ctx.textAlign = "left";
 				ctx.fillStyle = "#F3C96B";
 				ctx.fillText(localName, chipX, chipY + chipIconSize - 4);
-				const nameW = ctx.measureText(localName).width;
-				chipX += nameW + 2;
+				chipX += ctx.measureText(localName).width + 2;
 
-				// rolls number
-				setupFont(ctx, 17, true);
 				ctx.fillStyle = "white";
-				ctx.fillText(`${stat.rolls}`, chipX, chipY + chipIconSize - 4);
-				const rollW = ctx.measureText(`${stat.rolls}`).width;
-				chipX += rollW + chipSpacing;
+				ctx.fillText(rollsStr, chipX, chipY + chipIconSize - 4);
+				chipX += ctx.measureText(rollsStr).width + chipSpacing;
 			}
 
-			// 面板實際底部 = chip 行底部
-			effectivePanelBottomY = chipY + chipIconSize;
+			// 面板實際底部
+			const lastChipY = panelY + 28 + chipRow * chipLineHeight;
+			effectivePanelBottomY = lastChipY + chipIconSize;
 		}
 
 		// relics 區塊對齊
@@ -2807,21 +2828,9 @@ async function drawCharacterImage(
 				let nameFont = 28;
 				setupFont(ctx, nameFont, true);
 				const maxNameWidth = 268 - 40;
-				while (
-					ctx.measureText(lcName).width > maxNameWidth &&
-					nameFont > 20
-				) {
+				while (ctx.measureText(lcName).width > maxNameWidth && nameFont > 14) {
 					nameFont -= 1;
 					setupFont(ctx, nameFont, true);
-				}
-				if (ctx.measureText(lcName).width > maxNameWidth) {
-					while (
-						lcName.length > 0 &&
-						ctx.measureText(lcName + "...").width > maxNameWidth
-					) {
-						lcName = lcName.slice(0, -1);
-					}
-					lcName = lcName + "...";
 				}
 				ctx.fillText(
 					lcName,
@@ -2913,72 +2922,88 @@ async function drawCharacterImage(
 						});
 
 						ctx.textAlign = "left";
-						let descFont = 20;
-						setupFont(ctx, descFont, false);
-
 						const maxDescWidth = relics_width - 268 - 30;
 						const descX = light_cone_base_x + 268;
+						// 光錐框可用高度（扣掉名稱與等級行已佔的空間）
+						const descAreaHeight = light_cone_height - 60;
 
-						// Rich Text 解析與分行
-						// 1. 拆分標記
+						// interface 定義
+						interface WordToken { word: string; isGold: boolean; }
+						interface CharToken { char: string; isGold: boolean; width: number; }
+
+						// 解析 Rich Text segments
 						const segments = description
 							.split(/({{GOLD}}.*?{{\/GOLD}})/g)
 							.filter((s: string) => s !== "")
 							.map((part: string) => {
 								if (part.startsWith("{{GOLD}}")) {
-									return {
-										text: part.replace(
-											/{{GOLD}}|{{\/GOLD}}/g,
-											""
-										),
-										isGold: true
-									};
+									return { text: part.replace(/{{GOLD}}|{{\/GOLD}}/g, ""), isGold: true };
 								}
 								return { text: part, isGold: false };
 							});
 
-						// 2. 字符級分行 (支援 CJK)
-						interface CharToken {
-							char: string;
-							isGold: boolean;
-							width: number;
-						}
-						let lines: CharToken[][] = [];
-						let currentLine: CharToken[] = [];
-						let currentLineWidth = 0;
+						// 以初始字體 20px 先做分行，若超出高度則縮小字體重試
+						let descFont = 20;
+						let lineHeight = 24;
+						let visibleLines: CharToken[][] = [];
 
-						segments.forEach(
-							(seg: { text: string; isGold: boolean }) => {
-								const chars = seg.text.split("");
-								chars.forEach((char: string) => {
-									const charWidth =
-										ctx.measureText(char).width;
-									if (
-										currentLineWidth + charWidth >
-										maxDescWidth
-									) {
-										lines.push(currentLine);
-										currentLine = [];
-										currentLineWidth = 0;
-									}
-									currentLine.push({
-										char,
-										isGold: seg.isGold,
-										width: charWidth
-									});
-									currentLineWidth += charWidth;
+						for (; descFont >= 14; descFont -= 1, lineHeight = Math.floor(descFont * 1.2)) {
+							setupFont(ctx, descFont, false);
+
+							// --- 分行邏輯 ---
+							const wordTokens2: WordToken[] = [];
+							segments.forEach((seg: { text: string; isGold: boolean }) => {
+								const parts = seg.text.split(/(\s+)/);
+								parts.forEach((part: string) => {
+									if (part !== "") wordTokens2.push({ word: part, isGold: seg.isGold });
 								});
+							});
+
+							const spW = ctx.measureText(" ").width;
+							let lns: CharToken[][] = [];
+							let curLine: CharToken[] = [];
+							let curW = 0;
+
+							wordTokens2.forEach((token: WordToken) => {
+								const isSp = /^\s+$/.test(token.word);
+								const tokW = isSp ? spW * token.word.length : ctx.measureText(token.word).width;
+								if (!isSp && curW > 0 && curW + tokW > maxDescWidth) {
+									while (curLine.length > 0 && /\s/.test(curLine[curLine.length - 1]!.char)) {
+										curW -= curLine[curLine.length - 1]!.width;
+										curLine.pop();
+									}
+									lns.push(curLine);
+									curLine = [];
+									curW = 0;
+								}
+								if (isSp && curW === 0) return;
+								token.word.split("").forEach((char: string) => {
+									const cw = ctx.measureText(char).width;
+									curLine.push({ char, isGold: token.isGold, width: cw });
+									curW += cw;
+								});
+							});
+							if (curLine.length > 0) lns.push(curLine);
+
+							const neededHeight = lns.length * lineHeight;
+							if (neededHeight <= descAreaHeight) {
+								visibleLines = lns;
+								break;
 							}
-						);
-						if (currentLine.length > 0) lines.push(currentLine);
+							// 最小字體時直接截斷
+							if (descFont === 14) {
+								const maxLines = Math.floor(descAreaHeight / lineHeight);
+								visibleLines = lns.slice(0, maxLines);
+							}
+						}
+						setupFont(ctx, descFont, false);
 
 						// 垂直置中計算
-						const visibleLines = lines.slice(0, 9);
-						const totalTextHeight = visibleLines.length * 25;
+						const totalTextHeight = visibleLines.length * lineHeight;
 						const descY =
 							light_cone_base_y +
-							(280 - totalTextHeight) / 2 +
-							20;
+							(light_cone_height - totalTextHeight) / 2 +
+							10;
 
 						visibleLines.forEach((line, lIdx) => {
 							let currentX = descX;
@@ -2989,7 +3014,7 @@ async function drawCharacterImage(
 								ctx.fillText(
 									token.char,
 									currentX,
-									descY + lIdx * 25
+									descY + lIdx * lineHeight
 								);
 								currentX += token.width;
 							});
@@ -3417,8 +3442,8 @@ async function drawCharacterImage(
 		ctx.fillStyle = "lightgray";
 		ctx.fillText(playerData.player.uid, hasServantSkills ? 870 : 850, 1010);
 
-		// 顯示總分
-		const centerX = 420;
+		// 顯示總分 - 置中於左側面板 (x=50 到 x=500，中心=275)
+		const centerX = 275;
 		ctx.font = "bold 32px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
 		ctx.textAlign = "center";
 		ctx.fillStyle = "white";
@@ -3430,24 +3455,27 @@ async function drawCharacterImage(
 			const scoreText = tr("RelicGrade", {
 				grade: `${relicsScore.totalScore}`
 			});
+			const gradeText = relicsScore.totalGrade.grade;
 
+			ctx.font = "bold 32px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
 			const scoreWidth = ctx.measureText(scoreText).width;
-			const startX =
-				centerX -
-				(scoreWidth +
-					ctx.measureText(relicsScore.totalGrade.grade).width) /
-					2;
+			const gradeWidth = ctx.measureText(gradeText).width;
+			const gap = 8;
+			const totalWidth = scoreWidth + gap + gradeWidth;
+			const blockStartX = centerX - totalWidth / 2;
 
+			ctx.textAlign = "left";
+			ctx.fillStyle = "white";
 			ctx.fillText(
 				scoreText,
-				userLang == "en" ? startX + 50 : startX,
+				blockStartX,
 				effectivePanelBottomY + scoreOffsetY
 			);
 
 			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
 			ctx.fillText(
-				relicsScore.totalGrade.grade,
-				startX + scoreWidth - 130,
+				gradeText,
+				blockStartX + scoreWidth + gap,
 				effectivePanelBottomY + scoreOffsetY
 			);
 
@@ -3456,8 +3484,7 @@ async function drawCharacterImage(
 				ctx.fillStyle = "lightgray";
 				ctx.font =
 					"bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-				const tipX = userLang == "en" ? centerX - 150 : startX;
-				ctx.fillText(tr("profile_Tip"), tipX, effectivePanelBottomY + tipOffsetY);
+				ctx.fillText(tr("profile_Tip"), centerX, effectivePanelBottomY + tipOffsetY);
 			}
 		} else {
 			ctx.textAlign = "center";
