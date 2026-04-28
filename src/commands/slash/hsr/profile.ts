@@ -91,7 +91,7 @@ export default {
 
 		await interaction.deferReply();
 
-		handleProfileDraw(
+		await handleProfileDraw(
 			interaction,
 			tr,
 			user,

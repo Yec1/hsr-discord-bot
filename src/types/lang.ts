@@ -74,6 +74,9 @@ export interface LanguageStrings {
 	profile_MemoryOfChaosLevel: string;
 	profile_PureFictionLevel: string;
 	profile_Tip: string;
+	profile_EffectiveLines: string;
+	profile_EffectiveStatsTitle: string;
+	profile_EffectiveStatsTotal: string;
 	profile_CookieExpiredFallbackToUid: string;
 	profile_MemospriteSkill: string;
 	profile_MemospriteTalent: string;
@@ -278,6 +281,8 @@ export interface LanguageStrings {
 	property_StatusProbability: string;
 	property_StatusResistance: string;
 	property_BreakUp: string;
+	property_ElationAddedRatio: string;
+	property_Joy: string;
 
 	// Error Messages
 	Error: string;

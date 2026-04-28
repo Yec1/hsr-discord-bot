@@ -715,7 +715,11 @@ export const propertyMap: { [key: number]: string } = {
 	56: "StatusProbability",
 	57: "StatusResistance",
 	58: "BreakUp",
-	59: "BreakUp"
+	59: "BreakUp",
+	// 歡愉 (Elation) DMG Added Ratio — added in a later patch; HoYoLAB does not
+	// supply name/icon for this type, so we map it here.
+	// Icon file: iconJoy.png; translation key: property_Joy
+	71: "Joy"
 };
 
 // 為 loadImageAsync 添加 cache 屬性
@@ -769,9 +773,13 @@ async function drawEidolonIcons(
 		const cy = iconY + size / 2;
 		const r = size / 2;
 
-		// Load icon from CDN
-		const iconPath = rankIcons[i]
-			? `${MIHOMO_CDN_BASE}${rankIcons[i]}`
+		// Load icon from CDN — rankIcons[i] may be a full URL (HoYoLAB path)
+		// or a relative path (mihomo path); only prepend the CDN base for relative paths.
+		const rawIcon = rankIcons[i];
+		const iconPath = rawIcon
+			? rawIcon.startsWith("http")
+				? rawIcon
+				: `${MIHOMO_CDN_BASE}${rawIcon}`
 			: null;
 
 		const iconResult = iconPath ? await loadImageAsync(iconPath) : null;
@@ -1016,7 +1024,8 @@ async function renderAttributesList(
 	attributes: Attribute[],
 	startX: number,
 	startY: number,
-	spacing: number
+	spacing: number,
+	effectiveSet?: Set<string>
 ): Promise<void> {
 	// 過濾掉 0/0%/0.0%/0.00%/0.0/0 的屬性
 	const filtered = attributes.filter(attribute => {
@@ -1034,6 +1043,14 @@ async function renderAttributesList(
 
 		const y = startY + i * spacing;
 
+		// 判斷是否為有效詞條屬性 (用金色標示)
+		const isEffective =
+			effectiveSet &&
+			attribute.icon &&
+			[...effectiveSet].some(key =>
+				attribute.icon!.toLowerCase().includes(key.toLowerCase())
+			);
+
 		// 載入並繪製屬性圖標
 		const attributeImageResult = await loadImageAsync(
 			`./src/assets/image/${attribute.icon?.replace("Icon", "icon")}`
@@ -1045,7 +1062,7 @@ async function renderAttributesList(
 		// 繪製屬性名稱
 		setupFont(ctx, 24, true);
 		ctx.textAlign = "left";
-		ctx.fillStyle = "white";
+		ctx.fillStyle = isEffective ? "#F3C96B" : "white";
 		ctx.fillText(attribute.name || "", startX + 55, y + 34);
 
 		// base/add 顯示
@@ -1057,6 +1074,7 @@ async function renderAttributesList(
 		) {
 			setupFont(ctx, 16, true);
 			ctx.textAlign = "right";
+			ctx.fillStyle = isEffective ? "#F3C96B" : "white";
 			ctx.fillText(`${attribute.base}`, startX + 350, y + 22);
 			ctx.fillStyle = "#B0CFFF"; // 藍色
 			ctx.fillText(
@@ -1069,7 +1087,7 @@ async function renderAttributesList(
 		// final 顯示在右側
 		setupFont(ctx, 24, true);
 		ctx.textAlign = "right";
-		ctx.fillStyle = "white";
+		ctx.fillStyle = isEffective ? "#F3C96B" : "white";
 		ctx.fillText(
 			`${attribute.display || attribute.value || attribute.final}`,
 			startX + 450,
@@ -1490,8 +1508,19 @@ async function handleProfileDraw(
 						characters: []
 					};
 
-					// 獲取完整的角色數據，包括 relics 和 ornaments
-					characters = (await hsr.record.characters()) as any;
+				// 獲取完整的角色數據，包括 relics 和 ornaments
+				characters = (await hsr.record.characters()) as any;
+				// HoYoLAB returns `ranks[]` (each with .icon) instead of `rank_icons`.
+				// Inject rank_icons so drawEidolonIcons() works the same as the UID path.
+				if (Array.isArray(characters)) {
+					for (const c of characters as any[]) {
+						if (!c.rank_icons && Array.isArray(c.ranks) && c.ranks.length >= 6) {
+							c.rank_icons = [...c.ranks]
+								.sort((a: any, b: any) => a.pos - b.pos)
+								.map((r: any) => r.icon);
+						}
+					}
+				}
 
 					// 為 saveLeaderboard 準備完整的 playerData
 					const fullPlayerData: PlayerData = {
@@ -2260,8 +2289,13 @@ async function drawCharacterImage(
 					"none"
 		).toLowerCase();
 		const normalizedPathId = pathMapper[rawPathId] || rawPathId;
+		// HoYoLAB: path=undefined → rawPathId="" → normalizedPathId=""
+		// fallback 到 base_type 對應的命途名稱
+		const resolvedPathId = normalizedPathId ||
+			(await getPathMap())[character.base_type || 0] ||
+			"none";
 		const characterPathIcon = isAllCharacter
-			? `icon/path/${normalizedPathId}Small.png`
+			? `icon/path/${resolvedPathId}Small.png`
 			: (typeof character.path === "object" &&
 					character.path?.icon?.toLowerCase()) ||
 				`icon/path/${(await getPathMap())[character.base_type || 0]}.png`;
@@ -2476,7 +2510,13 @@ async function drawCharacterImage(
 		ctx.fillText(
 			(typeof character.path === "object"
 				? character.path?.name
-				: character.path) ||
+				: (() => {
+					const raw = (character.path as string) || "";
+					const mapped = pathMapper[raw.toLowerCase()] || raw;
+					if (!mapped) return undefined;
+					const key = mapped.charAt(0).toUpperCase() + mapped.slice(1);
+					return tr(`path_${key}`);
+				})()) ||
 				tr(`path_${(await getPathMap())[character.base_type || 0]}`),
 			112,
 			196
@@ -2549,6 +2589,20 @@ async function drawCharacterImage(
 					return acc;
 				}, {});
 
+			// mihomo attributes[] 的 hp/atk/def/spd 名稱帶有「基礎」前綴，
+			// 但合併後顯示的是加成後的總量，應去掉「基礎」改用完整名稱。
+			const fieldNameOverride: Record<string, string> = {
+				hp:  tr("property_MaxHP"),
+				atk: tr("property_Attack"),
+				def: tr("property_Defence"),
+				spd: tr("property_Speed")
+			};
+			for (const field of Object.keys(fieldNameOverride)) {
+				if (attributesWithAdditions[field] && fieldNameOverride[field]) {
+					(attributesWithAdditions[field] as Attribute).name = fieldNameOverride[field] as string;
+				}
+			}
+
 			result = Object.values(attributesWithAdditions);
 		} else {
 			result = (character.properties || []).map(property => {
@@ -2583,11 +2637,85 @@ async function drawCharacterImage(
 		// 上分隔線
 		const attrTopY = 315;
 		drawSeparatorLine(ctx, 50, 500, attrTopY);
-		// 屬性列表
-		await renderAttributesList(ctx, filteredAttributes, 50, 340, 45);
+		// 屬性列表 (relicsScore 在此提前取得，以便傳遞有效詞條集合)
+		const relicsScore = await getRelicsScore(character);
+		await renderAttributesList(ctx, filteredAttributes, 50, 340, 45, relicsScore?.effectivePropertyNames);
 		// 下分隔線動態位置
 		const attrBottomY = 373 + filteredAttributes.length * 45;
 		drawSeparatorLine(ctx, 50, 500, attrBottomY);
+
+		// 有效副屬性命中統計面板
+		let effectivePanelBottomY = attrBottomY; // 預設：沒有面板時底部就是分隔線
+		if (relicsScore && relicsScore.effectiveStats.size > 0) {
+			const panelX = 50;
+			const panelY = attrBottomY + 12;
+			const panelW = 450;
+			const chipIconSize = 26;
+
+			// 標題
+			setupFont(ctx, 18, true);
+			ctx.textAlign = "left";
+			ctx.fillStyle = "rgba(255,255,255,0.55)";
+			ctx.fillText(tr("profile_EffectiveStatsTitle"), panelX, panelY + 16);
+
+			// 圓形總計徽章 (右側)
+			const badgeR = 30;
+			const badgeCX = panelX + panelW - badgeR - 2;
+			const badgeCY = panelY + 36;
+			ctx.save();
+			ctx.beginPath();
+			ctx.arc(badgeCX, badgeCY, badgeR, 0, Math.PI * 2);
+			ctx.strokeStyle = "#F3C96B";
+			ctx.lineWidth = 2;
+			ctx.stroke();
+			ctx.restore();
+			setupFont(ctx, 22, true);
+			ctx.textAlign = "center";
+			ctx.fillStyle = "#F3C96B";
+			ctx.textBaseline = "middle";
+			const statsTotalRolls = [...relicsScore.effectiveStats.values()].reduce((s, v) => s + v.rolls, 0);
+			ctx.fillText(`${statsTotalRolls}`, badgeCX, badgeCY - 4);
+			setupFont(ctx, 12, false);
+			ctx.fillStyle = "rgba(255,255,255,0.6)";
+			ctx.fillText(tr("profile_EffectiveStatsTotal"), badgeCX, badgeCY + 14);
+			ctx.textBaseline = "alphabetic";
+
+			// 屬性 chip 橫排
+			const chipStartX = panelX;
+			const chipY = panelY + 28;
+			const chipSpacing = 8;
+			let chipX = chipStartX;
+			const stats = [...relicsScore.effectiveStats.entries()];
+			for (const [iconKey, stat] of stats) {
+				// icon
+				const iconResult = await loadImageAsync(
+					`./src/assets/image/${stat.icon}`
+				);
+				if (iconResult?.image) {
+					ctx.drawImage(iconResult.image, chipX, chipY, chipIconSize, chipIconSize);
+				}
+				chipX += chipIconSize + 2;
+
+				// name (優先用翻譯 key，否則 fallback 到 stat.name)
+				const localName = (tr as any)(`property_${iconKey}`) || stat.name;
+				setupFont(ctx, 17, true);
+				ctx.textAlign = "left";
+				ctx.fillStyle = "#F3C96B";
+				ctx.fillText(localName, chipX, chipY + chipIconSize - 4);
+				const nameW = ctx.measureText(localName).width;
+				chipX += nameW + 2;
+
+				// rolls number
+				setupFont(ctx, 17, true);
+				ctx.fillStyle = "white";
+				ctx.fillText(`${stat.rolls}`, chipX, chipY + chipIconSize - 4);
+				const rollW = ctx.measureText(`${stat.rolls}`).width;
+				chipX += rollW + chipSpacing;
+			}
+
+			// 面板實際底部 = chip 行底部
+			effectivePanelBottomY = chipY + chipIconSize;
+		}
 
 		// relics 區塊對齊
 		const relics_left_x = 1210;
@@ -3289,8 +3417,6 @@ async function drawCharacterImage(
 		ctx.fillStyle = "lightgray";
 		ctx.fillText(playerData.player.uid, hasServantSkills ? 870 : 850, 1010);
 
-		const relicsScore = await getRelicsScore(character);
-
 		// 顯示總分
 		const centerX = 420;
 		ctx.font = "bold 32px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
@@ -3298,6 +3424,9 @@ async function drawCharacterImage(
 		ctx.fillStyle = "white";
 
 		if (relicsScore) {
+			const scoreOffsetY = 56;
+			const tipOffsetY = 86;
+
 			const scoreText = tr("RelicGrade", {
 				grade: `${relicsScore.totalScore}`
 			});
@@ -3312,14 +3441,14 @@ async function drawCharacterImage(
 			ctx.fillText(
 				scoreText,
 				userLang == "en" ? startX + 50 : startX,
-				attrBottomY + 50
+				effectivePanelBottomY + scoreOffsetY
 			);
 
 			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
 			ctx.fillText(
 				relicsScore.totalGrade.grade,
 				startX + scoreWidth - 130,
-				attrBottomY + 50
+				effectivePanelBottomY + scoreOffsetY
 			);
 
 			if (isAllCharacter) {
@@ -3328,7 +3457,7 @@ async function drawCharacterImage(
 				ctx.font =
 					"bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
 				const tipX = userLang == "en" ? centerX - 150 : startX;
-				ctx.fillText(tr("profile_Tip"), tipX, attrBottomY + 80);
+				ctx.fillText(tr("profile_Tip"), tipX, effectivePanelBottomY + tipOffsetY);
 			}
 		} else {
 			ctx.textAlign = "center";

@@ -17,7 +17,6 @@ import { TranslationFunction } from "@/types/index.js";
 import emoji from "@/assets/emoji.js";
 import { database } from "@/index.js";
 import { getConfig } from "@/utilities/core/config.js";
-import { drainPendingLogins } from "@/utilities/webhookLogin.js";
 import { getAllCharacters, type Character, type Hoyolab } from "@/utilities/accountStore.js";
 
 function formatRelativeFromIso(iso: string | undefined): string {
@@ -97,57 +96,50 @@ export default {
 					"zh-TW": "..."
 				})
 				.setRequired(true)
-				.addChoices(
-					{
-						name: "❓ How to set up account",
-						name_localizations: {
-							"zh-TW": "❓ 如何設定帳號"
-						},
-						value: "HowToSetUpAccount"
+			.addChoices(
+				{
+					name: "❓ How to set up account",
+					name_localizations: {
+						"zh-TW": "❓ 如何設定帳號"
 					},
-					{
-						name: "🔗 Bind Account via Cookie",
-						name_localizations: {
-							"zh-TW": "🔗 綁定帳號 (直接提報 Cookie)"
-						},
-						value: "BindAccountByCookie"
+					value: "HowToSetUpAccount"
+				},
+				{
+					name: "🌐 Bind Account via Web Login",
+					name_localizations: {
+						"zh-TW": "🌐 綁定帳號 (網頁登入)"
 					},
-					{
-						name: "🔸 View configured account",
-						name_localizations: {
-							"zh-TW": "🔸 檢視已設定帳號"
-						},
-						value: "ViewAccount"
+					value: "BindAccountByWebLogin"
+				},
+				{
+					name: "🔗 Bind Account via Cookie",
+					name_localizations: {
+						"zh-TW": "🔗 綁定帳號 (Cookie)"
 					},
-					{
-						name: "⚙️ Edit configured account",
-						name_localizations: {
-							"zh-TW": "⚙️ 編輯已設定帳號"
-						},
-						value: "EditAccount"
+					value: "BindAccountByCookie"
+				},
+				{
+					name: "🔸 View configured account",
+					name_localizations: {
+						"zh-TW": "🔸 檢視已設定帳號"
 					},
-					{
-						name: "❌ Delete configured account",
-						name_localizations: {
-							"zh-TW": "❌ 刪除已設定帳號"
-						},
-						value: "DeleteAccount"
+					value: "ViewAccount"
+				},
+				{
+					name: "⚙️ Edit configured account",
+					name_localizations: {
+						"zh-TW": "⚙️ 編輯已設定帳號"
 					},
-					{
-						name: "🔐 Bind Account via Password (Recommended)",
-						name_localizations: {
-							"zh-TW": "🔐 綁定帳號 (帳密登入 - 推薦)"
-						},
-						value: "BindAccountByPassword"
+					value: "EditAccount"
+				},
+				{
+					name: "❌ Delete configured account",
+					name_localizations: {
+						"zh-TW": "❌ 刪除已設定帳號"
 					},
-					{
-						name: "🌐 Bind Account via Web Login (Most Secure)",
-						name_localizations: {
-							"zh-TW": "🌐 綁定帳號 (網頁登入 - 最安全)"
-						},
-						value: "BindAccountByWebLogin"
-					}
-				)
+					value: "DeleteAccount"
+				}
+			)
 		),
 	/**
 	 *
@@ -160,18 +152,6 @@ export default {
 	): Promise<void> {
 		const command = interaction.options.getString("options");
 		const userId = interaction.user.id;
-
-		// Pull any pending web-logins from Supabase before reading local DB.
-		// Fast no-op when Supabase is unconfigured or queue is empty.
-		try {
-			const bound = await drainPendingLogins(userId);
-			if (bound.length > 0) {
-				console.log(`[/account] drain bound ${bound.length} account(s) for ${userId}`);
-			}
-		} catch (e: any) {
-			console.error(`[/account] drainPendingLogins threw: ${e?.message ?? e}`);
-			/* never block /account on a queue read */
-		}
 
 		const accountKey = `${userId}.account`;
 		const hasAccount = await database.has(accountKey);
@@ -239,33 +219,6 @@ export default {
 								new TextInputBuilder()
 									.setCustomId("account_mid_v2")
 									.setLabel("ltmid_v2")
-									.setStyle(TextInputStyle.Short)
-									.setRequired(true)
-							)
-						)
-				);
-				return;
-			case "BindAccountByPassword":
-				await interaction.showModal(
-					new ModalBuilder()
-						.setCustomId("cookie_login_password")
-						.setTitle(tr("account_QuickLinkModal"))
-						.addComponents(
-							new ActionRowBuilder<TextInputBuilder>().addComponents(
-								new TextInputBuilder()
-									.setCustomId("account")
-									.setLabel(
-										tr("account_LoginAccountModalField")
-									)
-									.setPlaceholder("example@email.com")
-									.setStyle(TextInputStyle.Short)
-									.setRequired(true)
-							),
-							new ActionRowBuilder<TextInputBuilder>().addComponents(
-								new TextInputBuilder()
-									.setCustomId("password")
-									.setLabel(tr("account_LoginAccountDesc2"))
-									.setPlaceholder("******")
 									.setStyle(TextInputStyle.Short)
 									.setRequired(true)
 							)

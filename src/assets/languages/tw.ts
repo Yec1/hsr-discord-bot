@@ -76,6 +76,9 @@ const langs: LanguageStrings = {
 	profile_MemoryOfChaosLevel: "混沌回憶進度",
 	profile_PureFictionLevel: "虛構敘事進度",
 	profile_Tip: "※ 可能較低於UID查詢角色評分",
+	profile_EffectiveLines: "有效詞條：{effective} / {total}",
+	profile_EffectiveStatsTitle: "有效副屬性命中統計",
+	profile_EffectiveStatsTotal: "組計命中",
 	profile_CookieExpiredFallbackToUid:
 		"Cookie 已過期，目前改用 UID 查詢，無法取得全部角色資料。請重新設定 Cookie 以使用完整角色查詢。",
 	profile_MemospriteSkill: "憶靈技",
@@ -288,6 +291,8 @@ const langs: LanguageStrings = {
 	property_StatusProbability: "效果命中",
 	property_StatusResistance: "效果抗性",
 	property_BreakUp: "擊破特攻",
+	property_ElationAddedRatio: "歡愉傷害加成",
+	property_Joy: "歡愉傷害加成",
 
 	// Error Messages
 	Error: "錯誤",

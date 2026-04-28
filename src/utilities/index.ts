@@ -397,7 +397,7 @@ export async function drawInQueueReply(
 	interaction: CommandInteraction,
 	title: string = ""
 ): Promise<void> {
-	interaction.editReply({
+	await interaction.editReply({
 		embeds: [
 			new EmbedBuilder()
 				.setTitle(title)
@@ -405,7 +405,7 @@ export async function drawInQueueReply(
 					"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
 				)
 		]
-	});
+	}).catch(() => {});
 }
 
 const languageMapping: Record<string, LanguageEnum> = {
@@ -451,8 +451,7 @@ export async function failedReply(
 
 	replyOrfollowUp(interaction, {
 		embeds: [embed],
-		flags: MessageFlags.Ephemeral,
-		withResponse: true
+		flags: MessageFlags.Ephemeral
 	});
 }
 
@@ -807,10 +806,13 @@ function generateDynamicSecret(): string {
 
 export async function updateAccountInfo(
 	userId: string,
-	{ uid, cookie, nickname }: { uid: string; cookie: string; nickname?: string }
+	{
+		uid,
+		cookie,
+		nickname
+	}: { uid: string; cookie: string; nickname?: string }
 ): Promise<void> {
-	const ltuid =
-		extractLtuidFromCookie(cookie) ?? fallbackBucketKey(cookie);
+	const ltuid = extractLtuidFromCookie(cookie) ?? fallbackBucketKey(cookie);
 	await upsertHoyolab(database, userId, { ltuid_v2: ltuid, cookie });
 	await upsertCharacter(database, userId, ltuid, {
 		uid: String(uid),
@@ -1021,7 +1023,7 @@ export async function autoRefreshCookie(
 			body: JSON.stringify({})
 		});
 
-		const verifyResult = await verifyLTokenResponse.json() as any;
+		const verifyResult = (await verifyLTokenResponse.json()) as any;
 		if (verifyResult?.code === 200 || verifyResult?.retcode === 0) {
 			if (uid) {
 				await database.delete(`${uid}.cookieExpired`);
@@ -1031,13 +1033,13 @@ export async function autoRefreshCookie(
 			return { success: true, message: "Cookie 驗證成功 (verifyLToken)" };
 		}
 
-		console.warn(`[autoRefreshCookie] [user=${userId}] verifyLToken 失敗: code=${verifyResult?.retcode ?? verifyResult?.code}, msg=${verifyResult?.message}`);
+		console.warn(
+			`[autoRefreshCookie] [user=${userId}] verifyLToken 失敗: code=${verifyResult?.retcode ?? verifyResult?.code}, msg=${verifyResult?.message}`
+		);
 
 		// 如果驗證失敗，且有 stoken_v2，則嘗試透過 stoken_v2 強制更新 Token
 		if (cookieMap.stoken_v2 && (cookieMap.ltmid_v2 || cookieMap.mid)) {
-			const originalCookieArray = cookie
-				.split("; ")
-				.filter(Boolean);
+			const originalCookieArray = cookie.split("; ").filter(Boolean);
 			const stokenResult = await updateTokensBySToken(
 				userId,
 				accountIndex,
@@ -1048,9 +1050,13 @@ export async function autoRefreshCookie(
 			if (stokenResult.success) {
 				return stokenResult;
 			}
-			console.warn(`[autoRefreshCookie] [user=${userId}] stoken_v2 刷新失敗: ${stokenResult.message}`);
+			console.warn(
+				`[autoRefreshCookie] [user=${userId}] stoken_v2 刷新失敗: ${stokenResult.message}`
+			);
 		} else {
-			console.warn(`[autoRefreshCookie] [user=${userId}] 無 stoken_v2 可刷新，cookie fields: ${Object.keys(cookieMap).join(", ")}`);
+			console.warn(
+				`[autoRefreshCookie] [user=${userId}] 無 stoken_v2 可刷新，cookie fields: ${Object.keys(cookieMap).join(", ")}`
+			);
 		}
 
 		// 以下為相容方案：如果沒有 stoken，或發生某些意外，仍然嘗試驗證與刷新
@@ -1159,9 +1165,7 @@ export async function getUserGameInfo(
 		}
 
 		// 優先用 game_id 過濾，fallback 用 game_biz
-		let matched = recordList.find(
-			(item: any) => item.game_id === gameId
-		);
+		let matched = recordList.find((item: any) => item.game_id === gameId);
 
 		if (!matched) {
 			// fallback: 嘗試用 game_biz 過濾
@@ -1184,9 +1188,7 @@ export async function getUserGameInfo(
 			level: matched.level
 		};
 	} catch (error: any) {
-		console.error(
-			`[getUserGameInfo] 取得遊戲資訊失敗: ${error.message}`
-		);
+		console.error(`[getUserGameInfo] 取得遊戲資訊失敗: ${error.message}`);
 		throw error;
 	}
 }

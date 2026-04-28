@@ -1326,6 +1326,17 @@ async function handleSelectCharacter(
 				}
 
 				characters = (await hsr.record.characters()) as any;
+			// HoYoLAB returns `ranks[]` instead of `rank_icons`; inject it so
+			// drawEidolonIcons() renders the same as the UID (mihomo) path.
+			if (Array.isArray(characters)) {
+				for (const c of characters as any[]) {
+					if (!c.rank_icons && Array.isArray(c.ranks) && c.ranks.length >= 6) {
+						c.rank_icons = [...c.ranks]
+							.sort((a: any, b: any) => a.pos - b.pos)
+							.map((r: any) => r.icon);
+					}
+				}
+			}
 				const data = await hsr.record.records();
 				let gameInfo: { uid: string; nickname: string; level: number };
 				try {

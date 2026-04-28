@@ -76,6 +76,9 @@ const langs: LanguageStrings = {
 	profile_MemoryOfChaosLevel: "Memory of Chaos Progress",
 	profile_PureFictionLevel: "Pure Fiction Progress",
 	profile_Tip: "※ May be lower than UID query character rating",
+	profile_EffectiveLines: "Effective Lines: {effective} / {total}",
+	profile_EffectiveStatsTitle: "Effective Sub-stat Hits",
+	profile_EffectiveStatsTotal: "Total",
 	profile_CookieExpiredFallbackToUid:
 		"Your Cookie has expired. Switched to UID query, so full character data cannot be retrieved. Please reset your Cookie for full character lookup.",
 	profile_MemospriteSkill: "Memosprite Skill",
@@ -300,6 +303,8 @@ const langs: LanguageStrings = {
 	property_StatusProbability: "Effect Hit Rate",
 	property_StatusResistance: "Effect RES",
 	property_BreakUp: "Break Effect",
+	property_ElationAddedRatio: "Elation DMG Bonus",
+	property_Joy: "Elation DMG Bonus",
 
 	// Error Messages
 	Error: "Error",

@@ -63,10 +63,20 @@ interface Grade {
 	color: string;
 }
 
+interface EffectiveStat {
+	rolls: number;
+	name: string;
+	icon: string;
+}
+
 interface RelicsResult {
 	totalScore: string;
 	totalGrade: Grade;
 	scoreType: string;
+	effectiveLines: number;
+	totalLines: number;
+	effectivePropertyNames: Set<string>;
+	effectiveStats: Map<string, EffectiveStat>;
 	[key: number]: Relic;
 }
 
@@ -92,6 +102,31 @@ const propertyTranslate: PropertyTranslate = {
 	56: "StatusProbabilityBase",
 	57: "StatusResistanceBase",
 	59: "BreakDamageAddedRatioBase"
+};
+
+// calSubType → propertyMap icon keyword (for attribute bar golden highlight)
+const subTypeToIconKey: Record<string, string> = {
+	HPDelta:                    "MaxHP",
+	HPAddedRatio:               "MaxHP",
+	AttackDelta:                "Attack",
+	AttackAddedRatio:           "Attack",
+	DefenceDelta:               "Defence",
+	DefenceAddedRatio:          "Defence",
+	SpeedDelta:                 "Speed",
+	CriticalChanceBase:         "CriticalChance",
+	CriticalDamageBase:         "CriticalDamage",
+	SPRatioBase:                "EnergyRecovery",
+	HealRatioBase:              "HealRatio",
+	StatusProbabilityBase:      "StatusProbability",
+	StatusResistanceBase:       "StatusResistance",
+	BreakDamageAddedRatioBase:  "BreakUp",
+	PhysicalAddedRatio:         "PhysicalAddedRatio",
+	FireAddedRatio:             "FireAddedRatio",
+	IceAddedRatio:              "IceAddedRatio",
+	ThunderAddedRatio:          "ThunderAddedRatio",
+	WindAddedRatio:             "WindAddedRatio",
+	QuantumAddedRatio:          "QuantumAddedRatio",
+	ImaginaryAddedRatio:        "ImaginaryAddedRatio",
 };
 
 // 本地文件路徑配置
@@ -401,6 +436,10 @@ async function getRelicsScore(
 
 	let totalScoreN = 0;
 	let validRelicCount = 0;
+	let effectiveLines = 0;
+	let totalLines = 0;
+	const effectivePropertyNames = new Set<string>();
+	const effectiveStats = new Map<string, EffectiveStat>();
 
 	// 初始化長度為 6 的空陣列，對應 6 個槽位
 	const allRelics: (Relic | null)[] = [null, null, null, null, null, null];
@@ -458,6 +497,38 @@ async function getRelicsScore(
 		const mainScore = calculateMainAffixScore(relic, charScore, i + 1);
 		const subScore = calculateSubScore(relic, charScore);
 
+		// 累計有效/總詞條數 (calculateSubScore 已填好 sub.weight 和 sub.count)
+		for (const sub of relic.sub_affix || []) {
+			const rollCount = Number(sub.count || 0) || 1;
+			totalLines += rollCount;
+			if ((sub.weight || 0) > 0) {
+				effectiveLines += rollCount;
+			}
+			// 屬性條金色高亮門檻：weight >= 0.75
+			if ((sub.weight || 0) >= 0.75) {
+				const subType = sub.type || sub.property_type;
+				const calSubType = (propertyTranslate[subType as number] || subType) as string;
+				const iconKey = subTypeToIconKey[calSubType] || calSubType;
+				if (iconKey) {
+					effectivePropertyNames.add(iconKey);
+					// 累計 per-property 有效 roll 數（用於統計面板）
+					const existing = effectiveStats.get(iconKey);
+					const subIcon = sub.icon?.replace(/^Icon/, "icon") ||
+						`icon/property/icon${iconKey}.png`;
+					const subName = sub.name || sub.propertyName || iconKey;
+					if (existing) {
+						existing.rolls += rollCount;
+					} else {
+						effectiveStats.set(iconKey, {
+							rolls: rollCount,
+							name: subName,
+							icon: subIcon
+						});
+					}
+				}
+			}
+		}
+
 		// SRS-N: 主词条归一化得分 * 40% + 副词条归一化得分 * 60%
 		let relicScoreN = mainScore * 0.4 + subScore * 0.6;
 
@@ -486,6 +557,10 @@ async function getRelicsScore(
 	result.totalScore = totalScore;
 	result.totalGrade = totalGrade;
 	result.scoreType = scoreType;
+	result.effectiveLines = effectiveLines;
+	result.totalLines = totalLines;
+	result.effectivePropertyNames = effectivePropertyNames;
+	result.effectiveStats = effectiveStats;
 
 	return result;
 }
@@ -591,7 +666,8 @@ function calculateSubScore(relic: Relic, weights: Weights): number {
 
 		let step = 0;
 		if (sub.step !== undefined) step = Number(sub.step || 0);
-		else step = Math.max(0, count - 1);
+		// HoYoLAB does not provide step data; default to 0 (no upgrade tiers assumed).
+		// Using count - 1 would fabricate upgrade data and inflate scores.
 
 		sub.weight = subWeight;
 

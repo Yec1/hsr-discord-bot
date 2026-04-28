@@ -290,16 +290,9 @@ class AutoRedeemSystem {
 			);
 
 			if (!refreshResult.success) {
-				// 通知用戶 Cookie 已失效，需要重新設定
-				const channelId = (await this.db.get(`autoRedeem.${userId}`))?.channelId;
-				if (channelId) {
-					await this.sendRedeemMessage(channelId, {
-						tr,
-						tag: `<@${userId}>`,
-						description: `❌ **${accountNickname || account.uid}** (${account.uid})\nCookie 已過期且無法自動刷新，請重新使用 \`/cookie\` 或 \`/login\` 指令更新登入資訊。`,
-						hasSuccess: false
-					});
-				}
+				this.logger.warn(
+					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 刷新失敗，靜默跳過`
+				);
 				return {
 					uid: account.uid,
 					nickname: accountNickname,
@@ -363,16 +356,9 @@ class AutoRedeemSystem {
 
 			if (result.status.tokenInvalid) {
 				await this.db.set(`${account.uid}.cookieExpired`, true);
-				// 通知用戶 Cookie 已失效（-100），需要重新設定
-				const channelId = (await this.db.get(`autoRedeem.${userId}`))?.channelId;
-				if (channelId) {
-					await this.sendRedeemMessage(channelId, {
-						tr,
-						tag: `<@${userId}>`,
-						description: `❌ **${accountNickname || account.uid}** (${account.uid})\nCookie 已過期（錯誤 -100），請重新使用 \`/cookie\` 或 \`/login\` 指令更新登入資訊。`,
-						hasSuccess: false
-					});
-				}
+				this.logger.warn(
+					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 已過期（-100），標記待自動刷新，靜默跳過`
+				);
 				return {
 					uid: account.uid,
 					nickname: accountNickname,

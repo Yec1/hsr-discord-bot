@@ -389,9 +389,13 @@ class AutoDailySignSystem {
 			}
 
 			const isTokenError = this.isSkippableError(errorMessage);
-			const displayError = isTokenError
-				? "Token 已過期或請求異常"
-				: errorMessage;
+
+			if (isTokenError) {
+				this.logger.warn(
+					`[用戶 ${userId}] 帳號 #${accountIndex} Token 已過期，靜默跳過`
+				);
+				throw new Error(errorMessage);
+			}
 
 			await this.sendErrorMessage(channelId, {
 				content: tag,
@@ -402,16 +406,12 @@ class AutoDailySignSystem {
 							`${tr("Auto")}${tr("daily_Failed")}`
 						)
 						.setDescription(
-							`- \`${account.uid}\`: ${displayError}`
+							`- \`${account.uid}\`: ${errorMessage}`
 						)
 				]
 			});
 
-			if (isTokenError) {
-				throw new Error(errorMessage);
-			} else {
-				throw new Error(`API 錯誤: ${errorMessage}`);
-			}
+			throw new Error(`API 錯誤: ${errorMessage}`);
 		}
 	}
 
