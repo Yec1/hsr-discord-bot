@@ -2445,7 +2445,7 @@ async function drawCharacterImage(
 			setupFont(ctx, fontSize, true);
 		}
 
-		ctx.fillText(character.name, 120, 100);
+		ctx.fillText(character.name, 120, 88);
 
 		// 绘制等级（跟在名字后面）
 		const nameWidth = ctx.measureText(character.name).width;
@@ -2454,39 +2454,39 @@ async function drawCharacterImage(
 		ctx.fillText(
 			`${tr("level")} ${character.level}`,
 			120 + nameWidth + 10,
-			100
+			88
 		);
 		ctx.fillStyle = "white";
 
-		// 绘制元素和命途图标
+		// 绘制元素图标（row 1, 與名字對齊）
 		if (element) {
-			ctx.drawImage(element, 50, 50, 64, 64);
-		}
-		if (path) {
-			ctx.drawImage(path, 50, 120, 64, 64);
+			ctx.drawImage(element, 50, 56, 56, 56);
 		}
 
-		// 绘制命途名称
+		// 绘制星级 (row 2)
+		if (star) {
+			ctx.drawImage(star, 50, 120, 160, 32);
+		}
+
+		// 绘制命途图标 + 名称 (row 3)
+		if (path) {
+			ctx.drawImage(path, 50, 162, 52, 52);
+		}
 		setupFont(ctx, 28, true);
 		ctx.fillText(
 			(typeof character.path === "object"
 				? character.path?.name
 				: character.path) ||
 				tr(`path_${(await getPathMap())[character.base_type || 0]}`),
-			130,
-			165
+			112,
+			196
 		);
-
-		// 绘制星级
-		if (star) {
-			ctx.drawImage(star, 50, 185, 160, 32);
-		}
 
 		ctx.textAlign = "left";
 
 		// 绘制命座图标（置中於左側面板 centerX=210）
 		const PANEL_CENTER_X = 270;
-		const EIDOLON_CENTER_Y = 270;
+		const EIDOLON_CENTER_Y = 260;
 		if (character.rank_icons && character.rank_icons.length >= 6) {
 			await drawEidolonIcons(ctx, character.rank_icons, character.rank, PANEL_CENTER_X, EIDOLON_CENTER_Y);
 		} else {
