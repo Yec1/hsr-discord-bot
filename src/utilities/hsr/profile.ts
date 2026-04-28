@@ -732,6 +732,84 @@ export function clearImageCache(): void {
 	}
 }
 
+const MIHOMO_CDN_BASE = "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
+const EIDOLON_ICON_SIZE = 36;
+const EIDOLON_ICON_GAP = 6;
+/** Total width occupied by all 6 eidolon icons + gaps */
+export const EIDOLON_BLOCK_WIDTH = 6 * EIDOLON_ICON_SIZE + 5 * EIDOLON_ICON_GAP; // 246
+
+/**
+ * Draws 6 eidolon icons horizontally.
+ * Unlocked icons (index < unlockedCount) get a white circular border.
+ * Locked icons get a semi-transparent black overlay.
+ *
+ * @param ctx        Canvas 2D context
+ * @param rankIcons  character.rank_icons (6-element array of relative paths)
+ * @param unlockedCount  character.rank (0–6)
+ * @param x          Left edge of first icon
+ * @param baselineY  Text baseline used by surrounding code (icons are vertically centred here)
+ */
+async function drawEidolonIcons(
+	ctx: any,
+	rankIcons: string[],
+	unlockedCount: number,
+	x: number,
+	baselineY: number
+): Promise<void> {
+	const size = EIDOLON_ICON_SIZE;
+	const gap = EIDOLON_ICON_GAP;
+	const top = baselineY - size / 2; // vertically centre on baseline
+
+	for (let i = 0; i < 6; i++) {
+		const iconX = x + i * (size + gap);
+		const iconY = top;
+		const cx = iconX + size / 2;
+		const cy = iconY + size / 2;
+		const r = size / 2;
+
+		// Load icon from CDN
+		const iconPath = rankIcons[i]
+			? `${MIHOMO_CDN_BASE}${rankIcons[i]}`
+			: null;
+
+		const iconResult = iconPath ? await loadImageAsync(iconPath) : null;
+
+		ctx.save();
+
+		// Clip to circle
+		ctx.beginPath();
+		ctx.arc(cx, cy, r, 0, Math.PI * 2);
+		ctx.clip();
+
+		if (iconResult?.image) {
+			ctx.drawImage(iconResult.image, iconX, iconY, size, size);
+		} else {
+			// Grey placeholder circle when image fails to load
+			ctx.fillStyle = "rgba(100,100,100,0.8)";
+			ctx.fillRect(iconX, iconY, size, size);
+		}
+
+		// Locked overlay
+		if (i >= unlockedCount) {
+			ctx.fillStyle = "rgba(0,0,0,0.55)";
+			ctx.fillRect(iconX, iconY, size, size);
+		}
+
+		ctx.restore();
+
+		// White border for unlocked icons (drawn outside clip so border isn't cut)
+		if (i < unlockedCount) {
+			ctx.save();
+			ctx.strokeStyle = "rgba(255,255,255,0.9)";
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
+			ctx.stroke();
+			ctx.restore();
+		}
+	}
+}
+
 const loadImageAsync: LoadImageAsyncFunction = async (
 	url: string,
 	fallbackUrl: string | null = null
