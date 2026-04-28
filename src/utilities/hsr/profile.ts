@@ -791,7 +791,7 @@ async function drawEidolonIcons(
 			ctx.fillRect(iconX, iconY, size, size);
 		}
 
-		// Locked overlay
+		// Locked overlay + lock icon
 		if (i >= unlockedCount) {
 			ctx.fillStyle = "rgba(0,0,0,0.55)";
 			ctx.fillRect(iconX, iconY, size, size);
@@ -807,6 +807,52 @@ async function drawEidolonIcons(
 			ctx.beginPath();
 			ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
 			ctx.stroke();
+			ctx.restore();
+		}
+
+		// Lock icon drawn on top for locked icons
+		if (i >= unlockedCount) {
+			ctx.save();
+			const lw = size * 0.28; // lock body width
+			const lh = size * 0.22; // lock body height
+			const lx = cx - lw / 2;
+			const ly = cy - lh * 0.1; // slightly below centre
+			const shackleW = lw * 0.55;
+			const shackleH = lh * 1.1;
+			const shackleX = cx - shackleW / 2;
+			const shackleY = ly - shackleH;
+
+			ctx.strokeStyle = "rgba(255,255,255,0.85)";
+			ctx.fillStyle = "rgba(255,255,255,0.85)";
+			ctx.lineWidth = size * 0.07;
+			ctx.lineCap = "round";
+
+			// Shackle (U-shape arc)
+			ctx.beginPath();
+			ctx.arc(
+				cx,
+				shackleY + shackleH * 0.55,
+				shackleW / 2,
+				Math.PI,
+				0
+			);
+			ctx.stroke();
+
+			// Lock body (rounded rect)
+			const br = size * 0.06;
+			ctx.beginPath();
+			ctx.moveTo(lx + br, ly);
+			ctx.lineTo(lx + lw - br, ly);
+			ctx.arcTo(lx + lw, ly, lx + lw, ly + br, br);
+			ctx.lineTo(lx + lw, ly + lh - br);
+			ctx.arcTo(lx + lw, ly + lh, lx + lw - br, ly + lh, br);
+			ctx.lineTo(lx + br, ly + lh);
+			ctx.arcTo(lx, ly + lh, lx, ly + lh - br, br);
+			ctx.lineTo(lx, ly + br);
+			ctx.arcTo(lx, ly, lx + br, ly, br);
+			ctx.closePath();
+			ctx.fill();
+
 			ctx.restore();
 		}
 	}
@@ -2439,7 +2485,7 @@ async function drawCharacterImage(
 		ctx.textAlign = "left";
 
 		// 绘制命座图标（置中於左側面板 centerX=210）
-		const PANEL_CENTER_X = 210;
+		const PANEL_CENTER_X = 270;
 		const EIDOLON_CENTER_Y = 270;
 		if (character.rank_icons && character.rank_icons.length >= 6) {
 			await drawEidolonIcons(ctx, character.rank_icons, character.rank, PANEL_CENTER_X, EIDOLON_CENTER_Y);
