@@ -2445,7 +2445,7 @@ async function drawCharacterImage(
 			setupFont(ctx, fontSize, true);
 		}
 
-		ctx.fillText(character.name, 120, 88);
+		ctx.fillText(character.name, 120, 99);
 
 		// 绘制等级（跟在名字后面）
 		const nameWidth = ctx.measureText(character.name).width;
@@ -2454,7 +2454,7 @@ async function drawCharacterImage(
 		ctx.fillText(
 			`${tr("level")} ${character.level}`,
 			120 + nameWidth + 10,
-			88
+			99
 		);
 		ctx.fillStyle = "white";
 
