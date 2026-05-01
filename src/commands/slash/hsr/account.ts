@@ -10,14 +10,19 @@ import {
 	StringSelectMenuBuilder,
 	ButtonBuilder,
 	ButtonStyle,
-	MessageFlags
+	MessageFlags,
+	ContainerBuilder,
+	SectionBuilder,
+	TextDisplayBuilder,
+	SeparatorBuilder,
+	ThumbnailBuilder
 } from "discord.js";
 import { failedReply, getRandomColor } from "@/utilities/index.js";
 import { TranslationFunction } from "@/types/index.js";
 import emoji from "@/assets/emoji.js";
 import { database } from "@/index.js";
 import { getConfig } from "@/utilities/core/config.js";
-import { getAllCharacters, type Character, type Hoyolab } from "@/utilities/accountStore.js";
+import { getAllCharacters, getHoyolabs, type Character, type Hoyolab } from "@/utilities/accountStore.js";
 
 function formatRelativeFromIso(iso: string | undefined): string {
 	if (!iso) return "—";
@@ -30,43 +35,67 @@ function formatRelativeFromIso(iso: string | undefined): string {
 	return `${Math.floor(diffSec / 86400)}d ago`;
 }
 
-function buildCharacterEmbed(
-	character: Character,
-	_hoyolab: Hoyolab,
-	tr: TranslationFunction
-): EmbedBuilder {
-	const titleGame = character.game_name ?? "Honkai: Star Rail";
-	const lvLabel = tr("account_View_LvShort");
-	const titleLevel = character.level !== undefined ? `${lvLabel} ${character.level}` : "";
-	const title = titleLevel ? `${titleGame} · ${titleLevel}` : titleGame;
-	const nickname = character.nickname ?? "";
-	const description = `${nickname ? `**${nickname}** · ` : ""}UID \`${character.uid}\``;
+function buildAccountComponents(
+	characters: Array<Character & { ltuid_v2: string; cookie: string }>,
+	hoyolabs: Hoyolab[],
+	discordUsername: string,
+	discordAvatarUrl: string,
+	tr: TranslationFunction,
+): ContainerBuilder {
+	const container = new ContainerBuilder();
 
-	const embed = new EmbedBuilder()
-		.setColor(getRandomColor() as any)
-		.setTitle(title)
-		.setDescription(description);
+	const firstHoyolab = hoyolabs[0] ?? null;
+	const hoyolabName = firstHoyolab?.hoyolabName ?? null;
+	const hoyolabIcon = firstHoyolab?.hoyolabIcon ?? null;
+	const ltuid = firstHoyolab?.ltuid_v2 ?? "—";
 
-	if (character.logo) embed.setThumbnail(character.logo);
-	if (character.cover) embed.setImage(character.cover);
+	const headerText = [
+		`**${discordUsername}**`,
+		hoyolabName
+			? `${hoyolabName} · ltuid \`${ltuid}\``
+			: `ltuid \`${ltuid}\``,
+	].join("\n");
 
-	const regionVal = character.region_name ?? character.region ?? "—";
-	embed.addFields({ name: tr("account_View_Region"), value: regionVal, inline: true });
+	const headerSection = new SectionBuilder().addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(headerText),
+	);
+	headerSection.setThumbnailAccessory(
+		new ThumbnailBuilder().setURL(hoyolabIcon ?? discordAvatarUrl),
+	);
+	container.addSectionComponents(headerSection);
+	container.addSeparatorComponents(new SeparatorBuilder());
 
-	const stats = character.stats ?? [];
-	if (stats.length > 0) {
-		for (const s of stats.slice(0, 4)) {
-			embed.addFields({ name: s.name || "—", value: s.value || "—", inline: true });
+	for (let i = 0; i < characters.length; i++) {
+		const c = characters[i]!;
+		const gameName = c.game_name ?? "Honkai: Star Rail";
+		const lvLabel = tr("account_View_LvShort");
+		const levelStr = c.level !== undefined ? ` · ${lvLabel} ${c.level}` : "";
+		const regionStr = c.region_name ?? c.region ?? "—";
+		const nicknameStr = c.nickname ? `**${c.nickname}** · ` : "";
+		const syncStr = c.enrichedAt
+			? ` · ${tr("account_View_LastSync", { time: formatRelativeFromIso(c.enrichedAt) })}`
+			: "";
+
+		const charText = [
+			`${nicknameStr}UID \`${c.uid}\``,
+			`${gameName}${levelStr}`,
+			`${tr("account_View_Region")}: ${regionStr}${syncStr}`,
+		].join("\n");
+
+		const charSection = new SectionBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(charText),
+		);
+		if (c.logo) {
+			charSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(c.logo));
+		}
+		container.addSectionComponents(charSection);
+
+		if (i < characters.length - 1) {
+			container.addSeparatorComponents(new SeparatorBuilder());
 		}
 	}
 
-	const linked = tr("account_View_Linked");
-	const lastSync = character.enrichedAt
-		? ` · ${tr("account_View_LastSync", { time: formatRelativeFromIso(character.enrichedAt) })}`
-		: "";
-	embed.setFooter({ text: `🔗 ${linked}${lastSync}` });
-
-	return embed;
+	return container;
 }
 
 interface Account {
@@ -262,54 +291,33 @@ export default {
 				});
 				return;
 			}
-			case "ViewAccount": {
-				const characters = await getAllCharacters(database as any, userId);
-				if (characters.length === 0) {
-					interaction.editReply({
-						embeds: [
-							new EmbedBuilder()
-								.setColor(getRandomColor() as any)
-								.setAuthor({
-									name: tr("account_ListOfAccount", {
-										Username: interaction.user.username
-									}),
-									iconURL: interaction.user.displayAvatarURL({
-										size: 4096
-									})
-								})
-								.setDescription(`❌ \`${tr("account_NoAccount")}\``)
-						]
-					});
-					return;
-				}
-
-				const embeds = characters.slice(0, 10).map(c => {
-					// getAllCharacters returns Character & { ltuid_v2, cookie } — split for builder
-					const { ltuid_v2, cookie, ...charOnly } = c;
-					const hoyolab: Hoyolab = {
-						ltuid_v2,
-						cookie,
-						hoyolabName: null,
-						lastUpdate: charOnly.lastUpdate,
-						invalid: charOnly.invalid,
-						characters: []
-					};
-					return buildCharacterEmbed(charOnly as Character, hoyolab, tr);
+		case "ViewAccount": {
+			const characters = await getAllCharacters(database as any, userId);
+			if (characters.length === 0) {
+				await interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setColor(getRandomColor() as any)
+							.setDescription(`❌ \`${tr("account_NoAccount")}\``)
+					]
 				});
-
-				// Lead author embed if user has > 0 characters — keep the username header.
-				if (embeds.length > 0) {
-					embeds[0]!.setAuthor({
-						name: tr("account_ListOfAccount", {
-							Username: interaction.user.username
-						}),
-						iconURL: interaction.user.displayAvatarURL({ size: 4096 })
-					});
-				}
-
-				interaction.editReply({ embeds });
 				return;
 			}
+
+			const hoyolabs = await getHoyolabs(database as any, userId);
+			const container = buildAccountComponents(
+				characters.slice(0, 10),
+				hoyolabs,
+				interaction.user.username,
+				interaction.user.displayAvatarURL({ size: 256 }),
+				tr,
+			);
+			await interaction.editReply({
+				flags: MessageFlags.IsComponentsV2,
+				components: [container],
+			} as any);
+			return;
+		}
 			case "EditAccount":
 				interaction.editReply({
 					components: [
