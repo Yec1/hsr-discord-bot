@@ -6,6 +6,7 @@ import {
 	requestPlayerActivity,
 	getUserHSRData,
 	getUserGameInfo,
+	getUserCookie,
 	getFriendlyErrorMessage
 } from "../index.js";
 
@@ -1485,11 +1486,12 @@ async function handleProfileDraw(
 				} else {
 					const data = await hsr.record.records();
 					let gameInfo: { uid: string; nickname: string; level: number };
-					try {
-						gameInfo = await getUserGameInfo(hsr.cookie as any);
-					} catch (e) {
-						console.warn(
-							"[Profile] getUserGameInfo failed, using fallback:",
+				try {
+					const cookieStr = await getUserCookie(user.id, accountIndex) ?? "";
+					gameInfo = await getUserGameInfo(cookieStr);
+				} catch (e) {
+					console.warn(
+						"[Profile] getUserGameInfo failed, using fallback:",
 							(e as Error).message
 						);
 						gameInfo = {

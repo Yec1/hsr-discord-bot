@@ -1339,11 +1339,12 @@ async function handleSelectCharacter(
 			}
 				const data = await hsr.record.records();
 				let gameInfo: { uid: string; nickname: string; level: number };
-				try {
-					gameInfo = await getUserGameInfo(hsr.cookie as any);
-				} catch (e) {
-					console.warn(
-						"[SelectMenu] getUserGameInfo failed, using fallback:",
+			try {
+				const cookieStr = await getUserCookie(userId || "", parseInt(accountIndex || "0")) ?? "";
+				gameInfo = await getUserGameInfo(cookieStr);
+			} catch (e) {
+				console.warn(
+					"[SelectMenu] getUserGameInfo failed, using fallback:",
 						(e as Error).message
 					);
 					gameInfo = {
