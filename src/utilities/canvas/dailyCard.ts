@@ -28,19 +28,22 @@ for (const { file, family } of fontCandidates) {
   }
 }
 
+export interface DayReward {
+  name: string;
+  icon?: string;
+  count: number;
+}
+
 export interface HSRDailyCardPayload {
   uid: string;
+  nickname: string;
   status: "success" | "already_signed";
-  rewardName: string;
-  rewardIcon?: string;
-  rewardCount: number;
   totalDays: number;
   month: number;
   signCntMissed?: number;
-  monthLastDay?: boolean;
-  tmrRewardName?: string;
-  tmrRewardIcon?: string;
-  tmrRewardCount?: number;
+  yesterdayReward?: DayReward & { claimed: boolean };
+  todayReward: DayReward;
+  nextRewards: [DayReward, DayReward, DayReward];
 }
 
 const imageCache = new Map<string, Buffer>();
@@ -84,172 +87,308 @@ function roundedRect(
   ctx.closePath();
 }
 
-async function drawIconBox(
-  ctx: any,
-  iconBuffer: Buffer | null,
-  fallbackLabel: string,
-  font: string,
-  x: number,
-  y: number,
-  size: number,
-  accentColor: string,
-) {
-  roundedRect(ctx, x - 8, y - 8, size + 16, size + 16, 14);
-  ctx.fillStyle = "rgba(192, 132, 252, 0.10)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(192, 132, 252, 0.32)";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  if (iconBuffer) {
-    try {
-      const img = await loadImage(iconBuffer);
-      const ratio = Math.min(size / img.width, size / img.height);
-      const dw = img.width * ratio;
-      const dh = img.height * ratio;
-      ctx.drawImage(img, x + (size - dw) / 2, y + (size - dh) / 2, dw, dh);
-      return;
-    } catch {}
-  }
-  // Fallback text
-  ctx.fillStyle = accentColor;
-  ctx.font = `bold 26px ${font}`;
-  const initials = (fallbackLabel || "?").slice(0, 2);
-  const tw = ctx.measureText(initials).width;
-  ctx.fillText(initials, x + (size - tw) / 2, y + size / 2 + 10);
-}
-
 export async function buildHSRDailyCard(
   payload: HSRDailyCardPayload,
 ): Promise<Buffer> {
   const W = 900;
-  const H = payload.monthLastDay ? 320 : 360;
+  const H = 360;
   const canvas = createCanvas(W, H);
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d") as any;
 
   const font = '"HSRFont", "HSRFontTW", sans-serif';
-  const accent = "#c084fc";
 
-  // Background gradient — HSR dark purple theme
-  const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, "#0e0a18");
-  bg.addColorStop(0.5, "#130f20");
-  bg.addColorStop(1, "#1a1228");
-  ctx.fillStyle = bg;
+  // ── BACKGROUND ──
+  const bgPaths = [
+    path.join(__dirname, "../../assets/daily-bg.jpg"),
+    path.join(process.cwd(), "src/assets/daily-bg.jpg"),
+    path.join(process.cwd(), "dist/assets/daily-bg.jpg"),
+  ];
+  let bgLoaded = false;
+  for (const bgPath of bgPaths) {
+    if (fs.existsSync(bgPath)) {
+      try {
+        const bgBuf = fs.readFileSync(bgPath);
+        const bgImg = await loadImage(bgBuf);
+        // Cover-crop centered
+        const scale = Math.max(W / bgImg.width, H / bgImg.height);
+        const dw = bgImg.width * scale;
+        const dh = bgImg.height * scale;
+        const dx = (W - dw) / 2;
+        const dy = (H - dh) / 2;
+        ctx.drawImage(bgImg, dx, dy, dw, dh);
+        // Dark overlay to simulate brightness(0.45) saturate(0.9)
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillRect(0, 0, W, H);
+        bgLoaded = true;
+        break;
+      } catch {
+        // continue to next path
+      }
+    }
+  }
+  if (!bgLoaded) {
+    // Fallback gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "#06040e");
+    grad.addColorStop(1, "#0a0614");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Left shadow overlay
+  const leftShadow = ctx.createLinearGradient(0, 0, W, 0);
+  leftShadow.addColorStop(0, "rgba(6,4,14,0.96)");
+  leftShadow.addColorStop(0.28, "rgba(6,4,14,0.80)");
+  leftShadow.addColorStop(0.55, "rgba(6,4,14,0.10)");
+  leftShadow.addColorStop(1, "rgba(6,4,14,0)");
+  ctx.fillStyle = leftShadow;
   ctx.fillRect(0, 0, W, H);
 
-  // Outer panel
-  const px = 28, py = 24, pw = W - 56, ph = H - 48;
-  roundedRect(ctx, px, py, pw, ph, 20);
-  ctx.fillStyle = "rgba(8, 6, 14, 0.65)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(192, 132, 252, 0.26)";
-  ctx.lineWidth = 1.8;
-  ctx.stroke();
+  // Bottom fade overlay
+  const bottomFade = ctx.createLinearGradient(0, H * 0.5, 0, H);
+  bottomFade.addColorStop(0, "rgba(4,3,10,0)");
+  bottomFade.addColorStop(1, "rgba(4,3,10,0.6)");
+  ctx.fillStyle = bottomFade;
+  ctx.fillRect(0, 0, W, H);
 
-  // Accent bar left
-  ctx.fillStyle = accent;
-  roundedRect(ctx, px, py + 20, 4, ph - 40, 2);
-  ctx.fill();
+  // ── LEFT COLUMN ──
+  const lx = 44;
+  const ly = 44;
 
-  // ── LEFT: UID ──
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = `bold 34px ${font}`;
-  ctx.fillText(`UID ${payload.uid}`, px + 24, py + 54);
+  // UID
+  ctx.fillStyle = "rgba(255,255,255,0.28)";
+  ctx.font = `11px ${font}`;
+  ctx.fillText(`UID  ${payload.uid}`, lx, ly + 11);
 
-  // Status badge
-  const signed = payload.status === "success";
-  const badgeText = signed ? "✔ 簽到成功" : "✔ 已簽到";
-  const badgeColor = signed ? accent : "#a0b8d0";
-  roundedRect(ctx, px + 24, py + 70, 150, 36, 10);
-  ctx.fillStyle = signed
-    ? "rgba(192, 132, 252, 0.16)"
-    : "rgba(160, 184, 208, 0.12)";
-  ctx.fill();
-  ctx.strokeStyle = signed
-    ? "rgba(192, 132, 252, 0.50)"
-    : "rgba(160, 184, 208, 0.35)";
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
-  ctx.fillStyle = badgeColor;
-  ctx.font = `bold 20px ${font}`;
-  ctx.fillText(badgeText, px + 36, py + 94);
+  // Nickname
+  ctx.fillStyle = "rgba(255,255,255,1)";
+  ctx.font = `bold 28px ${font}`;
+  ctx.fillText(payload.nickname, lx, ly + 11 + 8 + 24);
 
-  // ── CENTER: Today reward icon ──
-  const iconSize = 112;
-  const centerX = Math.floor(W / 2);
-  const iconX = centerX - iconSize / 2 - (payload.monthLastDay ? 0 : 80);
-  const iconY = py + 36;
+  // Horizontal divider — vertically centered in column
+  const dividerY = H / 2;
+  ctx.fillStyle = "rgba(255,255,255,0.15)";
+  ctx.fillRect(lx, dividerY, 32, 1);
 
-  const todayBuffer = payload.rewardIcon
-    ? await loadImageBuffer(payload.rewardIcon)
-    : null;
-  await drawIconBox(ctx, todayBuffer, payload.rewardName, font, iconX, iconY, iconSize, accent);
+  // Stats block ~64px from bottom
+  const statsY = H - 44 - 64;
 
-  ctx.fillStyle = "#8a6aaa";
-  ctx.font = `16px ${font}`;
-  const todayLbl = "今日獎勵";
-  ctx.fillText(todayLbl, iconX, iconY - 14);
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.font = `bold 26px ${font}`;
+  ctx.fillText(`${payload.totalDays}`, lx, statsY + 24);
 
-  ctx.fillStyle = "#e5c8ff";
-  ctx.font = `bold 20px ${font}`;
-  const rewardLabel = `${payload.rewardName} ×${payload.rewardCount}`;
-  const rlW = ctx.measureText(rewardLabel).width;
-  ctx.fillText(rewardLabel, iconX + (iconSize - rlW) / 2, iconY + iconSize + 28);
+  ctx.fillStyle = "rgba(255,255,255,0.28)";
+  ctx.font = `10px ${font}`;
+  ctx.fillText(`${payload.month}月累計天數`, lx, statsY + 24 + 14);
 
-  // Tomorrow reward icon (only if not last day)
-  if (!payload.monthLastDay && payload.tmrRewardName) {
-    const tmrIconX = centerX + 10;
-    const tmrBuf = payload.tmrRewardIcon
-      ? await loadImageBuffer(payload.tmrRewardIcon)
-      : null;
-
-    // Dim the tomorrow box
-    ctx.globalAlpha = 0.65;
-    await drawIconBox(ctx, tmrBuf, payload.tmrRewardName, font, tmrIconX, iconY, iconSize, "#7a5aaa");
-    ctx.globalAlpha = 1;
-
-    ctx.fillStyle = "#6a4a8a";
-    ctx.font = `16px ${font}`;
-    ctx.fillText("明日獎勵", tmrIconX, iconY - 14);
-
-    ctx.fillStyle = "#9a80b8";
-    ctx.font = `18px ${font}`;
-    const tmrLabel = `${payload.tmrRewardName} ×${payload.tmrRewardCount ?? 1}`;
-    const tmrLW = ctx.measureText(tmrLabel).width;
-    ctx.fillText(tmrLabel, tmrIconX + (iconSize - tmrLW) / 2, iconY + iconSize + 28);
-  }
-
-  // ── RIGHT: Stats ──
-  const rightX = W - px - 220;
-  const statsStartY = py + 52;
-  const lineH = 54;
-
-  const stats: [string, string][] = [
-    [`${payload.month} 月簽到`, `${payload.totalDays} 天`],
-  ];
   if (payload.signCntMissed !== undefined) {
-    stats.push(["漏簽天數", `${payload.signCntMissed} 天`]);
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.font = `bold 26px ${font}`;
+    ctx.fillText(`${payload.signCntMissed}`, lx, statsY + 24 + 14 + 28);
+
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.font = `10px ${font}`;
+    ctx.fillText("漏簽天數", lx, statsY + 24 + 14 + 28 + 14);
   }
 
-  for (let i = 0; i < stats.length; i++) {
-    const item = stats[i] as [string, string];
-    const [label, value] = item;
-    const sy = statsStartY + i * lineH;
-    ctx.fillStyle = "#7a5a9a";
-    ctx.font = `18px ${font}`;
-    ctx.fillText(label, rightX, sy);
-    ctx.fillStyle = "#d8b4fe";
-    ctx.font = `bold 30px ${font}`;
-    ctx.fillText(value, rightX, sy + 30);
+  // ── VERTICAL DIVIDER ──
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.fillRect(282, 44, 1, H - 88);
+
+  // ── RIGHT COLUMN: 5-DAY CARDS ──
+  const now = moment().tz("Asia/Taipei");
+  const dayLabels = ["昨天", "今天", "明天", "後天", "大後天"];
+  const cardAreaX = 310;
+  const cardAreaW = 864 - cardAreaX;
+  const slotW = cardAreaW / 5;
+
+  // Build slot data
+  type SlotState = "past-claimed" | "past-missed" | "active" | "future";
+  interface Slot {
+    label: string;
+    date: string;
+    reward: DayReward;
+    state: SlotState;
   }
 
-  // Timestamp bottom right
-  const ts = moment().tz("Asia/Taipei").format("YYYY/MM/DD HH:mm");
-  ctx.fillStyle = "#4a3a6a";
-  ctx.font = `16px ${font}`;
+  const slots: Slot[] = [
+    {
+      label: "昨天",
+      date: now.clone().subtract(1, "day").format("M/DD"),
+      reward: payload.yesterdayReward ?? { name: "—", count: 0 },
+      state: payload.yesterdayReward?.claimed ? "past-claimed" : "past-missed",
+    },
+    {
+      label: "今天",
+      date: now.format("M/DD"),
+      reward: payload.todayReward,
+      state: "active",
+    },
+    {
+      label: "明天",
+      date: now.clone().add(1, "day").format("M/DD"),
+      reward: payload.nextRewards[0],
+      state: "future",
+    },
+    {
+      label: "後天",
+      date: now.clone().add(2, "day").format("M/DD"),
+      reward: payload.nextRewards[1],
+      state: "future",
+    },
+    {
+      label: "大後天",
+      date: now.clone().add(3, "day").format("M/DD"),
+      reward: payload.nextRewards[2],
+      state: "future",
+    },
+  ];
+
+  const iconBoxSize = 72;
+  const iconPad = 10;
+
+  // Vertical center for icon boxes
+  const iconBoxY = Math.floor((H - iconBoxSize) / 2);
+  const iconCenterY = iconBoxY + iconBoxSize / 2;
+
+  for (let i = 0; i < 5; i++) {
+    const slot = slots[i]!;
+    const slotCenterX = Math.floor(cardAreaX + slotW * i + slotW / 2);
+    const iconBoxX = slotCenterX - iconBoxSize / 2;
+
+    // Set alpha
+    const alpha =
+      slot.state === "active" ? 1.0 : slot.state === "future" ? 0.55 : 0.32;
+    ctx.globalAlpha = alpha;
+
+    // Day label
+    const dayLabelColor =
+      slot.state === "active"
+        ? "rgba(255,255,255,0.70)"
+        : "rgba(255,255,255,0.25)";
+    ctx.fillStyle = dayLabelColor;
+    ctx.font = `10px ${font}`;
+    const dayLabelW = ctx.measureText(slot.label).width;
+    ctx.fillText(slot.label, slotCenterX - dayLabelW / 2, iconBoxY - 24);
+
+    // Date
+    ctx.fillStyle = "rgba(255,255,255,0.40)";
+    ctx.font = `9px ${font}`;
+    const dateW = ctx.measureText(slot.date).width;
+    ctx.fillText(slot.date, slotCenterX - dateW / 2, iconBoxY - 12);
+
+    // Icon box background
+    const bgColor =
+      slot.state === "active"
+        ? "rgba(255,255,255,0.10)"
+        : "rgba(255,255,255,0.06)";
+    roundedRect(ctx, iconBoxX, iconBoxY, iconBoxSize, iconBoxSize, 8);
+    ctx.fillStyle = bgColor;
+    ctx.fill();
+
+    // Icon box border
+    const borderColor =
+      slot.state === "active"
+        ? "rgba(255,255,255,0.35)"
+        : "rgba(255,255,255,0.09)";
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Icon image
+    if (slot.reward.icon) {
+      const iconBuf = await loadImageBuffer(slot.reward.icon);
+      if (iconBuf) {
+        try {
+          const img = await loadImage(iconBuf);
+          const innerSize = iconBoxSize - iconPad * 2;
+          const scale = Math.min(innerSize / img.width, innerSize / img.height);
+          const dw = img.width * scale;
+          const dh = img.height * scale;
+          const ox = iconBoxX + iconPad + (innerSize - dw) / 2;
+          const oy = iconBoxY + iconPad + (innerSize - dh) / 2;
+          ctx.drawImage(img, ox, oy, dw, dh);
+        } catch {
+          // skip
+        }
+      }
+    }
+
+    // Checkmark badge (past-claimed)
+    if (slot.state === "past-claimed") {
+      const badgeX = iconBoxX + iconBoxSize - 8;
+      const badgeY = iconBoxY - 8;
+      ctx.beginPath();
+      ctx.arc(badgeX, badgeY, 8, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.20)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.6)";
+      ctx.font = `8px ${font}`;
+      ctx.fillText("✓", badgeX - 3, badgeY + 3);
+    }
+
+    // Reward name + count
+    const rewardColor =
+      slot.state === "active"
+        ? "rgba(255,255,255,0.90)"
+        : "rgba(255,255,255,0.55)";
+    ctx.fillStyle = rewardColor;
+    ctx.font =
+      slot.state === "active" ? `600 11px ${font}` : `11px ${font}`;
+    const rewardText = `${slot.reward.name} ×${slot.reward.count}`;
+    const rewardW = ctx.measureText(rewardText).width;
+    ctx.fillText(rewardText, slotCenterX - rewardW / 2, iconBoxY + iconBoxSize + 16);
+
+    // Status text (yesterday and today only)
+    if (slot.state === "past-claimed") {
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.font = `9px ${font}`;
+      const st = "已領取";
+      const stW = ctx.measureText(st).width;
+      ctx.fillText(st, slotCenterX - stW / 2, iconBoxY + iconBoxSize + 28);
+    } else if (slot.state === "past-missed") {
+      ctx.fillStyle = "rgba(255,80,80,0.8)";
+      ctx.font = `9px ${font}`;
+      const st = "未簽到";
+      const stW = ctx.measureText(st).width;
+      ctx.fillText(st, slotCenterX - stW / 2, iconBoxY + iconBoxSize + 28);
+    } else if (slot.state === "active") {
+      ctx.fillStyle = "#86efac";
+      ctx.font = `9px ${font}`;
+      const st = "已簽到";
+      const stW = ctx.measureText(st).width;
+      ctx.fillText(st, slotCenterX - stW / 2, iconBoxY + iconBoxSize + 28);
+    }
+
+    // Arrow between cards (after each card except last)
+    if (i < 4) {
+      ctx.globalAlpha = 0.45;
+      const nextSlotCenterX = Math.floor(cardAreaX + slotW * (i + 1) + slotW / 2);
+      const arrowX = Math.floor((slotCenterX + nextSlotCenterX) / 2);
+      const arrowY = iconCenterY;
+      const aw = 8; // half-base
+      const ah = 6; // half-height
+      ctx.fillStyle = "rgba(255,255,255,0.45)";
+      ctx.beginPath();
+      ctx.moveTo(arrowX + aw / 2, arrowY);
+      ctx.lineTo(arrowX - aw / 2, arrowY - ah / 2);
+      ctx.lineTo(arrowX - aw / 2, arrowY + ah / 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  ctx.globalAlpha = 1.0;
+
+  // ── TIMESTAMP ──
+  const ts = moment().tz("Asia/Taipei").format("YYYY/MM/DD · HH:mm") + " CST";
+  ctx.fillStyle = "rgba(255,255,255,0.15)";
+  ctx.font = `10px ${font}`;
   const tsW = ctx.measureText(ts).width;
-  ctx.fillText(ts, W - px - tsW - 8, H - py - 8);
+  ctx.fillText(ts, W - 36 - tsW, H - 20);
 
   return canvas.toBuffer("image/png");
 }
