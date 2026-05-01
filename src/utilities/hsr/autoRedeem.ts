@@ -271,13 +271,23 @@ class AutoRedeemSystem {
 			`${account.uid}.cookieExpired`
 		);
 		if (isCookieExpired) {
+			// 若之前已確認無法自動刷新（需人工介入），直接跳過
+			const needsManualUpdate = await this.db.get(`${account.uid}.needsCookieUpdate`);
+			if (needsManualUpdate) {
+				return {
+					uid: account.uid,
+					nickname: accountNickname,
+					description: "",
+					codeResults: [],
+					hasSuccess: false,
+					hasResults: false
+				};
+			}
+
 			const shouldRetry = await this.shouldRetryCookieRefresh(
 				account.uid
 			);
 			if (!shouldRetry) {
-				this.logger.info(
-					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 更新中卻跳過下次更新嘗試`
-				);
 				return {
 					uid: account.uid,
 					nickname: accountNickname,
@@ -296,9 +306,6 @@ class AutoRedeemSystem {
 			);
 
 			if (!refreshResult.success) {
-				this.logger.warn(
-					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 更新失敗，默默跳過`
-				);
 				return {
 					uid: account.uid,
 					nickname: accountNickname,
@@ -539,6 +546,12 @@ export default async function autoRedeem(): Promise<void> {
 						`${account.uid}.cookieExpired`
 					);
 					if (!isCookieExpired) continue;
+
+					// 若之前已確認無法自動刷新（需人工介入），跳過
+					const needsManualUpdate = await (system as any).db.get(
+						`${account.uid}.needsCookieUpdate`
+					);
+					if (needsManualUpdate) continue;
 
 					const shouldRetry = await system.shouldRetryCookieRefresh(
 						account.uid

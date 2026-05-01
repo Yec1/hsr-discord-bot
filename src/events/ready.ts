@@ -76,13 +76,13 @@ client.once(Events.ClientReady, async () => {
 		if (!hourlyJob) {
 			hourlyJob = schedule.scheduleJob("0 * * * *", function () {
 				runAutoDailySign();
-				runAutoRedeem();
 				autoMimo();
 			});
 		}
 
 		if (!dailyJob) {
-			dailyJob = schedule.scheduleJob("0 2 * * *", function () {
+			dailyJob = schedule.scheduleJob("0 8 * * *", function () {
+				runAutoRedeem();
 				setupLeaderboardMaintenance();
 			});
 		}

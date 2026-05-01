@@ -204,6 +204,15 @@ class AutoDailySignSystem {
 		return this.stats.success + this.stats.signed > successBefore;
 	}
 
+	async getDiscordNickname(userId: string): Promise<string> {
+		try {
+			const user = await this.client.users.fetch(userId);
+			return user.displayName || user.username || "旅行者";
+		} catch {
+			return "旅行者";
+		}
+	}
+
 	async performSignIn(
 		account: Account,
 		userLang: string,
@@ -220,6 +229,8 @@ class AutoDailySignSystem {
 			cookie: account.cookie,
 			lang: this.getLanguage(userLang)
 		});
+
+		const nickname = await this.getDiscordNickname(userId);
 
 		try {
 			const [info, reward, rewards] = (await Promise.all([
@@ -255,7 +266,7 @@ class AutoDailySignSystem {
 
 		await this.sendSuccessMessage(channelId, {
 			uid: account.uid,
-			nickname: "旅行者",
+			nickname,
 			status: "success",
 			totalDays: signedDays,
 			month: reward.month,
@@ -327,7 +338,7 @@ class AutoDailySignSystem {
 
 				await this.sendSuccessMessage(channelId, {
 					uid: account.uid,
-					nickname: "旅行者",
+					nickname,
 					status: "success",
 					totalDays: signedDays,
 					month: reward.month,
