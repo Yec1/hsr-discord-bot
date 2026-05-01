@@ -397,15 +397,17 @@ export async function drawInQueueReply(
 	interaction: CommandInteraction,
 	title: string = ""
 ): Promise<void> {
-	await interaction.editReply({
-		embeds: [
-			new EmbedBuilder()
-				.setTitle(title)
-				.setThumbnail(
-					"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
-				)
-		]
-	}).catch(() => {});
+	await interaction
+		.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setTitle(title)
+					.setThumbnail(
+						"https://media.discordapp.net/attachments/1057244827688910850/1119941063780601856/hertaa1.gif"
+					)
+			]
+		})
+		.catch(() => {});
 }
 
 const languageMapping: Record<string, LanguageEnum> = {
@@ -432,7 +434,9 @@ export async function setupDefaultLang(
 		"en-GB": "en"
 	};
 
-	const langCode = langMap[userSystemLang] || (userSystemLang.startsWith("zh") ? "tw" : "en");
+	const langCode =
+		langMap[userSystemLang] ||
+		(userSystemLang.startsWith("zh") ? "tw" : "en");
 
 	if (languageMapping[langCode])
 		await database.set(`${userId}.locale`, langCode);
@@ -833,22 +837,24 @@ export async function updateTokensBySToken(
 	originalCookieArray: string[],
 	uid?: string
 ): Promise<{ success: boolean; message: string; newCookie?: string }> {
-	const stoken = cookieMap.stoken_v2;
+	const stoken = cookieMap.stoken;
+	const cookieUid = cookieMap.ltuid_v2 || cookieMap.account_id_v2;
 	const mid = cookieMap.ltmid_v2 || cookieMap.mid;
 
-	if (!stoken || !mid) {
+	if (!stoken || !mid || !cookieUid) {
 		return {
 			success: false,
-			message: "Missing stoken_v2 or mid in cookie parameters"
+			message: "Missing stoken, uid, or mid in cookie parameters"
 		};
 	}
 
 	const url =
 		"https://sg-public-api.hoyoverse.com/account/ma-passport/token/getBySToken";
 
-	// We piece together the cookie for the request
-	// (usually stoken_v2 and mid are enough for this endpoint)
-	const requestCookie = `stoken_v2=${stoken}; mid=${mid};`;
+	// Must send all identity cookies with key "stoken" (not "stoken_v2")
+	const requestCookie =
+		`stoken=${stoken}; ltuid_v2=${cookieUid}; ltmid_v2=${mid}; ` +
+		`account_id_v2=${cookieUid}; account_mid_v2=${mid}; mid=${mid};`;
 
 	const response = await withProxy(config.PROXY_URL, () =>
 		fetch(url, {
@@ -928,6 +934,16 @@ export async function updateTokensBySToken(
 		account[accountIndex].cookie = finalCookie;
 		await database.set(accountKey, account);
 
+		// Sync hoyolabs store so both stores stay consistent.
+		const ltuid = extractLtuidFromCookie(finalCookie);
+		if (ltuid) {
+			try {
+				await upsertHoyolab(database, userId, { ltuid_v2: ltuid, cookie: finalCookie });
+			} catch {
+				// Non-fatal: flat array is already updated above.
+			}
+		}
+
 		if (uid) {
 			await database.delete(`${uid}.cookieExpired`);
 			await database.delete(`${uid}.needsCookieUpdate`);
@@ -940,6 +956,100 @@ export async function updateTokensBySToken(
 		message: "Token refreshed using stoken_v2",
 		newCookie: finalCookie
 	};
+}
+
+/**
+ * Exchange stoken_v2 + mid for ltoken_v2 and cookie_token_v2.
+ * Returns the enriched cookie string (original keys preserved, new tokens
+ * appended/replaced), or null if the exchange fails.
+ */
+export async function getTokensFromSToken(
+	cookieStr: string
+): Promise<string | null> {
+	const cookieMap: Record<string, string> = {};
+	for (const part of cookieStr.split(/;\s*/)) {
+		const eq = part.indexOf("=");
+		if (eq === -1) continue;
+		cookieMap[part.slice(0, eq).trim()] = part.slice(eq + 1).trim();
+	}
+
+	const stoken = cookieMap["stoken"];
+	const uid = cookieMap["ltuid_v2"] || cookieMap["account_id_v2"];
+	const mid =
+		cookieMap["ltmid_v2"] ||
+		cookieMap["account_mid_v2"] ||
+		cookieMap["mid"];
+	if (!stoken || !mid || !uid) {
+		return null;
+	}
+
+	const url =
+		"https://sg-public-api.hoyoverse.com/account/ma-passport/token/getBySToken";
+	// Must send all identity cookies; key must be "stoken" not "stoken_v2"
+	const requestCookie =
+		`stoken=${stoken}; ltuid_v2=${uid}; ltmid_v2=${mid}; ` +
+		`account_id_v2=${uid}; account_mid_v2=${mid}; mid=${mid};`;
+
+	let response: Response;
+	try {
+		response = await withProxy(config.PROXY_URL, () =>
+			fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					ds: generateDynamicSecret(),
+					"x-rpc-app_id": "c9oqaq3s3gu8",
+					Cookie: requestCookie
+				},
+				body: JSON.stringify({ dst_token_types: [2, 4] })
+			})
+		);
+	} catch (e: any) {
+		return null;
+	}
+
+	if (!response.ok) {
+		return null;
+	}
+
+	let data: any;
+	try {
+		data = await response.json();
+	} catch {
+		return null;
+	}
+
+	if (data?.retcode !== 0 || !data?.data?.tokens) {
+		return null;
+	}
+
+	let ltoken = "";
+	let cookieToken = "";
+	for (const tokenObj of data.data.tokens) {
+		if (tokenObj.token_type === 2) ltoken = tokenObj.token;
+		if (tokenObj.token_type === 4) cookieToken = tokenObj.token;
+	}
+	if (!ltoken) return null;
+
+	// Build enriched cookie: keep existing keys, replace/add new tokens
+	const parts = cookieStr.split(/;\s*/).filter(Boolean);
+	const has = (k: string) => parts.some(p => p.startsWith(k + "="));
+	const replace = (k: string, v: string) =>
+		parts.map(p => (p.startsWith(k + "=") ? `${k}=${v}` : p));
+
+	let arr = has("ltoken_v2")
+		? replace("ltoken_v2", ltoken)
+		: [...parts, `ltoken_v2=${ltoken}`];
+	if (cookieToken) {
+		arr = has("cookie_token_v2")
+			? arr.map(p =>
+					p.startsWith("cookie_token_v2=")
+						? `cookie_token_v2=${cookieToken}`
+						: p
+				)
+			: [...arr, `cookie_token_v2=${cookieToken}`];
+	}
+	return arr.join("; ");
 }
 
 export async function autoRefreshCookie(
@@ -1041,7 +1151,7 @@ export async function autoRefreshCookie(
 		);
 
 		// 如果驗證失敗，且有 stoken_v2，則嘗試透過 stoken_v2 強制更新 Token
-		if (cookieMap.stoken_v2 && (cookieMap.ltmid_v2 || cookieMap.mid)) {
+		if (cookieMap.stoken && (cookieMap.ltmid_v2 || cookieMap.mid)) {
 			const originalCookieArray = cookie.split("; ").filter(Boolean);
 			const stokenResult = await updateTokensBySToken(
 				userId,
@@ -1058,7 +1168,7 @@ export async function autoRefreshCookie(
 			);
 		} else {
 			console.warn(
-				`[autoRefreshCookie] [user=${userId}] 無 stoken_v2 可刷新，cookie fields: ${Object.keys(cookieMap).join(", ")}`
+				`[autoRefreshCookie] [user=${userId}] 無 stoken 可刷新，cookie fields: ${Object.keys(cookieMap).join(", ")}`
 			);
 		}
 
@@ -1159,7 +1269,30 @@ export async function getUserGameInfo(
 	gameId: number = 6 // 6 = Honkai: Star Rail
 ): Promise<GameInfo> {
 	try {
-		const hoyolab = new Hoyolab({ cookie });
+		// hoyolab-ts requires legacy ltuid/ltoken keys.
+		// Web-login provides v2 keys (ltuid_v2, ltoken_v2); map them as aliases.
+		let normalizedCookie = cookie;
+		const cookieMap: Record<string, string> = {};
+		for (const part of cookie.split(/;\s*/)) {
+			const eq = part.indexOf("=");
+			if (eq === -1) continue;
+			cookieMap[part.slice(0, eq).trim()] = part.slice(eq + 1).trim();
+		}
+		const extras: string[] = [];
+		if (
+			!cookieMap["ltuid"] &&
+			(cookieMap["ltuid_v2"] || cookieMap["account_id_v2"])
+		)
+			extras.push(
+				`ltuid=${cookieMap["ltuid_v2"] ?? cookieMap["account_id_v2"]}`
+			);
+		if (!cookieMap["ltoken"] && cookieMap["ltoken_v2"])
+			extras.push(`ltoken=${cookieMap["ltoken_v2"]}`);
+		if (!cookieMap["ltmid_v2"] && cookieMap["account_mid_v2"])
+			extras.push(`ltmid_v2=${cookieMap["account_mid_v2"]}`);
+		if (extras.length) normalizedCookie = cookie + "; " + extras.join("; ");
+
+		const hoyolab = new Hoyolab({ cookie: normalizedCookie });
 
 		const recordList = await hoyolab.gameRecordCard();
 

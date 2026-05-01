@@ -17,7 +17,7 @@
  *      Calls `getUserGameInfo`.
  */
 import { database, client } from "@/index.js";
-import { getUserGameInfo, updateAccountInfo } from "@/utilities/index.js";
+import { getUserGameInfo, updateAccountInfo, getTokensFromSToken } from "@/utilities/index.js";
 import { upsertHoyolab, upsertCharacter, type Character } from "@/utilities/accountStore.js";
 import { getConfig } from "@/utilities/core/config.js";
 import Logger from "@/utilities/core/logger.js";
@@ -43,6 +43,31 @@ export interface BindResult {
 const log = new Logger("WebLogin");
 const HSR_GAME_ID = 6;
 
+/** Parse a cookie string into a key→value map. */
+function parseCookieMap(cookieStr: string): Record<string, string> {
+	return Object.fromEntries(
+		cookieStr.split(";").map(p => {
+			const [k, ...v] = p.trim().split("=");
+			return [k!.trim(), v.join("=").trim()];
+		})
+	);
+}
+
+/** Extract stoken + ltmid_v2 from a raw cookie string for Hoyolab storage. */
+function extractStokenFields(
+	cookieStr: string
+): { stoken: string; ltmid_v2: string } | null {
+	try {
+		const m = parseCookieMap(cookieStr);
+		const stoken = m["stoken"];
+		const ltmid_v2 = m["ltmid_v2"] ?? m["account_mid_v2"] ?? m["mid"];
+		if (!stoken || !ltmid_v2) return null;
+		return { stoken, ltmid_v2 };
+	} catch {
+		return null;
+	}
+}
+
 async function checkAccountLimit(discordUserId: string): Promise<void> {
 	const config = getConfig();
 	if (config.DEVIDS.includes(discordUserId)) return;
@@ -52,18 +77,9 @@ async function checkAccountLimit(discordUserId: string): Promise<void> {
 	}
 }
 
-async function notifyBound(discordUserId: string, uid: string, nickname?: string): Promise<void> {
-	try {
-		const user = await client.users.fetch(discordUserId);
-		await user.send(
-			`✅ Your Hoyoverse account has been linked to **HSR Bot**!\nUID: \`${uid}\`${nickname ? ` — ${nickname}` : ""}`
-		);
-		log.info(`[bind] DM sent to ${discordUserId}`);
-	} catch (e) {
-		log.info(
-			`DM to ${discordUserId} failed (likely DMs disabled): ${(e as Error).message}`
-		);
-	}
+async function notifyBound(_discordUserId: string, _uid: string, _nickname?: string): Promise<void> {
+	// DM notification removed — users see the newly bound account immediately
+	// when they next use any command or autocomplete.
 }
 
 export async function bindCookieToUser(
@@ -97,6 +113,22 @@ export async function bindCookieToUser(
 		nickname: gameInfo.nickname
 	});
 	log.info(`[bind] updateAccountInfo OK key=${discordUserId}.account uid=${uid}`);
+
+	// Patch stoken/ltmid_v2 onto the Hoyolab record for silent cookie refresh.
+	const ltuid_v2 = parseCookieMap(cookieStr)["ltuid_v2"] ?? parseCookieMap(cookieStr)["account_id_v2"];
+	const stokenPatch = extractStokenFields(cookieStr);
+	if (ltuid_v2 && stokenPatch) {
+		try {
+			await upsertHoyolab(database as any, discordUserId, {
+				ltuid_v2,
+				cookie: cookieStr,
+				...stokenPatch,
+			});
+			log.info(`[bind] stoken stored for ltuid=${ltuid_v2}`);
+		} catch (e: any) {
+			log.warn(`[bind] stoken patch failed: ${e?.message ?? e}`);
+		}
+	}
 
 	await notifyBound(discordUserId, uid, gameInfo.nickname);
 
@@ -141,7 +173,8 @@ export async function bindFromEnriched(
 	await upsertHoyolab(database as any, discordUserId, {
 		ltuid_v2,
 		cookie: cookieStr,
-		hoyolabName: null
+		hoyolabName: null,
+		...extractStokenFields(cookieStr),
 	});
 	await upsertCharacter(database as any, discordUserId, ltuid_v2, character);
 	log.info(`[bindFromEnriched] OK uid=${uid} updated=${!isNew}`);
@@ -162,7 +195,8 @@ export async function bindHoyolabOnly(
 	await upsertHoyolab(database as any, discordUserId, {
 		ltuid_v2,
 		cookie: cookieStr,
-		hoyolabName: null
+		hoyolabName: null,
+		...extractStokenFields(cookieStr),
 	});
 	// No character row, no DM, no slot consumed.
 }
@@ -213,11 +247,21 @@ export async function drainPendingLogins(
 				await bindHoyolabOnly(discordUserId, row.ltuid_v2, cookieStr);
 			} else {
 				log.info(`[drain] route=legacy row=${row.id} (no enriched payload)`);
-				const res = await bindCookieToUser(discordUserId, cookieStr);
+				// Web-login cookies use stoken_v2; try to exchange for ltoken_v2
+				// before calling getUserGameInfo which requires ltoken.
+				const enriched = await getTokensFromSToken(cookieStr);
+				if (enriched) {
+					log.info(`[drain] stoken exchange OK row=${row.id} newCookieLen=${enriched.length}`);
+				} else {
+					log.warn(`[drain] stoken exchange failed row=${row.id}, using original cookie`);
+				}
+				const res = await bindCookieToUser(discordUserId, enriched ?? cookieStr);
 				out.push(res);
 			}
 		} catch (e: any) {
 			log.error(`[drain] bind FAILED row=${row.id}: ${e?.message ?? e}`);
+			// Do NOT markConsumed on bind failure — keep row available for retry.
+			continue;
 		}
 		await markConsumed(row.id);
 		log.info(`[drain] markConsumed row=${row.id}`);

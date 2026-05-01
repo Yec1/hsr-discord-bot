@@ -49,6 +49,10 @@ export interface Hoyolab {
 	lastUpdate: string;
 	invalid: boolean;
 	characters: Character[];
+	/** Encrypted stoken for silent cookie refresh. Stored per Hoyolab account. */
+	stoken?: string;
+	/** ltmid_v2 required alongside ltuid_v2 for stoken exchange. */
+	ltmid_v2?: string;
 }
 
 export interface AccountStore {
@@ -244,7 +248,7 @@ function nowIso() {
 export async function upsertHoyolab(
 	db: DbAdapter,
 	userId: string,
-	patch: { ltuid_v2: string; cookie: string; hoyolabName?: string | null }
+	patch: { ltuid_v2: string; cookie: string; hoyolabName?: string | null; stoken?: string; ltmid_v2?: string }
 ): Promise<Hoyolab> {
 	const store = await loadAccounts(db, userId);
 	const idx = store.hoyolabs.findIndex(h => h.ltuid_v2 === patch.ltuid_v2);
@@ -256,7 +260,9 @@ export async function upsertHoyolab(
 			hoyolabName: patch.hoyolabName ?? null,
 			lastUpdate: nowIso(),
 			invalid: false,
-			characters: []
+			characters: [],
+			...(patch.stoken !== undefined && { stoken: patch.stoken }),
+			...(patch.ltmid_v2 !== undefined && { ltmid_v2: patch.ltmid_v2 }),
 		};
 		store.hoyolabs.push(h);
 	} else {
@@ -265,6 +271,8 @@ export async function upsertHoyolab(
 		h.invalid = false;
 		h.lastUpdate = nowIso();
 		if (patch.hoyolabName !== undefined) h.hoyolabName = patch.hoyolabName;
+		if (patch.stoken !== undefined) h.stoken = patch.stoken;
+		if (patch.ltmid_v2 !== undefined) h.ltmid_v2 = patch.ltmid_v2;
 	}
 	await saveAccounts(db, userId, store);
 	return h;
