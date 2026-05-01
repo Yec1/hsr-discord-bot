@@ -53,6 +53,8 @@ export interface Hoyolab {
 	stoken?: string;
 	/** ltmid_v2 required alongside ltuid_v2 for stoken exchange. */
 	ltmid_v2?: string;
+	/** Hoyolab profile picture URL fetched at web-login time. */
+	hoyolabIcon?: string;
 }
 
 export interface AccountStore {
@@ -248,7 +250,7 @@ function nowIso() {
 export async function upsertHoyolab(
 	db: DbAdapter,
 	userId: string,
-	patch: { ltuid_v2: string; cookie: string; hoyolabName?: string | null; stoken?: string; ltmid_v2?: string }
+	patch: { ltuid_v2: string; cookie: string; hoyolabName?: string | null; stoken?: string; ltmid_v2?: string; hoyolabIcon?: string }
 ): Promise<Hoyolab> {
 	const store = await loadAccounts(db, userId);
 	const idx = store.hoyolabs.findIndex(h => h.ltuid_v2 === patch.ltuid_v2);
@@ -263,6 +265,7 @@ export async function upsertHoyolab(
 			characters: [],
 			...(patch.stoken !== undefined && { stoken: patch.stoken }),
 			...(patch.ltmid_v2 !== undefined && { ltmid_v2: patch.ltmid_v2 }),
+			...(patch.hoyolabIcon !== undefined && { hoyolabIcon: patch.hoyolabIcon }),
 		};
 		store.hoyolabs.push(h);
 	} else {
@@ -273,6 +276,7 @@ export async function upsertHoyolab(
 		if (patch.hoyolabName !== undefined) h.hoyolabName = patch.hoyolabName;
 		if (patch.stoken !== undefined) h.stoken = patch.stoken;
 		if (patch.ltmid_v2 !== undefined) h.ltmid_v2 = patch.ltmid_v2;
+		if (patch.hoyolabIcon !== undefined) h.hoyolabIcon = patch.hoyolabIcon;
 	}
 	await saveAccounts(db, userId, store);
 	return h;
