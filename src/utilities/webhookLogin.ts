@@ -140,7 +140,8 @@ async function notifyBound(_discordUserId: string, _uid: string, _nickname?: str
 
 export async function bindCookieToUser(
 	discordUserId: string,
-	cookieStr: string
+	cookieStr: string,
+	hoyolabIcon?: string
 ): Promise<BindResult> {
 	log.info(`[bind] start user=${discordUserId} cookieLen=${cookieStr.length}`);
 
@@ -202,6 +203,7 @@ export async function bindCookieToUser(
 				ltuid_v2,
 				cookie: apiCookie,
 				...stokenPatch,
+				...(hoyolabIcon !== undefined ? { hoyolabIcon } : {}),
 			});
 			log.info(`[bind] stoken stored for ltuid=${ltuid_v2}`);
 		} catch (e: any) {
@@ -219,7 +221,8 @@ export async function bindFromEnriched(
 	ltuid_v2: string,
 	cookieStr: string,
 	card: EnrichedGameCard,
-	fetchedAt: string
+	fetchedAt: string,
+	hoyolabIcon?: string
 ): Promise<BindResult> {
 	log.info(
 		`[bindFromEnriched] start user=${discordUserId} uid=${card.game_role_id} ltuid=${ltuid_v2}`
@@ -254,6 +257,7 @@ export async function bindFromEnriched(
 		cookie: cookieStr,
 		hoyolabName: null,
 		...extractStokenFields(cookieStr),
+		...(hoyolabIcon !== undefined ? { hoyolabIcon } : {}),
 	});
 	await upsertCharacter(database as any, discordUserId, ltuid_v2, character);
 	log.info(`[bindFromEnriched] OK uid=${uid} updated=${!isNew}`);
@@ -309,6 +313,10 @@ export async function drainPendingLogins(
 
 		const enriched = row.enriched;
 		const card = enriched?.cards.find(c => c.game_id === HSR_GAME_ID) ?? null;
+		const hoyolabIcon =
+			typeof (row.hoyo_account as any)?.avatar_url === "string"
+				? (row.hoyo_account as any).avatar_url
+				: undefined;
 
 		try {
 			if (card && enriched) {
@@ -318,7 +326,8 @@ export async function drainPendingLogins(
 					row.ltuid_v2,
 					cookieStr,
 					card,
-					enriched.fetched_at
+					enriched.fetched_at,
+					hoyolabIcon
 				);
 				out.push(res);
 			} else {
@@ -332,7 +341,7 @@ export async function drainPendingLogins(
 					log.info(`[drain] route=legacy row=${row.id} (no enriched payload)`);
 				}
 				// bindCookieToUser now handles stoken → ltoken_v2 exchange internally.
-				const res = await bindCookieToUser(discordUserId, cookieStr);
+				const res = await bindCookieToUser(discordUserId, cookieStr, hoyolabIcon);
 				out.push(res);
 			}
 		} catch (e: any) {
