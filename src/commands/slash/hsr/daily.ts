@@ -5,6 +5,7 @@ import {
 	MessageFlags
 } from "discord.js";
 import { getRandomColor, getUserHSRData } from "@/utilities/index.js";
+import { buildHSRDailyCard } from "@/utilities/canvas/dailyCard.js";
 import { database } from "@/index.js";
 import { TranslationFunction } from "@/types/index.js";
 
@@ -265,8 +266,6 @@ export default {
 		const info: DailyInfo = await hsr.daily.info();
 		const reward: DailyReward = await hsr.daily.reward();
 		const rewards: DailyRewards = await hsr.daily.rewards();
-		const todaySign = rewards.awards[info.total_sign_day - 1];
-		const tmrSign = rewards.awards[info.total_sign_day];
 		const res: DailyClaimResponse = await hsr.daily.claim();
 
 		if (res.code === -5003 || res.info.is_sign)
@@ -278,33 +277,72 @@ export default {
 				]
 			});
 
-		interaction.editReply({
-			embeds: [
-				new EmbedBuilder()
-					.setColor("#A2CDB0")
-					.setTitle(tr("daily_SignSuccess"))
-					.setThumbnail(todaySign?.icon || null)
-					.setDescription(
-						`${tr("daily_Description", { a: `**${todaySign?.name}** x${todaySign?.cnt}` })}${info.month_last_day ? "" : `\n${tr("daily_DescriptionTmr", { b: `**${tmrSign?.name}** x${tmrSign?.cnt}` })}`}`
-					)
-					.addFields(
-						{
-							name: tr("daily_Month"),
-							value: `\`${reward.month}\` 月`,
-							inline: true
-						},
-						{
-							name: tr("daily_SignedDay", { z: `\`${info.total_sign_day}\`` }),
-							value: "\u200b",
-							inline: true
-						},
-						{
-							name: tr("daily_MissedDay", { z: `\`${info.sign_cnt_missed}\`` }),
-							value: "\u200b",
-							inline: true
-						}
-					)
-			]
+		// info.total_sign_day is post-claim (already includes today)
+		const idx = info.total_sign_day - 1; // 0-based index of today's reward
+		const ystSign = rewards.awards[idx - 1];
+		const todaySign = rewards.awards[idx] || rewards.awards[0];
+		const nextSigns = [
+			rewards.awards[idx + 1] || rewards.awards[0],
+			rewards.awards[idx + 2] || rewards.awards[0],
+			rewards.awards[idx + 3] || rewards.awards[0],
+		];
+		const mkReward = (r: any) => ({
+			name: r?.name || "",
+			count: r?.cnt ?? 1,
+			...(r?.icon ? { icon: r.icon as string } : {}),
 		});
+
+		let cardFile: { attachment: Buffer; name: string } | null = null;
+		try {
+			const buf = await buildHSRDailyCard({
+				uid: (hsr as any).uid?.toString() || "",
+				nickname: interaction.user.displayName || "旅行者",
+				status: "success",
+				totalDays: info.total_sign_day,
+				month: reward.month,
+				signCntMissed: info.sign_cnt_missed,
+				...(ystSign ? { yesterdayReward: { ...mkReward(ystSign), claimed: idx > 0 } } : {}),
+				todayReward: mkReward(todaySign),
+				nextRewards: [mkReward(nextSigns[0]), mkReward(nextSigns[1]), mkReward(nextSigns[2])],
+			});
+			cardFile = { attachment: buf, name: "daily-hsr.png" };
+		} catch (e) {
+			// fall through to embed-only reply
+		}
+
+		if (cardFile) {
+			const { AttachmentBuilder } = await import("discord.js");
+			const file = new AttachmentBuilder(cardFile.attachment, { name: cardFile.name });
+			interaction.editReply({ files: [file] });
+		} else {
+			interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#A2CDB0")
+						.setTitle(tr("daily_SignSuccess"))
+						.setThumbnail(todaySign?.icon || null)
+						.setDescription(
+							`${tr("daily_Description", { a: `**${todaySign?.name}** x${todaySign?.cnt}` })}`
+						)
+						.addFields(
+							{
+								name: tr("daily_Month"),
+								value: `\`${reward.month}\` 月`,
+								inline: true
+							},
+							{
+								name: tr("daily_SignedDay", { z: `\`${info.total_sign_day}\`` }),
+								value: "\u200b",
+								inline: true
+							},
+							{
+								name: tr("daily_MissedDay", { z: `\`${info.sign_cnt_missed}\`` }),
+								value: "\u200b",
+								inline: true
+							}
+						)
+				]
+			});
+		}
 	}
 };

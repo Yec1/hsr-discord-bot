@@ -11,7 +11,7 @@ import {
 	autoRefreshCookie
 } from "@/utilities/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
-import { buildHSRDailyCard } from "@/utilities/canvas/dailyCard.js";
+import { buildHSRDailyCard, HSRDailyCardPayload } from "@/utilities/canvas/dailyCard.js";
 
 interface Config {
 	API_TIMEOUT: number;
@@ -235,29 +235,35 @@ class AutoDailySignSystem {
 				return;
 			}
 
-			// total_sign_day is the count BEFORE claiming; after claim it's +1
-			const signedDays = info.total_sign_day + 1;
-			const todaySign =
-				rewards.awards[info.total_sign_day] || rewards.awards[0];
-			const tmrSign =
-				rewards.awards[info.total_sign_day + 1] || rewards.awards[1];
+		// total_sign_day is the count BEFORE claiming; after claim it's +1
+		const signedDays = info.total_sign_day + 1;
+		const idx = info.total_sign_day; // 0-based index of today (pre-claim)
+		const ystSign = rewards.awards[idx - 1];
+		const todaySign = rewards.awards[idx] || rewards.awards[0];
+		const nextSigns = [
+			rewards.awards[idx + 1] || rewards.awards[0],
+			rewards.awards[idx + 2] || rewards.awards[0],
+			rewards.awards[idx + 3] || rewards.awards[0],
+		];
+		const mkReward = (r: any) => ({
+			name: r?.name || "",
+			count: r?.cnt ?? 1,
+			...(r?.icon ? { icon: r.icon as string } : {}),
+		});
 
-			this.stats.success++;
+		this.stats.success++;
 
-			await this.sendSuccessMessage(channelId, {
-				uid: account.uid,
-				status: "success",
-				rewardName: todaySign?.name || "",
-				rewardIcon: todaySign?.icon,
-				rewardCount: todaySign?.cnt ?? 1,
-				totalDays: signedDays,
-				month: reward.month,
-				signCntMissed: info.sign_cnt_missed,
-				monthLastDay: !!info.month_last_day,
-				tmrRewardName: tmrSign?.name,
-				tmrRewardIcon: tmrSign?.icon,
-				tmrRewardCount: tmrSign?.cnt,
-			}, tag);
+		await this.sendSuccessMessage(channelId, {
+			uid: account.uid,
+			nickname: "旅行者",
+			status: "success",
+			totalDays: signedDays,
+			month: reward.month,
+			signCntMissed: info.sign_cnt_missed,
+			...(ystSign ? { yesterdayReward: { ...mkReward(ystSign), claimed: idx > 0 } } : {}),
+			todayReward: mkReward(todaySign),
+			nextRewards: [mkReward(nextSigns[0]), mkReward(nextSigns[1]), mkReward(nextSigns[2])],
+		}, tag);
 		} catch (error: any) {
 			let errorMessage = error.message || "";
 			const code = error.code ?? error.retcode;
@@ -301,32 +307,36 @@ class AutoDailySignSystem {
 						return;
 					}
 
-					// total_sign_day is the count BEFORE claiming; after claim it's +1
-					const signedDays = info.total_sign_day + 1;
-					const todaySign =
-						rewards.awards[info.total_sign_day] ||
-						rewards.awards[0];
-					const tmrSign =
-						rewards.awards[info.total_sign_day + 1] ||
-						rewards.awards[1];
+				// total_sign_day is the count BEFORE claiming; after claim it's +1
+				const signedDays = info.total_sign_day + 1;
+				const idx = info.total_sign_day; // 0-based index of today (pre-claim)
+				const ystSign = rewards.awards[idx - 1];
+				const todaySign = rewards.awards[idx] || rewards.awards[0];
+				const nextSigns = [
+					rewards.awards[idx + 1] || rewards.awards[0],
+					rewards.awards[idx + 2] || rewards.awards[0],
+					rewards.awards[idx + 3] || rewards.awards[0],
+				];
+				const mkReward = (r: any) => ({
+					name: r?.name || "",
+					count: r?.cnt ?? 1,
+					...(r?.icon ? { icon: r.icon as string } : {}),
+				});
 
-					this.stats.success++;
+				this.stats.success++;
 
-					await this.sendSuccessMessage(channelId, {
-						uid: account.uid,
-						status: "success",
-						rewardName: todaySign?.name || "",
-						rewardIcon: todaySign?.icon,
-						rewardCount: todaySign?.cnt ?? 1,
-						totalDays: signedDays,
-						month: reward.month,
-						signCntMissed: info.sign_cnt_missed,
-						monthLastDay: !!info.month_last_day,
-						tmrRewardName: tmrSign?.name,
-						tmrRewardIcon: tmrSign?.icon,
-						tmrRewardCount: tmrSign?.cnt,
-					}, tag);
-					return;
+				await this.sendSuccessMessage(channelId, {
+					uid: account.uid,
+					nickname: "旅行者",
+					status: "success",
+					totalDays: signedDays,
+					month: reward.month,
+					signCntMissed: info.sign_cnt_missed,
+					...(ystSign ? { yesterdayReward: { ...mkReward(ystSign), claimed: idx > 0 } } : {}),
+					todayReward: mkReward(todaySign),
+					nextRewards: [mkReward(nextSigns[0]), mkReward(nextSigns[1]), mkReward(nextSigns[2])],
+				}, tag);
+				return;
 					} catch (retryError: any) {
 						errorMessage = retryError.message;
 					}
@@ -362,20 +372,7 @@ class AutoDailySignSystem {
 
 	async sendSuccessMessage(
 		channelId: string,
-		cardData: {
-			uid: string;
-			status: "success" | "already_signed";
-			rewardName: string;
-			rewardIcon?: string;
-			rewardCount: number;
-			totalDays: number;
-			month: number;
-			signCntMissed?: number;
-			monthLastDay?: boolean;
-			tmrRewardName?: string;
-			tmrRewardIcon?: string;
-			tmrRewardCount?: number;
-		},
+		cardData: HSRDailyCardPayload,
 		content: string,
 	): Promise<void> {
 		let cardFile: { buffer: string; name: string } | null = null;
