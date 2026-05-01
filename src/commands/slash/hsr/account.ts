@@ -85,9 +85,9 @@ function buildAccountComponents(
 		const charSection = new SectionBuilder().addTextDisplayComponents(
 			new TextDisplayBuilder().setContent(charText),
 		);
-		if (c.logo) {
-			charSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(c.logo));
-		}
+		charSection.setThumbnailAccessory(
+			new ThumbnailBuilder().setURL(c.logo ?? discordAvatarUrl),
+		);
 		container.addSectionComponents(charSection);
 
 		if (i < characters.length - 1) {
