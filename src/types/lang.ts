@@ -188,6 +188,20 @@ export interface LanguageStrings {
 	autoDaily_On: string;
 	autoDaily_Time: string;
 	autoDaily_Tag: string;
+	autoDaily_Fallback: string;
+
+	card_MonthCumulativeDays: string;
+	card_MissedDays: string;
+	card_Yesterday: string;
+	card_Today: string;
+	card_Tomorrow: string;
+	card_DayAfterTomorrow: string;
+	card_TwoDaysAfterTomorrow: string;
+	card_Claimed: string;
+	card_Missed: string;
+	card_CheckedIn: string;
+
+	redeem_AllRedeemed: string;
 
 	warp_TypeCollaborationCharacter: string;
 	warp_TypeCollaborationLightcone: string;

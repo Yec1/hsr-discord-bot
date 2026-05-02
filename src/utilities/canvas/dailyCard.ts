@@ -44,6 +44,13 @@ export interface HSRDailyCardPayload {
   yesterdayReward?: DayReward & { claimed: boolean };
   todayReward: DayReward;
   nextRewards: [DayReward, DayReward, DayReward];
+  // i18n labels (pre-translated by caller; hardcoded Chinese as fallback)
+  labelMonthCumulativeDays?: string; // e.g. "3月累計天數"
+  labelMissedDays?: string;          // e.g. "漏簽天數"
+  labelDays?: [string, string, string, string, string]; // [昨天,今天,明天,後天,大後天]
+  labelClaimed?: string;             // e.g. "已領取"
+  labelMissed?: string;              // e.g. "未簽到"
+  labelCheckedIn?: string;           // e.g. "已簽到"
 }
 
 const imageCache = new Map<string, Buffer>();
@@ -152,18 +159,18 @@ export async function buildHSRDailyCard(
   ctx.fillRect(0, 0, W, H);
 
   // ── LEFT COLUMN ──
-  const lx = 44;
+  const lx = 36;
   const ly = 44;
 
   // UID
   ctx.fillStyle = "rgba(255,255,255,0.28)";
-  ctx.font = `11px ${font}`;
-  ctx.fillText(`UID  ${payload.uid}`, lx, ly + 11);
+  ctx.font = `13px ${font}`;
+  ctx.fillText(`UID  ${payload.uid}`, lx, ly + 13);
 
   // Nickname
   ctx.fillStyle = "rgba(255,255,255,1)";
-  ctx.font = `bold 28px ${font}`;
-  ctx.fillText(payload.nickname, lx, ly + 11 + 8 + 24);
+  ctx.font = `bold 32px ${font}`;
+  ctx.fillText(payload.nickname, lx, ly + 13 + 10 + 28);
 
   // Horizontal divider — vertically centered in column
   const dividerY = H / 2;
@@ -171,35 +178,35 @@ export async function buildHSRDailyCard(
   ctx.fillRect(lx, dividerY, 32, 1);
 
   // Stats block ~64px from bottom
-  const statsY = H - 44 - 64;
+  const statsY = H - 44 - 74;
 
   ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.font = `bold 26px ${font}`;
-  ctx.fillText(`${payload.totalDays}`, lx, statsY + 24);
+  ctx.font = `bold 32px ${font}`;
+  ctx.fillText(`${payload.totalDays}`, lx, statsY + 30);
 
   ctx.fillStyle = "rgba(255,255,255,0.28)";
-  ctx.font = `10px ${font}`;
-  ctx.fillText(`${payload.month}月累計天數`, lx, statsY + 24 + 14);
+  ctx.font = `12px ${font}`;
+  ctx.fillText(payload.labelMonthCumulativeDays ?? `${payload.month}月累計天數`, lx, statsY + 30 + 16);
 
   if (payload.signCntMissed !== undefined) {
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.font = `bold 26px ${font}`;
-    ctx.fillText(`${payload.signCntMissed}`, lx, statsY + 24 + 14 + 28);
+    ctx.font = `bold 32px ${font}`;
+    ctx.fillText(`${payload.signCntMissed}`, lx, statsY + 30 + 16 + 34);
 
     ctx.fillStyle = "rgba(255,255,255,0.28)";
-    ctx.font = `10px ${font}`;
-    ctx.fillText("漏簽天數", lx, statsY + 24 + 14 + 28 + 14);
+    ctx.font = `12px ${font}`;
+    ctx.fillText(payload.labelMissedDays ?? "漏簽天數", lx, statsY + 30 + 16 + 34 + 16);
   }
 
   // ── VERTICAL DIVIDER ──
   ctx.fillStyle = "rgba(255,255,255,0.08)";
-  ctx.fillRect(282, 44, 1, H - 88);
+  ctx.fillRect(200, 44, 1, H - 88);
 
   // ── RIGHT COLUMN: 5-DAY CARDS ──
   const now = moment().tz("Asia/Taipei");
-  const dayLabels = ["昨天", "今天", "明天", "後天", "大後天"];
-  const cardAreaX = 310;
-  const cardAreaW = 864 - cardAreaX;
+  const dayLabels = payload.labelDays ?? ["昨天", "今天", "明天", "後天", "大後天"] as [string,string,string,string,string];
+  const cardAreaX = 224;
+  const cardAreaW = W - cardAreaX - 20;
   const slotW = cardAreaW / 5;
 
   // Build slot data
@@ -213,39 +220,39 @@ export async function buildHSRDailyCard(
 
   const slots: Slot[] = [
     {
-      label: "昨天",
+      label: dayLabels[0],
       date: now.clone().subtract(1, "day").format("M/DD"),
       reward: payload.yesterdayReward ?? { name: "—", count: 0 },
       state: payload.yesterdayReward?.claimed ? "past-claimed" : "past-missed",
     },
     {
-      label: "今天",
+      label: dayLabels[1],
       date: now.format("M/DD"),
       reward: payload.todayReward,
       state: "active",
     },
     {
-      label: "明天",
+      label: dayLabels[2],
       date: now.clone().add(1, "day").format("M/DD"),
       reward: payload.nextRewards[0],
       state: "future",
     },
     {
-      label: "後天",
+      label: dayLabels[3],
       date: now.clone().add(2, "day").format("M/DD"),
       reward: payload.nextRewards[1],
       state: "future",
     },
     {
-      label: "大後天",
+      label: dayLabels[4],
       date: now.clone().add(3, "day").format("M/DD"),
       reward: payload.nextRewards[2],
       state: "future",
     },
   ];
 
-  const iconBoxSize = 72;
-  const iconPad = 10;
+  const iconBoxSize = 96;
+  const iconPad = 12;
 
   // Vertical center for icon boxes
   const iconBoxY = Math.floor((H - iconBoxSize) / 2);
@@ -267,22 +274,22 @@ export async function buildHSRDailyCard(
         ? "rgba(255,255,255,0.70)"
         : "rgba(255,255,255,0.25)";
     ctx.fillStyle = dayLabelColor;
-    ctx.font = `10px ${font}`;
+    ctx.font = `13px ${font}`;
     const dayLabelW = ctx.measureText(slot.label).width;
-    ctx.fillText(slot.label, slotCenterX - dayLabelW / 2, iconBoxY - 24);
+    ctx.fillText(slot.label, slotCenterX - dayLabelW / 2, iconBoxY - 28);
 
     // Date
     ctx.fillStyle = "rgba(255,255,255,0.40)";
-    ctx.font = `9px ${font}`;
+    ctx.font = `12px ${font}`;
     const dateW = ctx.measureText(slot.date).width;
-    ctx.fillText(slot.date, slotCenterX - dateW / 2, iconBoxY - 12);
+    ctx.fillText(slot.date, slotCenterX - dateW / 2, iconBoxY - 14);
 
     // Icon box background
     const bgColor =
       slot.state === "active"
         ? "rgba(255,255,255,0.10)"
         : "rgba(255,255,255,0.06)";
-    roundedRect(ctx, iconBoxX, iconBoxY, iconBoxSize, iconBoxSize, 8);
+    roundedRect(ctx, iconBoxX, iconBoxY, iconBoxSize, iconBoxSize, 10);
     ctx.fillStyle = bgColor;
     ctx.fill();
 
@@ -319,15 +326,15 @@ export async function buildHSRDailyCard(
       const badgeX = iconBoxX + iconBoxSize - 8;
       const badgeY = iconBoxY - 8;
       ctx.beginPath();
-      ctx.arc(badgeX, badgeY, 8, 0, Math.PI * 2);
+      ctx.arc(badgeX, badgeY, 9, 0, Math.PI * 2);
       ctx.fillStyle = "rgba(255,255,255,0.15)";
       ctx.fill();
       ctx.strokeStyle = "rgba(255,255,255,0.20)";
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.fillStyle = "rgba(255,255,255,0.6)";
-      ctx.font = `8px ${font}`;
-      ctx.fillText("✓", badgeX - 3, badgeY + 3);
+      ctx.font = `10px ${font}`;
+      ctx.fillText("✓", badgeX - 3, badgeY + 4);
     }
 
     // Reward name + count
@@ -337,30 +344,30 @@ export async function buildHSRDailyCard(
         : "rgba(255,255,255,0.55)";
     ctx.fillStyle = rewardColor;
     ctx.font =
-      slot.state === "active" ? `600 11px ${font}` : `11px ${font}`;
+      slot.state === "active" ? `600 13px ${font}` : `13px ${font}`;
     const rewardText = `${slot.reward.name} ×${slot.reward.count}`;
     const rewardW = ctx.measureText(rewardText).width;
-    ctx.fillText(rewardText, slotCenterX - rewardW / 2, iconBoxY + iconBoxSize + 16);
+    ctx.fillText(rewardText, slotCenterX - rewardW / 2, iconBoxY + iconBoxSize + 20);
 
     // Status text (yesterday and today only)
     if (slot.state === "past-claimed") {
       ctx.fillStyle = "rgba(255,255,255,0.35)";
-      ctx.font = `9px ${font}`;
-      const st = "已領取";
+      ctx.font = `11px ${font}`;
+      const st = payload.labelClaimed ?? "已領取";
       const stW = ctx.measureText(st).width;
-      ctx.fillText(st, slotCenterX - stW / 2, iconBoxY + iconBoxSize + 28);
+      ctx.fillText(st, slotCenterX - stW / 2, iconBoxY + iconBoxSize + 36);
     } else if (slot.state === "past-missed") {
       ctx.fillStyle = "rgba(255,80,80,0.8)";
-      ctx.font = `9px ${font}`;
-      const st = "未簽到";
+      ctx.font = `11px ${font}`;
+      const st = payload.labelMissed ?? "未簽到";
       const stW = ctx.measureText(st).width;
-      ctx.fillText(st, slotCenterX - stW / 2, iconBoxY + iconBoxSize + 28);
+      ctx.fillText(st, slotCenterX - stW / 2, iconBoxY + iconBoxSize + 36);
     } else if (slot.state === "active") {
       ctx.fillStyle = "#86efac";
-      ctx.font = `9px ${font}`;
-      const st = "已簽到";
+      ctx.font = `11px ${font}`;
+      const st = payload.labelCheckedIn ?? "已簽到";
       const stW = ctx.measureText(st).width;
-      ctx.fillText(st, slotCenterX - stW / 2, iconBoxY + iconBoxSize + 28);
+      ctx.fillText(st, slotCenterX - stW / 2, iconBoxY + iconBoxSize + 36);
     }
 
     // Arrow between cards (after each card except last)
@@ -369,8 +376,8 @@ export async function buildHSRDailyCard(
       const nextSlotCenterX = Math.floor(cardAreaX + slotW * (i + 1) + slotW / 2);
       const arrowX = Math.floor((slotCenterX + nextSlotCenterX) / 2);
       const arrowY = iconCenterY;
-      const aw = 8; // half-base
-      const ah = 6; // half-height
+      const aw = 10;
+      const ah = 7;
       ctx.fillStyle = "rgba(255,255,255,0.45)";
       ctx.beginPath();
       ctx.moveTo(arrowX + aw / 2, arrowY);
@@ -386,7 +393,7 @@ export async function buildHSRDailyCard(
   // ── TIMESTAMP ──
   const ts = moment().tz("Asia/Taipei").format("YYYY/MM/DD · HH:mm") + " CST";
   ctx.fillStyle = "rgba(255,255,255,0.15)";
-  ctx.font = `10px ${font}`;
+  ctx.font = `12px ${font}`;
   const tsW = ctx.measureText(ts).width;
   ctx.fillText(ts, W - 36 - tsW, H - 20);
 

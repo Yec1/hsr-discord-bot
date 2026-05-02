@@ -195,6 +195,20 @@ const langs: LanguageStrings = {
 	autoDaily_On: "已开启自动签到",
 	autoDaily_Time: "自动签到时间：<time>",
 	autoDaily_Tag: "签到时提及：<z>",
+	autoDaily_Fallback: "开拓者",
+
+	card_MonthCumulativeDays: "<month>月累计天数",
+	card_MissedDays: "漏签天数",
+	card_Yesterday: "昨天",
+	card_Today: "今天",
+	card_Tomorrow: "明天",
+	card_DayAfterTomorrow: "后天",
+	card_TwoDaysAfterTomorrow: "大后天",
+	card_Claimed: "已领取",
+	card_Missed: "未签到",
+	card_CheckedIn: "已签到",
+
+	redeem_AllRedeemed: "所有 <count> 个礼包码已全部兑换完毕",
 
 	warp_TypeCollaborationCharacter: "合作角色跃迁",
 	warp_TypeCollaborationLightcone: "合作光锥跃迁",

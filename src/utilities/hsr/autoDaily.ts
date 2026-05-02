@@ -207,9 +207,9 @@ class AutoDailySignSystem {
 	async getDiscordNickname(userId: string): Promise<string> {
 		try {
 			const user = await this.client.users.fetch(userId);
-			return user.displayName || user.username || "旅行者";
+			return user.displayName || user.username || "開拓者";
 		} catch {
-			return "旅行者";
+			return "開拓者";
 		}
 	}
 
@@ -274,6 +274,12 @@ class AutoDailySignSystem {
 			...(ystSign ? { yesterdayReward: { ...mkReward(ystSign), claimed: idx > 0 } } : {}),
 			todayReward: mkReward(todaySign),
 			nextRewards: [mkReward(nextSigns[0]), mkReward(nextSigns[1]), mkReward(nextSigns[2])],
+			labelMonthCumulativeDays: tr("card_MonthCumulativeDays").replace("<month>", String(reward.month)),
+			labelMissedDays: tr("card_MissedDays"),
+			labelDays: [tr("card_Yesterday"), tr("card_Today"), tr("card_Tomorrow"), tr("card_DayAfterTomorrow"), tr("card_TwoDaysAfterTomorrow")],
+			labelClaimed: tr("card_Claimed"),
+			labelMissed: tr("card_Missed"),
+			labelCheckedIn: tr("card_CheckedIn"),
 		}, tag);
 		} catch (error: any) {
 			let errorMessage = error.message || "";
@@ -336,17 +342,23 @@ class AutoDailySignSystem {
 
 				this.stats.success++;
 
-				await this.sendSuccessMessage(channelId, {
-					uid: account.uid,
-					nickname,
-					status: "success",
-					totalDays: signedDays,
-					month: reward.month,
-					signCntMissed: info.sign_cnt_missed,
-					...(ystSign ? { yesterdayReward: { ...mkReward(ystSign), claimed: idx > 0 } } : {}),
-					todayReward: mkReward(todaySign),
-					nextRewards: [mkReward(nextSigns[0]), mkReward(nextSigns[1]), mkReward(nextSigns[2])],
-				}, tag);
+			await this.sendSuccessMessage(channelId, {
+				uid: account.uid,
+				nickname,
+				status: "success",
+				totalDays: signedDays,
+				month: reward.month,
+				signCntMissed: info.sign_cnt_missed,
+				...(ystSign ? { yesterdayReward: { ...mkReward(ystSign), claimed: idx > 0 } } : {}),
+				todayReward: mkReward(todaySign),
+				nextRewards: [mkReward(nextSigns[0]), mkReward(nextSigns[1]), mkReward(nextSigns[2])],
+				labelMonthCumulativeDays: tr("card_MonthCumulativeDays").replace("<month>", String(reward.month)),
+				labelMissedDays: tr("card_MissedDays"),
+				labelDays: [tr("card_Yesterday"), tr("card_Today"), tr("card_Tomorrow"), tr("card_DayAfterTomorrow"), tr("card_TwoDaysAfterTomorrow")],
+				labelClaimed: tr("card_Claimed"),
+				labelMissed: tr("card_Missed"),
+				labelCheckedIn: tr("card_CheckedIn"),
+			}, tag);
 				return;
 					} catch (retryError: any) {
 						errorMessage = retryError.message;

@@ -296,7 +296,7 @@ export default {
 		try {
 			const buf = await buildHSRDailyCard({
 				uid: (hsr as any).uid?.toString() || "",
-				nickname: interaction.user.displayName || "旅行者",
+				nickname: interaction.user.displayName || tr("autoDaily_Fallback"),
 				status: "success",
 				totalDays: info.total_sign_day,
 				month: reward.month,
@@ -304,6 +304,12 @@ export default {
 				...(ystSign ? { yesterdayReward: { ...mkReward(ystSign), claimed: idx > 0 } } : {}),
 				todayReward: mkReward(todaySign),
 				nextRewards: [mkReward(nextSigns[0]), mkReward(nextSigns[1]), mkReward(nextSigns[2])],
+				labelMonthCumulativeDays: tr("card_MonthCumulativeDays").replace("<month>", String(reward.month)),
+				labelMissedDays: tr("card_MissedDays"),
+				labelDays: [tr("card_Yesterday"), tr("card_Today"), tr("card_Tomorrow"), tr("card_DayAfterTomorrow"), tr("card_TwoDaysAfterTomorrow")],
+				labelClaimed: tr("card_Claimed"),
+				labelMissed: tr("card_Missed"),
+				labelCheckedIn: tr("card_CheckedIn"),
 			});
 			cardFile = { attachment: buf, name: "daily-hsr.png" };
 		} catch (e) {

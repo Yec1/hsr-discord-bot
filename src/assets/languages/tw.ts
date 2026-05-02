@@ -196,6 +196,20 @@ const langs: LanguageStrings = {
 	autoDaily_On: "已開啟自動簽到",
 	autoDaily_Time: "自動簽到時間：<time>",
 	autoDaily_Tag: "簽到時提及：<z>",
+	autoDaily_Fallback: "開拓者",
+
+	card_MonthCumulativeDays: "<month>月累計天數",
+	card_MissedDays: "漏簽天數",
+	card_Yesterday: "昨天",
+	card_Today: "今天",
+	card_Tomorrow: "明天",
+	card_DayAfterTomorrow: "後天",
+	card_TwoDaysAfterTomorrow: "大後天",
+	card_Claimed: "已領取",
+	card_Missed: "未簽到",
+	card_CheckedIn: "已簽到",
+
+	redeem_AllRedeemed: "所有 <count> 個禮包碼已全部兌換完畢",
 
 	warp_TypeCollaborationCharacter: "合作角色躍遷",
 	warp_TypeCollaborationLightcone: "合作光錐躍遷",
