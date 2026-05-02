@@ -608,11 +608,11 @@ export default {
 				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
-							.setColor("#E76161")
-							.setTitle(tr("autoDaily_Off"))
-							.setThumbnail(
-								"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
-							)
+					.setColor("#E76161")
+						.setTitle(tr("autoRedeem_Off"))
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1120715314678730832/kuru.gif"
+						)
 					]
 				});
 			}

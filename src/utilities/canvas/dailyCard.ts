@@ -321,22 +321,6 @@ export async function buildHSRDailyCard(
       }
     }
 
-    // Checkmark badge (past-claimed)
-    if (slot.state === "past-claimed") {
-      const badgeX = iconBoxX + iconBoxSize - 8;
-      const badgeY = iconBoxY - 8;
-      ctx.beginPath();
-      ctx.arc(badgeX, badgeY, 9, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255,255,255,0.15)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.20)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.fillStyle = "rgba(255,255,255,0.6)";
-      ctx.font = `10px ${font}`;
-      ctx.fillText("✓", badgeX - 3, badgeY + 4);
-    }
-
     // Reward name + count
     const rewardColor =
       slot.state === "active"
