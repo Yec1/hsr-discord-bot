@@ -81,7 +81,7 @@ const BOTTOM_H = 40;         // footer height
 function calcHeight(accounts: HSRRedeemAccountResult[]): number {
   let h = PADDING * 2 + TOP_H;
   for (let i = 0; i < accounts.length; i++) {
-    const codes = accounts[i].codes.length || 1;
+    const codes = accounts[i]!.codes.length || 1;
     const rows = Math.ceil(codes / SLOT_COLS);
     h += ACC_HEADER_H + rows * (SLOT_H + SLOT_GAP);
     if (i < accounts.length - 1) h += ACC_GAP;
@@ -178,7 +178,7 @@ export async function buildHSRRedeemCard(payload: HSRRedeemCardPayload): Promise
   const failCount = allCodes.filter(c => c.status === "failed" || c.status === "invalid").length;
 
   for (let ai = 0; ai < payload.accounts.length; ai++) {
-    const acc = payload.accounts[ai];
+    const acc = payload.accounts[ai]!;
 
     // ── Account header (left) ──
     ctx.fillStyle = "rgba(255,255,255,0.28)";
@@ -202,7 +202,7 @@ export async function buildHSRRedeemCard(payload: HSRRedeemCardPayload): Promise
       const rowCodes = codes.slice(ri * SLOT_COLS, (ri + 1) * SLOT_COLS);
 
       for (let ci = 0; ci < rowCodes.length; ci++) {
-        const codeResult = rowCodes[ci];
+        const codeResult = rowCodes[ci]!;
         const cfg = STATUS_CONFIG[codeResult.status] || STATUS_CONFIG.failed;
 
         const sx = codeAreaX + ci * (SLOT_W + SLOT_GAP);
