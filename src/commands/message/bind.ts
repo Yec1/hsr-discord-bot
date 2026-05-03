@@ -2,12 +2,11 @@ import { Message, EmbedBuilder } from "discord.js";
 import { database } from "@/index.js";
 import { HonkaiStarRail } from "@yeci226/hoyoapi";
 import { getUserGameInfo } from "@/utilities/index.js";
-
-interface Account {
-	uid: string;
-	cookie: string;
-	nickname?: string;
-}
+import {
+	extractLtuidFromCookie,
+	upsertHoyolab,
+	upsertCharacter
+} from "@/utilities/accountStore.js";
 
 export default {
 	name: "bind",
@@ -37,7 +36,7 @@ export default {
 			const hsr = new HonkaiStarRail({ cookie });
 			await hsr.daily.info();
 
-			// 取得暱稱等資訊（以顯示用途）
+			// 取得暱稱等資訊
 			let nickname = "";
 			try {
 				const info = await getUserGameInfo(cookie);
@@ -45,22 +44,23 @@ export default {
 			} catch {}
 
 			const userId = message.author.id;
-			const accountKey = `${userId}.account`;
-			const existedAccounts: Account[] =
-				(await database.get(accountKey)) || [];
+			const ltuid_v2 = extractLtuidFromCookie(cookie) ?? "";
 
-			// 若已存在同 UID，則更新 Cookie 與暱稱
-			const existingIndex = existedAccounts.findIndex(
-				acc => acc.uid === uid
-			);
-			if (existingIndex !== -1 && existedAccounts[existingIndex]) {
-				existedAccounts[existingIndex].cookie = cookie;
-				if (nickname)
-					existedAccounts[existingIndex].nickname = nickname;
-				await database.set(accountKey, existedAccounts);
-			} else {
-				await database.push(accountKey, { uid, cookie, nickname });
+			if (!ltuid_v2) {
+				return message.reply({
+					content: "❌ 無法從 Cookie 中取得 ltuid_v2，請確認 Cookie 格式正確。"
+				});
 			}
+
+			// 寫入新格式（hoyolabs）
+			await upsertHoyolab(database, userId, { ltuid_v2, cookie });
+			await upsertCharacter(database, userId, ltuid_v2, {
+				uid,
+				nickname: nickname || null,
+				region: null,
+				lastUpdate: new Date().toISOString(),
+				invalid: false
+			});
 
 			// 清除過期標記
 			await database.delete(`${uid}.cookieExpired`);
