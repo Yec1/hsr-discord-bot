@@ -1,74 +1,104 @@
-<a href="https://forum.gamer.com.tw/C.php?bsn=72822&snA=3548&subbsn=0&page=1&s_author=&gothis=29007#29007">
-    <img src="https://cdn.discordapp.com/avatars/895191125512581171/57c74708ddaf7991500ce26e52335d27.webp" alt="hsr logo" title="hsr" align="right" height="128" />
-</a>
+<div align="center">
 
-# 星穹鐵道 Discord Bot
+<img src="https://cdn.discordapp.com/avatars/895191125512581171/57c74708ddaf7991500ce26e52335d27.webp" width="120" height="120" style="border-radius:50%"/>
 
-:star: 在GitHub上給我們點星星吧 — 這會給予我們很大的動力！
+# 星鐵小助手
 
-你可以自由的將本專案進行更改，只需在 網站/或任何形式的公開文件 中放入原機器人及原作者網址
+**星穹鐵道 Discord Bot — Honkai: Star Rail**
 
-You are free to make changes to this project, just include the original bot and original author's URL in the website or any form of public documentation.
+[![Discord](https://img.shields.io/badge/加入支援伺服器-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/mPCEATJDve)
+[![Invite](https://img.shields.io/badge/邀請機器人-57F287?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/api/oauth2/authorize?client_id=895191125512581171&permissions=412317240384&scope=applications.commands%20bot)
+[![DiscordTW](https://img.shields.io/badge/DiscordTW-FF6B6B?style=for-the-badge&logo=discord&logoColor=white)](https://discordservers.tw/bots/895191125512581171)
 
-## 連結
-* <a href="https://discord.com/api/oauth2/authorize?client_id=895191125512581171&permissions=412317240384&scope=applications.commands bot">邀請連結</a>
-* <a href="https://discordservers.tw/bots/895191125512581171"><b>DiscordTW</b></a>
-* <a href="https://discord.gg/mPCEATJDve"><b>支援伺服器</b></a>
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 
-## 使用 星鐵小助手 可以讓您快速在Discord 上使用
-* <b>UID 查詢玩家個人資料</b>：查看放置在漫遊簽證上角色的 <b>儀器</b>、<b>行跡</b>和<b>光錐</b>等級
-* <b>每日自動簽到
-* <b>每小時自動偵測體力和委託狀態</b>：若體力<b>大於 0 ~ 240</b> 時或者 <b>委託完成 </b>時會自動通知
-* <b>獲取當期的躍遷紀錄
-* <b>模擬每個版本的限定躍遷</b>：目前可模擬版本為 <b>1.0.0 ~ 2.0.1</b> (更新時間 2023/12/27)
-* <b>兌換禮包碼
-* <b>忘卻之庭紀錄</b>：可以查詢自己或別人的混沌回憶每層樓紀錄
-* <b>排行榜</b>：可以列出每位角色遺器評分前十名
-* <b>指南</b>：查看各角色配配隊等
+</div>
 
-## Cookie 使用須知
-當您使用星鐵小助手的自動簽到、自動通知、角色總覽、忘卻之庭紀錄功能時會需要 Hoyolab 帳號的 Cookie，當您設置 Cookie 後代表您已同意機器人使用 Cookie 來為您提供服務，星鐵小助手保證不會以提供服務以外的情況下使用 Cookie。
-### 以下幾點關於 Cookie 的說明
-* Cookie 不能夠登入您的遊戲帳號
-* Cookie 只能夠幫您獲取遊戲上的資料，例如：便籤、忘卻之庭、簽到、角色等
-* 您隨時能使用指令來刪除儲存在星鐵小助手的 Cookie
+---
 
-## 展示
-<img src="https://cdn.discordapp.com/attachments/1148490547523235871/1186544299500912721/809279679.png">
-<img src="https://cdn.discordapp.com/attachments/1149960935654559835/1187405599298826371/809279679.png">
-<img src="https://cdn.discordapp.com/attachments/1149960935654559835/1187405728873447434/image.png">
-<img src="https://cdn.discordapp.com/attachments/1149960935654559835/1187405852743839875/image.png">
-<img src="https://cdn.discordapp.com/attachments/1149960935654559835/1187406129182015528/726e55d5ba1fc5ed.png">
-<img src="https://cdn.discordapp.com/attachments/1148490547523235871/1187385711343710300/a30fdb3ca5446ff0.png">
+## ✨ 功能
 
-## Installation 自己架設機器人
+| 功能 | 說明 |
+|------|------|
+| 👤 **角色查詢** | 輸入 UID 查看角色遺器、行跡、光錐等級 |
+| 📅 **每日自動簽到** | 自動完成 Hoyolab 每日簽到並推播通知 |
+| ⚡ **體力 & 委託通知** | 體力達到閾值或委託完成時自動通知 |
+| 🎫 **兌換禮包碼** | 快速兌換官方禮包碼，支援批次兌換 |
+| 🌀 **躍遷紀錄** | 查看歷史躍遷紀錄與統計 |
+| 🎰 **模擬躍遷** | 模擬各版本的限定躍遷池 |
+| ⚔️ **忘卻之庭** | 查詢混沌回憶每層佈陣與通關紀錄 |
+| 🏆 **排行榜** | 各角色遺器評分前十名排行 |
+| 📖 **角色指南** | 角色配隊、遺器推薦等攻略資訊 |
 
-- [Node.js](https://nodejs.org/) 16 or higher
-- [npm](https://www.npmjs.com/)
+---
+
+## 📸 展示
+
+<div align="center">
+<img src="https://cdn.discordapp.com/attachments/1148490547523235871/1186544299500912721/809279679.png" width="49%"/>
+<img src="https://cdn.discordapp.com/attachments/1149960935654559835/1187405599298826371/809279679.png" width="49%"/>
+<img src="https://cdn.discordapp.com/attachments/1149960935654559835/1187405728873447434/image.png" width="49%"/>
+<img src="https://cdn.discordapp.com/attachments/1149960935654559835/1187405852743839875/image.png" width="49%"/>
+</div>
+
+---
+
+## 🔒 Cookie 使用須知
+
+使用自動簽到、自動通知、角色總覽、忘卻之庭等功能時需要 Hoyolab 帳號的 Cookie。
+
+> **設置 Cookie 即代表您同意機器人使用 Cookie 提供服務。星鐵小助手保證不會在提供服務以外的情況下使用您的 Cookie。**
+
+- ✅ Cookie **無法**登入您的遊戲帳號
+- ✅ Cookie 只能讀取遊戲資料（便籤、簽到、角色等）
+- ✅ 您可隨時使用指令刪除儲存的 Cookie
+
+---
+
+## 🛠️ 自行架設
+
+### 前置需求
+
+- [Node.js](https://nodejs.org/) 18 或更高版本
+- [yarn](https://yarnpkg.com/)
+
+### 安裝步驟
 
 ```bash
-# Clone this repo.
+# 1. Clone 專案
 git clone https://github.com/Yec1/hsr-discord-bot
+cd hsr-discord-bot
 
-# Enter the repository.
-cd HSRre
+# 2. 安裝依賴
+yarn install
 
-# Install dependencies.
-npm install / yarn install
+# 3. 設定設定檔
+cp config.example.json config.json
+# 填入你的 Bot Token 等資訊
 
-## Usage
-
-```bash
-# Fill env & emoji - If you don't need it, you can delete it
-Rename .env.example to .env and fill your bot token.
-
-# Start Bot
-node . or node ./src/Cluster.js
+# 4. 啟動
+yarn start
 ```
 
-## References
+---
 
-* [StarRailRes](https://github.com/Mar-7th/StarRailRes)
-* [StarRailScore](https://github.com/Mar-7th/StarRailScore)
-* [star-rail-warp-sim](https://github.com/mikeli0623/star-rail-warp-sim)
-* [mihomo](https://api.mihomo.me/)
+## 📚 References
+
+- [StarRailRes](https://github.com/Mar-7th/StarRailRes)
+- [StarRailScore](https://github.com/Mar-7th/StarRailScore)
+- [star-rail-warp-sim](https://github.com/mikeli0623/star-rail-warp-sim)
+- [mihomo API](https://api.mihomo.me/)
+
+---
+
+## 📄 授權
+
+本專案採用 MIT 授權。你可以自由修改與使用，但請在網站或任何公開文件中標註原作者與原機器人連結。
+
+<div align="center">
+
+Made with ❤️ by [Yeci](https://github.com/yeci226)
+
+</div>
