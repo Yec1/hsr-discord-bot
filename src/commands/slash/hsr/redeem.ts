@@ -8,9 +8,9 @@ import {
 	failedReply,
 	getRedeemCodes,
 	getRandomColor,
-	getUserHSRData,
 	getUserUid,
-	updateCookie
+	updateCookie,
+	autoRefreshCookie
 } from "@/utilities/index.js";
 import Logger from "@/utilities/core/logger.js";
 import type { TranslationFunction } from "@/types/index.js";
@@ -45,6 +45,42 @@ function hasValidRedeemToken(cookie: string): boolean {
 		getCookieFieldValue(cookie, "account_mid_v2") ||
 		getCookieFieldValue(cookie, "ltmid_v2")
 	);
+}
+
+async function redeemCodeDirect(
+	uid: string,
+	cookie: string,
+	code: string
+): Promise<{ retcode: number; message: string }> {
+	let region = "prod_official_asia";
+	if (uid.startsWith("6")) region = "prod_official_usa";
+	else if (uid.startsWith("7")) region = "prod_official_eur";
+	else if (uid.startsWith("8")) region = "prod_official_asia";
+	else if (uid.startsWith("9")) region = "prod_official_cht";
+
+	const url =
+		"https://sg-hkrpg-api.hoyoverse.com/common/apicdkey/api/webExchangeCdkeyRisk";
+	const params = new URLSearchParams({
+		uid: String(uid),
+		region,
+		lang: "zh-tw",
+		cdkey: code,
+		game_biz: "hkrpg_global",
+		t: String(Date.now())
+	});
+
+	const response = await fetch(`${url}?${params.toString()}`, {
+		method: "POST",
+		headers: {
+			cookie: cookie,
+			"x-rpc-signgame": "hkrpg",
+			"x-rpc-app_id": "c9oqaq3s3gu8",
+			"x-rpc-client_type": "4"
+		}
+	});
+
+	const result = (await response.json()) as any;
+	return { retcode: result.retcode ?? -1, message: result.message ?? "" };
 }
 
 export default {
@@ -249,25 +285,31 @@ export default {
 			const userRedeemedCodes =
 				(await database.get(`${uid}.redeemedCodes`)) || [];
 
+			const unredeemedCodes = codes.filter(c => !userRedeemedCodes.includes(c.code));
+			const redeemedCodes = codes.filter(c => userRedeemedCodes.includes(c.code));
+
+			const descLines: string[] = [];
+			if (unredeemedCodes.length > 0) {
+				descLines.push("**未兌換**");
+				descLines.push(...unredeemedCodes.map(c => `❌ \`${c.code}\``));
+			}
+			if (redeemedCodes.length > 0) {
+				if (descLines.length > 0) descLines.push("");
+				descLines.push("**已兌換**");
+				descLines.push(...redeemedCodes.map(c => `✅ ~~${c.code}~~`));
+			}
+			if (codes.length === 0) {
+				descLines.push("目前沒有可用的兌換碼");
+			}
+
 			interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setTimestamp()
 						.setColor(getRandomColor() as any)
 						.setTitle("當前可用兌換碼")
-						.setFooter({
-							text: "使用機器人兌換過的禮包碼才會顯示已兌換"
-						})
-						.setDescription(
-							`${codes
-								.map((code, index) => {
-									const redeemed = userRedeemedCodes.includes(
-										code.code
-									);
-									return `${index}. ${code.code} ${redeemed ? "`✅已兌換`" : "`❌未兌換`"}`;
-								})
-								.join("\n")}`
-						)
+						.setFooter({ text: "使用機器人兌換過的禮包碼才會顯示已兌換" })
+						.setDescription(descLines.join("\n"))
 				]
 			});
 		} else if (subcommand == "redeemall") {
@@ -277,15 +319,29 @@ export default {
 			const targetUser =
 				interaction.options.getUser("user") || interaction.user;
 
-			const hsr = await getUserHSRData(
-				interaction,
-				tr,
-				targetUser.id,
-				accountIndex
-			);
-			if (!hsr) return;
-
 			const uid = await getUserUid(targetUser.id, accountIndex);
+
+			// Proactively refresh cookie_token_v2 before redeeming.
+			// ltoken_v2 and cookie_token_v2 expire independently; a stale
+			// cookie_token_v2 causes -1071 on every redemption attempt even when
+			// the user just re-bound their account via the web login flow.
+			try {
+				const userAccounts = await database.get(`${targetUser.id}.account`);
+				const accountCookie = userAccounts?.[accountIndex]?.cookie;
+				if (accountCookie) {
+					await autoRefreshCookie(targetUser.id, accountIndex, accountCookie);
+				}
+			} catch (e) {
+				new Logger("Redeem").warn(
+					`[用戶 ${targetUser.id}] [帳號 #${accountIndex}] 兌換前 cookie 刷新失敗（非致命）: ${(e as any).message}`
+				);
+			}
+
+			const redeemAllAccounts = await database.get(`${targetUser.id}.account`);
+			const redeemAllCookie = redeemAllAccounts?.[accountIndex]?.cookie;
+			if (!redeemAllCookie) {
+				return failedReply(interaction, tr("error_NoAccount"));
+			}
 			const codes = await getRedeemCodes();
 			let userRedeemedCodes =
 				(await database.get(`${uid}.redeemedCodes`)) || [];
@@ -347,7 +403,7 @@ export default {
 						embeds: [createProgressEmbed(noRedeemedCodes, i, tr)]
 					});
 
-					const res = await hsr.redeem.claim(code.code);
+					const res = await redeemCodeDirect(uid || "", redeemAllCookie, code.code);
 					const result = await handleRedeemResult(
 						code.code,
 						res,
@@ -474,20 +530,20 @@ export default {
 			const targetUser =
 				interaction.options.getUser("user") || interaction.user;
 
-			const hsr = await getUserHSRData(
-				interaction,
-				tr,
-				targetUser.id,
-				accountIndex
-			);
-			if (!hsr) return;
-
 			const uid = await getUserUid(targetUser.id, accountIndex);
+			if (!uid) {
+				return failedReply(interaction, tr("error_NoAccount"));
+			}
+			const userAccountData = await database.get(`${targetUser.id}.account`);
+			const accountCookie = userAccountData?.[accountIndex]?.cookie;
+			if (!accountCookie) {
+				return failedReply(interaction, tr("error_NoAccount"));
+			}
 			let userRedeemedCodes =
 				(await database.get(`${uid}.redeemedCodes`)) || [];
 
 			try {
-				const res = await hsr.redeem.claim(code || "");
+				const res = await redeemCodeDirect(uid, accountCookie, code || "");
 				if (res.retcode == 0 || res.message == "OK") {
 					if (!userRedeemedCodes.includes(code))
 						userRedeemedCodes.push(code);
@@ -556,13 +612,6 @@ export default {
 				failedReply(interaction, (e as any).message);
 			}
 		} else if (subcommand == "autoredeem") {
-			const hsr = await getUserHSRData(
-				interaction,
-				tr,
-				interaction.user.id,
-				0
-			);
-			if (!hsr) return;
 			const userAccount = await database.get(
 				`${interaction.user.id}.account`
 			);
@@ -602,11 +651,11 @@ export default {
 				return interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
-							.setColor("#E76161")
-							.setTitle(tr("autoDaily_Off"))
-							.setThumbnail(
-								"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
-							)
+					.setColor("#E76161")
+						.setTitle(tr("autoRedeem_Off"))
+						.setThumbnail(
+							"https://media.discordapp.net/attachments/1057244827688910850/1120715314678730832/kuru.gif"
+						)
 					]
 				});
 			}
