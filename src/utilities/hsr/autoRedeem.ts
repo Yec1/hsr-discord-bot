@@ -112,7 +112,14 @@ class AutoRedeemSystem {
 		try {
 			const userLang =
 				(await getUserLang(userId)) || CONFIG.DEFAULT_LANGUAGE;
-			const accounts = await this.db.get(`${userId}.account`);
+			const hoyolabs = ((await this.db.get(`${userId}.hoyolabs`)) as any[]) ?? [];
+			const accounts: Account[] = hoyolabs.flatMap((h: any) =>
+				(h.characters ?? []).map((c: any) => ({
+					uid: c.uid,
+					cookie: h.cookie,
+					nickname: c.nickname ?? undefined
+				}))
+			);
 			return { userLang, accounts };
 		} catch (error) {
 			this.logger.error(
