@@ -10,6 +10,40 @@ import schedule from "node-schedule";
 let presenceInterval: NodeJS.Timeout | null = null;
 let hourlyJob: schedule.Job | null = null;
 let dailyJob: schedule.Job | null = null;
+let isAutoRedeemRunning = false;
+let isAutoDailyRunning = false;
+
+async function runAutoRedeem(): Promise<void> {
+	const logger = new Logger("自動兌換排程");
+	if (isAutoRedeemRunning) {
+		logger.info("上一輪自動兌換尚未完成，跳過本次觸發");
+		return;
+	}
+	isAutoRedeemRunning = true;
+	try {
+		await autoRedeem();
+	} catch (error: any) {
+		logger.error(`自動兌換排程執行失敗: ${error?.message || error}`);
+	} finally {
+		isAutoRedeemRunning = false;
+	}
+}
+
+async function runAutoDailySign(): Promise<void> {
+	const logger = new Logger("自動簽到排程");
+	if (isAutoDailyRunning) {
+		logger.info("上一輪自動簽到尚未完成，跳過本次觸發");
+		return;
+	}
+	isAutoDailyRunning = true;
+	try {
+		await autoDailySign();
+	} catch (error: any) {
+		logger.error(`自動簽到排程執行失敗: ${error?.message || error}`);
+	} finally {
+		isAutoDailyRunning = false;
+	}
+}
 
 async function updatePresence(): Promise<void> {
 	const results = await cluster.broadcastEval(
@@ -34,26 +68,26 @@ async function updatePresence(): Promise<void> {
 client.once(Events.ClientReady, async () => {
 	new Logger("系統").success(`${client.user?.tag || "Bot"} 已經上線！`);
 	if (cluster.id == 0) {
-		autoDailySign();
-		autoRedeem();
+		runAutoDailySign();
+		runAutoRedeem();
 		autoMimo();
 		setupLeaderboardMaintenance();
 
 		if (!hourlyJob) {
 			hourlyJob = schedule.scheduleJob("0 * * * *", function () {
-				autoDailySign();
-				autoRedeem();
+				runAutoDailySign();
 				autoMimo();
 			});
 		}
 
 		if (!dailyJob) {
-			dailyJob = schedule.scheduleJob("0 2 * * *", function () {
+			dailyJob = schedule.scheduleJob("0 8 * * *", function () {
+				runAutoRedeem();
 				setupLeaderboardMaintenance();
 			});
 		}
 	}
 
 	if (presenceInterval) clearInterval(presenceInterval);
-	presenceInterval = setInterval(updatePresence, 10000);
+	presenceInterval = setInterval(updatePresence, 300_000);
 });

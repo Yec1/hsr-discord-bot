@@ -76,6 +76,9 @@ const langs: LanguageStrings = {
 	profile_MemoryOfChaosLevel: "混沌回憶進度",
 	profile_PureFictionLevel: "虛構敘事進度",
 	profile_Tip: "※ 可能較低於UID查詢角色評分",
+	profile_EffectiveLines: "有效詞條：{effective} / {total}",
+	profile_EffectiveStatsTitle: "有效副屬性命中統計",
+	profile_EffectiveStatsTotal: "組計命中",
 	profile_CookieExpiredFallbackToUid:
 		"Cookie 已過期，目前改用 UID 查詢，無法取得全部角色資料。請重新設定 Cookie 以使用完整角色查詢。",
 	profile_MemospriteSkill: "憶靈技",
@@ -109,13 +112,24 @@ const langs: LanguageStrings = {
 	account_SetUserIDDesc: "遊戲內的 UID",
 	account_SetUserCookie: "設定 Cookie",
 	account_NoAccount: "尚未設置帳號",
+	account_View_Region: "區域",
+	account_View_LastSync: "上次同步 {time}",
+	account_View_Linked: "已綁定",
+	account_View_LvShort: "等級",
+	account_View_NoStats: "（尚無資料）",
+	account_WebLoginTitle: "🔗 綁定你的 Hoyoverse 帳號",
+	account_WebLoginDesc:
+		"點擊下方按鈕前往安全的網頁綁定你的 Hoyoverse 帳號。\n你的帳密只會輸入在安全網頁上，絕對不會經過 Discord。\n\n系統會先請你驗證 Discord 身分，再輸入 Hoyoverse 信箱與密碼。",
+	account_WebLoginButton: "開啟網頁登入",
 	account_HowToSetUpAccount: "❓ 如何設定帳號",
 	account_HowToSetUpAccountDesc:
-		"1. 點擊此連結進入兌換頁面並先登入：https://hsr.hoyoverse.com/gift?code=abc\n2. 按下 `F12` 或 `Ctrl + Shift + I` 開啟開發者工具\n3. 在頁面上嘗試兌換一次（代碼可無效）\n4. 切換到 `Network` 分頁並搜尋 `webExchangeCdkeyRisk`\n5. 點進該請求後，在 `Headers` 往下找到 `Request Headers`\n6. 複製 `Cookie` 欄位的完整字串，使用 `/account` 選「設定帳號 (Cookie)」貼上",
+		"### 🔥 如何取得 Cookie\n1. 開啟 [Hoyolab](https://www.hoyolab.com/) 網頁並登入帳號\n2. 按下 `F12` 或 `Ctrl + Shift + I` 打開開發者工具\n3. 切換至 `Application` 選擇左邊的 `Cookies` → `https://www.hoyolab.com`\n4. 找到以下欄位並複製其值：`ltoken_v2`、`ltuid_v2`、`cookie_token_v2`、`account_mid_v2`\n5. 將它們填入各個欄位即可！",
 	account_CookieSetSuccess: "綁定成功！歡迎開拓者 <z>",
 	account_InvalidIndex: "無效的帳號索引",
 	account_CookieSetFailed: "Cookie 綁定失敗",
 	account_CookieSetFailedDesc: "請確認 Cookie 是否正確",
+	account_CookieInvalidOrExpired:
+		"Cookie 已過期或無效，請重新取得有效的 Cookie 後再試。",
 	account_DeletedSuccess: "已解除綁定帳號",
 	account_LimitExceeded: "最多只能設定至多 `5` 個帳號！",
 	account_AlreadySet: "您已經設定過 <z> 了！",
@@ -182,6 +196,20 @@ const langs: LanguageStrings = {
 	autoDaily_On: "已開啟自動簽到",
 	autoDaily_Time: "自動簽到時間：<time>",
 	autoDaily_Tag: "簽到時提及：<z>",
+	autoDaily_Fallback: "開拓者",
+
+	card_MonthCumulativeDays: "<month>月累計天數",
+	card_MissedDays: "漏簽天數",
+	card_Yesterday: "昨天",
+	card_Today: "今天",
+	card_Tomorrow: "明天",
+	card_DayAfterTomorrow: "後天",
+	card_TwoDaysAfterTomorrow: "大後天",
+	card_Claimed: "已領取",
+	card_Missed: "未簽到",
+	card_CheckedIn: "已簽到",
+
+	redeem_AllRedeemed: "所有 <count> 個禮包碼已全部兌換完畢",
 
 	warp_TypeCollaborationCharacter: "合作角色躍遷",
 	warp_TypeCollaborationLightcone: "合作光錐躍遷",
@@ -277,6 +305,8 @@ const langs: LanguageStrings = {
 	property_StatusProbability: "效果命中",
 	property_StatusResistance: "效果抗性",
 	property_BreakUp: "擊破特攻",
+	property_ElationAddedRatio: "歡愉傷害加成",
+	property_Joy: "歡愉傷害加成",
 
 	// Error Messages
 	Error: "錯誤",

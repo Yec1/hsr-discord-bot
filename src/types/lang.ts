@@ -74,6 +74,9 @@ export interface LanguageStrings {
 	profile_MemoryOfChaosLevel: string;
 	profile_PureFictionLevel: string;
 	profile_Tip: string;
+	profile_EffectiveLines: string;
+	profile_EffectiveStatsTitle: string;
+	profile_EffectiveStatsTotal: string;
 	profile_CookieExpiredFallbackToUid: string;
 	profile_MemospriteSkill: string;
 	profile_MemospriteTalent: string;
@@ -105,12 +108,21 @@ export interface LanguageStrings {
 	account_SetUserIDDesc: string;
 	account_SetUserCookie: string;
 	account_NoAccount: string;
+	account_View_Region: string;
+	account_View_LastSync: string;
+	account_View_Linked: string;
+	account_View_LvShort: string;
+	account_View_NoStats: string;
+	account_WebLoginTitle: string;
+	account_WebLoginDesc: string;
+	account_WebLoginButton: string;
 	account_HowToSetUpAccount: string;
 	account_HowToSetUpAccountDesc: string;
 	account_CookieSetSuccess: string;
 	account_InvalidIndex: string;
 	account_CookieSetFailed: string;
 	account_CookieSetFailedDesc: string;
+	account_CookieInvalidOrExpired: string;
 	account_DeletedSuccess: string;
 	account_LimitExceeded: string;
 	account_AlreadySet: string;
@@ -176,6 +188,20 @@ export interface LanguageStrings {
 	autoDaily_On: string;
 	autoDaily_Time: string;
 	autoDaily_Tag: string;
+	autoDaily_Fallback: string;
+
+	card_MonthCumulativeDays: string;
+	card_MissedDays: string;
+	card_Yesterday: string;
+	card_Today: string;
+	card_Tomorrow: string;
+	card_DayAfterTomorrow: string;
+	card_TwoDaysAfterTomorrow: string;
+	card_Claimed: string;
+	card_Missed: string;
+	card_CheckedIn: string;
+
+	redeem_AllRedeemed: string;
 
 	warp_TypeCollaborationCharacter: string;
 	warp_TypeCollaborationLightcone: string;
@@ -269,6 +295,8 @@ export interface LanguageStrings {
 	property_StatusProbability: string;
 	property_StatusResistance: string;
 	property_BreakUp: string;
+	property_ElationAddedRatio: string;
+	property_Joy: string;
 
 	// Error Messages
 	Error: string;

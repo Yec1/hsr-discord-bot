@@ -1,15 +1,15 @@
-import { client, database } from "@/index.js";
-import { AxiosError } from "axios";
+﻿import { client, database } from "@/index.js";
 import {
 	Events,
 	EmbedBuilder,
 	ModalSubmitInteraction,
 	MessageFlags,
 	ActionRowBuilder,
-	TextInputBuilder,
-	TextInputStyle
+	ButtonInteraction
 } from "discord.js";
 import { HonkaiStarRail } from "@yeci226/hoyoapi";
+import { randomUUID } from "node:crypto";
+import { ButtonBuilder, ButtonStyle } from "discord.js";
 import {
 	getUserLang,
 	requestPlayerDataEnka,
@@ -19,6 +19,20 @@ import { createTranslator, toI18nLang } from "@/utilities/core/i18n.js";
 import type { TranslationFunction } from "@/types/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
 const config = loadConfig();
+
+
+function withTimeout<T>(
+	promise: Promise<T>,
+	ms: number,
+	errorMsg: string
+): Promise<T> {
+	return Promise.race([
+		promise,
+		new Promise<T>((_, reject) =>
+			setTimeout(() => reject(new Error(errorMsg)), ms)
+		)
+	]);
+}
 
 interface Account {
 	uid: string;
@@ -34,10 +48,13 @@ interface GameInfo {
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isModalSubmit()) return;
 
-	const { locale, customId, fields } = interaction;
 	const tr = createTranslator(
-		(await getUserLang(interaction.user.id)) || toI18nLang(locale) || "en"
+		(await getUserLang(interaction.user.id)) ||
+			toI18nLang(interaction.locale) ||
+			"en"
 	);
+
+	const { customId, fields } = interaction;
 
 	if (customId === "cookie_set_new") {
 		await handleNewCookieSet(interaction, tr, fields);
@@ -53,14 +70,11 @@ async function handleNewCookieSet(
 ): Promise<void> {
 	await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-	const cookieRaw = fields.getTextInputValue("cookie") || "";
-	const cookie = cookieRaw
-		.replace(/^cookie\s*:\s*/i, "")
-		.replace(/\r?\n/g, " ")
-		.split(";")
-		.map((part: string) => part.trim())
-		.filter(Boolean)
-		.join("; ");
+	const ltokenV2 = fields.getTextInputValue("ltoken_v2").trim();
+	const ltuidV2 = fields.getTextInputValue("ltuid_v2").trim();
+	const cookieTokenV2 = fields.getTextInputValue("cookie_token_v2").trim();
+	const accountMidV2 = fields.getTextInputValue("account_mid_v2").trim();
+	const cookie = `ltoken_v2=${ltokenV2}; ltuid_v2=${ltuidV2}; cookie_token_v2=${cookieTokenV2}; account_mid_v2=${accountMidV2}; account_id_v2=${accountMidV2}; ltmid_v2=${accountMidV2}`;
 
 	if (await database.has(`${interaction.user.id}.account`)) {
 		const accounts: Account[] =
@@ -83,8 +97,36 @@ async function handleNewCookieSet(
 	}
 
 	try {
-		const gameInfo = await getUserGameInfo(cookie);
+		const gameInfo = await withTimeout(
+			getUserGameInfo(cookie),
+			20000,
+			"驗證超時，請稍後再試"
+		);
 		const uid = gameInfo.uid;
+
+		// Validate the cookie works for daily check-in (not just game record lookup)
+		try {
+			const hsr = new HonkaiStarRail({ cookie, uid: parseInt(uid) });
+			await withTimeout(hsr.daily.info(), 20000, "驗證超時，請稍後再試");
+		} catch (dailyError: any) {
+			await interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#E76161")
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+						.setTitle(tr("account_CookieSetFailed", { z: uid }))
+						.setDescription(
+							tr("account_CookieInvalidOrExpired") +
+								"\n\n`" +
+								(dailyError?.message ?? dailyError) +
+								"`"
+						)
+				]
+			});
+			return;
+		}
 
 		const accounts: Account[] =
 			(await database.get(`${interaction.user.id}.account`)) || [];
@@ -120,7 +162,9 @@ async function handleNewCookieSet(
 					.setThumbnail(
 						"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
 					)
-					.setTitle(tr("account_CookieSetSuccess", { z: gameInfo.nickname }))
+					.setTitle(
+						tr("account_CookieSetSuccess", { z: gameInfo.nickname })
+					)
 			]
 		});
 	} catch (error: any) {
@@ -159,19 +203,17 @@ async function handleCookieSet(
 		});
 		return;
 	}
-	const cookieRaw = fields.getTextInputValue("cookie") || "";
-	const cookie = cookieRaw
-		.replace(/^cookie\s*:\s*/i, "")
-		.replace(/\r?\n/g, " ")
-		.split(";")
-		.map((part: string) => part.trim())
-		.filter(Boolean)
-		.join("; ");
+	const ltokenV2 = fields.getTextInputValue("ltoken_v2").trim();
+	const ltuidV2 = fields.getTextInputValue("ltuid_v2").trim();
+	const cookieTokenV2 = fields.getTextInputValue("cookie_token_v2").trim();
+	const accountMidV2 = fields.getTextInputValue("account_mid_v2").trim();
+	const cookie = `ltoken_v2=${ltokenV2}; ltuid_v2=${ltuidV2}; cookie_token_v2=${cookieTokenV2}; account_mid_v2=${accountMidV2}; account_id_v2=${accountMidV2}; ltmid_v2=${accountMidV2}`;
 	const account: Account[] =
 		(await database.get(`${interaction.user.id}.account`)) ?? [];
 
 	const index = parseInt(accountIndex);
-	if (!account[index]) {
+	const targetAccount = account[index];
+	if (!targetAccount) {
 		await interaction.editReply({
 			embeds: [
 				new EmbedBuilder()
@@ -184,14 +226,47 @@ async function handleCookieSet(
 	}
 
 	try {
-		const gameInfo = await getUserGameInfo(cookie);
+		const gameInfo = await withTimeout(
+			getUserGameInfo(cookie),
+			20000,
+			"驗證超時，請稍後再試"
+		);
+
+		// Validate the cookie works for daily check-in
+		try {
+			const hsr = new HonkaiStarRail({
+				cookie,
+				uid: parseInt(gameInfo.uid)
+			});
+			await withTimeout(hsr.daily.info(), 20000, "驗證超時，請稍後再試");
+		} catch (dailyError: any) {
+			await interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#E76161")
+						.setThumbnail(
+							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+						)
+						.setTitle(
+							tr("account_CookieSetFailed", { z: gameInfo.uid })
+						)
+						.setDescription(
+							tr("account_CookieInvalidOrExpired") +
+								"\n\n`" +
+								(dailyError?.message ?? dailyError) +
+								"`"
+						)
+				]
+			});
+			return;
+		}
 
 		// 清除過期標記
-		await database.delete(`${account[index].uid}.cookieExpired`);
+		await database.delete(`${targetAccount.uid}.cookieExpired`);
 
-		account[index].cookie = cookie;
-		account[index].uid = gameInfo.uid;
-		account[index].nickname = gameInfo.nickname;
+		targetAccount.cookie = cookie;
+		targetAccount.uid = gameInfo.uid;
+		targetAccount.nickname = gameInfo.nickname;
 		await database.set(`${interaction.user.id}.account`, account);
 
 		await interaction.editReply({
@@ -201,7 +276,11 @@ async function handleCookieSet(
 					.setThumbnail(
 						"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
 					)
-					.setTitle(tr("account_CookieSetSuccess", { z: account[index].nickname }))
+					.setTitle(
+						tr("account_CookieSetSuccess", {
+							z: targetAccount.nickname
+						})
+					)
 			]
 		});
 	} catch (error: any) {
@@ -211,7 +290,7 @@ async function handleCookieSet(
 				new EmbedBuilder()
 					.setTitle(
 						tr("account_CookieSetFailed", {
-							z: `${account[index].uid}`
+							z: `${targetAccount.uid}`
 						})
 					)
 					.setDescription(
@@ -225,4 +304,4 @@ async function handleCookieSet(
 			]
 		});
 	}
-}
+}

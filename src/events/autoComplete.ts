@@ -6,6 +6,7 @@ import {
 } from "@/utilities/index.js";
 import { getCharacterAutocompleteOptions } from "@/utilities/hsr/atlas.js";
 import { createTranslator, toI18nLang } from "@/utilities/core/i18n.js";
+import { drainPendingLogins } from "@/utilities/webhookLogin.js";
 
 interface Account {
 	uid: string;
@@ -19,6 +20,11 @@ client.on(Events.InteractionCreate, async (interaction: any) => {
 	const { name: optionName, value: userInput } = focusedOption;
 
 	if (optionName === "account") {
+		// Drain any pending web-logins so newly bound accounts appear immediately.
+		try {
+			await drainPendingLogins(interaction.user.id);
+		} catch {}
+
 		const userAccounts = (await database.get(
 			`${interaction.user.id}.account`
 		)) as Account[];

@@ -31,7 +31,8 @@ interface WarpResults {
 	regular: any[];
 }
 
-const drawQueue = new Queue({ autostart: true });
+const DRAW_QUEUE_MAX = 50;
+const drawQueue = new Queue({ autostart: true, concurrency: 1 });
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (interaction.isModalSubmit()) {
@@ -287,6 +288,10 @@ client.on(Events.InteractionCreate, async interaction => {
 					}
 				};
 
+				if (drawQueue.length >= DRAW_QUEUE_MAX) {
+					await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+					return;
+				}
 				drawQueue.push(drawTask);
 
 				if (drawQueue.length !== 1) {
@@ -332,12 +337,15 @@ client.on(Events.InteractionCreate, async interaction => {
 			});
 
 			const collector = resMessage.createMessageComponentCollector({
-				time: 30 * 60 * 1000,
+				time: 5 * 60 * 1000,
 				componentType: ComponentType.StringSelect
 			});
 
 			collector.on("collect", async interaction => {
 				const type = interaction.values[0];
+				// Stop the collector immediately after the user picks — releases
+				// the warpResults closure and the message component listener.
+				collector.stop("selected");
 				await interaction.deferUpdate().catch(() => {});
 				interaction.message.edit({
 					embeds: [

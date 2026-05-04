@@ -44,7 +44,8 @@ import {
 } from "../utilities/hsr/jsonManager.js";
 import Queue from "queue";
 
-const drawQueue = new Queue({ autostart: true });
+const DRAW_QUEUE_MAX = 50;
+const drawQueue = new Queue({ autostart: true, concurrency: 1 });
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
 
@@ -1025,18 +1026,16 @@ async function handleAccountAction(
 		const accountData = account[parseInt(accountIndex || "0")];
 
 		const userAccountCookie = accountData?.cookie || "";
-		const cookieInput = new TextInputBuilder()
-			.setCustomId("cookie")
-			.setLabel("Cookie")
-			.setPlaceholder(
-				"ltoken_v2=...; ltuid_v2=...; cookie_token_v2=...; account_mid_v2=..."
-			)
-			.setStyle(TextInputStyle.Paragraph)
-			.setRequired(true)
-			.setMinLength(1)
-			.setMaxLength(4000);
 
-		if (userAccountCookie) cookieInput.setValue(userAccountCookie);
+		const parseCookie = (cookie: string, key: string) => {
+			const match = cookie.match(new RegExp(`${key}=([^;]+)`));
+			return match?.[1]?.trim() ?? "";
+		};
+
+		const ltokenV2 = parseCookie(userAccountCookie, "ltoken_v2");
+		const ltuidV2 = parseCookie(userAccountCookie, "ltuid_v2");
+		const cookieTokenV2 = parseCookie(userAccountCookie, "cookie_token_v2");
+		const accountMidV2 = parseCookie(userAccountCookie, "account_mid_v2");
 
 		await interaction.showModal(
 			new ModalBuilder()
@@ -1044,7 +1043,36 @@ async function handleAccountAction(
 				.setTitle(tr("account_SetUserCookie"))
 				.addComponents(
 					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						cookieInput
+						new TextInputBuilder()
+							.setCustomId("ltoken_v2")
+							.setLabel("ltoken_v2")
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true)
+							.setValue(ltokenV2)
+					),
+					new ActionRowBuilder<TextInputBuilder>().addComponents(
+						new TextInputBuilder()
+							.setCustomId("ltuid_v2")
+							.setLabel("ltuid_v2")
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true)
+							.setValue(ltuidV2)
+					),
+					new ActionRowBuilder<TextInputBuilder>().addComponents(
+						new TextInputBuilder()
+							.setCustomId("cookie_token_v2")
+							.setLabel("cookie_token_v2")
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true)
+							.setValue(cookieTokenV2)
+					),
+					new ActionRowBuilder<TextInputBuilder>().addComponents(
+						new TextInputBuilder()
+							.setCustomId("account_mid_v2")
+							.setLabel("account_mid_v2")
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true)
+							.setValue(accountMidV2)
 					)
 				)
 		);
@@ -1231,6 +1259,10 @@ async function handleForgottenHall(
 		}
 	};
 
+	if (drawQueue.length >= DRAW_QUEUE_MAX) {
+		await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		return;
+	}
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length !== 1) {
@@ -1266,7 +1298,7 @@ async function handleSelectCharacter(
 			const allCharactersBool = allCharacters == "true" ? true : false;
 
 			// 獲取用戶語言
-			const userLang = (await getUserLang(userId || "")) || "tw";
+			const userLang = (await getUserLang(userId || "")) || toI18nLang(interaction.locale) || "tw";
 
 			let playerData: PlayerData | null = null;
 			let playerActivity = null;
@@ -1299,13 +1331,25 @@ async function handleSelectCharacter(
 				}
 
 				characters = (await hsr.record.characters()) as any;
+			// HoYoLAB returns `ranks[]` instead of `rank_icons`; inject it so
+			// drawEidolonIcons() renders the same as the UID (mihomo) path.
+			if (Array.isArray(characters)) {
+				for (const c of characters as any[]) {
+					if (!c.rank_icons && Array.isArray(c.ranks) && c.ranks.length >= 6) {
+						c.rank_icons = [...c.ranks]
+							.sort((a: any, b: any) => a.pos - b.pos)
+							.map((r: any) => r.icon);
+					}
+				}
+			}
 				const data = await hsr.record.records();
 				let gameInfo: { uid: string; nickname: string; level: number };
-				try {
-					gameInfo = await getUserGameInfo(hsr.cookie as any);
-				} catch (e) {
-					console.warn(
-						"[SelectMenu] getUserGameInfo failed, using fallback:",
+			try {
+				const cookieStr = await getUserCookie(userId || "", parseInt(accountIndex || "0")) ?? "";
+				gameInfo = await getUserGameInfo(cookieStr);
+			} catch (e) {
+				console.warn(
+					"[SelectMenu] getUserGameInfo failed, using fallback:",
 						(e as Error).message
 					);
 					gameInfo = {
@@ -1550,6 +1594,10 @@ async function handleSelectCharacter(
 		}
 	};
 
+	if (drawQueue.length >= DRAW_QUEUE_MAX) {
+		await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		return;
+	}
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length !== 1) {

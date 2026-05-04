@@ -6,6 +6,7 @@ import {
 	requestPlayerActivity,
 	getUserHSRData,
 	getUserGameInfo,
+	getUserCookie,
 	getFriendlyErrorMessage
 } from "../index.js";
 
@@ -74,6 +75,7 @@ async function tryAutoSyncCurrentAnomalyBadge(
 
 	if (validRecords.length > 0) return;
 
+	/*
 	const lastSyncAt = (await database.get(syncAtKey)) as number | null;
 	if (
 		typeof lastSyncAt === "number" &&
@@ -81,6 +83,7 @@ async function tryAutoSyncCurrentAnomalyBadge(
 	) {
 		return;
 	}
+	*/
 
 	await database.set(syncAtKey, nowMs);
 
@@ -150,8 +153,10 @@ async function tryAutoSyncCurrentAnomalyBadge(
 		);
 
 		if (existingIndex >= 0) {
+			console.log(`[Profile] Sync: Updating existing mazeId ${rankRecord.mazeId}`);
 			upsertRecords[existingIndex] = rankRecord;
 		} else {
+			console.log(`[Profile] Sync: Adding NEW mazeId ${rankRecord.mazeId}`);
 			upsertRecords.push(rankRecord);
 		}
 
@@ -212,6 +217,7 @@ interface Character {
 	name: string;
 	level: number;
 	rank: number;
+	rank_icons?: string[];
 	rarity: number;
 	icon: string;
 	preview?: string;
@@ -262,6 +268,8 @@ interface Property {
 	base: string;
 	add: string;
 	final: string;
+	icon?: string;
+	name?: string;
 }
 
 interface Relic {
@@ -409,7 +417,14 @@ interface TextSegment {
 
 const db = database;
 
-const drawQueue = new Queue({ autostart: true });
+const DRAW_QUEUE_MAX = 50;
+const drawQueue = new Queue({ autostart: true, concurrency: 1 });
+// 移除預設 error handler（它會呼叫 end() 停止整個 queue）
+// 改為只記錄錯誤，讓 queue 繼續執行後續任務
+drawQueue.removeEventListener("error", (drawQueue as any)._errorHandler);
+drawQueue.addEventListener("error", (evt: any) => {
+	console.error("[DrawQueue] Task error (queue continues):", evt?.detail?.error);
+});
 
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master";
@@ -491,7 +506,7 @@ async function downloadImage(
 	// 30秒後清理緩存
 	setTimeout(() => {
 		imageDownloadCache.delete(cacheKey);
-	}, 30000);
+	}, 30000).unref();
 
 	return await downloadPromise;
 }
@@ -702,7 +717,11 @@ export const propertyMap: { [key: number]: string } = {
 	56: "StatusProbability",
 	57: "StatusResistance",
 	58: "BreakUp",
-	59: "BreakUp"
+	59: "BreakUp",
+	// 歡愉 (Elation) DMG Added Ratio — added in a later patch; HoYoLAB does not
+	// supply name/icon for this type, so we map it here.
+	// Icon file: iconJoy.png; translation key: property_Joy
+	71: "Joy"
 };
 
 // 為 loadImageAsync 添加 cache 屬性
@@ -716,6 +735,136 @@ const MAX_CACHE_SIZE = 20; // 最大快取數量
 export function clearImageCache(): void {
 	if (loadImageAsync.cache) {
 		loadImageAsync.cache.clear();
+	}
+}
+
+const MIHOMO_CDN_BASE = "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
+const EIDOLON_ICON_SIZE = 48;
+const EIDOLON_ICON_GAP = 6;
+/** Total width occupied by all 6 eidolon icons + gaps */
+export const EIDOLON_BLOCK_WIDTH = 6 * EIDOLON_ICON_SIZE + 5 * EIDOLON_ICON_GAP; // 318
+
+/**
+ * Draws 6 eidolon icons horizontally.
+ * Unlocked icons (index < unlockedCount) get a white circular border.
+ * Locked icons get a semi-transparent black overlay.
+ *
+ * @param ctx        Canvas 2D context
+ * @param rankIcons  character.rank_icons (6-element array of relative paths)
+ * @param unlockedCount  character.rank (0–6)
+ * @param x          Left edge of first icon
+ * @param baselineY  Text baseline used by surrounding code (icons are vertically centred here)
+ */
+async function drawEidolonIcons(
+	ctx: any,
+	rankIcons: string[],
+	unlockedCount: number,
+	centerX: number,
+	centerY: number
+): Promise<void> {
+	const size = EIDOLON_ICON_SIZE;
+	const gap = EIDOLON_ICON_GAP;
+	// Calculate left edge so icons are centred on centerX
+	const x = centerX - EIDOLON_BLOCK_WIDTH / 2;
+	const top = centerY - size / 2;
+
+	for (let i = 0; i < 6; i++) {
+		const iconX = x + i * (size + gap);
+		const iconY = top;
+		const cx = iconX + size / 2;
+		const cy = iconY + size / 2;
+		const r = size / 2;
+
+		// Load icon from CDN — rankIcons[i] may be a full URL (HoYoLAB path)
+		// or a relative path (mihomo path); only prepend the CDN base for relative paths.
+		const rawIcon = rankIcons[i];
+		const iconPath = rawIcon
+			? rawIcon.startsWith("http")
+				? rawIcon
+				: `${MIHOMO_CDN_BASE}${rawIcon}`
+			: null;
+
+		const iconResult = iconPath ? await loadImageAsync(iconPath) : null;
+
+		ctx.save();
+
+		// Clip to circle
+		ctx.beginPath();
+		ctx.arc(cx, cy, r, 0, Math.PI * 2);
+		ctx.clip();
+
+		if (iconResult?.image) {
+			ctx.drawImage(iconResult.image, iconX, iconY, size, size);
+		} else {
+			// Grey placeholder circle when image fails to load
+			ctx.fillStyle = "rgba(100,100,100,0.8)";
+			ctx.fillRect(iconX, iconY, size, size);
+		}
+
+		// Locked overlay + lock icon
+		if (i >= unlockedCount) {
+			ctx.fillStyle = "rgba(0,0,0,0.55)";
+			ctx.fillRect(iconX, iconY, size, size);
+		}
+
+		ctx.restore();
+
+		// White border for unlocked icons (drawn outside clip so border isn't cut)
+		if (i < unlockedCount) {
+			ctx.save();
+			ctx.strokeStyle = "rgba(255,255,255,0.9)";
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
+			ctx.stroke();
+			ctx.restore();
+		}
+
+		// Lock icon drawn on top for locked icons
+		if (i >= unlockedCount) {
+			ctx.save();
+			const lw = size * 0.28; // lock body width
+			const lh = size * 0.22; // lock body height
+			const lx = cx - lw / 2;
+			const ly = cy - lh * 0.1; // slightly below centre
+			const shackleW = lw * 0.55;
+			const shackleH = lh * 1.1;
+			const shackleX = cx - shackleW / 2;
+			const shackleY = ly - shackleH;
+
+			ctx.strokeStyle = "rgba(255,255,255,0.85)";
+			ctx.fillStyle = "rgba(255,255,255,0.85)";
+			ctx.lineWidth = size * 0.07;
+			ctx.lineCap = "round";
+
+			// Shackle (U-shape arc)
+			ctx.beginPath();
+			ctx.arc(
+				cx,
+				shackleY + shackleH * 0.55,
+				shackleW / 2,
+				Math.PI,
+				0
+			);
+			ctx.stroke();
+
+			// Lock body (rounded rect)
+			const br = size * 0.06;
+			ctx.beginPath();
+			ctx.moveTo(lx + br, ly);
+			ctx.lineTo(lx + lw - br, ly);
+			ctx.arcTo(lx + lw, ly, lx + lw, ly + br, br);
+			ctx.lineTo(lx + lw, ly + lh - br);
+			ctx.arcTo(lx + lw, ly + lh, lx + lw - br, ly + lh, br);
+			ctx.lineTo(lx + br, ly + lh);
+			ctx.arcTo(lx, ly + lh, lx, ly + lh - br, br);
+			ctx.lineTo(lx, ly + br);
+			ctx.arcTo(lx, ly, lx + br, ly, br);
+			ctx.closePath();
+			ctx.fill();
+
+			ctx.restore();
+		}
 	}
 }
 
@@ -758,7 +907,18 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 				throw new Error("Invalid URL");
 			}
 
-			const image = await loadImage(url);
+			// 對遠端 URL，先用 axios 下載成 Buffer 再傳給 loadImage
+			// 避免 @napi-rs/canvas 的 native HTTP client 在雲端伺服器上被 GitHub CDN RST
+			let imageSource: string | Buffer = url;
+			if (url.startsWith("http://") || url.startsWith("https://")) {
+				const response = await axios.get(url, {
+					responseType: "arraybuffer",
+					timeout: 15000
+				});
+				imageSource = Buffer.from(response.data);
+			}
+
+			const image = await loadImage(imageSource);
 			loadImageAsync.cache!.set(url, image);
 			return { image, usedFallback: false };
 		} catch (error) {
@@ -773,7 +933,15 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 			if (fallbackUrl && fallbackUrl.trim() !== "") {
 				try {
 					if (!loadImageAsync.cache!.has(fallbackUrl)) {
-						const fallbackImage = await loadImage(fallbackUrl);
+						let fallbackSource: string | Buffer = fallbackUrl;
+						if (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://")) {
+							const fbResponse = await axios.get(fallbackUrl, {
+								responseType: "arraybuffer",
+								timeout: 15000
+							});
+							fallbackSource = Buffer.from(fbResponse.data);
+						}
+						const fallbackImage = await loadImage(fallbackSource);
 						loadImageAsync.cache!.set(fallbackUrl, fallbackImage);
 					}
 					return {
@@ -858,7 +1026,8 @@ async function renderAttributesList(
 	attributes: Attribute[],
 	startX: number,
 	startY: number,
-	spacing: number
+	spacing: number,
+	effectiveSet?: Set<string>
 ): Promise<void> {
 	// 過濾掉 0/0%/0.0%/0.00%/0.0/0 的屬性
 	const filtered = attributes.filter(attribute => {
@@ -876,6 +1045,14 @@ async function renderAttributesList(
 
 		const y = startY + i * spacing;
 
+		// 判斷是否為有效詞條屬性 (用金色標示)
+		const isEffective =
+			effectiveSet &&
+			attribute.icon &&
+			[...effectiveSet].some(key =>
+				attribute.icon!.toLowerCase().includes(key.toLowerCase())
+			);
+
 		// 載入並繪製屬性圖標
 		const attributeImageResult = await loadImageAsync(
 			`./src/assets/image/${attribute.icon?.replace("Icon", "icon")}`
@@ -887,7 +1064,7 @@ async function renderAttributesList(
 		// 繪製屬性名稱
 		setupFont(ctx, 24, true);
 		ctx.textAlign = "left";
-		ctx.fillStyle = "white";
+		ctx.fillStyle = isEffective ? "#F3C96B" : "white";
 		ctx.fillText(attribute.name || "", startX + 55, y + 34);
 
 		// base/add 顯示
@@ -899,6 +1076,7 @@ async function renderAttributesList(
 		) {
 			setupFont(ctx, 16, true);
 			ctx.textAlign = "right";
+			ctx.fillStyle = isEffective ? "#F3C96B" : "white";
 			ctx.fillText(`${attribute.base}`, startX + 350, y + 22);
 			ctx.fillStyle = "#B0CFFF"; // 藍色
 			ctx.fillText(
@@ -911,7 +1089,7 @@ async function renderAttributesList(
 		// final 顯示在右側
 		setupFont(ctx, 24, true);
 		ctx.textAlign = "right";
-		ctx.fillStyle = "white";
+		ctx.fillStyle = isEffective ? "#F3C96B" : "white";
 		ctx.fillText(
 			`${attribute.display || attribute.value || attribute.final}`,
 			startX + 450,
@@ -1266,7 +1444,7 @@ async function handleProfileDraw(
 
 	const drawTask = async () => {
 		try {
-			interaction.editReply({
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setTitle(tr("Searching"))
@@ -1274,9 +1452,8 @@ async function handleProfileDraw(
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
 						)
-				],
-				withResponse: true
-			});
+				]
+			}).catch(() => {});
 
 			await tryAutoSyncCurrentAnomalyBadge(
 				interaction,
@@ -1310,11 +1487,12 @@ async function handleProfileDraw(
 				} else {
 					const data = await hsr.record.records();
 					let gameInfo: { uid: string; nickname: string; level: number };
-					try {
-						gameInfo = await getUserGameInfo(hsr.cookie as any);
-					} catch (e) {
-						console.warn(
-							"[Profile] getUserGameInfo failed, using fallback:",
+				try {
+					const cookieStr = await getUserCookie(user.id, accountIndex) ?? "";
+					gameInfo = await getUserGameInfo(cookieStr);
+				} catch (e) {
+					console.warn(
+						"[Profile] getUserGameInfo failed, using fallback:",
 							(e as Error).message
 						);
 						gameInfo = {
@@ -1333,8 +1511,19 @@ async function handleProfileDraw(
 						characters: []
 					};
 
-					// 獲取完整的角色數據，包括 relics 和 ornaments
-					characters = (await hsr.record.characters()) as any;
+				// 獲取完整的角色數據，包括 relics 和 ornaments
+				characters = (await hsr.record.characters()) as any;
+				// HoYoLAB returns `ranks[]` (each with .icon) instead of `rank_icons`.
+				// Inject rank_icons so drawEidolonIcons() works the same as the UID path.
+				if (Array.isArray(characters)) {
+					for (const c of characters as any[]) {
+						if (!c.rank_icons && Array.isArray(c.ranks) && c.ranks.length >= 6) {
+							c.rank_icons = [...c.ranks]
+								.sort((a: any, b: any) => a.pos - b.pos)
+								.map((r: any) => r.icon);
+						}
+					}
+				}
 
 					// 為 saveLeaderboard 準備完整的 playerData
 					const fullPlayerData: PlayerData = {
@@ -1669,17 +1858,39 @@ async function handleProfileDraw(
 					: [])
 			];
 
-			interaction.editReply({
-				content: cookieExpiredFallbackNotice
-					? tr("profile_CookieExpiredFallbackToUid")
-					: "",
-				embeds: [],
-				components: components,
-				files: [image]
-			});
+			// 上傳圖片，加入 retry 避免 Discord connection reset
+			const uploadWithRetry = async (retries = 3): Promise<void> => {
+				for (let attempt = 1; attempt <= retries; attempt++) {
+					try {
+						await interaction.editReply({
+							content: cookieExpiredFallbackNotice
+								? tr("profile_CookieExpiredFallbackToUid")
+								: "",
+							embeds: [],
+							components: components,
+							files: [image]
+						});
+						return;
+					} catch (uploadError: any) {
+						const isSocketError =
+							uploadError?.code === "UND_ERR_SOCKET" ||
+							uploadError?.message?.includes("other side closed") ||
+							uploadError?.message?.includes("socket hang up");
+						if (isSocketError && attempt < retries) {
+							console.warn(
+								`[Profile] Upload attempt ${attempt} failed (socket error), retrying...`
+							);
+							await new Promise(res => setTimeout(res, 1000 * attempt));
+							continue;
+						}
+						throw uploadError;
+					}
+				}
+			};
+			await uploadWithRetry();
 		} catch (error) {
 			console.error(error);
-			interaction.editReply({
+			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
 						.setColor("#E76161")
@@ -1688,12 +1899,15 @@ async function handleProfileDraw(
 						.setThumbnail(
 							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
 						)
-				],
-				withResponse: true
-			});
+				]
+			}).catch(() => {});
 		}
 	};
 
+	if (drawQueue.length >= DRAW_QUEUE_MAX) {
+		await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		return;
+	}
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length !== 1) {
@@ -1843,7 +2057,12 @@ async function drawMainImage(
 				const badgeX = badgeStartX + i * (badgeSize + badgeSpacing);
 
 				try {
-					const badgeIcon = await loadImage(record.rankIcon);
+					let badgeSource: string | Buffer = record.rankIcon;
+					if (record.rankIcon?.startsWith("http://") || record.rankIcon?.startsWith("https://")) {
+						const badgeResponse = await axios.get(record.rankIcon, { responseType: "arraybuffer", timeout: 15000 });
+						badgeSource = Buffer.from(badgeResponse.data);
+					}
+					const badgeIcon = await loadImage(badgeSource);
 					if (badgeIcon) {
 						ctx.drawImage(
 							badgeIcon,
@@ -2077,8 +2296,13 @@ async function drawCharacterImage(
 					"none"
 		).toLowerCase();
 		const normalizedPathId = pathMapper[rawPathId] || rawPathId;
+		// HoYoLAB: path=undefined → rawPathId="" → normalizedPathId=""
+		// fallback 到 base_type 對應的命途名稱
+		const resolvedPathId = normalizedPathId ||
+			(await getPathMap())[character.base_type || 0] ||
+			"none";
 		const characterPathIcon = isAllCharacter
-			? `icon/path/${normalizedPathId}Small.png`
+			? `icon/path/${resolvedPathId}Small.png`
 			: (typeof character.path === "object" &&
 					character.path?.icon?.toLowerCase()) ||
 				`icon/path/${(await getPathMap())[character.base_type || 0]}.png`;
@@ -2262,58 +2486,69 @@ async function drawCharacterImage(
 			setupFont(ctx, fontSize, true);
 		}
 
-		ctx.fillText(character.name, 120, 100);
+		ctx.fillText(character.name, 120, 99);
 
-		// 绘制元素和命途图标
+		// 绘制等级（跟在名字后面）
+		const nameWidth = ctx.measureText(character.name).width;
+		setupFont(ctx, 28, false);
+		ctx.fillStyle = "rgba(255,255,255,0.75)";
+		ctx.fillText(
+			`${tr("level")} ${character.level}`,
+			120 + nameWidth + 10,
+			99
+		);
+		ctx.fillStyle = "white";
+
+		// 绘制元素图标（row 1, 與名字對齊）
 		if (element) {
-			ctx.drawImage(element, 50, 50, 64, 64);
-		}
-		if (path) {
-			ctx.drawImage(path, 50, 120, 64, 64);
+			ctx.drawImage(element, 50, 56, 56, 56);
 		}
 
-		// 绘制命途名称
+		// 绘制星级 (row 2)
+		if (star) {
+			ctx.drawImage(star, 50, 120, 160, 32);
+		}
+
+		// 绘制命途图标 + 名称 (row 3)
+		if (path) {
+			ctx.drawImage(path, 50, 162, 52, 52);
+		}
 		setupFont(ctx, 28, true);
 		ctx.fillText(
 			(typeof character.path === "object"
 				? character.path?.name
-				: character.path) ||
+				: (() => {
+					const raw = (character.path as string) || "";
+					const mapped = pathMapper[raw.toLowerCase()] || raw;
+					if (!mapped) return undefined;
+					const key = mapped.charAt(0).toUpperCase() + mapped.slice(1);
+					return tr(`path_${key}`);
+				})()) ||
 				tr(`path_${(await getPathMap())[character.base_type || 0]}`),
-			130,
-			165
+			112,
+			196
 		);
 
-		// 绘制星级
-		if (star) {
-			ctx.drawImage(star, 50, 185, 160, 32);
+		ctx.textAlign = "left";
+
+		// 绘制命座图标（置中於左側面板 centerX=210）
+		const PANEL_CENTER_X = 270;
+		const EIDOLON_CENTER_Y = 260;
+		if (character.rank_icons && character.rank_icons.length >= 6) {
+			await drawEidolonIcons(ctx, character.rank_icons, character.rank, PANEL_CENTER_X, EIDOLON_CENTER_Y);
+		} else {
+			// Fallback: original text if rank_icons not available
+			setupFont(ctx, 26, true);
+			ctx.fillStyle = "#DCC491";
+			ctx.textAlign = "center";
+			ctx.fillText(
+				`${tr("Eidolon", { rank: character.rank })}`,
+				PANEL_CENTER_X,
+				EIDOLON_CENTER_Y
+			);
+			ctx.fillStyle = "white";
+			ctx.textAlign = "left";
 		}
-
-		ctx.textAlign = "center";
-
-		// 绘制命座和等级信息
-		setupFont(ctx, 26, true);
-		ctx.fillStyle = "#DCC491";
-		ctx.fillText(
-			`${tr("Eidolon", {
-				rank: character.rank
-			})}`,
-			210,
-			270
-		);
-		ctx.fillStyle = "white";
-
-		setupFont(ctx, 28, true);
-		ctx.fillText(
-			`${tr("level")} ${character.level}`,
-			210 +
-				ctx.measureText(
-					`${tr("Eidolon", {
-						rank: character.rank
-					})}`
-				).width +
-				20,
-			270
-		);
 
 		// 优化属性渲染
 		let result = [];
@@ -2361,12 +2596,33 @@ async function drawCharacterImage(
 					return acc;
 				}, {});
 
+			// mihomo attributes[] 的 hp/atk/def/spd 名稱帶有「基礎」前綴，
+			// 但合併後顯示的是加成後的總量，應去掉「基礎」改用完整名稱。
+			const fieldNameOverride: Record<string, string> = {
+				hp:  tr("property_MaxHP"),
+				atk: tr("property_Attack"),
+				def: tr("property_Defence"),
+				spd: tr("property_Speed")
+			};
+			for (const field of Object.keys(fieldNameOverride)) {
+				if (attributesWithAdditions[field] && fieldNameOverride[field]) {
+					(attributesWithAdditions[field] as Attribute).name = fieldNameOverride[field] as string;
+				}
+			}
+
 			result = Object.values(attributesWithAdditions);
 		} else {
 			result = (character.properties || []).map(property => {
-				const iconFile = `icon/property/icon${propertyMap[property.property_type]}.png`;
+				// 優先使用 API 提供的 icon（支援 elation_dmg / Joy 等新屬性）
+				const iconFile = property.icon
+					? property.icon
+					: `icon/property/icon${propertyMap[property.property_type]}.png`;
+				// 優先使用 API 提供的 name（支援歡愉傷等新屬性名稱）
+				const name = property.name
+					? property.name
+					: tr(`property_${propertyMap[property.property_type]}`);
 				return {
-					name: tr(`property_${propertyMap[property.property_type]}`),
+					name,
 					base: property.base,
 					add: property.add,
 					final: property.final,
@@ -2388,11 +2644,106 @@ async function drawCharacterImage(
 		// 上分隔線
 		const attrTopY = 315;
 		drawSeparatorLine(ctx, 50, 500, attrTopY);
-		// 屬性列表
-		await renderAttributesList(ctx, filteredAttributes, 50, 340, 45);
+		// 屬性列表 (relicsScore 在此提前取得，以便傳遞有效詞條集合)
+		const relicsScore = await getRelicsScore(character);
+		await renderAttributesList(ctx, filteredAttributes, 50, 340, 45, relicsScore?.effectivePropertyNames);
 		// 下分隔線動態位置
 		const attrBottomY = 373 + filteredAttributes.length * 45;
 		drawSeparatorLine(ctx, 50, 500, attrBottomY);
+
+		// 有效副屬性命中統計面板
+		let effectivePanelBottomY = attrBottomY; // 預設：沒有面板時底部就是分隔線
+		if (relicsScore && relicsScore.effectiveStats.size > 0) {
+			const panelX = 50;
+			const panelY = attrBottomY + 12;
+			const panelW = 450;
+			const chipIconSize = 26;
+
+			// 圓形總計徽章 (右側)
+			const badgeR = 30;
+			const badgeCX = panelX + panelW - badgeR - 2;
+			const badgeCY = panelY + 36;
+			// chip 列表可用右邊界：徽章左側留 10px 間距
+			const chipRightLimit = badgeCX - badgeR - 10;
+
+			// 標題
+			setupFont(ctx, 18, true);
+			ctx.textAlign = "left";
+			ctx.fillStyle = "rgba(255,255,255,0.55)";
+			ctx.fillText(tr("profile_EffectiveStatsTitle"), panelX, panelY + 16);
+
+			ctx.save();
+			ctx.beginPath();
+			ctx.arc(badgeCX, badgeCY, badgeR, 0, Math.PI * 2);
+			ctx.strokeStyle = "#F3C96B";
+			ctx.lineWidth = 2;
+			ctx.stroke();
+			ctx.restore();
+			setupFont(ctx, 22, true);
+			ctx.textAlign = "center";
+			ctx.fillStyle = "#F3C96B";
+			ctx.textBaseline = "middle";
+			const statsTotalRolls = [...relicsScore.effectiveStats.values()].reduce((s, v) => s + v.rolls, 0);
+			ctx.fillText(`${statsTotalRolls}`, badgeCX, badgeCY - 4);
+			setupFont(ctx, 12, false);
+			ctx.fillStyle = "rgba(255,255,255,0.6)";
+			ctx.fillText(tr("profile_EffectiveStatsTotal"), badgeCX, badgeCY + 14);
+			ctx.textBaseline = "alphabetic";
+
+			// 屬性 chip 多行排列
+			const chipStartX = panelX;
+			const chipLineHeight = chipIconSize + 6;
+			const chipSpacing = 8;
+			let chipX = chipStartX;
+			let chipRow = 0;
+			const stats = [...relicsScore.effectiveStats.entries()];
+			for (const [iconKey, stat] of stats) {
+				// 預先計算此 chip 的寬度
+				let localName = (tr as any)(`property_${iconKey}`) || stat.name;
+				if (typeof localName === "string") {
+					localName = localName
+						.replace(/Critical Damage/gi, "Crit DMG")
+						.replace(/Critical Rate/gi, "Crit Rate")
+						.replace(/Break Effect/gi, "Break")
+						.replace(/Effect Hit Rate/gi, "EHR")
+						.replace(/Effect RES/gi, "RES")
+						.replace(/Outgoing Healing/gi, "Healing")
+						.replace(/Energy Regen Rate/gi, "Energy")
+						.replace(/ DMG Boost$/gi, " DMG");
+				}
+				setupFont(ctx, 17, true);
+				const rollsStr = `${stat.rolls}`;
+				const chipW = chipIconSize + 2 + ctx.measureText(localName).width + 2 + ctx.measureText(rollsStr).width + chipSpacing;
+
+				// 若超出右邊界則換行（只在第一行，不超過2行）
+				if (chipRow === 0 && chipX + chipW > chipRightLimit) {
+					chipRow = 1;
+					chipX = chipStartX;
+				}
+
+				const chipY = panelY + 28 + chipRow * chipLineHeight;
+
+				// icon
+				const iconResult = await loadImageAsync(`./src/assets/image/${stat.icon}`);
+				if (iconResult?.image) {
+					ctx.drawImage(iconResult.image, chipX, chipY, chipIconSize, chipIconSize);
+				}
+				chipX += chipIconSize + 2;
+
+				ctx.textAlign = "left";
+				ctx.fillStyle = "#F3C96B";
+				ctx.fillText(localName, chipX, chipY + chipIconSize - 4);
+				chipX += ctx.measureText(localName).width + 2;
+
+				ctx.fillStyle = "white";
+				ctx.fillText(rollsStr, chipX, chipY + chipIconSize - 4);
+				chipX += ctx.measureText(rollsStr).width + chipSpacing;
+			}
+
+			// 面板實際底部
+			const lastChipY = panelY + 28 + chipRow * chipLineHeight;
+			effectivePanelBottomY = lastChipY + chipIconSize;
+		}
 
 		// relics 區塊對齊
 		const relics_left_x = 1210;
@@ -2484,21 +2835,9 @@ async function drawCharacterImage(
 				let nameFont = 28;
 				setupFont(ctx, nameFont, true);
 				const maxNameWidth = 268 - 40;
-				while (
-					ctx.measureText(lcName).width > maxNameWidth &&
-					nameFont > 20
-				) {
+				while (ctx.measureText(lcName).width > maxNameWidth && nameFont > 14) {
 					nameFont -= 1;
 					setupFont(ctx, nameFont, true);
-				}
-				if (ctx.measureText(lcName).width > maxNameWidth) {
-					while (
-						lcName.length > 0 &&
-						ctx.measureText(lcName + "...").width > maxNameWidth
-					) {
-						lcName = lcName.slice(0, -1);
-					}
-					lcName = lcName + "...";
 				}
 				ctx.fillText(
 					lcName,
@@ -2590,72 +2929,128 @@ async function drawCharacterImage(
 						});
 
 						ctx.textAlign = "left";
-						let descFont = 20;
-						setupFont(ctx, descFont, false);
-
 						const maxDescWidth = relics_width - 268 - 30;
 						const descX = light_cone_base_x + 268;
+						// 光錐框可用高度（扣掉名稱與等級行已佔的空間，預留上下各 20px 邊距）
+						const descAreaHeight = light_cone_height - 80;
 
-						// Rich Text 解析與分行
-						// 1. 拆分標記
+						// interface 定義
+						interface WordToken { word: string; isGold: boolean; }
+						interface CharToken { char: string; isGold: boolean; width: number; }
+
+						// 解析 Rich Text segments
 						const segments = description
 							.split(/({{GOLD}}.*?{{\/GOLD}})/g)
 							.filter((s: string) => s !== "")
 							.map((part: string) => {
 								if (part.startsWith("{{GOLD}}")) {
-									return {
-										text: part.replace(
-											/{{GOLD}}|{{\/GOLD}}/g,
-											""
-										),
-										isGold: true
-									};
+									return { text: part.replace(/{{GOLD}}|{{\/GOLD}}/g, ""), isGold: true };
 								}
 								return { text: part, isGold: false };
 							});
 
-						// 2. 字符級分行 (支援 CJK)
-						interface CharToken {
-							char: string;
-							isGold: boolean;
-							width: number;
-						}
-						let lines: CharToken[][] = [];
-						let currentLine: CharToken[] = [];
-						let currentLineWidth = 0;
+						// 以初始字體 20px 先做分行，若超出高度則縮小字體重試
+						let descFont = 20;
+						let lineHeight = 24;
+						let visibleLines: CharToken[][] = [];
 
-						segments.forEach(
-							(seg: { text: string; isGold: boolean }) => {
-								const chars = seg.text.split("");
-								chars.forEach((char: string) => {
-									const charWidth =
-										ctx.measureText(char).width;
-									if (
-										currentLineWidth + charWidth >
-										maxDescWidth
-									) {
-										lines.push(currentLine);
-										currentLine = [];
-										currentLineWidth = 0;
-									}
-									currentLine.push({
-										char,
-										isGold: seg.isGold,
-										width: charWidth
-									});
-									currentLineWidth += charWidth;
-								});
+						for (; descFont >= 14; descFont -= 1, lineHeight = Math.floor(descFont * 1.2)) {
+							setupFont(ctx, descFont, false);
+
+							// --- 分行邏輯 ---
+						const wordTokens2: WordToken[] = [];
+						segments.forEach((seg: { text: string; isGold: boolean }) => {
+							const parts = seg.text.split(/(\s+)/);
+							parts.forEach((part: string) => {
+								if (part !== "") wordTokens2.push({ word: part, isGold: seg.isGold });
+							});
+						});
+
+						const isCJK = (ch: string) => /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/.test(ch);
+
+						const spW = ctx.measureText(" ").width;
+						let lns: CharToken[][] = [];
+						let curLine: CharToken[] = [];
+						let curW = 0;
+
+						const pushLine = () => {
+							// 去掉行尾空白
+							while (curLine.length > 0 && /\s/.test(curLine[curLine.length - 1]!.char)) {
+								curW -= curLine[curLine.length - 1]!.width;
+								curLine.pop();
 							}
-						);
-						if (currentLine.length > 0) lines.push(currentLine);
+							lns.push(curLine);
+							curLine = [];
+							curW = 0;
+						};
+
+						wordTokens2.forEach((token: WordToken) => {
+							const isSp = /^\s+$/.test(token.word);
+							if (isSp) {
+								if (curW === 0) return; // 行首空白略過
+								const spChars = token.word.split("");
+								spChars.forEach((char: string) => {
+									const cw = spW;
+									curLine.push({ char, isGold: token.isGold, width: cw });
+									curW += cw;
+								});
+								return;
+							}
+
+							// 非空白 token：逐字元處理
+							token.word.split("").forEach((char: string) => {
+								const cw = ctx.measureText(char).width;
+								if (isCJK(char)) {
+									// CJK 字元：每個字都可以換行
+									if (curW > 0 && curW + cw > maxDescWidth) {
+										pushLine();
+									}
+									curLine.push({ char, isGold: token.isGold, width: cw });
+									curW += cw;
+								} else {
+									// 非 CJK（英文/數字）：先累積整個字元，超寬才換行
+									// 這裡直接加字元，超過時換行（單字元級別，避免英文單字被切斷的問題
+									// 由於已在 wordTokens2 層面保留了完整單詞，單詞超過一行時才會在字元層換行）
+									if (curW > 0 && curW + cw > maxDescWidth) {
+										pushLine();
+									}
+									curLine.push({ char, isGold: token.isGold, width: cw });
+									curW += cw;
+								}
+							});
+						});
+						if (curLine.length > 0) lns.push(curLine);
+
+							const neededHeight = lns.length * lineHeight;
+							if (neededHeight <= descAreaHeight) {
+								visibleLines = lns;
+								break;
+							}
+							// 最小字體時直接截斷
+							if (descFont === 14) {
+								const maxLines = Math.floor(descAreaHeight / lineHeight);
+								visibleLines = lns.slice(0, maxLines);
+							}
+						}
+						setupFont(ctx, descFont, false);
 
 						// 垂直置中計算
-						const visibleLines = lines.slice(0, 9);
-						const totalTextHeight = visibleLines.length * 25;
+						const totalTextHeight = visibleLines.length * lineHeight;
 						const descY =
 							light_cone_base_y +
-							(280 - totalTextHeight) / 2 +
-							20;
+							(light_cone_height - totalTextHeight) / 2 +
+							10;
+
+						// Clip 文字繪製區域，防止溢出光錐框
+						ctx.save();
+						ctx.beginPath();
+						ctx.rect(
+							descX,
+							light_cone_base_y + 10,
+							maxDescWidth,
+							light_cone_height - 20
+						);
+						ctx.clip();
 
 						visibleLines.forEach((line, lIdx) => {
 							let currentX = descX;
@@ -2666,11 +3061,13 @@ async function drawCharacterImage(
 								ctx.fillText(
 									token.char,
 									currentX,
-									descY + lIdx * 25
+									descY + lIdx * lineHeight
 								);
 								currentX += token.width;
 							});
 						});
+
+						ctx.restore();
 					}
 				}
 			} else {
@@ -3094,37 +3491,41 @@ async function drawCharacterImage(
 		ctx.fillStyle = "lightgray";
 		ctx.fillText(playerData.player.uid, hasServantSkills ? 870 : 850, 1010);
 
-		const relicsScore = await getRelicsScore(character);
-
-		// 顯示總分
-		const centerX = 420;
+		// 顯示總分 - 置中於左側面板 (x=50 到 x=500，中心=275)
+		const centerX = 275;
 		ctx.font = "bold 32px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
 		ctx.textAlign = "center";
 		ctx.fillStyle = "white";
 
 		if (relicsScore) {
+			const scoreOffsetY = 56;
+			const tipOffsetY = 86;
+
 			const scoreText = tr("RelicGrade", {
 				grade: `${relicsScore.totalScore}`
 			});
+			const gradeText = relicsScore.totalGrade.grade;
 
+			ctx.font = "bold 32px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
 			const scoreWidth = ctx.measureText(scoreText).width;
-			const startX =
-				centerX -
-				(scoreWidth +
-					ctx.measureText(relicsScore.totalGrade.grade).width) /
-					2;
+			const gradeWidth = ctx.measureText(gradeText).width;
+			const gap = 8;
+			const totalWidth = scoreWidth + gap + gradeWidth;
+			const blockStartX = centerX - totalWidth / 2;
 
+			ctx.textAlign = "left";
+			ctx.fillStyle = "white";
 			ctx.fillText(
 				scoreText,
-				userLang == "en" ? startX + 50 : startX,
-				attrBottomY + 50
+				blockStartX,
+				effectivePanelBottomY + scoreOffsetY
 			);
 
 			ctx.fillStyle = `${relicsScore.totalGrade.color}`;
 			ctx.fillText(
-				relicsScore.totalGrade.grade,
-				startX + scoreWidth - 130,
-				attrBottomY + 50
+				gradeText,
+				blockStartX + scoreWidth + gap,
+				effectivePanelBottomY + scoreOffsetY
 			);
 
 			if (isAllCharacter) {
@@ -3132,8 +3533,7 @@ async function drawCharacterImage(
 				ctx.fillStyle = "lightgray";
 				ctx.font =
 					"bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-				const tipX = userLang == "en" ? centerX - 150 : startX;
-				ctx.fillText(tr("profile_Tip"), tipX, attrBottomY + 80);
+				ctx.fillText(tr("profile_Tip"), centerX, effectivePanelBottomY + tipOffsetY);
 			}
 		} else {
 			ctx.textAlign = "center";
@@ -3533,7 +3933,12 @@ async function drawAllCharactersImage(
 				const badgeY = startY;
 
 				try {
-					const badgeIcon = await loadImage(record.rankIcon);
+					let badgeSource: string | Buffer = record.rankIcon;
+					if (record.rankIcon?.startsWith("http://") || record.rankIcon?.startsWith("https://")) {
+						const badgeResponse = await axios.get(record.rankIcon, { responseType: "arraybuffer", timeout: 15000 });
+						badgeSource = Buffer.from(badgeResponse.data);
+					}
+					const badgeIcon = await loadImage(badgeSource);
 					if (badgeIcon) {
 						ctx.drawImage(
 							badgeIcon,

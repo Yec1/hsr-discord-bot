@@ -196,7 +196,8 @@ let lastCacheTime = 0;
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时
 
 // 绘制队列
-const drawQueue = new Queue({ autostart: true });
+const DRAW_QUEUE_MAX = 50;
+const drawQueue = new Queue({ autostart: true, concurrency: 1 });
 
 // 字体注册状态
 let fontsRegistered = false;
@@ -800,6 +801,10 @@ export async function handleCharacterAtlas(
 		};
 
 		// 使用队列系统，与profile保持一致
+		if (drawQueue.length >= DRAW_QUEUE_MAX) {
+			await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+			return;
+		}
 		drawQueue.push(drawTask);
 
 		if (drawQueue.length !== 1) {

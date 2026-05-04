@@ -21,7 +21,37 @@ export class VerificationServer {
 
 	public static onResult(sessionId: string, callback: (result: any) => void) {
 		this.registerSession(sessionId);
-		this.events.once(`result:${sessionId}`, callback);
+
+		let fired = false;
+		const fire = (result: any) => {
+			if (fired) return;
+			fired = true;
+			clearInterval(pollInterval);
+			callback(result);
+		};
+
+		this.events.once(`result:${sessionId}`, fire);
+
+		// HTTP polling fallback — works even if WebSocket is down
+		const baseUrl = (() => {
+			const cfg = this.config as any;
+			return cfg.WEBSITE_URL || `http://localhost:${cfg.WEBSERVER_PORT || 3000}`;
+		})();
+		const pollInterval = setInterval(async () => {
+			try {
+				const res = await fetch(`${baseUrl}/claim-result/${sessionId}`);
+				const data = await res.json() as any;
+				if (data.success && data.result !== undefined) {
+					fire(data.result);
+				}
+			} catch { /* ignore, keep polling */ }
+		}, 2000);
+
+		// Clean up after 15 minutes regardless
+		setTimeout(() => {
+			clearInterval(pollInterval);
+			this.events.removeAllListeners(`result:${sessionId}`);
+		}, 15 * 60 * 1000);
 	}
 
 	public static registerSession(sessionId: string) {
@@ -73,8 +103,8 @@ export class VerificationServer {
 						message.result
 					);
 				}
-			} catch (e) {
-				// Ignore
+			} catch (e: any) {
+				VerificationServer.logger.error(`JSON Parse Error: ${e.message}`);
 			}
 		});
 

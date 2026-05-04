@@ -500,7 +500,8 @@ interface BossInfo {
 	name_mi18n: string;
 }
 
-const drawQueue = new Queue({ autostart: true });
+const DRAW_QUEUE_MAX = 50;
+const drawQueue = new Queue({ autostart: true, concurrency: 1 });
 
 GlobalFonts.registerFromPath(
 	join(".", "src", ".", "assets", "URW-DIN-Arabic-Medium.ttf"),
@@ -820,6 +821,10 @@ async function handleForgottenHallDraw(
 		}
 	};
 
+	if (drawQueue.length >= DRAW_QUEUE_MAX) {
+		await (interaction as any).editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		return;
+	}
 	drawQueue.push(drawTask);
 
 	if (drawQueue.length !== 1) {

@@ -1,5 +1,6 @@
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { createRequire } from "module";
 import {
 	Client,
 	GatewayIntentBits,
@@ -12,6 +13,27 @@ import { QuickDB } from "quick.db";
 import { loadConfig } from "@/utilities/core/config.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// 重要：discord.js 用的是它自己 nested 的 undici@6（@discordjs/rest/node_modules/undici）
+// 不是 hsr-discord-bot 頂層的 undici@8。必須從 discord.js 解析的 undici 取 Agent，
+// 否則設定的 dispatcher 跟 discord.js 用的是不同 npm 實例，完全沒有效果。
+const require = createRequire(import.meta.url);
+const discordUndiciPath = require.resolve("undici", {
+	paths: [require.resolve("@discordjs/rest")]
+});
+const { Agent: DiscordUndiciAgent } = require(discordUndiciPath) as typeof import("undici");
+
+// 解決 stale connection 問題（UND_ERR_SOCKET / "other side closed" with bytesWritten:0）：
+// - keepAliveTimeout 設短一點，主動在 server 關閉 idle 連線前丟掉 client 端
+// - keepAliveMaxTimeout 上限
+// - connect.timeout 連線建立 timeout
+const discordRestAgent = new DiscordUndiciAgent({
+	keepAliveTimeout: 10_000,
+	keepAliveMaxTimeout: 10_000,
+	connect: {
+		timeout: 30_000
+	}
+});
 
 const config = loadConfig();
 
@@ -38,6 +60,10 @@ const client = new Client({
 		parse: ["users"],
 		repliedUser: false
 	},
+	rest: {
+		timeout: 60000, // 60s，給圖片上傳足夠時間
+		agent: discordRestAgent as any
+	},
 	shards: getInfo().SHARD_LIST,
 	shardCount: getInfo().TOTAL_SHARDS
 });
@@ -46,7 +72,6 @@ const client = new Client({
  * @description 集群客戶端
  */
 const cluster = new ClusterClient(client);
-if (cluster.id == 0) await import("./server.js");
 
 /**
  * @description 資料庫
@@ -114,7 +139,6 @@ async function getSlashCommands(paths: string[]) {
 				`${path} 處的指令缺少必要的「資料」或「執行」屬性`
 			);
 		}
-		commands.slash.set(file.name, file);
 
 		if (
 			file.type === ApplicationCommandType.Message ||
@@ -139,8 +163,6 @@ async function bindEvents(paths: string[]) {
 		await import(fileUrl);
 	}
 }
-
-import { VerificationServer } from "@/utilities/core/VerificationServer.js";
 
 /**
  * @description 載入指令
@@ -169,7 +191,7 @@ export async function load() {
 			`已載入 ${eventPaths.length} 事件、${slashCommands.length} 斜線指令、${messageCommands.length} 訊息指令`
 		);
 
-		client.on("ready", async () => {
+		client.once("ready", async () => {
 			try {
 				await client.application?.commands.set(slashCommands);
 			} catch (error) {
@@ -184,8 +206,6 @@ export async function load() {
 
 client.login(process.env.NODE_ENV === "dev" ? config.TEST_TOKEN : config.TOKEN);
 
-load().then(() => {
-	new VerificationServer(cluster as any).start();
-});
+load();
 
 export { client, database, cluster, commands };

@@ -8,10 +8,10 @@ import {
 	getUserCookie,
 	getUserLang,
 	getUserUid,
-	getRandomColor,
 	autoRefreshCookie
 } from "@/utilities/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
+import { buildHSRDailyCard, HSRDailyCardPayload } from "@/utilities/canvas/dailyCard.js";
 
 interface Config {
 	API_TIMEOUT: number;
@@ -121,13 +121,18 @@ class AutoDailySignSystem {
 	isSkippableError(errorMessage: string): boolean {
 		const skipPatterns = [
 			"尚未登入",
+			"尚未登录",
 			"Not logged in",
 			"未登入",
+			"未登录",
 			"登入失敗",
+			"登录失败",
 			"Login failed",
 			"Cookie 已過期",
+			"Cookie 已过期",
 			"Cookie expired",
 			"無效的 Cookie",
+			"无效的 Cookie",
 			"Invalid cookie"
 		];
 
@@ -149,16 +154,18 @@ class AutoDailySignSystem {
 	async processDailySign(
 		userId: string,
 		dailyData: DailyData
-	): Promise<void> {
+	): Promise<boolean> {
 		const accounts = await this.db.get(`${userId}.account`);
 		if (!accounts || !Array.isArray(accounts) || accounts.length === 0) {
-			return;
+			return false;
 		}
 
 		const userLang = (await getUserLang(userId)) || CONFIG.DEFAULT_LANGUAGE;
 		const tr = createTranslator(userLang);
 		const channelId = dailyData[userId]?.channelId || "";
 		const tag = dailyData[userId]?.tag === "true" ? `<@${userId}>` : "";
+
+		const successBefore = this.stats.success + this.stats.signed;
 
 		for (
 			let accountIndex = 0;
@@ -193,6 +200,17 @@ class AutoDailySignSystem {
 				}
 			}
 		}
+
+		return this.stats.success + this.stats.signed > successBefore;
+	}
+
+	async getDiscordNickname(userId: string): Promise<string> {
+		try {
+			const user = await this.client.users.fetch(userId);
+			return user.displayName || user.username || "開拓者";
+		} catch {
+			return "開拓者";
+		}
 	}
 
 	async performSignIn(
@@ -212,6 +230,8 @@ class AutoDailySignSystem {
 			lang: this.getLanguage(userLang)
 		});
 
+		const nickname = await this.getDiscordNickname(userId);
+
 		try {
 			const [info, reward, rewards] = (await Promise.all([
 				hsr.daily.info(),
@@ -226,59 +246,41 @@ class AutoDailySignSystem {
 				return;
 			}
 
-			const todaySign =
-				rewards.awards[info.total_sign_day - 1] || rewards.awards[0];
-			const tmrSign =
-				rewards.awards[info.total_sign_day] || rewards.awards[1];
+		// total_sign_day is the count BEFORE claiming; after claim it's +1
+		const signedDays = info.total_sign_day + 1;
+		const idx = info.total_sign_day; // 0-based index of today (pre-claim)
+		const ystSign = rewards.awards[idx - 1];
+		const todaySign = rewards.awards[idx] || rewards.awards[0];
+		const nextSigns = [
+			rewards.awards[idx + 1] || rewards.awards[0],
+			rewards.awards[idx + 2] || rewards.awards[0],
+			rewards.awards[idx + 3] || rewards.awards[0],
+		];
+		const mkReward = (r: any) => ({
+			name: r?.name || "",
+			count: r?.cnt ?? 1,
+			...(r?.icon ? { icon: r.icon as string } : {}),
+		});
 
-			this.stats.success++;
+		this.stats.success++;
 
-			await this.sendSuccessMessage(channelId, {
-				content: tag,
-				embeds: [
-					new EmbedBuilder()
-						.setColor(getRandomColor() as any)
-						.setTitle(
-							`${account.uid} ${tr("Auto")}${tr("daily_SignSuccess")}`
-						)
-						.setThumbnail(todaySign?.icon)
-						.setDescription(
-							`${tr("daily_Description", {
-								a: `\`${todaySign?.name}x${todaySign?.cnt}\``
-							})}${
-								info.month_last_day
-									? ""
-									: `\n\n<@${userId}> ${tr(
-											"daily_DescriptionTmr",
-											{
-												b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-											}
-										)}`
-							}`
-						)
-						.addFields(
-							{
-								name: `${reward.month} ${tr("daily_Month")}`,
-								value: "\u200b",
-								inline: true
-							},
-							{
-								name: tr("daily_SignedDay", {
-									z: `\`${info.total_sign_day}\``
-								}),
-								value: "\u200b",
-								inline: true
-							},
-							{
-								name: tr("daily_MissedDay", {
-									z: `\`${info.sign_cnt_missed}\``
-								}),
-								value: "\u200b",
-								inline: true
-							}
-						)
-				]
-			});
+		await this.sendSuccessMessage(channelId, {
+			uid: account.uid,
+			nickname,
+			status: "success",
+			totalDays: signedDays,
+			month: reward.month,
+			signCntMissed: info.sign_cnt_missed,
+			...(ystSign ? { yesterdayReward: { ...mkReward(ystSign), claimed: idx > 0 } } : {}),
+			todayReward: mkReward(todaySign),
+			nextRewards: [mkReward(nextSigns[0]), mkReward(nextSigns[1]), mkReward(nextSigns[2])],
+			labelMonthCumulativeDays: tr("card_MonthCumulativeDays").replace("<month>", String(reward.month)),
+			labelMissedDays: tr("card_MissedDays"),
+			labelDays: [tr("card_Yesterday"), tr("card_Today"), tr("card_Tomorrow"), tr("card_DayAfterTomorrow"), tr("card_TwoDaysAfterTomorrow")],
+			labelClaimed: tr("card_Claimed"),
+			labelMissed: tr("card_Missed"),
+			labelCheckedIn: tr("card_CheckedIn"),
+		}, tag);
 		} catch (error: any) {
 			let errorMessage = error.message || "";
 			const code = error.code ?? error.retcode;
@@ -311,88 +313,126 @@ class AutoDailySignSystem {
 							retryHsr.daily.rewards()
 						])) as any;
 
-						const result =
-							(await retryHsr.daily.claim()) as SignResult;
+					const result =
+						(await retryHsr.daily.claim()) as SignResult;
 
-						if (
-							result.code === -5003 ||
-							result.info.is_sign === true
-						) {
-							this.stats.signed++;
-							return;
-						}
-
-						const todaySign =
-							rewards.awards[info.total_sign_day - 1] ||
-							rewards.awards[0];
-						const tmrSign =
-							rewards.awards[info.total_sign_day] ||
-							rewards.awards[1];
-
-						this.stats.success++;
-
-						await this.sendSuccessMessage(channelId, {
-							content: tag,
-							embeds: [
-								new EmbedBuilder()
-									.setColor(getRandomColor() as any)
-									.setTitle(
-										`${account.uid} ${tr("Auto")}${tr("daily_SignSuccess")} (Refreshed)`
-									)
-									.setThumbnail(todaySign?.icon)
-									.setDescription(
-										`${tr("daily_Description", {
-											a: `\`${todaySign?.name}x${todaySign?.cnt}\``
-										})}${
-											info.month_last_day
-												? ""
-												: `\n\n<@${userId}> ${tr(
-														"daily_DescriptionTmr",
-														{
-															b: `\`${tmrSign?.name}x${tmrSign?.cnt}\``
-														}
-													)}`
-										}`
-									)
-									.addFields(
-										{
-											name: `${reward.month} ${tr("daily_Month")}`,
-											value: "\u200b",
-											inline: true
-										},
-										{
-											name: tr("daily_SignedDay", {
-												z: `\`${info.total_sign_day}\``
-											}),
-											value: "\u200b",
-											inline: true
-										},
-										{
-											name: tr("daily_MissedDay", {
-												z: `\`${info.sign_cnt_missed}\``
-											}),
-											value: "\u200b",
-											inline: true
-										}
-									)
-							]
-						});
+					if (
+						result.code === -5003 ||
+						result.info.is_sign === true
+					) {
+						this.stats.signed++;
 						return;
+					}
+
+				// total_sign_day is the count BEFORE claiming; after claim it's +1
+				const signedDays = info.total_sign_day + 1;
+				const idx = info.total_sign_day; // 0-based index of today (pre-claim)
+				const ystSign = rewards.awards[idx - 1];
+				const todaySign = rewards.awards[idx] || rewards.awards[0];
+				const nextSigns = [
+					rewards.awards[idx + 1] || rewards.awards[0],
+					rewards.awards[idx + 2] || rewards.awards[0],
+					rewards.awards[idx + 3] || rewards.awards[0],
+				];
+				const mkReward = (r: any) => ({
+					name: r?.name || "",
+					count: r?.cnt ?? 1,
+					...(r?.icon ? { icon: r.icon as string } : {}),
+				});
+
+				this.stats.success++;
+
+			await this.sendSuccessMessage(channelId, {
+				uid: account.uid,
+				nickname,
+				status: "success",
+				totalDays: signedDays,
+				month: reward.month,
+				signCntMissed: info.sign_cnt_missed,
+				...(ystSign ? { yesterdayReward: { ...mkReward(ystSign), claimed: idx > 0 } } : {}),
+				todayReward: mkReward(todaySign),
+				nextRewards: [mkReward(nextSigns[0]), mkReward(nextSigns[1]), mkReward(nextSigns[2])],
+				labelMonthCumulativeDays: tr("card_MonthCumulativeDays").replace("<month>", String(reward.month)),
+				labelMissedDays: tr("card_MissedDays"),
+				labelDays: [tr("card_Yesterday"), tr("card_Today"), tr("card_Tomorrow"), tr("card_DayAfterTomorrow"), tr("card_TwoDaysAfterTomorrow")],
+				labelClaimed: tr("card_Claimed"),
+				labelMissed: tr("card_Missed"),
+				labelCheckedIn: tr("card_CheckedIn"),
+			}, tag);
+				return;
 					} catch (retryError: any) {
 						errorMessage = retryError.message;
 					}
 				}
 			}
 
-			if (this.isSkippableError(errorMessage)) {
+			const isTokenError = this.isSkippableError(errorMessage);
+
+			if (isTokenError) {
+				this.logger.warn(
+					`[用戶 ${userId}] 帳號 #${accountIndex} Token 已過期，靜默跳過`
+				);
 				throw new Error(errorMessage);
-			} else {
-				throw new Error(`API 錯誤: ${errorMessage}`);
 			}
+
+			await this.sendErrorMessage(channelId, {
+				content: tag,
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#E76161")
+						.setTitle(
+							`${tr("Auto")}${tr("daily_Failed")}`
+						)
+						.setDescription(
+							`- \`${account.uid}\`: ${errorMessage}`
+						)
+				]
+			});
+
+			throw new Error(`API 錯誤: ${errorMessage}`);
 		}
 	}
 
 	async sendSuccessMessage(
+		channelId: string,
+		cardData: HSRDailyCardPayload,
+		content: string,
+	): Promise<void> {
+		let cardFile: { buffer: string; name: string } | null = null;
+		try {
+			const buf = await buildHSRDailyCard(cardData);
+			cardFile = { buffer: buf.toString("base64"), name: "daily-hsr.png" };
+		} catch (e) {
+			this.logger.error(`Daily canvas card 生成失敗: ${e}`);
+		}
+
+		try {
+			await cluster.broadcastEval(
+				async (c: any, { channelId, content, cardFile }: any) => {
+					const channel = c.channels.cache.get(channelId);
+					if (!channel) return;
+					if (cardFile) {
+						const { AttachmentBuilder } = await import("discord.js");
+						const file = new AttachmentBuilder(
+							Buffer.from(cardFile.buffer, "base64"),
+							{ name: cardFile.name }
+						);
+						await channel.send({ content: content || undefined, files: [file] }).catch(() => {});
+					}
+				},
+				{
+					context: { channelId, content, cardFile },
+					timeout: CONFIG.API_TIMEOUT
+				}
+			);
+		} catch (error) {
+			this.logger.error(
+				`發送訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
+			);
+		}
+	}
+
+	async sendErrorMessage(
 		channelId: string,
 		messageData: MessageData
 	): Promise<void> {
@@ -411,7 +451,7 @@ class AutoDailySignSystem {
 			);
 		} catch (error) {
 			this.logger.error(
-				`發送訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
+				`發送錯誤訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
 			);
 		}
 	}
@@ -581,11 +621,13 @@ export default async function autoDailySign(
 		}
 
 		try {
-			await system.processDailySign(userId, dailyData);
-			await (system as any).db.set(
-				`lastSignedDate:${userId}`,
-				userDateKey
-			);
+			const processed = await system.processDailySign(userId, dailyData);
+			if (processed) {
+				await (system as any).db.set(
+					`lastSignedDate:${userId}`,
+					userDateKey
+				);
+			}
 		} catch (error) {
 			(system as any).logger.error(
 				`處理用戶 ${userId} 時發生錯誤: ${(error as Error).message}`
@@ -594,5 +636,10 @@ export default async function autoDailySign(
 	}
 
 	await system.updateStatistics(startTime, label);
+	try {
+		(system as any).webhook.destroy();
+	} catch {
+		// non-fatal
+	}
 	return system.getStats();
 }

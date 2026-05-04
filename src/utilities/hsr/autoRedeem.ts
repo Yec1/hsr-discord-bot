@@ -4,16 +4,17 @@ import Logger from "@/utilities/core/logger.js";
 import { createTranslator } from "@/utilities/core/i18n.js";
 import {
 	getUserLang,
-	getRandomColor,
 	getRedeemCodes,
 	autoRefreshCookie
 } from "@/utilities/index.js";
+import { buildHSRRedeemCard } from "@/utilities/canvas/redeemCard.js";
 
 // Constants
 const CONFIG = {
 	TAIPEI_TIMEZONE: "Asia/Taipei",
 	API_TIMEOUT: 10000,
 	REDEEM_DELAY: 3000,
+	ACCOUNT_DELAY: 5000,
 	COOKIE_REFRESH_RETRY_INTERVAL: 6 * 60 * 60 * 1000,
 	DEFAULT_LANGUAGE: "en",
 	ERROR_CODES: {
@@ -63,6 +64,7 @@ interface ProcessAccountResult {
 	uid: string;
 	nickname: string;
 	description: string;
+	codeResults: Array<{ code: string; rewards?: string; status: "success" | "already_claimed" | "invalid" | "failed" }>;
 	hasSuccess: boolean;
 	hasResults: boolean;
 }
@@ -214,6 +216,7 @@ class AutoRedeemSystem {
 		tr: (key: string, params?: any) => string
 	): {
 		description: string;
+		codeResults: Array<{ code: string; rewards?: string; status: "success" | "already_claimed" | "invalid" | "failed" }>;
 		stats: {
 			success: number;
 			alreadyClaimed: number;
@@ -223,33 +226,35 @@ class AutoRedeemSystem {
 		hasResults: boolean;
 	} {
 		const description: string[] = [];
+		const codeResults: Array<{ code: string; rewards?: string; status: "success" | "already_claimed" | "invalid" | "failed" }> = [];
 		const stats = { success: 0, alreadyClaimed: 0, invalid: 0, failed: 0 };
 
 		results.forEach(result => {
 			const { code, status } = result;
 			if (status.success) {
 				description.push(
-					`✅ **${code.code}** - (${tr("redeem_Success")})`
+					`✅**${code.code}** - (${tr("redeem_Success")})`
 				);
+				codeResults.push({ code: code.code, rewards: (code as any).rewards, status: "success" });
 				stats.success++;
 			} else if (status.alreadyClaimed) {
-				description.push(
-					`ℹ️ **${code.code}** - (${tr("redeem_Already")})`
-				);
+				// 已兌換：默默跳過不推送通知（已加入 redeemedCodes，下次不會再試）
 				stats.alreadyClaimed++;
 			} else if (status.invalid) {
 				description.push(
-					`⚠️ **${code.code}** - (${tr("redeem_Invalid")})`
+					`❌ **${code.code}** - (${tr("redeem_Invalid")})`
 				);
+				codeResults.push({ code: code.code, rewards: (code as any).rewards, status: "invalid" });
 				stats.invalid++;
 			} else {
-				// 失敗類型（包含 Cookie 待刷新、風控等）不推播到頻道
+				// 失敗類型（如 Cookie 待刷新、風控）不廣播至頻道
 				stats.failed++;
 			}
 		});
 
 		return {
 			description: description.join("\n"),
+			codeResults,
 			stats,
 			hasResults: description.length > 0
 		};
@@ -266,17 +271,28 @@ class AutoRedeemSystem {
 			`${account.uid}.cookieExpired`
 		);
 		if (isCookieExpired) {
-			const shouldRetry = await this.shouldRetryCookieRefresh(
-				account.uid
-			);
-			if (!shouldRetry) {
-				this.logger.info(
-					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 刷新冷卻中，跳過本次刷新嘗試`
-				);
+			// 若之前已確認無法自動刷新（需人工介入），直接跳過
+			const needsManualUpdate = await this.db.get(`${account.uid}.needsCookieUpdate`);
+			if (needsManualUpdate) {
 				return {
 					uid: account.uid,
 					nickname: accountNickname,
 					description: "",
+					codeResults: [],
+					hasSuccess: false,
+					hasResults: false
+				};
+			}
+
+			const shouldRetry = await this.shouldRetryCookieRefresh(
+				account.uid
+			);
+			if (!shouldRetry) {
+				return {
+					uid: account.uid,
+					nickname: accountNickname,
+					description: "",
+					codeResults: [],
 					hasSuccess: false,
 					hasResults: false
 				};
@@ -294,6 +310,7 @@ class AutoRedeemSystem {
 					uid: account.uid,
 					nickname: accountNickname,
 					description: "",
+					codeResults: [],
 					hasSuccess: false,
 					hasResults: false
 				};
@@ -305,6 +322,7 @@ class AutoRedeemSystem {
 					uid: account.uid,
 					nickname: accountNickname,
 					description: "",
+					codeResults: [],
 					hasSuccess: false,
 					hasResults: false
 				};
@@ -324,7 +342,8 @@ class AutoRedeemSystem {
 			return {
 				uid: account.uid,
 				nickname: accountNickname,
-				description: `ℹ️ ${tr("redeem_Already")}: ${codes.length} 個禮包碼已全部兌換`,
+				description: `✅ ${tr("redeem_Already")}: ${tr("redeem_AllRedeemed").replace("<count>", String(codes.length))}`,
+				codeResults: [],
 				hasSuccess: false,
 				hasResults: false
 			};
@@ -337,7 +356,7 @@ class AutoRedeemSystem {
 				this.stats.total++;
 				const result = await this.processCode(code, account, userId);
 
-				if (
+			if (
 					result.status &&
 					!result.status.failed &&
 					(result.status.success ||
@@ -345,22 +364,27 @@ class AutoRedeemSystem {
 						result.status.invalid)
 				) {
 					redeemedCodeSet.add(code.code);
+					await this.db.set(`${account.uid}.redeemedCodes`, [...redeemedCodeSet]);
 				}
 
-				if (!result.status.tokenInvalid) {
-					await this.db.delete(`${account.uid}.cookieExpired`);
-				}
+			if (!result.status.tokenInvalid) {
+				await this.db.delete(`${account.uid}.cookieExpired`);
+			}
 
-				if (result.status.tokenInvalid) {
-					await this.db.set(`${account.uid}.cookieExpired`, true);
-					return {
-						uid: account.uid,
-						nickname: accountNickname,
-						description: "",
-						hasSuccess: false,
-						hasResults: false
-					};
-				}
+			if (result.status.tokenInvalid) {
+				await this.db.set(`${account.uid}.cookieExpired`, true);
+				this.logger.warn(
+					`[用戶 ${userId}] [帳號 #${accountIndex}] Cookie 已失效（-100），標記待自動刷新並跳過`
+				);
+				return {
+					uid: account.uid,
+					nickname: accountNickname,
+					description: "",
+					codeResults: [],
+					hasSuccess: false,
+					hasResults: false
+				};
+			}
 
 				if (result.status.riskBlocked) {
 					await this.db.delete(`${account.uid}.cookieExpired`);
@@ -368,6 +392,7 @@ class AutoRedeemSystem {
 						uid: account.uid,
 						nickname: accountNickname,
 						description: "",
+						codeResults: [],
 						hasSuccess: false,
 						hasResults: false
 					};
@@ -382,9 +407,7 @@ class AutoRedeemSystem {
 			}
 		}
 
-		await this.db.set(`${account.uid}.redeemedCodes`, [...redeemedCodeSet]);
-
-		const { description, stats, hasResults } = this.formatResults(
+		const { description, codeResults, stats, hasResults } = this.formatResults(
 			results,
 			tr
 		);
@@ -398,6 +421,7 @@ class AutoRedeemSystem {
 			nickname:
 				accountNickname || account.nickname || String(account.uid),
 			description,
+			codeResults,
 			hasSuccess: stats.success > 0,
 			hasResults
 		};
@@ -408,32 +432,34 @@ class AutoRedeemSystem {
 		data: {
 			tr: (key: string, params?: any) => string;
 			tag: string;
-			description: string;
+			account: { uid: string; nickname?: string; codes: Array<{ code: string; rewards?: string; status: "success" | "already_claimed" | "invalid" | "failed" }> };
 			hasSuccess: boolean;
 		}
 	): Promise<void> {
-		const embed = new EmbedBuilder()
-			.setColor(getRandomColor() as any)
-			.setTitle(
-				data.hasSuccess
-					? data.tr("Auto") + data.tr("redeem_SuccessDesc")
-					: data.tr("Auto") + data.tr("redeem_RedeemStats")
-			)
-			.setDescription(data.description)
-			.setThumbnail(
-				"https://static.wikia.nocookie.net/houkai-star-rail/images/d/d9/Item_Stellar_Jade.png/revision/latest?cb=20230722074903"
-			)
-			.setTimestamp();
+		let cardFile: { buffer: string; name: string } | null = null;
+		try {
+			const buf = await buildHSRRedeemCard(data.account);
+			cardFile = { buffer: buf.toString("base64"), name: "redeem-hsr.png" };
+		} catch (e) {
+			this.logger.error(`Redeem canvas card 生成失敗: ${e}`);
+		}
 
 		try {
 			await cluster.broadcastEval(
-				async (c: any, { channelId, content, embed }: any) => {
+				async (c: any, { channelId, content, cardFile }: any) => {
 					const channel = c.channels.cache.get(channelId);
-					if (channel)
-						await channel.send({ content, embeds: [embed] });
+					if (!channel) return;
+					const { AttachmentBuilder } = await import("discord.js");
+					if (cardFile) {
+						const file = new AttachmentBuilder(
+							Buffer.from(cardFile.buffer, "base64"),
+							{ name: cardFile.name }
+						);
+						await channel.send({ content: content || undefined, files: [file] });
+					}
 				},
 				{
-					context: { channelId, content: data.tag || "", embed },
+					context: { channelId, content: data.tag || "", cardFile },
 					timeout: CONFIG.API_TIMEOUT
 				}
 			);
@@ -445,15 +471,14 @@ class AutoRedeemSystem {
 	}
 
 	async updateStatistics(nowTime: string): Promise<void> {
-		this.logger.info("========== 自動兌換統計 ==========");
+		this.logger.info("========== 兌換碼統計 ==========");
 		this.logger.info(`時間: ${nowTime}:00`);
-		this.logger.info(`總計處理: ${this.stats.total} 個禮包碼`);
-		this.logger.success(`成功兌換: ${this.stats.success} 個`);
+		this.logger.info(`總處理數: ${this.stats.total} 個禮包碼`);
+		this.logger.success(`兌換成功: ${this.stats.success} 個`);
 		this.logger.info(`已兌換過: ${this.stats.alreadyClaimed} 個`);
-		this.logger.warn(`無效代碼: ${this.stats.invalid} 個`);
+		this.logger.warn(`無效碼數: ${this.stats.invalid} 個`);
 		this.logger.error(`兌換失敗: ${this.stats.failed} 個`);
 
-		// 如果没有处理任何礼包码，说明可能所有用户都已经兑换过了
 		if (this.stats.total === 0) {
 			this.logger.info(
 				"所有用戶的禮包碼都已兌換完畢，或沒有有效的兌換碼"
@@ -471,7 +496,7 @@ export default async function autoRedeem(): Promise<void> {
 		system as any
 	).db.get("autoRedeem");
 	if (!redeemData) {
-		(system as any).logger.warn("沒有找到需要自動兌換的用戶數據");
+		(system as any).logger.warn("沒有找到需要自動兌換的用戶資料");
 		return;
 	}
 
@@ -481,10 +506,10 @@ export default async function autoRedeem(): Promise<void> {
 		hour12: false
 	});
 
-	(system as any).logger.info("========== 開始自動兌換 ==========");
-	(system as any).logger.info(`執行時間: ${currentHour}:00`);
+	(system as any).logger.info("========== 自動兌換開始 ==========");
+	(system as any).logger.info(`當前時間: ${currentHour}:00`);
 	(system as any).logger.info(
-		`需要處理的用戶數量: ${Object.keys(redeemData).length}`
+		`需要處理的用戶數: ${Object.keys(redeemData).length}`
 	);
 
 	try {
@@ -502,7 +527,7 @@ export default async function autoRedeem(): Promise<void> {
 
 				if (!accounts?.length) {
 					(system as any).logger.warn(
-						`用戶 ${userId} 沒有有效的帳號配置`
+						`用戶 ${userId} 沒有已設置的帳號資料`
 					);
 					continue;
 				}
@@ -511,16 +536,26 @@ export default async function autoRedeem(): Promise<void> {
 					`用戶 ${userId} 有 ${accounts.length} 個帳號需要處理`
 				);
 
-				// 預檢查：先嘗試刷新已標記過期的 Cookie
-				for (let i = 0; i < accounts.length; i++) {
-					const account = accounts[i];
-					if (!account || !account.uid || !account.cookie) continue;
+				// 預先嘗試刷新 Cookie：
+			// 1. 已標記失效（cookieExpired）的帳號強制刷新
+			// 2. 有 stoken 的帳號也做 proactive refresh，確保 cookie_token_v2
+			//    在兌換前是最新的（ltoken_v2 與 cookie_token_v2 獨立過期）
+			for (let i = 0; i < accounts.length; i++) {
+				const account = accounts[i];
+				if (!account || !account.uid || !account.cookie) continue;
 
-					const isCookieExpired = await (system as any).db.get(
-						`${account.uid}.cookieExpired`
-					);
-					if (!isCookieExpired) continue;
+				const isCookieExpired = await (system as any).db.get(
+					`${account.uid}.cookieExpired`
+				);
 
+				// 若之前已確認無法自動刷新（需人工介入），跳過
+				const needsManualUpdate = await (system as any).db.get(
+					`${account.uid}.needsCookieUpdate`
+				);
+				if (needsManualUpdate) continue;
+
+				// 已標記失效：受 retry interval 限制
+				if (isCookieExpired) {
 					const shouldRetry = await system.shouldRetryCookieRefresh(
 						account.uid
 					);
@@ -528,60 +563,62 @@ export default async function autoRedeem(): Promise<void> {
 
 					await system.markCookieRefreshAttempt(account.uid);
 					await autoRefreshCookie(userId, i, account.cookie);
+					continue;
 				}
 
-				const accountPromises = accounts.map(
-					async (account: Account, index: number) => {
-						if (!account || !account.uid || !account.cookie) {
-							(system as any).logger.warn(
-								`用戶 ${userId} 的帳號 #${index} 配置無效`
-							);
-							return null;
-						}
+				// 未標記失效但有 stoken：proactive refresh，不受 retry interval 限制
+				const hasStoken = account.cookie.includes("stoken=");
+				if (hasStoken) {
+					await autoRefreshCookie(userId, i, account.cookie);
+				}
+			}
 
-						try {
-							processedAccounts++;
-							const result = await system.processAccount(
-								account,
-								codesList,
-								{
-									userId,
-									userLang,
-									tr: createTranslator(userLang),
-									accountIndex: index,
-									accountNickname:
-										account.nickname || `Account #${index}`
-								}
-							);
+			// 重新讀取帳號資料，確保使用 refresh 後的最新 cookie
+			const refreshedAccounts = await (system as any).db.get(`${userId}.account`);
+			const latestAccounts: Account[] = refreshedAccounts?.length ? refreshedAccounts : accounts;
 
-							if (result) {
-								(system as any).logger.info(
-									`用戶 ${userId} 帳號 #${index} 處理完成: ${result.description}`
-								);
-							}
-
-							return result;
-						} catch (error) {
-							(system as any).logger.error(
-								`使用者 ${userId} 的帳號 #${index} 處理失敗: ${(error as any).message}`
-							);
-							system.stats.failed++;
-							return null;
-						}
-					}
-				);
-
-				const results = await Promise.allSettled(accountPromises);
-				const successfulResults = results
-					.filter(
-						result => result.status === "fulfilled" && result.value
-					)
-					.map(
-						result =>
-							(
-								result as PromiseFulfilledResult<ProcessAccountResult>
-							).value
+			const successfulResults: ProcessAccountResult[] = [];
+			for (let index = 0; index < latestAccounts.length; index++) {
+				const account = latestAccounts[index];
+				if (!account || !account.uid || !account.cookie) {
+					(system as any).logger.warn(
+						`用戶 ${userId} 的帳號 #${index} 設置無效`
 					);
+					continue;
+				}
+
+				try {
+					processedAccounts++;
+					const result = await system.processAccount(
+						account,
+						codesList,
+						{
+							userId,
+							userLang,
+							tr: createTranslator(userLang),
+							accountIndex: index,
+							accountNickname:
+								account.nickname || `Account #${index}`
+						}
+					);
+
+					if (result) {
+						(system as any).logger.info(
+							`用戶 ${userId} 帳號 #${index} 處理完畢: ${result.description}`
+						);
+						successfulResults.push(result);
+					}
+				} catch (error) {
+					(system as any).logger.error(
+						`使用者 ${userId} 的帳號 #${index} 處理失敗: ${(error as any).message}`
+					);
+					system.stats.failed++;
+				}
+
+				if (index < latestAccounts.length - 1) {
+					await system.sleep(CONFIG.ACCOUNT_DELAY);
+				}
+			}
 
 				const visibleResults = successfulResults.filter(
 					result =>
@@ -595,23 +632,19 @@ export default async function autoRedeem(): Promise<void> {
 							? `<@${userId}>`
 							: "";
 					const tr = createTranslator(userLang);
-					const hasSuccess = visibleResults.some(
-						result => result.hasSuccess
-					);
 
-					const description = visibleResults
-						.map(
-							result =>
-								`## ${result.nickname || result.uid} (${result.uid})\n${result.description}`
-						)
-						.join("\n\n");
-
-					await system.sendRedeemMessage(channelId, {
-						tr,
-						tag,
-						description,
-						hasSuccess
-					});
+					// Send one message per account so cards never stack in a single message
+					for (const result of visibleResults) {
+						await system.sendRedeemMessage(channelId, {
+							tr,
+							tag,
+							account: {
+								uid: result.uid,
+								codes: result.codeResults || [],
+							},
+							hasSuccess: result.hasSuccess,
+						});
+					}
 				}
 
 				processedUsers++;
@@ -623,11 +656,11 @@ export default async function autoRedeem(): Promise<void> {
 		}
 
 		(system as any).logger.info(
-			`處理完成: ${processedUsers} 個用戶，${processedAccounts} 個帳號`
+			`處理完畢: ${processedUsers} 個用戶，${processedAccounts} 個帳號`
 		);
 		await system.updateStatistics(currentHour);
 	} catch (error) {
-		(system as any).logger.error("自動兌換過程中發生錯誤:");
+		(system as any).logger.error("自動兌換流程中發生錯誤");
 		(system as any).logger.error((error as any).message);
 	}
 	(system as any).logger.info("========== 自動兌換結束 ==========");

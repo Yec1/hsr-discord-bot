@@ -4554,6 +4554,70 @@
       ]
     ]
   },
+  "22007": {
+    "id": "22007",
+    "skill": "Companion",
+    "desc": "Increases the wearer's CRIT DMG by #1[i]%. After the wearer uses their Ultimate, increases all allies' Elation by #2[i]%, lasting for #3[i] turn(s).",
+    "params": [
+      [
+        0.12,
+        0.08,
+        1
+      ],
+      [
+        0.15,
+        0.09,
+        1
+      ],
+      [
+        0.18,
+        0.1,
+        1
+      ],
+      [
+        0.21,
+        0.11,
+        1
+      ],
+      [
+        0.24,
+        0.12,
+        1
+      ]
+    ],
+    "properties": [
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 0.12
+        }
+      ],
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 0.15
+        }
+      ],
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 0.18
+        }
+      ],
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 0.21
+        }
+      ],
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 0.24
+        }
+      ]
+    ]
+  },
   "23000": {
     "id": "23000",
     "skill": "Meteor Swarm",
@@ -8554,6 +8618,159 @@
         {
           "type": "CriticalChanceBase",
           "value": 0.3
+        }
+      ]
+    ]
+  },
+  "23057": {
+    "id": "23057",
+    "skill": "Guaranteed Victory",
+    "desc": "Increases the wearer's SPD by #1[i]%. The Elation DMG dealt ignores #2[i]% of the target's DEF. When the wearer uses Ultimate on themselves, gains #3[i] point(s) of \"Punchline.\" This effect can be triggered up to 1 time. And resets this trigger count after using Basic ATK #4[i] time(s).",
+    "params": [
+      [
+        0.18,
+        0.2,
+        20,
+        3
+      ],
+      [
+        0.21,
+        0.24,
+        25,
+        3
+      ],
+      [
+        0.24,
+        0.28,
+        30,
+        3
+      ],
+      [
+        0.27,
+        0.32,
+        35,
+        3
+      ],
+      [
+        0.3,
+        0.36,
+        40,
+        3
+      ]
+    ],
+    "properties": [
+      [
+        {
+          "type": "SpeedAddedRatio",
+          "value": 0.18
+        }
+      ],
+      [
+        {
+          "type": "SpeedAddedRatio",
+          "value": 0.21
+        }
+      ],
+      [
+        {
+          "type": "SpeedAddedRatio",
+          "value": 0.24
+        }
+      ],
+      [
+        {
+          "type": "SpeedAddedRatio",
+          "value": 0.27
+        }
+      ],
+      [
+        {
+          "type": "SpeedAddedRatio",
+          "value": 0.3
+        }
+      ]
+    ]
+  },
+  "23058": {
+    "id": "23058",
+    "skill": "Daydream",
+    "desc": "Increases the wearer's CRIT DMG by #1[i]% and Energy Regeneration Rate by #4[f1]%. When the wearer's Max Energy is greater than #5[i], for every 10 points of Max Energy that exceeds this amount, further increases Energy Regeneration Rate by #6[f1]%. Up to a maximum of #7[i] points of excess Max Energy can be taken into account. When the wearer uses Elation Skill, increases the DMG received by all enemies by #2[f1]% for #3[i] turn(s). Effects of the same type cannot stack.",
+    "params": [
+      [
+        0.6,
+        0.15,
+        2,
+        0.1,
+        120,
+        0.003,
+        360
+      ],
+      [
+        0.75,
+        0.1875,
+        2,
+        0.115,
+        120,
+        0.003,
+        360
+      ],
+      [
+        0.9,
+        0.225,
+        2,
+        0.13,
+        120,
+        0.003,
+        360
+      ],
+      [
+        1.05,
+        0.2625,
+        2,
+        0.145,
+        120,
+        0.003,
+        360
+      ],
+      [
+        1.2,
+        0.3,
+        2,
+        0.16,
+        120,
+        0.003,
+        360
+      ]
+    ],
+    "properties": [
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 0.6
+        }
+      ],
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 0.75
+        }
+      ],
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 0.9
+        }
+      ],
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 1.05
+        }
+      ],
+      [
+        {
+          "type": "CriticalDamageBase",
+          "value": 1.2
         }
       ]
     ]

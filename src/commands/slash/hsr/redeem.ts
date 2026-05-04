@@ -319,6 +319,10 @@ export default {
 			const targetUser =
 				interaction.options.getUser("user") || interaction.user;
 
+			if (targetUser && targetUser.id !== interaction.user.id && !interaction.memberPermissions?.has('Administrator')) {
+				return failedReply(interaction, 'You can only perform this action for yourself.');
+			}
+
 			const uid = await getUserUid(targetUser.id, accountIndex);
 
 			// Proactively refresh cookie_token_v2 before redeeming.
@@ -530,6 +534,10 @@ export default {
 			const targetUser =
 				interaction.options.getUser("user") || interaction.user;
 
+			if (targetUser && targetUser.id !== interaction.user.id && !interaction.memberPermissions?.has('Administrator')) {
+				return failedReply(interaction, 'You can only perform this action for yourself.');
+			}
+
 			const uid = await getUserUid(targetUser.id, accountIndex);
 			if (!uid) {
 				return failedReply(interaction, tr("error_NoAccount"));
@@ -599,7 +607,7 @@ export default {
 						await database.get(`${targetUser.id}.account`)
 					)[accountIndex];
 
-					if (hasValidRedeemToken(userAccount.cookie || "")) {
+					if (!hasValidRedeemToken(userAccount.cookie || "")) {
 						failedReply(
 							interaction,
 							`${userAccount.uid} ${tr("redeem_CookieTokenInvalid")}`
@@ -677,7 +685,6 @@ async function handleRedeemResult(
 
 	switch (res.retcode) {
 		case 0:
-		case res.message === "OK":
 			status = "success";
 			message = tr("redeem_Success");
 			break;
