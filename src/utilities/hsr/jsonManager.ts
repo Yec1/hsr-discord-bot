@@ -862,8 +862,20 @@ export async function buildPathMap(
 		const pathData = data as any;
 		const baseType = internalIdToBaseType[internalId];
 		if (baseType !== undefined) {
-			// 使用 text (英文名) 作為 value，與現有邏輯一致（如 "Destruction" → lowercase → "destruction"）
-			map[baseType] = (pathData.text || internalId).toLowerCase();
+		// 使用 internalId lowercase 作為 value（與檔名一致，如 "Rogue" → "rogue"）
+		// 注意：text 是顯示名稱（如 "The Hunt"），不能用於檔名
+		const internalIdToFileName: Record<string, string> = {
+			Warrior: "destruction",
+			Rogue: "hunt",
+			Mage: "erudition",
+			Shaman: "harmony",
+			Warlock: "nihility",
+			Knight: "preservation",
+			Priest: "abundance",
+			Memory: "remembrance",
+			Elation: "elation"
+		};
+		map[baseType] = internalIdToFileName[internalId] || internalId.toLowerCase();
 		}
 	}
 	return map;

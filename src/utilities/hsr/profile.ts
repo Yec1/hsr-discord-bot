@@ -1829,6 +1829,11 @@ async function handleProfileDraw(
 					label: tr("path_remembrance"),
 					value: "remembrance",
 					emoji: emoji["remembrance"]
+				},
+				{
+					label: tr("path_elation"),
+					value: "elation",
+					emoji: emoji["elation"]
 				}
 			];
 
