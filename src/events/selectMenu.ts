@@ -1593,67 +1593,54 @@ async function handleSelectCharacter(
 				name: `CharacterPage_${playerData.player.uid}.webp`
 			});
 
-			const selectMenus = createChunkedSelectMenus(
-				characterId === "main"
-					? (characters || []).map(character => {
-							// 安全地获取元素ID
+			const charOptionsForMenu = characterId === "main"
+				? (characters || []).map(character => {
+						const elementId = allCharactersBool
+							? character.element
+							: typeof character.element === "string"
+								? character.element
+								: character.element?.id || "physical";
+						const elementKey = (elementId as string).toLowerCase();
+						return {
+							emoji: (emoji as any)[elementKey] || emoji.physical,
+							label: `${character.name}`,
+							value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
+						};
+					})
+				: [
+						{
+							emoji: (emoji as any).avatarIcon,
+							label: tr("MainPage"),
+							value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-main`
+						},
+						...(characters || []).map(character => {
 							const elementId = allCharactersBool
 								? character.element
 								: typeof character.element === "string"
 									? character.element
 									: character.element?.id || "physical";
-							const elementKey = (
-								elementId as string
-							).toLowerCase();
-
+							const elementKey = (elementId as string).toLowerCase();
 							return {
-								emoji:
-									(emoji as any)[elementKey] ||
-									emoji.physical,
-								label: `${character.name}`,
+								emoji: (emoji as any)[elementKey] || emoji.physical,
+								label: character.name,
 								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
 							};
 						})
-					: [
-							{
-								emoji: (emoji as any).avatarIcon,
-								label: tr("MainPage"),
-								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-main`
-							},
-							...(characters || []).map(character => {
-								// 安全地获取元素ID
-								const elementId = allCharactersBool
-									? character.element
-									: typeof character.element === "string"
-										? character.element
-										: character.element?.id || "physical";
-								const elementKey = (
-									elementId as string
-								).toLowerCase();
+					];
 
-								return {
-									emoji:
-										(emoji as any)[elementKey] ||
-										emoji.physical,
-									label: character.name,
-									value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
-								};
-							})
-						],
+			const charMenuAfterDraw = createPagedSelectMenu(
+				charOptionsForMenu,
+				0,
+				"profile_SelectCharacter",
 				tr("profile_SelectCharacter"),
-				"profile_SelectCharacter"
+				`${playerData.player.uid}:${userId}:${accountIndex}:${allCharacters}`
 			);
 
 			interaction.editReply({
 				content: "",
-
 				embeds: [],
 				components: [
-					...selectMenus.map(menu =>
-						new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-							menu
-						)
-					)
+					new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(charMenuAfterDraw)
 				],
 				files: [image]
 			});
