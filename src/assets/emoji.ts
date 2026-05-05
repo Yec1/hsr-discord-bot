@@ -51,6 +51,7 @@ interface EmojiMap {
 	hunt: string;
 	nihility: string;
 	abundance: string;
+	elation: string;
 	link: string;
 }
 
@@ -108,6 +109,7 @@ const emoji: EmojiMap = {
 	hunt: "<:hunt:1389813410656550982>",
 	nihility: "<:nihility:1389813413194104882>",
 	abundance: "<:abundance:1389813403081642127>",
+	elation: "<:elation:1501151436128518194>",
 
 	link: "<:link:1256225760474038316>"
 };

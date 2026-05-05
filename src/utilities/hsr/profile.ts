@@ -63,19 +63,11 @@ async function tryAutoSyncCurrentAnomalyBadge(
 	const roundKey = `${uid}.anomalyRoundNum`;
 	const syncAtKey = `${uid}.anomalyBadgeAutoSyncAt`;
 
+	// 永久保留所有歷史徽章，不以 expireTime 過濾
 	const existingRecords =
 		((await database.get(recordsKey)) as AnomalyRankRecord[]) || [];
-	const validRecords = existingRecords.filter(
-		record => record?.expireTime > nowSec
-	);
 
-	if (validRecords.length !== existingRecords.length) {
-		await database.set(recordsKey, validRecords);
-	}
-
-	if (validRecords.length > 0) return;
-
-	/*
+	// 節流：6 小時內不重複同步（但仍不清除舊記錄）
 	const lastSyncAt = (await database.get(syncAtKey)) as number | null;
 	if (
 		typeof lastSyncAt === "number" &&
@@ -83,7 +75,6 @@ async function tryAutoSyncCurrentAnomalyBadge(
 	) {
 		return;
 	}
-	*/
 
 	await database.set(syncAtKey, nowMs);
 
@@ -111,56 +102,51 @@ async function tryAutoSyncCurrentAnomalyBadge(
 			return;
 		}
 
-		const latestRecord = [...challengePeakRecords].sort((a, b) => {
-			return (
-				toUnixTimestamp(b?.group?.end_time) -
-				toUnixTimestamp(a?.group?.end_time)
-			);
-		})[0];
+		// 遍歷所有期，全部 upsert 進去（永久保留）
+		const upsertRecords = [...existingRecords];
 
-		if (!latestRecord?.boss_record?.has_challenge_record) return;
+		for (const record of challengePeakRecords) {
+			if (!record?.boss_record?.has_challenge_record) continue;
 
-		const expireTime = toUnixTimestamp(latestRecord.group?.end_time);
-		if (!expireTime || expireTime <= nowSec) return;
+			const expireTime = toUnixTimestamp(record.group?.end_time);
+			const rankIcon = record?.boss_record?.challenge_peak_rank_icon;
+			if (!rankIcon) continue;
 
-		const roundNum = latestRecord?.boss_record?.round_num;
-		if (typeof roundNum === "number") {
-			const anomalyRecord: AnomalyRoundRecord = {
-				roundNum,
-				expireTime
+			const rankRecord: AnomalyRankRecord = {
+				mazeId: record?.boss_info?.maze_id || 0,
+				groupName: record?.group?.name_mi18n || "",
+				rankIcon,
+				rankIconType:
+					record?.boss_record?.challenge_peak_rank_icon_type || "",
+				expireTime: expireTime || 0,
+				challengeTime: toUnixTimestamp(
+					record?.boss_record?.challenge_time
+				)
 			};
-			await database.set(roundKey, anomalyRecord);
-		}
 
-		const rankIcon = latestRecord?.boss_record?.challenge_peak_rank_icon;
-		if (!rankIcon) return;
+			const existingIndex = upsertRecords.findIndex(
+				r => r.mazeId === rankRecord.mazeId
+			);
 
-		const rankRecord: AnomalyRankRecord = {
-			mazeId: latestRecord?.boss_info?.maze_id || 0,
-			groupName: latestRecord?.group?.name_mi18n || "",
-			rankIcon,
-			rankIconType:
-				latestRecord?.boss_record?.challenge_peak_rank_icon_type || "",
-			expireTime,
-			challengeTime: toUnixTimestamp(
-				latestRecord?.boss_record?.challenge_time
-			)
-		};
+			if (existingIndex >= 0) {
+				console.log(`[Profile] Sync: Updating mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`);
+				upsertRecords[existingIndex] = rankRecord;
+			} else {
+				console.log(`[Profile] Sync: Adding mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`);
+				upsertRecords.push(rankRecord);
+			}
 
-		const upsertRecords = [...validRecords];
-		const existingIndex = upsertRecords.findIndex(
-			record => record.mazeId === rankRecord.mazeId
-		);
-
-		if (existingIndex >= 0) {
-			console.log(`[Profile] Sync: Updating existing mazeId ${rankRecord.mazeId}`);
-			upsertRecords[existingIndex] = rankRecord;
-		} else {
-			console.log(`[Profile] Sync: Adding NEW mazeId ${rankRecord.mazeId}`);
-			upsertRecords.push(rankRecord);
+			// 同時更新最新一期的 roundNum（用於顯示仲裁輪次圖標）
+			if (expireTime > nowSec) {
+				const roundNum = record?.boss_record?.round_num;
+				if (typeof roundNum === "number") {
+					await database.set(roundKey, { roundNum, expireTime } as AnomalyRoundRecord);
+				}
+			}
 		}
 
 		await database.set(recordsKey, upsertRecords);
+		console.log(`[Profile] Sync done: ${upsertRecords.length} badge(s) stored for UID ${uid}`);
 	} catch (error) {
 		console.warn("[Profile] Auto sync anomaly badge failed:", error);
 	}
@@ -174,7 +160,7 @@ function getAnomalyIconPath(roundNum: number): string | null {
 	if (roundNum >= 5 && roundNum <= 6) return "./src/assets/image/226001.png";
 	return null; // 6以上不使用
 }
-import { createChunkedSelectMenus } from "./selectmenu.js";
+import { createChunkedSelectMenus, createPagedSelectMenu } from "./selectmenu.js";
 import { join } from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import {
@@ -1721,37 +1707,41 @@ async function handleProfileDraw(
 
 			if (!characters) throw new Error("No characters data");
 
-			const selectMenus = createChunkedSelectMenus(
-				characters.map(character => {
-					// 安全地获取元素ID
-					let elementId: string;
-					if (useAllCharacters) {
-						// 对于 allCharacters 模式，element 可能是字符串
-						elementId =
-							typeof character.element === "string"
-								? character.element
-								: character.element?.id || "physical";
-					} else {
-						elementId =
-							(typeof character.element === "object"
-								? character.element?.id
-								: character.element) || "physical";
-					}
+			const charOptions = characters.map(character => {
+				// 安全地获取元素ID
+				let elementId: string;
+				if (useAllCharacters) {
+					// 对于 allCharacters 模式，element 可能是字符串
+					elementId =
+						typeof character.element === "string"
+							? character.element
+							: character.element?.id || "physical";
+				} else {
+					elementId =
+						(typeof character.element === "object"
+							? character.element?.id
+							: character.element) || "physical";
+				}
 
-					// 确保 elementId 是有效的字符串
-					const elementKey =
-						elementId && typeof elementId === "string"
-							? elementId.toLowerCase()
-							: "physical";
+				// 确保 elementId 是有效的字符串
+				const elementKey =
+					elementId && typeof elementId === "string"
+						? elementId.toLowerCase()
+						: "physical";
 
-					return {
-						emoji: (emoji as any)[elementKey] || emoji.physical,
-						label: `${character.name}`,
-						value: `${playerData?.player.uid}-${user.id}-${accountIndex}-${useAllCharacters}-${character.id}`
-					};
-				}),
+				return {
+					emoji: (emoji as any)[elementKey] || emoji.physical,
+					label: `${character.name}`,
+					value: `${playerData?.player.uid}-${user.id}-${accountIndex}-${useAllCharacters}-${character.id}`
+				};
+			});
+
+			const charMenu = createPagedSelectMenu(
+				charOptions,
+				0,
+				"profile_SelectCharacter",
 				tr("profile_SelectCharacter"),
-				"profile_SelectCharacter"
+				`${playerData?.player.uid}:${user.id}:${accountIndex}:${useAllCharacters}`
 			);
 
 			const filterOptions = [
@@ -1850,9 +1840,7 @@ async function handleProfileDraw(
 				.addOptions(filterOptions);
 
 			const components = [
-				...selectMenus.map(menu =>
-					new ActionRowBuilder().addComponents(menu)
-				),
+				new ActionRowBuilder().addComponents(charMenu),
 				...(useAllCharacters
 					? [new ActionRowBuilder().addComponents(filterMenu)]
 					: [])

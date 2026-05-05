@@ -190,4 +190,54 @@ function createChunkedSelectMenus(
 	return selectMenus;
 }
 
-export { getSelectMenu, createChunkedSelectMenus };
+/**
+ * 建立單頁 SelectMenu，前後各插入一個換頁選項（當有多頁時）。
+ * prev/next value 格式：`__prev__:{uid}:{userId}:{accountIndex}:{useAllCharacters}:{currentPage}`
+ */
+function createPagedSelectMenu(
+	options: SelectMenuOption[],
+	page: number,
+	customIdPrefix: string,
+	placeholder: string,
+	/** 用於 prev/next value 中的 context，格式任意，只要 handler 能解析 */
+	context: string
+): StringSelectMenuBuilder {
+	const pageSize = 23;
+	const totalPages = Math.ceil(options.length / pageSize);
+	const clampedPage = Math.max(0, Math.min(page, totalPages - 1));
+	const start = clampedPage * pageSize;
+	const pageItems = options.slice(start, start + pageSize);
+
+	const menuOptions: { emoji?: string; label: string; value: string }[] = [];
+
+	if (totalPages > 1 && clampedPage > 0) {
+		menuOptions.push({
+			label: "◀ 上一頁",
+			value: `__prev__:${context}:${clampedPage}`
+		});
+	}
+	menuOptions.push(
+		...pageItems.map(o => ({
+			...(o.emoji ? { emoji: o.emoji } : {}),
+			label: o.label,
+			value: o.value
+		}))
+	);
+	if (totalPages > 1 && clampedPage < totalPages - 1) {
+		menuOptions.push({
+			label: "▶ 下一頁",
+			value: `__next__:${context}:${clampedPage}`
+		});
+	}
+
+	const pageLabel = totalPages > 1 ? ` (${clampedPage + 1}/${totalPages})` : "";
+
+	return new StringSelectMenuBuilder()
+		.setCustomId(`${customIdPrefix}`)
+		.setPlaceholder(placeholder + pageLabel)
+		.setMinValues(1)
+		.setMaxValues(1)
+		.addOptions(menuOptions);
+}
+
+export { getSelectMenu, createChunkedSelectMenus, createPagedSelectMenu };

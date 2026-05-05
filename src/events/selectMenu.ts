@@ -15,7 +15,7 @@ import {
 import axios from "axios";
 import emoji from "../assets/emoji.js";
 import { drawFloorImage } from "../utilities/hsr/forgottenhall.js";
-import { createChunkedSelectMenus } from "../utilities/hsr/selectmenu.js";
+import { createChunkedSelectMenus, createPagedSelectMenu } from "../utilities/hsr/selectmenu.js";
 import {
 	drawMainImage,
 	drawCharacterImage,
@@ -96,8 +96,25 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 	}
 	if (customId == "forgottenHall_Floor" && values[0])
 		handleForgottenHall(interaction, tr, values[0]);
-	if (customId.startsWith("profile_SelectCharacter") && values[0])
-		handleSelectCharacter(interaction, tr, values[0]);
+	if (customId.startsWith("profile_SelectCharacter") && values[0]) {
+		const v = values[0];
+		if (v.startsWith("__prev__:") || v.startsWith("__next__:")) {
+			// value 格式: __prev__:{uid}:{userId}:{accountIndex}:{useAllCharacters}:{currentPage}
+			// 或        __next__:...
+			const parts = v.split(":");
+			// parts[0] = __prev__ or __next__, [1]=uid, [2]=userId, [3]=accountIndex, [4]=useAllCharacters, [5]=currentPage
+			const direction = parts[0] === "__prev__" ? -1 : 1;
+		const uid = parts[1] ?? "";
+		const userId = parts[2] ?? "";
+			const accountIndex = parseInt(parts[3] ?? "0");
+			const useAllCharacters = parts[4] === "true";
+			const currentPage = parseInt(parts[5] ?? "0");
+			const newPage = currentPage + direction;
+			await handlePageTurn(interaction, tr, uid, userId, accountIndex, useAllCharacters, newPage);
+		} else {
+			handleSelectCharacter(interaction, tr, v);
+		}
+	}
 	if (customId.startsWith("profile_Filter")) {
 		const [_, userId, accountIndex] = customId.split("-");
 		if (userId && accountIndex) {
@@ -555,23 +572,27 @@ async function handleProfileFilter(
 			name: `AllCharacters_${playerData.player.uid}.webp`
 		});
 
-		const selectMenus = createChunkedSelectMenus(
-			sortedCharacters.map((character, i) => {
-				// 安全地获取元素ID
-				const elementId =
-					typeof character.element === "string"
-						? character.element
-						: character.element?.id || "physical";
-				const elementKey = (elementId as string).toLowerCase();
+		const charOptionsMapped = sortedCharacters.map((character, i) => {
+			// 安全地获取元素ID
+			const elementId =
+				typeof character.element === "string"
+					? character.element
+					: character.element?.id || "physical";
+			const elementKey = (elementId as string).toLowerCase();
 
-				return {
-					emoji: (emoji as any)[elementKey] || emoji.physical,
-					label: `${character.name}`,
-					value: `${playerData.player.uid}-${userId}-${i}`
-				};
-			}),
+			return {
+				emoji: (emoji as any)[elementKey] || emoji.physical,
+				label: `${character.name}`,
+				value: `${playerData.player.uid}-${userId}-${i}`
+			};
+		});
+
+		const charMenu = createPagedSelectMenu(
+			charOptionsMapped,
+			0,
+			"profile_SelectCharacter",
 			tr("profile_SelectCharacter"),
-			"profile_SelectCharacter"
+			`${playerData.player.uid}:${userId}:${accountIndex}:true`
 		);
 
 		// 獲取動態命途與屬性數據
@@ -650,7 +671,8 @@ async function handleProfileFilter(
 				"preservation",
 				"nihility",
 				"abundance",
-				"remembrance"
+				"remembrance",
+				"elation"
 			].forEach(id => {
 				filterOptions.push({
 					label: tr(`path_${id}`),
@@ -671,14 +693,8 @@ async function handleProfileFilter(
 			content: "",
 			embeds: [],
 			components: [
-				...selectMenus.map(menu =>
-					new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-						menu
-					)
-				),
-				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-					filterMenu
-				)
+				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(charMenu),
+				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(filterMenu)
 			],
 			files: [image]
 		});
@@ -695,6 +711,71 @@ async function handleProfileFilter(
 					)
 			]
 		});
+	}
+}
+
+/**
+ * 換頁 handler：只更新 SelectMenu，不重新繪圖
+ */
+async function handlePageTurn(
+	interaction: StringSelectMenuInteraction,
+	tr: any,
+	uid: string,
+	userId: string,
+	accountIndex: number,
+	useAllCharacters: boolean,
+	newPage: number
+): Promise<void> {
+	try {
+		// 取得角色列表
+		const hsr = await getUserHSRData(interaction, tr, userId, accountIndex);
+		if (!hsr) return;
+
+		let allCharacters: any[];
+		if (useAllCharacters) {
+			const data = await hsr.record.records();
+			allCharacters = (data as any).avatar_list;
+		} else {
+			allCharacters = (await hsr.record.characters()) as any;
+		}
+
+		const charOptions = allCharacters.map((character: any) => {
+			const elementId =
+				typeof character.element === "string"
+					? character.element
+					: character.element?.id || "physical";
+			const elementKey = (elementId as string).toLowerCase();
+			return {
+				emoji: (emoji as any)[elementKey] || emoji.physical,
+				label: `${character.name}`,
+				value: `${uid}-${userId}-${accountIndex}-${useAllCharacters}-${character.id}`
+			};
+		});
+
+		const charMenu = createPagedSelectMenu(
+			charOptions,
+			newPage,
+			"profile_SelectCharacter",
+			tr("profile_SelectCharacter"),
+			`${uid}:${userId}:${accountIndex}:${useAllCharacters}`
+		);
+
+		// 只更新 components，保留既有圖片與 embeds
+		const existingComponents = interaction.message.components;
+		// 最後一個 row 是 filter menu（若存在）
+		const filterRow = existingComponents.length > 1
+			? existingComponents[existingComponents.length - 1]
+			: null;
+
+		const newComponents: any[] = [
+			new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(charMenu)
+		];
+		if (filterRow) newComponents.push(filterRow);
+
+		await interaction.update({ components: newComponents });
+	} catch (error) {
+		console.error("handlePageTurn error:", error);
+		await interaction.update({ components: [] });
 	}
 }
 
