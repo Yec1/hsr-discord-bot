@@ -46,9 +46,14 @@ async function runAutoDailySign(): Promise<void> {
 }
 
 async function updatePresence(): Promise<void> {
-	const results = await cluster.broadcastEval(
-		(c: any) => c.guilds.cache.size
-	);
+	let results: number[];
+	try {
+		results = await cluster.broadcastEval(
+			(c: any) => c.guilds.cache.size
+		);
+	} catch {
+		return;
+	}
 	const totalGuilds = results.reduce(
 		(prev: number, val: number) => prev + val,
 		0

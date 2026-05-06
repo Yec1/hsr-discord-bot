@@ -418,6 +418,8 @@ class AutoDailySignSystem {
 							{ name: cardFile.name }
 						);
 						await channel.send({ content: content || undefined, files: [file] }).catch(() => {});
+					} else {
+						await channel.send({ content: content || "✅ 簽到完成" }).catch(() => {});
 					}
 				},
 				{
