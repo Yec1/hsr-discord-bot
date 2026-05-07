@@ -9,13 +9,17 @@ client.on(Events.GuildCreate, async (guild: Guild) => {
 	let totalGuilds = 0;
 
 	if (cluster) {
-		const results = await cluster.broadcastEval(
-			(c: any) => c.guilds.cache.size
-		);
-		totalGuilds = results.reduce(
-			(prev: number, val: number) => prev + val,
-			0
-		);
+		try {
+			const results = await cluster.broadcastEval(
+				(c: any) => c.guilds.cache.size
+			);
+			totalGuilds = results.reduce(
+				(prev: number, val: number) => prev + val,
+				0
+			);
+		} catch {
+			totalGuilds = client.guilds.cache.size;
+		}
 	} else {
 		totalGuilds = client.guilds.cache.size;
 	}
