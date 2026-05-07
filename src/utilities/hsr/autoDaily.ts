@@ -1,6 +1,8 @@
 import { client, cluster, database } from "@/index.js";
 import { QuickDB } from "quick.db";
-import { EmbedBuilder, WebhookClient, Client } from "discord.js";
+import { EmbedBuilder, WebhookClient, Client, AttachmentBuilder } from "discord.js";
+import { REST } from "@discordjs/rest";
+import { Routes } from "discord-api-types/v10";
 import { HonkaiStarRail, LanguageEnum } from "@yeci226/hoyoapi";
 import Logger from "@/utilities/core/logger.js";
 import { createTranslator } from "@/utilities/core/i18n.js";
@@ -407,8 +409,10 @@ class AutoDailySignSystem {
 
 		const cardBase64 = cardBuf ? cardBuf.toString("base64") : null;
 
+		// 先嘗試 broadcastEval（走 cache，讓負責該 guild 的 shard 發送）
+		let sent = false;
 		try {
-			await cluster.broadcastEval(
+			const results = await cluster.broadcastEval(
 				async (c, { channelId, cardBase64, content }) => {
 					const channel = c.channels.cache.get(channelId) as any;
 					if (!channel) return false;
@@ -424,10 +428,33 @@ class AutoDailySignSystem {
 				},
 				{ context: { channelId, cardBase64, content } }
 			);
+			sent = Array.isArray(results) && results.some(r => r === true);
 		} catch (error) {
 			this.logger.error(
-				`發送訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
+				`broadcastEval 發送訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
 			);
+		}
+
+		// Fallback: 若 broadcastEval 失敗或所有 shard 都沒有 cache，改用 REST API 直接發
+		if (!sent) {
+			try {
+				const rest = new REST({ version: "10" }).setToken(process.env.TOKEN!);
+				if (cardBuf) {
+					// Use fetch/undici FormData for multipart upload
+					const fd = new (globalThis as any).FormData();
+					fd.append("payload_json", JSON.stringify({ content: content || undefined }));
+					fd.append("files[0]", new Blob([new Uint8Array(cardBuf)], { type: "image/png" }), "daily-hsr.png");
+					await rest.post(Routes.channelMessages(channelId), { body: fd, passThroughBody: true });
+				} else {
+					await rest.post(Routes.channelMessages(channelId), {
+						body: { content: content || "✅ 簽到完成" },
+					});
+				}
+			} catch (restError) {
+				this.logger.error(
+					`REST fallback 發送訊息至頻道 ${channelId} 時發生錯誤: ${(restError as Error).message}`
+				);
+			}
 		}
 	}
 
@@ -435,8 +462,9 @@ class AutoDailySignSystem {
 		channelId: string,
 		messageData: MessageData
 	): Promise<void> {
+		let sent = false;
 		try {
-			await cluster.broadcastEval(
+			const results = await cluster.broadcastEval(
 				async (c, { channelId, messageData }) => {
 					const channel = c.channels.cache.get(channelId) as any;
 					if (!channel) return false;
@@ -445,10 +473,30 @@ class AutoDailySignSystem {
 				},
 				{ context: { channelId, messageData } }
 			);
+			sent = Array.isArray(results) && results.some(r => r === true);
 		} catch (error) {
 			this.logger.error(
-				`發送錯誤訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
+				`broadcastEval 發送錯誤訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
 			);
+		}
+
+		if (!sent) {
+			try {
+				const rest = new REST({ version: "10" }).setToken(process.env.TOKEN!);
+				// messageData may contain embeds - serialize and send via REST
+				const body: any = {};
+				if (typeof messageData === "string") {
+					body.content = messageData;
+				} else {
+					if ((messageData as any).content) body.content = (messageData as any).content;
+					if ((messageData as any).embeds) body.embeds = (messageData as any).embeds;
+				}
+				await rest.post(Routes.channelMessages(channelId), { body });
+			} catch (restError) {
+				this.logger.error(
+					`REST fallback 發送錯誤訊息至頻道 ${channelId} 時發生錯誤: ${(restError as Error).message}`
+				);
+			}
 		}
 	}
 
