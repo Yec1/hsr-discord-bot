@@ -398,35 +398,26 @@ class AutoDailySignSystem {
 		cardData: HSRDailyCardPayload,
 		content: string,
 	): Promise<void> {
-		let cardFile: { buffer: string; name: string } | null = null;
+		let cardBuf: Buffer | null = null;
 		try {
-			const buf = await buildHSRDailyCard(cardData);
-			cardFile = { buffer: buf.toString("base64"), name: "daily-hsr.png" };
+			cardBuf = await buildHSRDailyCard(cardData);
 		} catch (e) {
 			this.logger.error(`Daily canvas card 生成失敗: ${e}`);
 		}
 
 		try {
-			await cluster.broadcastEval(
-			async (c: any, { channelId, content, cardFile }: any) => {
-				const channel = await c.channels.fetch(channelId).catch(() => null);
-				if (!channel) return;
-				if (cardFile) {
-					const { AttachmentBuilder } = await import("discord.js");
-					const file = new AttachmentBuilder(
-						Buffer.from(cardFile.buffer, "base64"),
-						{ name: cardFile.name }
-					);
-					await channel.send({ content: content || undefined, files: [file] }).catch(() => {});
-				} else {
-					await channel.send({ content: content || "✅ 簽到完成" }).catch(() => {});
-				}
-			},
-				{
-					context: { channelId, content, cardFile },
-					timeout: CONFIG.API_TIMEOUT
-				}
-			);
+			const { AttachmentBuilder } = await import("discord.js");
+			const channel = await client.channels.fetch(channelId).catch(() => null) as any;
+			if (!channel) {
+				this.logger.error(`發送通知失敗：找不到頻道 ${channelId}`);
+				return;
+			}
+			if (cardBuf) {
+				const file = new AttachmentBuilder(cardBuf, { name: "daily-hsr.png" });
+				await channel.send({ content: content || undefined, files: [file] });
+			} else {
+				await channel.send({ content: content || "✅ 簽到完成" });
+			}
 		} catch (error) {
 			this.logger.error(
 				`發送訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
@@ -439,18 +430,12 @@ class AutoDailySignSystem {
 		messageData: MessageData
 	): Promise<void> {
 		try {
-			await cluster.broadcastEval(
-			async (c: any, context: any) => {
-				const channel = await c.channels.fetch(context.channelId).catch(() => null);
-				if (channel) {
-					await channel.send(context.messageData).catch(() => {});
-				}
-			},
-				{
-					context: { channelId, messageData },
-					timeout: CONFIG.API_TIMEOUT
-				}
-			);
+			const channel = await client.channels.fetch(channelId).catch(() => null) as any;
+			if (!channel) {
+				this.logger.error(`發送錯誤通知失敗：找不到頻道 ${channelId}`);
+				return;
+			}
+			await channel.send(messageData);
 		} catch (error) {
 			this.logger.error(
 				`發送錯誤訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
