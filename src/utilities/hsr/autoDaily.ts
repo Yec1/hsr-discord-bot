@@ -408,20 +408,20 @@ class AutoDailySignSystem {
 
 		try {
 			await cluster.broadcastEval(
-				async (c: any, { channelId, content, cardFile }: any) => {
-					const channel = c.channels.cache.get(channelId);
-					if (!channel) return;
-					if (cardFile) {
-						const { AttachmentBuilder } = await import("discord.js");
-						const file = new AttachmentBuilder(
-							Buffer.from(cardFile.buffer, "base64"),
-							{ name: cardFile.name }
-						);
-						await channel.send({ content: content || undefined, files: [file] }).catch(() => {});
-					} else {
-						await channel.send({ content: content || "✅ 簽到完成" }).catch(() => {});
-					}
-				},
+			async (c: any, { channelId, content, cardFile }: any) => {
+				const channel = await c.channels.fetch(channelId).catch(() => null);
+				if (!channel) return;
+				if (cardFile) {
+					const { AttachmentBuilder } = await import("discord.js");
+					const file = new AttachmentBuilder(
+						Buffer.from(cardFile.buffer, "base64"),
+						{ name: cardFile.name }
+					);
+					await channel.send({ content: content || undefined, files: [file] }).catch(() => {});
+				} else {
+					await channel.send({ content: content || "✅ 簽到完成" }).catch(() => {});
+				}
+			},
 				{
 					context: { channelId, content, cardFile },
 					timeout: CONFIG.API_TIMEOUT
@@ -440,12 +440,12 @@ class AutoDailySignSystem {
 	): Promise<void> {
 		try {
 			await cluster.broadcastEval(
-				async (c: any, context: any) => {
-					const channel = c.channels.cache.get(context.channelId);
-					if (channel) {
-						await channel.send(context.messageData).catch(() => {});
-					}
-				},
+			async (c: any, context: any) => {
+				const channel = await c.channels.fetch(context.channelId).catch(() => null);
+				if (channel) {
+					await channel.send(context.messageData).catch(() => {});
+				}
+			},
 				{
 					context: { channelId, messageData },
 					timeout: CONFIG.API_TIMEOUT
