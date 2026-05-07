@@ -30,7 +30,7 @@ const clusterManager = new ClusterManager(`${__dirname}/index.js`, {
 });
 
 clusterManager.extend(
-	new HeartbeatManager({ interval: 2000, maxMissedHeartbeats: 5 })
+	new HeartbeatManager({ interval: 2000, maxMissedHeartbeats: 30 })
 );
 
 clusterManager.on("clusterCreate", cluster => {
