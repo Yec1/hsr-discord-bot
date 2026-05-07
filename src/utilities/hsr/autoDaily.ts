@@ -405,19 +405,25 @@ class AutoDailySignSystem {
 			this.logger.error(`Daily canvas card 生成失敗: ${e}`);
 		}
 
+		const cardBase64 = cardBuf ? cardBuf.toString("base64") : null;
+
 		try {
-			const { AttachmentBuilder } = await import("discord.js");
-			const channel = await client.channels.fetch(channelId).catch(() => null) as any;
-			if (!channel) {
-				this.logger.error(`發送通知失敗：找不到頻道 ${channelId}`);
-				return;
-			}
-			if (cardBuf) {
-				const file = new AttachmentBuilder(cardBuf, { name: "daily-hsr.png" });
-				await channel.send({ content: content || undefined, files: [file] });
-			} else {
-				await channel.send({ content: content || "✅ 簽到完成" });
-			}
+			await cluster.broadcastEval(
+				async (c, { channelId, cardBase64, content }) => {
+					const channel = await c.channels.fetch(channelId).catch(() => null) as any;
+					if (!channel) return false;
+					const { AttachmentBuilder } = await import("discord.js");
+					if (cardBase64) {
+						const buf = Buffer.from(cardBase64, "base64");
+						const file = new AttachmentBuilder(buf, { name: "daily-hsr.png" });
+						await channel.send({ content: content || undefined, files: [file] });
+					} else {
+						await channel.send({ content: content || "✅ 簽到完成" });
+					}
+					return true;
+				},
+				{ context: { channelId, cardBase64, content } }
+			);
 		} catch (error) {
 			this.logger.error(
 				`發送訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
@@ -430,12 +436,15 @@ class AutoDailySignSystem {
 		messageData: MessageData
 	): Promise<void> {
 		try {
-			const channel = await client.channels.fetch(channelId).catch(() => null) as any;
-			if (!channel) {
-				this.logger.error(`發送錯誤通知失敗：找不到頻道 ${channelId}`);
-				return;
-			}
-			await channel.send(messageData);
+			await cluster.broadcastEval(
+				async (c, { channelId, messageData }) => {
+					const channel = await c.channels.fetch(channelId).catch(() => null) as any;
+					if (!channel) return false;
+					await channel.send(messageData);
+					return true;
+				},
+				{ context: { channelId, messageData } }
+			);
 		} catch (error) {
 			this.logger.error(
 				`發送錯誤訊息至頻道 ${channelId} 時發生錯誤: ${(error as Error).message}`
