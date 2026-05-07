@@ -410,7 +410,7 @@ class AutoDailySignSystem {
 		try {
 			await cluster.broadcastEval(
 				async (c, { channelId, cardBase64, content }) => {
-					const channel = await c.channels.fetch(channelId).catch(() => null) as any;
+					const channel = c.channels.cache.get(channelId) as any;
 					if (!channel) return false;
 					const { AttachmentBuilder } = await import("discord.js");
 					if (cardBase64) {
@@ -438,7 +438,7 @@ class AutoDailySignSystem {
 		try {
 			await cluster.broadcastEval(
 				async (c, { channelId, messageData }) => {
-					const channel = await c.channels.fetch(channelId).catch(() => null) as any;
+					const channel = c.channels.cache.get(channelId) as any;
 					if (!channel) return false;
 					await channel.send(messageData);
 					return true;
