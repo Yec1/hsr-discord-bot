@@ -247,41 +247,33 @@ class AutoDailySignSystem {
 
 			if (result.code === -5003 || result.info.is_sign === true) {
 				this.stats.signed++;
-				// 每天只通知一次「已簽到」（用 UTC+8 日期，對應 Hoyolab 重置時間）
-				const now = new Date();
-				const today = new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
-				const deduKey = `lastNotifiedDate:${userId}:${accountIndex}`;
-				const lastNotified = await database.get(deduKey);
-				if (lastNotified !== today) {
-					await database.set(deduKey, today);
-					const signedDays = info.total_sign_day;
-					const idx = Math.max(0, info.total_sign_day - 1);
-					const todaySign = rewards.awards[idx] || rewards.awards[0];
-					const mkReward = (r: any) => ({
-						name: r?.name || "",
-						count: r?.cnt ?? 1,
-						...(r?.icon ? { icon: r.icon as string } : {})
-					});
-					await this.sendSuccessMessage(
-						channelId,
-						{
-							uid: account.uid,
-							nickname,
-							status: "already_signed",
-							totalDays: signedDays,
-							month: reward.month,
-							signCntMissed: info.sign_cnt_missed,
-							todayReward: mkReward(todaySign),
-							nextRewards: [
-								rewards.awards[idx + 1] || rewards.awards[0],
-								rewards.awards[idx + 2] || rewards.awards[0],
-								rewards.awards[idx + 3] || rewards.awards[0],
-							].map(mkReward) as [any, any, any],
-						},
-						tag,
-						userId
-					);
-				}
+				const signedDays = info.total_sign_day;
+				const idx = Math.max(0, info.total_sign_day - 1);
+				const todaySign = rewards.awards[idx] || rewards.awards[0];
+				const mkReward = (r: any) => ({
+					name: r?.name || "",
+					count: r?.cnt ?? 1,
+					...(r?.icon ? { icon: r.icon as string } : {})
+				});
+				await this.sendSuccessMessage(
+					channelId,
+					{
+						uid: account.uid,
+						nickname,
+						status: "already_signed",
+						totalDays: signedDays,
+						month: reward.month,
+						signCntMissed: info.sign_cnt_missed,
+						todayReward: mkReward(todaySign),
+						nextRewards: [
+							rewards.awards[idx + 1] || rewards.awards[0],
+							rewards.awards[idx + 2] || rewards.awards[0],
+							rewards.awards[idx + 3] || rewards.awards[0],
+						].map(mkReward) as [any, any, any],
+					},
+					tag,
+					userId
+				);
 				return;
 			}
 
