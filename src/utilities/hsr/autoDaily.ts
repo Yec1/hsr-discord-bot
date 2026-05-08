@@ -247,8 +247,9 @@ class AutoDailySignSystem {
 
 			if (result.code === -5003 || result.info.is_sign === true) {
 				this.stats.signed++;
-				// 每天只通知一次「已簽到」
-				const today = new Date().toISOString().slice(0, 10);
+				// 每天只通知一次「已簽到」（用 UTC+8 日期，對應 Hoyolab 重置時間）
+				const now = new Date();
+				const today = new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
 				const deduKey = `lastNotifiedDate:${userId}:${accountIndex}`;
 				const lastNotified = await database.get(deduKey);
 				if (lastNotified !== today) {
