@@ -277,7 +277,8 @@ class AutoDailySignSystem {
 								rewards.awards[idx + 3] || rewards.awards[0],
 							].map(mkReward) as [any, any, any],
 						},
-						tag
+						tag,
+						userId
 					);
 				}
 				return;
