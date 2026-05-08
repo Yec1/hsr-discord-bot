@@ -1,7 +1,7 @@
-import { sendRestMessage, sendRestDm } from "@/utilities/core/sendRestMessage.js";
+
 import { client, cluster, database } from "@/index.js";
 import { QuickDB } from "quick.db";
-import { EmbedBuilder, WebhookClient, Client } from "discord.js";
+import { EmbedBuilder, WebhookClient, Client, AttachmentBuilder } from "discord.js";
 import { HonkaiStarRail, LanguageEnum } from "@yeci226/hoyoapi";
 import Logger from "@/utilities/core/logger.js";
 import { createTranslator } from "@/utilities/core/i18n.js";
@@ -503,19 +503,32 @@ class AutoDailySignSystem {
 							.join("\n")
 					};
 				})();
-		const fileArg = cardFile
-			? { buffer: Buffer.from(cardFile.buffer, "base64"), name: cardFile.name }
-			: undefined;
+		const sendToChannel = async (cid: string, msgPayload: any) => {
+			const ch = await client.channels.fetch(cid) as any;
+			await ch.send(msgPayload);
+		};
+		const sendToDm = async (uid: string, msgPayload: any) => {
+			const user = await client.users.fetch(uid);
+			const dm = await user.createDM();
+			await dm.send(msgPayload);
+		};
+
+		const msgPayload = cardFile
+			? {
+				...(payload as object),
+				files: [new AttachmentBuilder(Buffer.from(cardFile.buffer, "base64"), { name: cardFile.name })],
+			}
+			: payload;
 
 		try {
-			await sendRestMessage(channelId, payload, fileArg);
+			await sendToChannel(channelId, msgPayload);
 		} catch (channelError) {
 			this.logger.error(
 				`發送訊息至頻道 ${channelId} 時發生錯誤，嘗試 DM: ${(channelError as any)?.stack ?? channelError}`
 			);
 			if (userId) {
 				try {
-					await sendRestDm(userId, payload, fileArg);
+					await sendToDm(userId, msgPayload);
 				} catch (dmError) {
 					this.logger.error(
 						`DM fallback 發送失敗 (userId: ${userId}): ${(dmError as any)?.stack ?? dmError}`
@@ -534,15 +547,26 @@ class AutoDailySignSystem {
 		const msgContent = typeof messageData.content === "string" ? messageData.content : undefined;
 		if (msgContent) restPayload.content = msgContent;
 		if (Array.isArray((messageData as any).embeds)) restPayload.embeds = (messageData as any).embeds;
+
+		const sendToChannel = async (cid: string, msgPayload: any) => {
+			const ch = await client.channels.fetch(cid) as any;
+			await ch.send(msgPayload);
+		};
+		const sendToDm = async (uid: string, msgPayload: any) => {
+			const user = await client.users.fetch(uid);
+			const dm = await user.createDM();
+			await dm.send(msgPayload);
+		};
+
 		try {
-			await sendRestMessage(channelId, restPayload);
+			await sendToChannel(channelId, restPayload);
 		} catch (channelError) {
 			this.logger.error(
 				`發送錯誤訊息至頻道 ${channelId} 時發生錯誤，嘗試 DM: ${(channelError as any)?.stack ?? channelError}`
 			);
 			if (userId) {
 				try {
-					await sendRestDm(userId, restPayload);
+					await sendToDm(userId, restPayload);
 				} catch (dmError) {
 					this.logger.error(
 						`DM fallback 發送失敗 (userId: ${userId}): ${(dmError as any)?.stack ?? dmError}`
