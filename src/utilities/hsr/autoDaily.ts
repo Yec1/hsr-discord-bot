@@ -552,6 +552,7 @@ class AutoDailySignSystem {
 
 		try {
 			await sendToChannel(channelId, msgPayload);
+			this.logger.info(`[通知] 發送成功 (User: ${userId ?? "?"}) method=channel channelId=${channelId}`);
 		} catch (channelError) {
 			this.logger.error(
 				`發送訊息至頻道 ${channelId} 時發生錯誤，嘗試 DM: ${(channelError as any)?.stack ?? channelError}`
@@ -559,6 +560,7 @@ class AutoDailySignSystem {
 			if (userId) {
 				try {
 					await sendToDm(userId, msgPayload);
+					this.logger.info(`[通知] 發送成功 (User: ${userId}) method=dm`);
 				} catch (dmError) {
 					this.logger.error(
 						`DM fallback 發送失敗 (userId: ${userId}): ${(dmError as any)?.stack ?? dmError}`

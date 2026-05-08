@@ -3,18 +3,12 @@ import autoDailySign from "@/utilities/hsr/autoDaily.js";
 
 export default {
 	name: "autodaily",
-	/**
-	 *
-	 * @param {Message} message
-	 * @param {String[]} args
-	 */
 	execute: async (message: Message, args: string[]) => {
 		const input = args[0]?.toLowerCase();
 
 		if (!input) {
 			return message.reply({
-				content:
-					"請輸入欲觸發的時段，例如 `autodaily 16` 或 `autodaily all`。"
+				content: "請輸入欲觸發的時段，例如 `autodaily 16` 或 `autodaily all`。"
 			});
 		}
 
@@ -42,6 +36,8 @@ export default {
 			targetText = `今天 ${hourLabel}`;
 		}
 
+		await message.reply({ content: `⏳ 開始執行自動簽到（${targetText}），請稍候...` });
+
 		try {
 			const stats = await autoDailySign({
 				manualHours,
@@ -63,14 +59,12 @@ export default {
 				lines.push("沒有符合條件的帳號需要觸發。");
 			}
 
-			const description = lines.join("\n");
-
 			return message.reply({
 				embeds: [
 					new EmbedBuilder()
 						.setColor(triggerAll ? 0x6bbf59 : 0x4c9aff)
 						.setTitle("自動簽到手動觸發完成")
-						.setDescription(description)
+						.setDescription(lines.join("\n"))
 						.setTimestamp()
 				]
 			});
