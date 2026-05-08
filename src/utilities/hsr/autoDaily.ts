@@ -497,38 +497,28 @@ class AutoDailySignSystem {
 					};
 				})();
 		const sendToChannel = async (cid: string, msgPayload: any) => {
-			const channelPresence = await cluster.broadcastEval(
-				(c: any, ctx: any) => c.channels.cache.has(ctx.channelId),
-				{ context: { channelId: cid } }
-			);
-			const targetCluster = channelPresence.findIndex(Boolean);
-			if (targetCluster < 0) throw new Error(`No cluster has channel ${cid} in cache`);
-
-			const serializedFiles = msgPayload.files
-				? await Promise.all(
-					msgPayload.files.map(async (file: any) => {
-						const attachment = file.attachment;
-						let buffer = Buffer.alloc(0);
-						if (Buffer.isBuffer(attachment)) buffer = Buffer.from(attachment);
-						else if (attachment instanceof Uint8Array) buffer = Buffer.from(attachment);
-						return { buffer: buffer.toString("base64"), name: file.name, description: file.description };
-					})
-				  )
-				: [];
-
-			await cluster.broadcastEval(
-				async (c: any, ctx: any) => {
-					const channel = c.channels.cache.get(ctx.channelId);
-					if (!channel) return false;
-					const { AttachmentBuilder } = await import("discord.js");
-					const files = ctx.payload.files.map(
-						(f: any) => new AttachmentBuilder(Buffer.from(f.buffer, "base64"), { name: f.name, description: f.description })
-					);
-					await (channel as any).send({ content: ctx.payload.content, embeds: ctx.payload.embeds, files });
-					return true;
-				},
-				{ cluster: targetCluster, context: { channelId: cid, payload: { content: msgPayload.content, embeds: msgPayload.embeds, files: serializedFiles } } }
-			);
+			const { FormData } = await import("undici");
+			const form = new FormData();
+			const jsonPart: Record<string, any> = {};
+			if (msgPayload.content) jsonPart.content = msgPayload.content;
+			if (msgPayload.embeds) jsonPart.embeds = msgPayload.embeds;
+			if (msgPayload.files?.length) {
+				jsonPart.attachments = msgPayload.files.map((f: any, i: number) => ({
+					id: String(i),
+					filename: f.name,
+					...(f.description ? { description: f.description } : {})
+				}));
+			}
+			form.append("payload_json", JSON.stringify(jsonPart));
+			if (msgPayload.files?.length) {
+				for (let i = 0; i < msgPayload.files.length; i++) {
+					const f = msgPayload.files[i];
+					const attachment = f.attachment;
+					const buf = Buffer.isBuffer(attachment) ? attachment : Buffer.from(attachment);
+					form.append(`files[${i}]`, new Blob([buf]), f.name);
+				}
+			}
+			await client.rest.post(`/channels/${cid}/messages` as any, { body: form, passThroughBody: true } as any);
 		};
 		const sendToDm = async (uid: string, msgPayload: any) => {
 			const user = await client.users.fetch(uid);
