@@ -505,6 +505,7 @@ class AutoDailySignSystem {
 				})();
 		const sendToChannel = async (cid: string, msgPayload: any) => {
 			const ch = await client.channels.fetch(cid) as any;
+			if (!ch) throw new Error(`Channel ${cid} not found`);
 			await ch.send(msgPayload);
 		};
 		const sendToDm = async (uid: string, msgPayload: any) => {
