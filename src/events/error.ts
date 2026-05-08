@@ -18,6 +18,8 @@ function buildErrorEmbed(label: string, error: Error | unknown): EmbedBuilder {
 }
 
 client.on("error", (error: Error) => {
+	if ((error as NodeJS.ErrnoException).code === "ERR_IPC_CHANNEL_CLOSED") return;
+	if (error.message === "Channel closed") return;
 	console.error(error);
 	new Logger("系統").error(`錯誤訊息：${error.message}`);
 	webhook.send({ embeds: [buildErrorEmbed("client.error", error)] }).catch(console.error);
@@ -33,9 +35,13 @@ client.on("warn", (message: string) => {
 });
 
 process.on("unhandledRejection", (error: Error) => {
+	if ((error as NodeJS.ErrnoException).code === "ERR_IPC_CHANNEL_CLOSED") return;
 	console.log(error);
-	new Logger("系統").error(`錯誤訊息：${error instanceof Error ? error.message : String(error)}`);
+	new Logger("系統").error(`錯誤訊息：${error instanceof Error ? error.stack ?? error.message : String(error)}`);
 	webhook.send({ embeds: [buildErrorEmbed("unhandledRejection", error)] }).catch(console.error);
 });
 
-process.on("uncaughtException", console.error);
+process.on("uncaughtException", (error) => {
+	if ((error as NodeJS.ErrnoException).code === "ERR_IPC_CHANNEL_CLOSED") return;
+	console.error(error);
+});

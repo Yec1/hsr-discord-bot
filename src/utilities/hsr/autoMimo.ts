@@ -1,4 +1,5 @@
 import { client, database, cluster } from "@/index.js";
+import { sendRestMessage } from "@/utilities/core/sendRestMessage.js";
 import { Client, EmbedBuilder } from "discord.js";
 import Logger from "@/utilities/core/logger.js";
 import { createTranslator } from "@/utilities/core/i18n.js";
@@ -189,17 +190,10 @@ class AutoMimoSystem {
 				.setTimestamp();
 
 			try {
-				await cluster.broadcastEval(
-					async (c: any, { channelId, content, embed }: any) => {
-						const channel = c.channels.cache.get(channelId);
-						if (channel)
-							await channel.send({ content, embeds: [embed] });
-					},
-					{
-						context: { channelId: data.channelId, content: tag, embed },
-						timeout: 10000
-					}
-				);
+				await sendRestMessage(data.channelId, {
+					...(tag && { content: tag }),
+					embeds: [embed.toJSON()]
+				});
 			} catch (e) {
 				// ignore
 			}

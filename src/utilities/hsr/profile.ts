@@ -2447,22 +2447,8 @@ async function drawCharacterImage(
 			const aspectRatio = originalWidth / originalHeight;
 
 			if (aspectRatio > 0.8) {
-				// 寬圖（皮膚立繪）：在右半區 (x=475~1920, h=1080) 內等比縮放置中，不裁切
-				const availableWidth = 1920 - 475; // 1445
-				const availableHeight = 1080;
-				let drawWidth: number, drawHeight: number;
-				if (availableWidth / availableHeight > aspectRatio) {
-					// 高度為瓶頸
-					drawHeight = availableHeight;
-					drawWidth = drawHeight * aspectRatio;
-				} else {
-					// 寬度為瓶頸
-					drawWidth = availableWidth;
-					drawHeight = drawWidth / aspectRatio;
-				}
-				const x = 475 + (availableWidth - drawWidth) / 2;
-				const y = (availableHeight - drawHeight) / 2;
-				ctx.drawImage(characterImageResult, x, y, drawWidth, drawHeight);
+				const scaledWidth = 768 * aspectRatio;
+				ctx.drawImage(characterImageResult, 475, 0, scaledWidth, 768);
 			} else {
 				const size = 0.8;
 				const scaledHeight = (768 * size) / aspectRatio;

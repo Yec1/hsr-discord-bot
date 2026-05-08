@@ -1,4 +1,5 @@
-import { client, cluster, database } from "@/index.js";
+import { sendRestMessage } from "@/utilities/core/sendRestMessage.js";
+import { client, database } from "@/index.js";
 import { Client, EmbedBuilder } from "discord.js";
 import Logger from "@/utilities/core/logger.js";
 import { createTranslator } from "@/utilities/core/i18n.js";
@@ -452,27 +453,16 @@ class AutoRedeemSystem {
 		}
 
 		try {
-			await cluster.broadcastEval(
-				async (c: any, { channelId, content, cardFile }: any) => {
-					const channel = c.channels.cache.get(channelId);
-					if (!channel) return;
-					const { AttachmentBuilder } = await import("discord.js");
-					if (cardFile) {
-						const file = new AttachmentBuilder(
-							Buffer.from(cardFile.buffer, "base64"),
-							{ name: cardFile.name }
-						);
-						await channel.send({ content: content || undefined, files: [file] });
-					}
-				},
-				{
-					context: { channelId, content: data.tag || "", cardFile },
-					timeout: CONFIG.API_TIMEOUT
-				}
-			);
+			if (cardFile) {
+				await sendRestMessage(
+					channelId,
+					{ ...(data.tag && { content: data.tag }) },
+					{ buffer: Buffer.from(cardFile.buffer, "base64"), name: cardFile.name }
+				);
+			}
 		} catch (error) {
 			this.logger.error(
-				`發送訊息至頻道 ${channelId} 時發生錯誤: ${(error as any).message}`
+				`發送訊息至頻道 ${channelId} 時發生錯誤: ${(error as any)?.stack ?? error}`
 			);
 		}
 	}

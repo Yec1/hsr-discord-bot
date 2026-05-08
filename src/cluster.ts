@@ -19,8 +19,7 @@ if (!token) {
 const clusterManager = new ClusterManager(`${__dirname}/index.js`, {
 	totalShards: "auto",
 	totalClusters: "auto",
-	mode: "process",
-	execArgv: ["--max-old-space-size=1024"],
+	mode: "worker",
 	respawn: true,
 	token,
 	restarts: {

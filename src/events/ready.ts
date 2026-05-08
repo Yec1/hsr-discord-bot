@@ -46,23 +46,11 @@ async function runAutoDailySign(): Promise<void> {
 }
 
 async function updatePresence(): Promise<void> {
-	let results: number[];
-	try {
-		results = await cluster.broadcastEval(
-			(c: any) => c.guilds.cache.size
-		);
-	} catch {
-		return;
-	}
-	const totalGuilds = results.reduce(
-		(prev: number, val: number) => prev + val,
-		0
-	);
-
+	const guildCount = client.guilds.cache.size;
 	client.user?.setPresence({
 		activities: [
 			{
-				name: `${totalGuilds} 個伺服器`,
+				name: `${guildCount} 個伺服器`,
 				type: ActivityType.Watching
 			}
 		],
