@@ -504,9 +504,38 @@ class AutoDailySignSystem {
 					};
 				})();
 		const sendToChannel = async (cid: string, msgPayload: any) => {
-			const ch = await client.channels.fetch(cid) as any;
-			if (!ch) throw new Error(`Channel ${cid} not found`);
-			await ch.send(msgPayload);
+			const channelPresence = await cluster.broadcastEval(
+				(c: any, ctx: any) => c.channels.cache.has(ctx.channelId),
+				{ context: { channelId: cid } }
+			);
+			const targetCluster = channelPresence.findIndex(Boolean);
+			if (targetCluster < 0) throw new Error(`No cluster has channel ${cid} in cache`);
+
+			const serializedFiles = msgPayload.files
+				? await Promise.all(
+					msgPayload.files.map(async (file: any) => {
+						const attachment = file.attachment;
+						let buffer = Buffer.alloc(0);
+						if (Buffer.isBuffer(attachment)) buffer = Buffer.from(attachment);
+						else if (attachment instanceof Uint8Array) buffer = Buffer.from(attachment);
+						return { buffer: buffer.toString("base64"), name: file.name, description: file.description };
+					})
+				  )
+				: [];
+
+			await cluster.broadcastEval(
+				async (c: any, ctx: any) => {
+					const channel = c.channels.cache.get(ctx.channelId);
+					if (!channel) return false;
+					const { AttachmentBuilder } = await import("discord.js");
+					const files = ctx.payload.files.map(
+						(f: any) => new AttachmentBuilder(Buffer.from(f.buffer, "base64"), { name: f.name, description: f.description })
+					);
+					await (channel as any).send({ content: ctx.payload.content, embeds: ctx.payload.embeds, files });
+					return true;
+				},
+				{ cluster: targetCluster, context: { channelId: cid, payload: { content: msgPayload.content, embeds: msgPayload.embeds, files: serializedFiles } } }
+			);
 		};
 		const sendToDm = async (uid: string, msgPayload: any) => {
 			const user = await client.users.fetch(uid);
@@ -550,8 +579,21 @@ class AutoDailySignSystem {
 		if (Array.isArray((messageData as any).embeds)) restPayload.embeds = (messageData as any).embeds;
 
 		const sendToChannel = async (cid: string, msgPayload: any) => {
-			const ch = await client.channels.fetch(cid) as any;
-			await ch.send(msgPayload);
+			const channelPresence = await cluster.broadcastEval(
+				(c: any, ctx: any) => c.channels.cache.has(ctx.channelId),
+				{ context: { channelId: cid } }
+			);
+			const targetCluster = channelPresence.findIndex(Boolean);
+			if (targetCluster < 0) throw new Error(`No cluster has channel ${cid} in cache`);
+			await cluster.broadcastEval(
+				async (c: any, ctx: any) => {
+					const channel = c.channels.cache.get(ctx.channelId);
+					if (!channel) return false;
+					await (channel as any).send(ctx.payload);
+					return true;
+				},
+				{ cluster: targetCluster, context: { channelId: cid, payload: msgPayload } }
+			);
 		};
 		const sendToDm = async (uid: string, msgPayload: any) => {
 			const user = await client.users.fetch(uid);
