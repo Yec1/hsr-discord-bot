@@ -3874,39 +3874,66 @@ async function drawAllCharactersImage(
 	bgPath?: string
 ): Promise<Buffer | null> {
 	try {
-		const canvasWidth = 1920;
-		const cardsPerRow = 6;
-		const totalRows = Math.ceil(characters.length / cardsPerRow);
-		const cardHeight = 100;
-		const cardGap = 10;
-		const baseY = 230;
-		const canvasHeight = baseY + totalRows * (cardHeight + cardGap) + 40;
-		const canvas = createCanvas(canvasWidth, canvasHeight);
+		const mf = (ctx: any, size: number, bold = false) => {
+			ctx.font = `${bold ? "bold " : ""}${size}px 'YaHei','URW DIN Arabic',Arial,sans-serif`;
+		};
+
+		// ── Layout constants ───────────────────────────────────────────────
+		const W = 1920;
+		const LEFT_W = 340;
+		const GRID_X = LEFT_W + 20;
+		const GRID_COLS = 6;
+		const CARD_W = 245, CARD_H = 300, CARD_GAP = 14;
+		const GRID_TOP = 28;
+		const totalRows = Math.ceil(characters.length / GRID_COLS);
+		const H = Math.max(1080, GRID_TOP + totalRows * (CARD_H + CARD_GAP) + 28);
+
+		const canvas = createCanvas(W, H);
 		const ctx = canvas.getContext("2d");
 
-		// 背景
+		// ── 1. Background ──────────────────────────────────────────────────
 		const bgResult = await loadImageAsync(bgPath ?? await getTodayBg());
-		const bg = bgResult?.image;
-		if (bg) {
-			ctx.drawImage(bg, 0, 0, canvasWidth, canvasHeight);
+		if (bgResult?.image) {
+			ctx.drawImage(bgResult.image, 0, 0, W, H);
+		} else {
+			ctx.fillStyle = "#0d1117";
+			ctx.fillRect(0, 0, W, H);
 		}
+		ctx.fillStyle = "rgba(0,0,0,0.55)";
+		ctx.fillRect(0, 0, W, H);
 
-		// 左上角頭像
+		// ── 2. Left panel (glass) ──────────────────────────────────────────
+		fillGlass(ctx, 14, 14, LEFT_W, H - 28, 14, 0.5);
+
+		const avatarCX = 14 + LEFT_W / 2;
+		const avatarCY = 110;
+		const avatarR = 68;
+
+		// Avatar
 		const avatarResult = await loadImageAsync(
-			playerData.player.avatar.icon
+			`${image_Header}/${playerData.player.avatar.icon}`
 		);
-		const avatar = avatarResult?.image;
-		if (avatar) {
+		if (avatarResult?.image) {
 			ctx.save();
 			ctx.beginPath();
-			ctx.arc(110, 110, 70, 0, Math.PI * 2);
-			ctx.closePath();
+			ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
 			ctx.clip();
-			ctx.drawImage(avatar, 40, 40, 140, 140);
+			ctx.drawImage(
+				avatarResult.image,
+				avatarCX - avatarR, avatarCY - avatarR,
+				avatarR * 2, avatarR * 2
+			);
 			ctx.restore();
 		}
+		ctx.save();
+		ctx.beginPath();
+		ctx.arc(avatarCX, avatarCY, avatarR + 3, 0, Math.PI * 2);
+		ctx.strokeStyle = "#D4AF37";
+		ctx.lineWidth = 3;
+		ctx.stroke();
+		ctx.restore();
 
-		// 繪製異常仲裁圖標（如果有的話）
+		// Anomaly icon overlay
 		const anomalyRecord = (await database.get(
 			`${playerData.player.uid}.anomalyRoundNum`
 		)) as AnomalyRoundRecord | null;
@@ -3915,285 +3942,221 @@ async function drawAllCharactersImage(
 			if (iconPath) {
 				const anomalyIcon = await loadImage(iconPath);
 				if (anomalyIcon) {
-					const iconSize = 140 * 1.1;
-					const iconX = 40 - 40 * 0.3;
-					const iconY = 40 - 40 * 0.1;
+					const iSize = avatarR * 2 * 1.1;
 					ctx.drawImage(
 						anomalyIcon,
-						iconX,
-						iconY,
-						iconSize,
-						iconSize
+						avatarCX - avatarR - iSize * 0.05,
+						avatarCY - avatarR - iSize * 0.05,
+						iSize, iSize
 					);
 				}
 			}
 		}
 
-		// 繪製異常仲裁徽章（如果有的話）
+		// Nickname
+		mf(ctx, 30, true);
+		ctx.fillStyle = "#FFFFFF";
+		ctx.textAlign = "center";
+		ctx.fillText(playerData.player.nickname, avatarCX, avatarCY + avatarR + 36);
+
+		// UID
+		mf(ctx, 20);
+		ctx.fillStyle = "rgba(255,255,255,0.6)";
+		ctx.fillText(`UID  ${playerData.player.uid}`, avatarCX, avatarCY + avatarR + 60);
+
+		// Anomaly rank badges
 		const anomalyRankRecords = (await database.get(
 			`${playerData.player.uid}.anomalyRankIcon`
 		)) as AnomalyRankRecord[] | null;
 		if (anomalyRankRecords && anomalyRankRecords.length > 0) {
-			// 按挑戰時間排序，最新的在前
-			anomalyRankRecords.sort(
-				(a, b) => b.challengeTime - a.challengeTime
-			);
-
-			// 最多顯示 3 個徽章（單角色頁面空間較小）
-			const displayRecords = anomalyRankRecords.slice(0, 5);
-			const badgeSize = 60;
-			const badgeSpacing = 6;
-
-			// 計算名稱寬度來定位徽章
-			ctx.font = "bold 40px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-			const nameWidth = ctx.measureText(playerData.player.nickname).width;
-			const nameX = 40 + 140 + 15; // 名稱起始位置
-			const nameY = 40 + 40; // 名稱垂直位置
-			const startX = nameX + nameWidth + 20; // 名稱後面
-			const startY = nameY - badgeSize / 2; // 與名稱垂直居中
-
-			for (let i = 0; i < displayRecords.length; i++) {
-				const record = displayRecords[i];
-				if (!record) continue;
-
-				const badgeX = startX + i * (badgeSize + badgeSpacing);
-				const badgeY = startY;
-
+			anomalyRankRecords.sort((a, b) => b.challengeTime - a.challengeTime);
+			const badges = anomalyRankRecords.slice(0, 5);
+			const badgeSz = 32;
+			const totalBW = badges.length * badgeSz + (badges.length - 1) * 5;
+			let bx = avatarCX - totalBW / 2;
+			const by = avatarCY + avatarR + 70;
+			for (const record of badges) {
 				try {
-					let badgeSource: string | Buffer = record.rankIcon;
-					if (record.rankIcon?.startsWith("http://") || record.rankIcon?.startsWith("https://")) {
-						const badgeResponse = await axios.get(record.rankIcon, { responseType: "arraybuffer", timeout: 15000 });
-						badgeSource = Buffer.from(badgeResponse.data);
+					let src: string | Buffer = record.rankIcon;
+					if (record.rankIcon?.startsWith("http")) {
+						const resp = await axios.get(record.rankIcon, { responseType: "arraybuffer", timeout: 10000 });
+						src = Buffer.from(resp.data);
 					}
-					const badgeIcon = await loadImage(badgeSource);
-					if (badgeIcon) {
-						ctx.drawImage(
-							badgeIcon,
-							badgeX,
-							badgeY,
-							badgeSize,
-							badgeSize
-						);
-					}
-				} catch (error) {
-					console.warn(
-						`Failed to load badge icon: ${record.rankIcon}`,
-						error
-					);
-				}
+					const bi = await loadImage(src);
+					if (bi) ctx.drawImage(bi, bx, by, badgeSz, badgeSz);
+				} catch { /* skip */ }
+				bx += badgeSz + 5;
 			}
 		}
 
-		// 文字資訊
-		ctx.textAlign = "left";
-		ctx.fillStyle = "white";
-		ctx.font = "bold 40px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-		ctx.fillText(playerData.player.nickname, 200, 90);
-		ctx.font = "bold 28px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-		ctx.fillText(`UID ${playerData.player.uid}`, 200, 135);
-		ctx.fillText(
-			`${tr("profile_TrailblazeLevel")} ${playerData.player.level}  ${tr("profile_CharactersCount")} ${characters.length}`,
-			200,
-			175
-		);
-
-		// 分隔線
-		ctx.strokeStyle = "rgba(255,255,255,0.5)";
-		ctx.lineWidth = 2;
+		// Divider
+		const divY1 = avatarCY + avatarR + 108;
+		ctx.strokeStyle = "rgba(255,255,255,0.2)";
+		ctx.lineWidth = 1;
 		ctx.beginPath();
-		ctx.moveTo(40, 200);
-		ctx.lineTo(700, 200);
+		ctx.moveTo(28, divY1);
+		ctx.lineTo(14 + LEFT_W - 14, divY1);
 		ctx.stroke();
 
-		// 顯示篩選和排序狀態
-		if (
-			filterInfo &&
-			(filterInfo.filters.length > 0 || filterInfo.sortType)
-		) {
-			ctx.textAlign = "left";
-			ctx.fillStyle = "rgba(255,255,255,0.8)";
-			ctx.font = "bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		// Stats grid
+		const stats = [
+			{ label: tr("profile_TrailblazeLevel"),  value: `${playerData.player.level}` },
+			{ label: tr("profile_EquilibriumLevel"),  value: `${playerData.player.world_level ?? "-"}` },
+			{ label: tr("profile_CharactersCount"),   value: `${characters.length}` },
+			{ label: tr("profile_AchievementsCount"), value: `${playerData.player.space_info?.achievement_count ?? "-"}` }
+		];
+		const gX0 = 28, gY0 = divY1 + 18;
+		const gColW = LEFT_W / 2, gRowH = 74;
+		stats.forEach((s, i) => {
+			const col = i % 2, row = Math.floor(i / 2);
+			const sx = gX0 + col * gColW + gColW / 2;
+			const sy = gY0 + row * gRowH;
+			mf(ctx, 28, true);
+			ctx.fillStyle = "#FFFFFF";
+			ctx.textAlign = "center";
+			ctx.fillText(s.value, sx, sy + 30);
+			mf(ctx, 16);
+			ctx.fillStyle = "rgba(255,255,255,0.55)";
+			ctx.fillText(s.label, sx, sy + 50);
+		});
 
-			let statusText = "※ ";
-			if (filterInfo.sortType) {
-				if (filterInfo.sortType === "sort_level") {
-					statusText += tr("profile_SortByLevel");
-				} else if (filterInfo.sortType === "sort_eidolon") {
-					statusText += tr("profile_SortByEidolon");
-				}
+		// Filter / sort status
+		if (filterInfo && (filterInfo.filters.length > 0 || filterInfo.sortType)) {
+			const divY2 = gY0 + 2 * gRowH + 10;
+			ctx.strokeStyle = "rgba(255,255,255,0.2)";
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(28, divY2);
+			ctx.lineTo(14 + LEFT_W - 14, divY2);
+			ctx.stroke();
+
+			const filterLabelMap: Record<string, string> = {};
+			try {
+				const [elemData, pathData] = await Promise.all([
+					loadElementsData("cht"),
+					loadPathsData("cht")
+				]);
+				if (elemData) for (const val of Object.values(elemData) as any[]) filterLabelMap[val.id.toLowerCase()] = val.name;
+				if (pathData) for (const val of Object.values(pathData) as any[]) filterLabelMap[val.text.toLowerCase()] = val.name;
+			} catch {
+				Object.assign(filterLabelMap, {
+					physical: tr("element_physical"), ice: tr("element_ice"),
+					fire: tr("element_fire"), lightning: tr("element_lightning"),
+					wind: tr("element_wind"), quantum: tr("element_quantum"),
+					imaginary: tr("element_imaginary"), destruction: tr("path_destruction"),
+					harmony: tr("path_harmony"), erudition: tr("path_erudition"),
+					hunt: tr("path_hunt"), preservation: tr("path_preservation"),
+					nihility: tr("path_nihility"), abundance: tr("path_abundance"),
+					remembrance: tr("path_remembrance")
+				});
 			}
 
+			let statusLines: string[] = [];
+			if (filterInfo.sortType === "sort_level") statusLines.push(tr("profile_SortByLevel"));
+			else if (filterInfo.sortType === "sort_eidolon") statusLines.push(tr("profile_SortByEidolon"));
 			if (filterInfo.filters.length > 0) {
-				if (statusText) statusText += " | ";
-				// 動態生成 filterLabelMap，自動支持新命途和屬性
-				const filterLabelMap: Record<string, string> = {};
-				try {
-					const [elemData, pathData] = await Promise.all([
-						loadElementsData("cht"),
-						loadPathsData("cht")
-					]);
-					if (elemData) {
-						for (const val of Object.values(elemData) as any[]) {
-							filterLabelMap[val.id.toLowerCase()] = val.name;
-						}
-					}
-					if (pathData) {
-						for (const val of Object.values(pathData) as any[]) {
-							filterLabelMap[val.text.toLowerCase()] = val.name;
-						}
-					}
-				} catch {
-					// 回退到翻譯系統
-					Object.assign(filterLabelMap, {
-						physical: tr("element_physical"),
-						ice: tr("element_ice"),
-						fire: tr("element_fire"),
-						lightning: tr("element_lightning"),
-						wind: tr("element_wind"),
-						quantum: tr("element_quantum"),
-						imaginary: tr("element_imaginary"),
-						destruction: tr("path_destruction"),
-						harmony: tr("path_harmony"),
-						erudition: tr("path_erudition"),
-						hunt: tr("path_hunt"),
-						preservation: tr("path_preservation"),
-						nihility: tr("path_nihility"),
-						abundance: tr("path_abundance"),
-						remembrance: tr("path_remembrance")
-					});
-				}
-				statusText += filterInfo.filters
-					.map(f => (filterLabelMap as any)[f] || f)
-					.join(" / ");
+				statusLines.push(filterInfo.filters.map(f => filterLabelMap[f] || f).join(" / "));
 			}
 
-			ctx.fillText(statusText, 720, 205);
+			mf(ctx, 18, true);
+			ctx.fillStyle = "#D4AF37";
+			ctx.textAlign = "left";
+			statusLines.forEach((line, i) => {
+				ctx.fillText(`※ ${line}`, 28, divY2 + 22 + i * 26);
+			});
 		}
 
-		// 角色卡片區域
-		const cardWidth = 300;
-		const baseX = 20;
+		// ── 3. Character grid ───────────────────────────────────────────────
+		const pathMapper: Record<string, string> = {
+			warrior: "destruction", rogue: "hunt", mage: "erudition",
+			priest: "abundance", shaman: "harmony", warlock: "nihility",
+			knight: "preservation", memory: "remembrance", elation: "elation"
+		};
 
 		for (let i = 0; i < characters.length; i++) {
 			const char = characters[i];
 			if (!char) continue;
-			const col = i % cardsPerRow;
-			const row = Math.floor(i / cardsPerRow);
-			const x = baseX + col * (cardWidth + cardGap);
-			const y = baseY + row * (cardHeight + cardGap);
+			const col = i % GRID_COLS;
+			const row = Math.floor(i / GRID_COLS);
+			const cx = GRID_X + col * (CARD_W + CARD_GAP);
+			const cy = GRID_TOP + row * (CARD_H + CARD_GAP);
 
-			// 卡片底色
-			ctx.save();
-			ctx.globalAlpha = 0.4;
-			ctx.fillStyle = "#222";
-			ctx.fillRect(x, y, cardWidth, cardHeight);
-			ctx.restore();
+			// glass card
+			fillGlass(ctx, cx, cy, CARD_W, CARD_H, 10, 0.38);
 
-			// 角色頭像（圓形）
-			const iconCenterX = x + 20 + 36;
-			const iconCenterY = y + cardHeight / 2;
+			// character icon (top portion)
 			const charIconResult = await loadImageAsync(char.icon);
 			const charIcon = charIconResult?.image;
-			ctx.save();
-			ctx.beginPath();
-			ctx.arc(iconCenterX, iconCenterY, 36, 0, Math.PI * 2);
-			ctx.closePath();
-			ctx.clip();
-			const scale = Math.max((2 * 36) / 168, (2 * 36) / 188);
-			const drawW = 168 * scale;
-			const drawH = 188 * scale;
 			if (charIcon) {
-				ctx.drawImage(
-					charIcon,
-					iconCenterX - drawW / 2,
-					iconCenterY - drawH / 2,
-					drawW,
-					drawH
-				);
+				ctx.save();
+				drawRoundRect(ctx, cx, cy, CARD_W, CARD_H, 10);
+				ctx.clip();
+				const iconH = CARD_H * 0.65;
+				const srcAR = charIcon.width / charIcon.height;
+				const dstH = iconH * 1.15;
+				const dstW = dstH * srcAR;
+				const dx = cx + (CARD_W - dstW) / 2;
+				ctx.drawImage(charIcon, dx, cy - iconH * 0.08, dstW, dstH);
+				ctx.restore();
 			}
+
+			// Bottom info bar
+			const barH = 90;
+			ctx.save();
+			drawRoundRect(ctx, cx, cy + CARD_H - barH, CARD_W, barH, 10);
+			ctx.clip();
+			ctx.fillStyle = "rgba(0,0,0,0.70)";
+			ctx.fillRect(cx, cy + CARD_H - barH, CARD_W, barH);
 			ctx.restore();
 
-			// 中間上方：命途icon、屬性icon（加大尺寸）
+			// Name
+			mf(ctx, 18, true);
+			ctx.fillStyle = "#FFD89C";
+			ctx.textAlign = "center";
+			ctx.fillText(char.name, cx + CARD_W / 2, cy + CARD_H - barH + 22);
+
+			// Lv + Eidolon
+			mf(ctx, 16);
+			ctx.fillStyle = "rgba(255,255,255,0.85)";
+			ctx.fillText(`Lv.${char.level}  E${char.rank ?? 0}`, cx + CARD_W / 2, cy + CARD_H - barH + 44);
+
+			// Element + Path icons
 			const elementIconResult = await loadImageAsync(
 				`./src/assets/image/element/${(typeof char.element === "string" ? char.element : char.element?.id || "physical").toLowerCase()}.png`
 			);
-			const elementIcon = elementIconResult?.image;
-			let pathIconPath = null;
-			const pathMapper: Record<string, string> = {
-				warrior: "destruction",
-				rogue: "hunt",
-				mage: "erudition",
-				priest: "abundance",
-				shaman: "harmony",
-				warlock: "nihility",
-				knight: "preservation",
-				memory: "remembrance",
-				elation: "elation"
-			};
-
+			let pathIconPath: string;
 			if (char.base_type) {
 				const pathName = (await getPathMap())[char.base_type] || "none";
 				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
 			} else if (char.path) {
-				const rawPath = (
-					typeof char.path === "string"
-						? char.path
-						: char.path?.id || "none"
-				).toLowerCase();
-				const pathName = pathMapper[rawPath] || rawPath;
-				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
+				const rawPath = (typeof char.path === "string" ? char.path : char.path?.id || "none").toLowerCase();
+				pathIconPath = `./src/assets/image/icon/path/${pathMapper[rawPath] || rawPath}Small.png`;
 			} else {
 				pathIconPath = `./src/assets/image/icon/path/none.png`;
 			}
-			const pathIconResult = await loadImageAsync(pathIconPath);
-			const pathIcon = pathIconResult?.image;
-			if (pathIcon) {
-				ctx.drawImage(pathIcon, x + 110, y + 12, 44, 44);
-			}
-			if (elementIcon) {
-				ctx.drawImage(elementIcon, x + 164, y + 12, 44, 44);
-			}
+			const [pathIconResult] = await Promise.all([loadImageAsync(pathIconPath)]);
+			const iconSz = 28;
+			const iconY2 = cy + CARD_H - barH + 52;
+			const totalIconW = (elementIconResult?.image ? iconSz : 0) + (pathIconResult?.image ? iconSz : 0) + 4;
+			let ix = cx + (CARD_W - totalIconW) / 2;
+			if (pathIconResult?.image) { ctx.drawImage(pathIconResult.image, ix, iconY2, iconSz, iconSz); ix += iconSz + 4; }
+			if (elementIconResult?.image) { ctx.drawImage(elementIconResult.image, ix, iconY2, iconSz, iconSz); }
 
-			// 中間下方：等級、命座（下移，增加間隔）
-			ctx.font = "bold 22px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-			ctx.fillStyle = "#fff";
-			ctx.textAlign = "left";
-			ctx.fillText(`Lv.${char.level}`, x + 110, y + 85);
-			ctx.fillStyle = "#DCC491";
-			ctx.fillText(`E${char.rank ?? 0}`, x + 175, y + 85);
-
-			// 右側分隔線
-			ctx.save();
-			ctx.strokeStyle = "rgba(255,255,255,0.3)";
-			ctx.lineWidth = 2;
-			ctx.beginPath();
-			ctx.moveTo(x + cardWidth - 70, y + 10);
-			ctx.lineTo(x + cardWidth - 70, y + cardHeight - 10);
-			ctx.stroke();
-			ctx.restore();
-
-			// 右側武器icon和等級
-			if (char.equip && char.equip.icon) {
-				const lcIconResult = await loadImageAsync(char.equip.icon);
-				const lcIcon = lcIconResult?.image;
-				if (lcIcon) {
-					ctx.drawImage(
-						lcIcon,
-						x + cardWidth - 62.5,
-						y + 12.5,
-						57.5,
-						57.5
-					);
+			// Light cone (small, top-right corner of card)
+			if (char.equip?.icon) {
+				const lcResult = await loadImageAsync(char.equip.icon);
+				if (lcResult?.image) {
+					const lcSz = 52;
+					ctx.save();
+					drawRoundRect(ctx, cx + CARD_W - lcSz - 4, cy + 4, lcSz, lcSz, 6);
+					ctx.clip();
+					ctx.drawImage(lcResult.image, cx + CARD_W - lcSz - 4, cy + 4, lcSz, lcSz);
+					ctx.restore();
+					mf(ctx, 13, true);
+					ctx.fillStyle = "white";
+					ctx.textAlign = "center";
+					ctx.fillText(`${char.equip.level ?? ""}`, cx + CARD_W - lcSz / 2 - 4, cy + lcSz + 10);
 				}
-				ctx.font =
-					"bold 18px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-				ctx.fillStyle = "#fff";
-				ctx.textAlign = "center";
-				ctx.fillText(
-					`Lv.${char.equip.level ?? ""}`,
-					x + cardWidth - 35,
-					y + 85
-				);
 			}
 		}
 
@@ -4203,7 +4166,6 @@ async function drawAllCharactersImage(
 		return null;
 	}
 }
-
 async function setupLeaderboardMaintenance(): Promise<void> {
 	try {
 		console.log("[Leaderboard] Starting scheduled maintenance...");
