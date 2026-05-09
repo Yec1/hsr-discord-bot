@@ -1,0 +1,14 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "ES2022",
+		"moduleResolution": "node",
+		"isolatedModules": false,
+		"noEmit": false,
+		"emitDeclarationOnly": false,
+		"declaration": false,
+		"types": ["jest", "node"]
+	},
+	"include": ["src/**/*", "tests/**/*"]
+}

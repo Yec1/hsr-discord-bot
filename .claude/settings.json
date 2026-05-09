@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "c:\\Users\\shawn\\桌面\\Programming\\bots\\hoyobot\\src\\assets",
+      "c:\\Users\\shawn\\桌面\\Programming\\bots\\hoyobot"
+    ],
+    "allow": [
+      "Bash([ -f \"$HSR_EVENTS/$f\" ])",
+      "Bash(sed -i -e 's|from \"\\\\.\\\\./index\\\\.js\"|from \"@/index.js\"|g' -e 's|from \"\\\\.\\\\./utilities/index\\\\.js\"|from \"@/utilities/index.js\"|g' -e 's|from \"\\\\.\\\\./utilities/hsr/|from \"@/utilities/hsr/|g' -e 's|from \"\\\\.\\\\./utilities/core/|from \"@/utilities/core/|g' -e 's|from \"\\\\.\\\\./assets/|from \"@/assets/|g' c:/Users/shawn/桌面/Programming/bots/hoyobot/src/events/__TRACKED_VAR__)"
+    ]
+  }
+}
