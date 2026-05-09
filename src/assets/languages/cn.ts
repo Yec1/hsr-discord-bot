@@ -70,6 +70,8 @@ const langs: LanguageStrings = {
 	profile_TrailblazeLevel: "开拓等级",
 	profile_EquilibriumLevel: "均衡等级",
 	profile_Records: "漫游纪录",
+	profile_SupportCharacters: "支援角色",
+	profile_CompanionCharacters: "星海同行",
 	profile_CharactersCount: "邂逅角色",
 	profile_AchievementsCount: "达成成就",
 	profile_MemoryLevel: "回忆进度",

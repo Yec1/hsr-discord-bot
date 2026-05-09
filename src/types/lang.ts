@@ -68,6 +68,8 @@ export interface LanguageStrings {
 	profile_TrailblazeLevel: string;
 	profile_EquilibriumLevel: string;
 	profile_Records: string;
+	profile_SupportCharacters: string;
+	profile_CompanionCharacters: string;
 	profile_CharactersCount: string;
 	profile_AchievementsCount: string;
 	profile_MemoryLevel: string;

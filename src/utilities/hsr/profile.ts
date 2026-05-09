@@ -1,4 +1,5 @@
 import { database } from "../../index.js";
+import { getUserBg, getTodayBg } from "./wallpaperManager.js";
 import {
 	requestPlayerData,
 	drawInQueueReply,
@@ -1672,10 +1673,12 @@ async function handleProfileDraw(
 				playerData = reqPlayerData;
 			}
 
-			const requestEndTime = Date.now();
-			const drawStartTime = Date.now();
-			let imageBuffer: Buffer | null = null;
-			if (useAllCharacters && characters) {
+		const requestEndTime = Date.now();
+		const drawStartTime = Date.now();
+		let imageBuffer: Buffer | null = null;
+		// Get user's preferred background
+		const bgPath = await getUserBg(user.id);
+		if (useAllCharacters && characters) {
 				// 預設按五星優先排序
 				const defaultSortedCharacters = characters.sort((a, b) => {
 					// 先按五星優先排序
@@ -1686,17 +1689,20 @@ async function handleProfileDraw(
 					return b.level - a.level;
 				});
 
-				imageBuffer = await drawAllCharactersImage(
-					tr,
-					playerData!,
-					defaultSortedCharacters
-				);
+			imageBuffer = await drawAllCharactersImage(
+				tr,
+				playerData!,
+				defaultSortedCharacters,
+				null,
+				bgPath
+			);
 			} else if (playerData) {
-				imageBuffer = await drawMainImage(
-					tr,
-					playerData,
-					playerActivity
-				);
+			imageBuffer = await drawMainImage(
+				tr,
+				playerData,
+				playerActivity,
+				bgPath
+			);
 			}
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 
@@ -1911,57 +1917,120 @@ async function handleProfileDraw(
 	}
 }
 
+// ── helpers for drawMainImage ──────────────────────────────────────────────
+function drawRoundRect(
+	ctx: any,
+	x: number,
+	y: number,
+	w: number,
+	h: number,
+	r: number
+) {
+	ctx.beginPath();
+	ctx.moveTo(x + r, y);
+	ctx.arcTo(x + w, y, x + w, y + h, r);
+	ctx.arcTo(x + w, y + h, x, y + h, r);
+	ctx.arcTo(x, y + h, x, y, r);
+	ctx.arcTo(x, y, x + w, y, r);
+	ctx.closePath();
+}
+
+function fillGlass(
+	ctx: any,
+	x: number,
+	y: number,
+	w: number,
+	h: number,
+	r: number,
+	alpha = 0.45
+) {
+	ctx.save();
+	drawRoundRect(ctx, x, y, w, h, r);
+	ctx.clip();
+	ctx.fillStyle = `rgba(10, 10, 20, ${alpha})`;
+	ctx.fillRect(x, y, w, h);
+	ctx.restore();
+	ctx.save();
+	drawRoundRect(ctx, x, y, w, h, r);
+	ctx.strokeStyle = "rgba(255,255,255,0.12)";
+	ctx.lineWidth = 1.5;
+	ctx.stroke();
+	ctx.restore();
+}
+
 async function drawMainImage(
 	tr: any,
 	playerData: PlayerData,
-	playerActivity: PlayerActivity | null
+	playerActivity: PlayerActivity | null,
+	bgPath?: string
 ): Promise<Buffer | null> {
 	try {
-		const canvas = createCanvas(1920, 1080);
+		const W = 1920, H = 1080;
+		const canvas = createCanvas(W, H);
 		const ctx = canvas.getContext("2d");
 
-		const imageUrls = [
-			"./src/assets/image/warp/bg.jpg",
-			`${image_Header}/${playerData.player.avatar.icon}`
-		];
+		const mf = (size: number, bold = false) => {
+			ctx.font = `${bold ? "bold " : ""}${size}px 'YaHei','URW DIN Arabic',Arial,sans-serif`;
+		};
 
-		const visibleCharacters = playerData.characters.slice(
-			0,
-			Math.min(playerData.characters.length, 8)
-		);
-		imageUrls.push(
-			...visibleCharacters.map(char => `${image_Header}/${char.preview}`)
-		);
-
-		const visibleActivities = playerActivity?.info?.slice(0, 5) || [];
-		imageUrls.push(
-			...visibleActivities.map(
-				activity => `${image_Header}/${activity.content.icon}`
-			)
-		);
-
-		const allImages = await Promise.all(
-			imageUrls.map(url => loadImageAsync(url))
-		);
-
-		const bg = allImages[0]?.image;
-		const avatar = allImages[1]?.image;
-		const charImages = allImages
-			.slice(2, 2 + visibleCharacters.length)
-			.map(img => img?.image);
-		const playerActivityIcons = allImages
-			.slice(2 + visibleCharacters.length)
-			.map(img => img?.image);
-
-		if (bg) {
-			ctx.drawImage(bg, 0, 0, 1920, 1080);
+		// ── 1. Background ────────────────────────────────────────────────────
+		const bgResult = await loadImageAsync(bgPath ?? await getTodayBg());
+		if (bgResult?.image) {
+			ctx.drawImage(bgResult.image, 0, 0, W, H);
+		} else {
+			ctx.fillStyle = "#0d1117";
+			ctx.fillRect(0, 0, W, H);
 		}
+		// dark overlay
+		ctx.fillStyle = "rgba(0,0,0,0.55)";
+		ctx.fillRect(0, 0, W, H);
 
-		if (avatar) {
-			ctx.drawImage(avatar, 896, 70, 128, 128);
+		// ── 2. Fetch extra images in parallel ────────────────────────────────
+		const allChars = playerData.characters.slice(0, 8);
+		const supportChars = allChars.slice(0, 3);
+		const companionChars = allChars.slice(3, 8);
+		const activities = playerActivity?.info?.slice(0, 5) || [];
+
+		const [avatarResult, ...restImages] = await Promise.all([
+			loadImageAsync(`${image_Header}/${playerData.player.avatar.icon}`),
+			...allChars.map(c => loadImageAsync(`${image_Header}/${c.preview}`)),
+			...activities.map(a => loadImageAsync(`${image_Header}/${a.content.icon}`))
+		]);
+		const charImgs = restImages.slice(0, allChars.length).map(r => r?.image);
+		const activityIcons = restImages.slice(allChars.length).map(r => r?.image);
+
+		// ── 3. Left panel ────────────────────────────────────────────────────
+		const LP = { x: 28, y: 28, w: 460, h: H - 56, r: 16 };
+		fillGlass(ctx, LP.x, LP.y, LP.w, LP.h, LP.r, 0.5);
+
+		// Avatar circle
+		const avatarCX = LP.x + LP.w / 2;
+		const avatarCY = LP.y + 110;
+		const avatarR = 80;
+		if (avatarResult?.image) {
+			ctx.save();
+			ctx.beginPath();
+			ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
+			ctx.clip();
+			ctx.drawImage(
+				avatarResult.image,
+				avatarCX - avatarR,
+				avatarCY - avatarR,
+				avatarR * 2,
+				avatarR * 2
+			);
+			ctx.restore();
 		}
+		// avatar ring
+		ctx.save();
+		ctx.beginPath();
+		ctx.arc(avatarCX, avatarCY, avatarR + 3, 0, Math.PI * 2);
+		ctx.strokeStyle = "#D4AF37";
+		ctx.lineWidth = 3;
+		ctx.stroke();
+		ctx.restore();
 
-		// 繪製異常仲裁圖標（如果有的話）
+		// Anomaly icon overlay
 		const anomalyRecord = (await database.get(
 			`${playerData.player.uid}.anomalyRoundNum`
 		)) as AnomalyRoundRecord | null;
@@ -1970,275 +2039,238 @@ async function drawMainImage(
 			if (iconPath) {
 				const anomalyIcon = await loadImage(iconPath);
 				if (anomalyIcon) {
-					const iconSize = 128 * 1.1;
-					const iconX = 896 - 10;
-					const iconY = 70 - 70 * 0.1;
+					const iSize = avatarR * 2 * 1.1;
 					ctx.drawImage(
 						anomalyIcon,
-						iconX,
-						iconY,
-						iconSize,
-						iconSize
+						avatarCX - avatarR - iSize * 0.05,
+						avatarCY - avatarR - iSize * 0.05,
+						iSize,
+						iSize
 					);
 				}
 			}
 		}
 
-		const setupMainFont = (size: number, isBold: boolean = false) => {
-			ctx.font = `${isBold ? "bold " : ""}${size}px 'YaHei', 'URW DIN Arabic', Arial, sans-serif`;
-		};
-
-		const setupNumberFont = (size: number, isBold: boolean = false) => {
-			ctx.font = `${isBold ? "bold " : ""}${size}px 'URW DIN Arabic', Arial, sans-serif`;
-		};
-
-		setupMainFont(40, true);
-		ctx.fillStyle = "white";
+		// Nickname
+		mf(36, true);
+		ctx.fillStyle = "#FFFFFF";
 		ctx.textAlign = "center";
-		ctx.fillText(playerData.player.nickname, 960, 245);
+		ctx.fillText(playerData.player.nickname, avatarCX, avatarCY + avatarR + 42);
 
-		const xRange = {
-			start: 610,
-			end: 1300
-		};
+		// UID
+		mf(22);
+		ctx.fillStyle = "rgba(255,255,255,0.6)";
+		ctx.fillText(
+			`UID  ${playerData.player.uid}`,
+			avatarCX,
+			avatarCY + avatarR + 70
+		);
 
-		// 繪製 UID 和異常仲裁徽章（同一橫排，平均分配寬度）
+		// Anomaly rank badges
 		const anomalyRankRecords = (await database.get(
 			`${playerData.player.uid}.anomalyRankIcon`
 		)) as AnomalyRankRecord[] | null;
-
-		const badgeSize = 46;
-		const badgeSpacing = 8;
-		const availableWidth = xRange.end - xRange.start; // 690px
-		const uidText = `UID ${playerData.player.uid}`;
-
-		// 計算 UID 文字寬度
-		setupNumberFont(24);
-		ctx.fillStyle = "lightgray";
-		const uidWidth = ctx.measureText(uidText).width;
-
 		if (anomalyRankRecords && anomalyRankRecords.length > 0) {
-			// 按挑戰時間排序，最新的在前
-			anomalyRankRecords.sort(
-				(a, b) => b.challengeTime - a.challengeTime
-			);
-
-			// 最多顯示 5 個徽章
-			const displayRecords = anomalyRankRecords.slice(0, 5);
-			const totalBadgeWidth =
-				displayRecords.length * badgeSize +
-				(displayRecords.length - 1) * badgeSpacing;
-			const totalContentWidth = uidWidth + totalBadgeWidth + 20; // UID 和徽章間距
-
-			// 計算起始位置（居中對齊）
-			const startX =
-				xRange.start + (availableWidth - totalContentWidth) / 2;
-			const uidX = startX;
-			const badgeStartX = startX + uidWidth + 22.5;
-			const contentY = 290; // UID 和徽章的垂直位置
-			const badgeY = contentY - badgeSize / 2 - 7.5;
-
-			// 繪製 UID
-			ctx.textAlign = "left";
-			ctx.fillText(uidText, uidX, contentY);
-
-			// 繪製徽章
-			for (let i = 0; i < displayRecords.length; i++) {
-				const record = displayRecords[i];
-				if (!record) continue;
-
-				const badgeX = badgeStartX + i * (badgeSize + badgeSpacing);
-
+			anomalyRankRecords.sort((a, b) => b.challengeTime - a.challengeTime);
+			const badges = anomalyRankRecords.slice(0, 5);
+			const badgeSz = 36;
+			const totalBW = badges.length * badgeSz + (badges.length - 1) * 6;
+			let bx = avatarCX - totalBW / 2;
+			const by = avatarCY + avatarR + 82;
+			for (const record of badges) {
 				try {
-					let badgeSource: string | Buffer = record.rankIcon;
-					if (record.rankIcon?.startsWith("http://") || record.rankIcon?.startsWith("https://")) {
-						const badgeResponse = await axios.get(record.rankIcon, { responseType: "arraybuffer", timeout: 15000 });
-						badgeSource = Buffer.from(badgeResponse.data);
+					let src: string | Buffer = record.rankIcon;
+					if (record.rankIcon?.startsWith("http")) {
+						const resp = await axios.get(record.rankIcon, {
+							responseType: "arraybuffer",
+							timeout: 10000
+						});
+						src = Buffer.from(resp.data);
 					}
-					const badgeIcon = await loadImage(badgeSource);
-					if (badgeIcon) {
-						ctx.drawImage(
-							badgeIcon,
-							badgeX,
-							badgeY,
-							badgeSize,
-							badgeSize
-						);
-					}
-				} catch (error) {
-					console.warn(
-						`Failed to load badge icon: ${record.rankIcon}`,
-						error
-					);
-				}
+					const bi = await loadImage(src);
+					if (bi) ctx.drawImage(bi, bx, by, badgeSz, badgeSz);
+				} catch { /* skip */ }
+				bx += badgeSz + 6;
 			}
-		} else {
-			// 沒有徽章時，UID 居中顯示
-			ctx.textAlign = "center";
-			ctx.fillText(uidText, 960, 300);
 		}
-		ctx.textAlign = "center";
 
-		const profileStatsData = [
-			{
-				labelText: tr("profile_TrailblazeLevel"),
-				valueText: `${playerData.player.level}`
-			},
-			{
-				labelText: tr("profile_EquilibriumLevel"),
-				valueText: `${playerData.player.world_level}`
-			},
-			{
-				labelText: tr("profile_CharactersCount"),
-				valueText: `${playerData.player.space_info?.avatar_count}`
-			},
-			{
-				labelText: tr("profile_AchievementsCount"),
-				valueText: `${playerData.player.space_info?.achievement_count}`
-			}
+		// Divider
+		const divY1 = avatarCY + avatarR + 105;
+		ctx.strokeStyle = "rgba(255,255,255,0.2)";
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.moveTo(LP.x + 24, divY1);
+		ctx.lineTo(LP.x + LP.w - 24, divY1);
+		ctx.stroke();
+
+		// Stats grid (2×2)
+		const stats = [
+			{ label: tr("profile_TrailblazeLevel"),  value: `${playerData.player.level}` },
+			{ label: tr("profile_EquilibriumLevel"),  value: `${playerData.player.world_level ?? "-"}` },
+			{ label: tr("profile_CharactersCount"),   value: `${playerData.player.space_info?.avatar_count ?? "-"}` },
+			{ label: tr("profile_AchievementsCount"), value: `${playerData.player.space_info?.achievement_count ?? "-"}` }
 		];
+		const gX0 = LP.x + 30, gY0 = divY1 + 22;
+		const gColW = (LP.w - 60) / 2, gRowH = 80;
+		stats.forEach((s, i) => {
+			const col = i % 2, row = Math.floor(i / 2);
+			const sx = gX0 + col * gColW + gColW / 2;
+			const sy = gY0 + row * gRowH;
+			mf(32, true);
+			ctx.fillStyle = "#FFFFFF";
+			ctx.textAlign = "center";
+			ctx.fillText(s.value, sx, sy + 34);
+			mf(18);
+			ctx.fillStyle = "rgba(255,255,255,0.55)";
+			ctx.fillText(s.label, sx, sy + 56);
+		});
 
-		function calculatePositions(
-			statsData: any[],
-			xRange: { start: number; end: number }
-		) {
-			const count = statsData.length;
+		// Divider 2
+		const divY2 = gY0 + 2 * gRowH + 14;
+		ctx.strokeStyle = "rgba(255,255,255,0.2)";
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.moveTo(LP.x + 24, divY2);
+		ctx.lineTo(LP.x + LP.w - 24, divY2);
+		ctx.stroke();
 
-			if (count === 1) {
-				const centerX = (xRange.start + xRange.end) / 2;
-				return [
-					{
-						labelX: centerX,
-						labelY: 355,
-						valueX: centerX,
-						valueY: 400
-					}
-				];
-			}
+		// Activity list
+		if (activities.length > 0) {
+			mf(22, true);
+			ctx.fillStyle = "#D4AF37";
+			ctx.textAlign = "left";
+			ctx.fillText(tr("profile_Records"), LP.x + 30, divY2 + 28);
 
-			const totalWidth = xRange.end - xRange.start;
-			const spacing = totalWidth / (count - 1);
-
-			return statsData.map((stat, index) => {
-				const x = xRange.start + spacing * index;
-				return {
-					...stat,
-					labelX: x,
-					labelY: 355,
-					valueX: x,
-					valueY: 400
-				};
+			activities.forEach((act, i) => {
+				const ay = divY2 + 52 + i * 48;
+				const icon = activityIcons[i];
+				if (icon) ctx.drawImage(icon, LP.x + 30, ay - 26, 34, 34);
+				mf(20);
+				ctx.fillStyle = "rgba(255,255,255,0.85)";
+				ctx.textAlign = "left";
+				// Truncate long text
+				let txt = act.text;
+				const maxW = LP.w - 90;
+				while (ctx.measureText(txt).width > maxW && txt.length > 4) {
+					txt = txt.slice(0, -1);
+				}
+				if (txt !== act.text) txt += "…";
+				ctx.fillText(txt, LP.x + 72, ay + 4);
 			});
 		}
 
-		const profileStats = calculatePositions(profileStatsData, xRange);
-		ctx.fillStyle = "white";
+		// ── 4. Right panel ──────────────────────────────────────────────────
+		const RP = { x: 510, y: 28 };
 
-		profileStats.forEach(stat => {
-			setupMainFont(30, true);
-			ctx.fillText(stat.labelText, stat.labelX, stat.labelY);
-		});
+		// -- Support characters (top 3, larger) --
+		const suppLabel = tr("profile_SupportCharacters") ?? "支援角色";
+		mf(24, true);
+		ctx.fillStyle = "#D4AF37";
+		ctx.textAlign = "left";
+		ctx.fillText(suppLabel, RP.x, RP.y + 28);
 
-		profileStats.forEach(stat => {
-			setupNumberFont(32);
-			ctx.fillText(stat.valueText, stat.valueX, stat.valueY);
-		});
+		const suppCardW = 420, suppCardH = 490, suppGap = 20;
+		const suppTotalW = supportChars.length * suppCardW + (supportChars.length - 1) * suppGap;
+		const suppStartX = RP.x + ((W - RP.x - 28) - suppTotalW) / 2;
 
-		ctx.strokeStyle = "#fff";
-		ctx.beginPath();
-		ctx.moveTo(560, 435);
-		ctx.lineTo(1360, 435);
-		ctx.stroke();
+		for (let i = 0; i < supportChars.length; i++) {
+			const char = supportChars[i]!;
+			const cx = suppStartX + i * (suppCardW + suppGap);
+			const cy = RP.y + 40;
 
-		const width =
-			(920 + (playerData.characters.length - 4) * 230) /
-			playerData.characters.length;
+			// card glass
+			fillGlass(ctx, cx, cy, suppCardW, suppCardH, 12, 0.38);
 
-		const characterRenderData = visibleCharacters.map((char, i) => {
-			const x =
-				520 - (playerData.characters.length - 4) * 115 + i * width;
-			const y = 716;
-			return { char, x, y, image: charImages[i] };
-		});
-
-		characterRenderData.forEach(data => {
-			if (data.image) {
-				ctx.drawImage(data.image, data.x, 460, 187, 256);
+			// character preview
+			const img = charImgs[i];
+			if (img) {
+				// clip to card
+				ctx.save();
+				drawRoundRect(ctx, cx, cy, suppCardW, suppCardH, 12);
+				ctx.clip();
+				// scale to fill upper ~80% of card, anchor bottom
+				const srcAR = img.width / img.height;
+				const dstH = suppCardH;
+				const dstW = dstH * srcAR;
+				const dx = cx + (suppCardW - dstW) / 2;
+				ctx.drawImage(img, dx, cy - suppCardH * 0.05, dstW, dstH);
+				ctx.restore();
 			}
-		});
 
-		ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-		characterRenderData.forEach(data => {
-			const { x, y } = data;
-			ctx.beginPath();
-			ctx.moveTo(x, y);
-			ctx.lineTo(x, y + 56);
-			ctx.quadraticCurveTo(x, y + 76, x + 20, y + 76);
-			ctx.lineTo(x + 167, y + 76);
-			ctx.quadraticCurveTo(x + 187, y + 76, x + 187, y + 56);
-			ctx.lineTo(x + 187, y);
-			ctx.closePath();
-			ctx.fill();
-		});
+			// bottom info bar
+			const barH = 70;
+			ctx.save();
+			drawRoundRect(ctx, cx, cy + suppCardH - barH, suppCardW, barH, 12);
+			ctx.clip();
+			ctx.fillStyle = "rgba(0,0,0,0.65)";
+			ctx.fillRect(cx, cy + suppCardH - barH, suppCardW, barH);
+			ctx.restore();
 
-		setupMainFont(28, true);
-		characterRenderData.forEach(data => {
-			const { char, x, y } = data;
-			ctx.fillStyle = (char as any).pos <= 2 ? "#FFD89C" : "white";
-			ctx.fillText(char.name, x + 93, y + 35);
-		});
-
-		setupMainFont(20);
-		characterRenderData.forEach(data => {
-			const { char, x, y } = data;
-			ctx.fillText(
-				tr("level_Format", { level: char.level }),
-				x + 93,
-				y + 65
-			);
-		});
-
-		// Line2
-		ctx.strokeStyle = "#fff";
-		ctx.beginPath();
-		ctx.moveTo(560, 817);
-		ctx.lineTo(1360, 817);
-		ctx.stroke();
-
-		// Records
-		ctx.font = "bold 30px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
-		ctx.fillStyle = "white";
-		ctx.fillText(tr("profile_Records"), 960, 860);
-
-		const records: any[] = [];
-		const chaosRecords = playerActivity?.info || [];
-
-		records?.forEach((record, index) => {
-			ctx.font = "24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
-			ctx.textAlign = "left";
-			ctx.fillText(record.label, 720, 900 + index * 40);
-			ctx.font = "bold 24px 'URW DIN Arabic', Arial, sans-serif'";
-			ctx.textAlign = "right";
-			ctx.fillText(record.value, 1200, 900 + index * 40);
-		});
-
-		const iconPositions = chaosRecords?.map(record => {
-			const recordTextWidth = ctx.measureText(record.text).width;
-			return 980 - recordTextWidth / 2;
-		});
-
-		const minIconX = Math.min(...iconPositions);
-
-		chaosRecords?.forEach((record, index) => {
+			mf(26, true);
+			ctx.fillStyle = "#FFD89C";
 			ctx.textAlign = "center";
-			ctx.font = "bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
-			ctx.fillText(record.text, 980, 910 + index * 40);
+			ctx.fillText(char.name, cx + suppCardW / 2, cy + suppCardH - barH + 28);
+			mf(20);
+			ctx.fillStyle = "rgba(255,255,255,0.75)";
+			ctx.fillText(
+				`Lv.${char.level}  ✦${char.rank}`,
+				cx + suppCardW / 2,
+				cy + suppCardH - barH + 52
+			);
+		}
 
-			const recordIcon = playerActivityIcons[index];
-			if (recordIcon) {
-				ctx.drawImage(recordIcon, minIconX, 880 + index * 40, 40, 40);
+		// -- Companion characters (bottom 5, smaller) --
+		const compY = RP.y + 40 + suppCardH + 24;
+		const compLabel = tr("profile_CompanionCharacters") ?? "星海同行";
+		mf(24, true);
+		ctx.fillStyle = "#D4AF37";
+		ctx.textAlign = "left";
+		ctx.fillText(compLabel, RP.x, compY - 6);
+
+		const compCardW = 245, compCardH = 310, compGap = 18;
+		const compTotalW = companionChars.length * compCardW + (companionChars.length - 1) * compGap;
+		const compStartX = RP.x + ((W - RP.x - 28) - compTotalW) / 2;
+
+		for (let i = 0; i < companionChars.length; i++) {
+			const char = companionChars[i]!;
+			const cx = compStartX + i * (compCardW + compGap);
+			const cy = compY + 4;
+
+			fillGlass(ctx, cx, cy, compCardW, compCardH, 10, 0.38);
+
+			const img = charImgs[3 + i];
+			if (img) {
+				ctx.save();
+				drawRoundRect(ctx, cx, cy, compCardW, compCardH, 10);
+				ctx.clip();
+				const srcAR = img.width / img.height;
+				const dstH = compCardH;
+				const dstW = dstH * srcAR;
+				const dx = cx + (compCardW - dstW) / 2;
+				ctx.drawImage(img, dx, cy - compCardH * 0.05, dstW, dstH);
+				ctx.restore();
 			}
-		});
+
+			const barH = 54;
+			ctx.save();
+			drawRoundRect(ctx, cx, cy + compCardH - barH, compCardW, barH, 10);
+			ctx.clip();
+			ctx.fillStyle = "rgba(0,0,0,0.65)";
+			ctx.fillRect(cx, cy + compCardH - barH, compCardW, barH);
+			ctx.restore();
+
+			mf(20, true);
+			ctx.fillStyle = "white";
+			ctx.textAlign = "center";
+			ctx.fillText(char.name, cx + compCardW / 2, cy + compCardH - barH + 22);
+			mf(16);
+			ctx.fillStyle = "rgba(255,255,255,0.7)";
+			ctx.fillText(
+				`Lv.${char.level}  ✦${char.rank}`,
+				cx + compCardW / 2,
+				cy + compCardH - barH + 42
+			);
+		}
 
 		return canvas.toBuffer("image/webp");
 	} catch (error) {
@@ -2252,7 +2284,8 @@ async function drawCharacterImage(
 	playerData: PlayerData,
 	character: Character,
 	isAllCharacter: boolean = false,
-	userLang: string = "en"
+	userLang: string = "en",
+	bgPath?: string
 ): Promise<Buffer | null> {
 	try {
 		// 验证输入参数
@@ -2302,7 +2335,7 @@ async function drawCharacterImage(
 
 		// 减少基础图片加载数量
 		const imagePaths = [
-			"./src/assets/image/warp/bg.jpg",
+			bgPath ?? await getTodayBg(),
 			`./src/assets/image/${characterElementIcon}`,
 			`./src/assets/image/${characterPathIcon}`,
 			`./src/assets/image/icon/deco/Star${character.rarity == 5 ? "5" : "4"}.png`
@@ -3837,7 +3870,8 @@ async function drawAllCharactersImage(
 	tr: any,
 	playerData: PlayerData,
 	characters: Character[],
-	filterInfo: FilterInfo | null = null
+	filterInfo: FilterInfo | null = null,
+	bgPath?: string
 ): Promise<Buffer | null> {
 	try {
 		const canvasWidth = 1920;
@@ -3851,7 +3885,7 @@ async function drawAllCharactersImage(
 		const ctx = canvas.getContext("2d");
 
 		// 背景
-		const bgResult = await loadImageAsync("./src/assets/image/warp/bg.jpg");
+		const bgResult = await loadImageAsync(bgPath ?? await getTodayBg());
 		const bg = bgResult?.image;
 		if (bg) {
 			ctx.drawImage(bg, 0, 0, canvasWidth, canvasHeight);

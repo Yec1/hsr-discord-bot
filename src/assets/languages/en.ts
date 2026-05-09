@@ -70,6 +70,8 @@ const langs: LanguageStrings = {
 	profile_TrailblazeLevel: "Trailblaze Level",
 	profile_EquilibriumLevel: "Equilibrium Level",
 	profile_Records: "Travel Records",
+	profile_SupportCharacters: "Support Characters",
+	profile_CompanionCharacters: "Companions",
 	profile_CharactersCount: "Characters Met",
 	profile_AchievementsCount: "Achievements",
 	profile_MemoryLevel: "Memory Progress",
