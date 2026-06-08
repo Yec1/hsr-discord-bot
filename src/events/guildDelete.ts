@@ -6,7 +6,18 @@ const config = loadConfig();
 const webhook = new WebhookClient({ url: config.JLWEBHOOK || "" });
 
 client.on(Events.GuildDelete, async (guild: Guild) => {
-	const totalGuilds = client.guilds.cache.size;
+	let totalGuilds = client.guilds.cache.size;
+	if (cluster) {
+		const results = await cluster.broadcastEval(
+			(c: any) => c.guilds.cache.size
+		);
+		totalGuilds = results.reduce(
+			(prev: number, val: number) => prev + val,
+			0
+		);
+	} else {
+		totalGuilds = client.guilds.cache.size;
+	}
 
 	webhook.send({
 		embeds: [

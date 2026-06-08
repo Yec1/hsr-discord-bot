@@ -21,6 +21,7 @@ import {
 	drawCharacterImage,
 	drawAllCharactersImage
 } from "../utilities/hsr/profile.js";
+import { getUserBg, getBgPool, setUserBgPref } from "../utilities/hsr/wallpaperManager.js";
 import {
 	getRandomColor,
 	drawInQueueReply,
@@ -61,11 +62,52 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 		!customId.startsWith("leaderboard") &&
 		!customId.startsWith("profile_SelectCharacter") &&
 		!customId.startsWith("profile_Filter") &&
+		!customId.startsWith("profilebg_select") &&
 		!customId.startsWith("news") &&
 		!customId.startsWith("guide") &&
 		customId !== "forgottenHall_Floor"
 	)
 		await interaction.update({}).catch(() => {});
+	if (customId.startsWith("profilebg_select") && values[0]) {
+		const parts = customId.split(":");
+		const targetUserId = parts[1] ?? "";
+		const value = values[0];
+		if (value === "random") {
+			await setUserBgPref(targetUserId, null);
+			await interaction.update({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#5CBA4A")
+						.setDescription("✅ 已設定為**隨機背景**，每天自動從官方新聞選取")
+				],
+				components: []
+			});
+		} else {
+			// value = "fixed:N"
+			const idx = parseInt(value.split(":")[1] ?? "0");
+			const pool = await getBgPool();
+			const article = pool[idx];
+			if (!article) {
+				await interaction.update({
+					embeds: [new EmbedBuilder().setColor("#E76161").setDescription("❌ 找不到對應的圖片")],
+					components: []
+				});
+				return;
+			}
+			await setUserBgPref(targetUserId, article.url);
+			await interaction.update({
+				embeds: [
+					new EmbedBuilder()
+						.setColor("#5CBA4A")
+						.setTitle("✅ 背景已更新")
+						.setDescription(`已設定為：**${article.title}**`)
+						.setImage(article.url)
+				],
+				components: []
+			});
+		}
+		return;
+	}
 	if (customId.startsWith("guide") && values[0])
 		handleGuide(interaction, tr, values[0]);
 	if (customId.startsWith("news") && values[0])
@@ -545,11 +587,13 @@ async function handleProfileFilter(
 		}
 
 		// 重新繪圖
+		const bgPath = await getUserBg(userId ?? "");
 		const imageBuffer = await drawAllCharactersImage(
 			tr,
 			playerData as any,
 			sortedCharacters as any,
-			filterInfo
+			filterInfo,
+			bgPath
 		);
 
 		if (!imageBuffer) {
@@ -1563,29 +1607,34 @@ async function handleSelectCharacter(
 				return;
 			}
 
-			const drawStartTime = Date.now();
-			const imageBuffer =
-				characterId == "main"
-					? allCharactersBool
-						? await drawAllCharactersImage(
-								tr,
-								playerData as any,
-								(characters || []) as any
-							)
-						: await drawMainImage(
-								tr,
-								playerData as any,
-								playerActivity
-							)
-					: character
-						? await drawCharacterImage(
-								tr,
-								playerData as any,
-								character as any,
-								allCharactersBool,
-								userLang
-							)
-						: null;
+		const drawStartTime = Date.now();
+		const bgPath = await getUserBg(userId ?? "");
+		const imageBuffer =
+			characterId == "main"
+				? allCharactersBool
+					? await drawAllCharactersImage(
+							tr,
+							playerData as any,
+							(characters || []) as any,
+							null,
+							bgPath
+						)
+					: await drawMainImage(
+							tr,
+							playerData as any,
+							playerActivity,
+							bgPath
+						)
+				: character
+					? await drawCharacterImage(
+							tr,
+							playerData as any,
+							character as any,
+							allCharactersBool,
+							userLang,
+							bgPath
+						)
+					: null;
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 			const drawEndTime = Date.now();
 

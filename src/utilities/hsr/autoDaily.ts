@@ -12,6 +12,7 @@ import {
 	autoRefreshCookie
 } from "@/utilities/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
+import { sendRestMessage, sendRestDm } from "@/utilities/core/sendRestMessage.js";
 import {
 	buildHSRDailyCard,
 	HSRDailyCardPayload
@@ -496,45 +497,14 @@ class AutoDailySignSystem {
 							.join("\n")
 					};
 				})();
-		const sendToChannel = async (cid: string, msgPayload: any) => {
-			const { FormData } = await import("undici");
-			const form = new FormData();
-			const jsonPart: Record<string, any> = {};
-			if (msgPayload.content) jsonPart.content = msgPayload.content;
-			if (msgPayload.embeds) jsonPart.embeds = msgPayload.embeds;
-			if (msgPayload.files?.length) {
-				jsonPart.attachments = msgPayload.files.map((f: any, i: number) => ({
-					id: String(i),
-					filename: f.name,
-					...(f.description ? { description: f.description } : {})
-				}));
-			}
-			form.append("payload_json", JSON.stringify(jsonPart));
-			if (msgPayload.files?.length) {
-				for (let i = 0; i < msgPayload.files.length; i++) {
-					const f = msgPayload.files[i];
-					const attachment = f.attachment;
-					const buf = Buffer.isBuffer(attachment) ? attachment : Buffer.from(attachment);
-					form.append(`files[${i}]`, new Blob([buf]), f.name);
-				}
-			}
-			await client.rest.post(`/channels/${cid}/messages` as any, { body: form, passThroughBody: true } as any);
-		};
-		const sendToDm = async (uid: string, msgPayload: any) => {
-			const user = await client.users.fetch(uid);
-			const dm = await user.createDM();
-			await dm.send(msgPayload);
-		};
-
-		const msgPayload = cardFile
-			? {
-				...(payload as object),
-				files: [new AttachmentBuilder(Buffer.from(cardFile.buffer, "base64"), { name: cardFile.name })],
-			}
-			: payload;
+		const fileArg = cardFile
+			? { buffer: Buffer.from(cardFile.buffer, "base64"), name: cardFile.name }
+			: undefined;
+		const restPayloadSuccess: { content?: string; embeds?: object[] } = {};
+		if ((payload as any).content) restPayloadSuccess.content = (payload as any).content;
 
 		try {
-			await sendToChannel(channelId, msgPayload);
+			await sendRestMessage(channelId, restPayloadSuccess, fileArg);
 			this.logger.info(`[通知] 發送成功 (User: ${userId ?? "?"}) method=channel channelId=${channelId}`);
 		} catch (channelError) {
 			this.logger.error(
@@ -542,7 +512,7 @@ class AutoDailySignSystem {
 			);
 			if (userId) {
 				try {
-					await sendToDm(userId, msgPayload);
+					await sendRestDm(userId, restPayloadSuccess, fileArg);
 					this.logger.info(`[通知] 發送成功 (User: ${userId}) method=dm`);
 				} catch (dmError) {
 					this.logger.error(
@@ -564,26 +534,10 @@ class AutoDailySignSystem {
 		if (Array.isArray((messageData as any).embeds)) restPayload.embeds = (messageData as any).embeds;
 
 		const sendToChannel = async (cid: string, msgPayload: any) => {
-			const channelPresence = await cluster.broadcastEval(
-				(c: any, ctx: any) => c.channels.cache.has(ctx.channelId),
-				{ context: { channelId: cid } }
-			);
-			const targetCluster = channelPresence.findIndex(Boolean);
-			if (targetCluster < 0) throw new Error(`No cluster has channel ${cid} in cache`);
-			await cluster.broadcastEval(
-				async (c: any, ctx: any) => {
-					const channel = c.channels.cache.get(ctx.channelId);
-					if (!channel) return false;
-					await (channel as any).send(ctx.payload);
-					return true;
-				},
-				{ cluster: targetCluster, context: { channelId: cid, payload: msgPayload } }
-			);
+			await sendRestMessage(cid, msgPayload);
 		};
 		const sendToDm = async (uid: string, msgPayload: any) => {
-			const user = await client.users.fetch(uid);
-			const dm = await user.createDM();
-			await dm.send(msgPayload);
+			await sendRestDm(uid, msgPayload);
 		};
 
 		try {

@@ -447,6 +447,7 @@ interface ForgottenHallResponse {
 	end_time?: TimeInfo;
 	schedule_id?: string;
 	groups?: GroupInfo[];
+	extra_star_num?: number;
 }
 
 interface FloorDetail {
@@ -456,6 +457,7 @@ interface FloorDetail {
 	round_num: number;
 	node_1: NodeInfo;
 	node_2: NodeInfo;
+	node_3?: NodeInfo;
 }
 
 interface NodeInfo {
@@ -493,6 +495,7 @@ interface GroupInfo {
 	schedule_id: string;
 	upper_boss: BossInfo;
 	lower_boss: BossInfo;
+	tierce_boss?: BossInfo;
 }
 
 interface BossInfo {
@@ -751,10 +754,10 @@ async function handleForgottenHallDraw(
 				const forgottenRes = res as ForgottenHallResponse;
 				selectMenuOptions = forgottenRes.all_floor_detail.map(
 					(floor, i) => {
-						const floorScore = (node: NodeInfo) =>
-							parseInt(node?.score) || 0;
+						const floorScore = (node: NodeInfo | undefined) =>
+							node ? parseInt(node.score || "0") || 0 : 0;
 						const totalScore =
-							floorScore(floor.node_1) + floorScore(floor.node_2);
+							floorScore(floor.node_1) + floorScore(floor.node_2) + floorScore(floor.node_3);
 						return {
 							label: `${floor.name.replace(
 								/<\/?[^>]+(>|$)/g,
@@ -1699,78 +1702,100 @@ async function drawForgottenHallImage(
 			ctx.lineWidth = borderWidth;
 			ctx.strokeRect(box1X, box1Y + 165, box1Width, box1Height - 50);
 
-			const lineX = box1X + box1Width / 2;
 			const lineY = box1Y + 165;
 			const lineHeight = box1Height - 50;
 
-			ctx.beginPath();
-			ctx.moveTo(lineX, lineY);
-			ctx.lineTo(lineX, lineY + lineHeight);
-			ctx.stroke();
+			const bossesCount = res.groups?.[0]?.tierce_boss ? 3 : 2;
+			const sectionWidth = box1Width / bossesCount;
+
+			for (let i = 1; i < bossesCount; i++) {
+				const lx = box1X + sectionWidth * i;
+				ctx.beginPath();
+				ctx.moveTo(lx, lineY);
+				ctx.lineTo(lx, lineY + lineHeight);
+				ctx.stroke();
+			}
 
 			const bossBg = await getCachedImage(
 				`./src/assets/image/forgottenhall/knightBossNode.png`
 			);
 
 			const upperBoss = await getCachedImage(
-				res.groups?.[0]?.upper_boss.icon || ""
+				res.groups?.[0]?.upper_boss?.icon || ""
 			);
 			const lowerBoss = await getCachedImage(
-				res.groups?.[0]?.lower_boss.icon || ""
+				res.groups?.[0]?.lower_boss?.icon || ""
+			);
+			const tierceBoss = await getCachedImage(
+				res.groups?.[0]?.tierce_boss?.icon || ""
 			);
 
-			for (let i = 1; i <= 2; i++) {
-				ctx.font =
-					"bold 24px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+			for (let i = 1; i <= bossesCount; i++) {
+				const xOffset = box1X + sectionWidth * (i - 1);
+				const sectionRight = xOffset + sectionWidth;
+
+				let bossName = "";
+				let bossImg = null;
+				if (i == 1) { bossName = res.groups?.[0]?.upper_boss?.name_mi18n || ""; bossImg = upperBoss; }
+				else if (i == 2) { bossName = res.groups?.[0]?.lower_boss?.name_mi18n || ""; bossImg = lowerBoss; }
+				else if (i == 3) { bossName = res.groups?.[0]?.tierce_boss?.name_mi18n || ""; bossImg = tierceBoss; }
+
+				if (i == 3) {
+					const bossBg3 = await getCachedImage(
+						`./src/assets/image/forgottenhall/boss_node_bg_3.png`
+					);
+					if (bossBg3) {
+						(ctx as any).drawImage(
+							bossBg3,
+							xOffset,
+							lineY,
+							sectionWidth,
+							lineHeight
+						);
+					} else if (bossBg) {
+						(ctx as any).drawImage(
+							bossBg,
+							sectionRight - 180,
+							lineY + 2,
+							174.6,
+							90
+						);
+					}
+				} else if (bossBg) {
+					(ctx as any).drawImage(
+						bossBg,
+						sectionRight - 180,
+						lineY + 2,
+						174.6,
+						90
+					);
+				}
+
+				if (bossImg) {
+					(ctx as any).drawImage(
+						bossImg,
+						sectionRight - 110,
+						lineY + 7,
+						80,
+						80
+					);
+				}
+
+				ctx.font = "bold 24px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 				ctx.fillStyle = "white";
 				ctx.textAlign = "left";
 				ctx.fillText(
 					`${tr("forgottenHall_TeamSetup", {
 						z: i.toString()
 					})}`,
-					i == 1 ? box1X + 20 : box1X + box1Width / 2 + 20,
+					xOffset + 20,
 					lineY + 40
 				);
 
 				ctx.fillText(
-					`${i == 1 ? res.groups?.[0]?.upper_boss.name_mi18n : res.groups?.[0]?.lower_boss.name_mi18n}`,
-					i == 1 ? box1X + 20 : box1X + box1Width / 2 + 20,
+					`${bossName}`,
+					xOffset + 20,
 					lineY + 75
-				);
-			}
-
-			if (bossBg) {
-				(ctx as any).drawImage(
-					bossBg,
-					box1X + box1Width / 2 - 180,
-					lineY + 2,
-					174.6,
-					90
-				);
-				(ctx as any).drawImage(
-					bossBg,
-					box1X + box1Width - 180,
-					lineY + 2,
-					174.6,
-					90
-				);
-			}
-			if (upperBoss) {
-				(ctx as any).drawImage(
-					upperBoss,
-					box1X + box1Width / 2 - 110,
-					lineY + 7,
-					80,
-					80
-				);
-			}
-			if (lowerBoss) {
-				(ctx as any).drawImage(
-					lowerBoss,
-					box1X + box1Width - 110,
-					lineY + 7,
-					80,
-					80
 				);
 			}
 		}
@@ -1887,7 +1912,7 @@ async function drawForgottenHallImage(
 			ctx.fillStyle = "rgb(249, 200, 126)";
 			ctx.fillText(
 				`${
-					parseInt(floor.node_1.score) + parseInt(floor.node_2.score)
+					parseInt(floor.node_1.score) + parseInt(floor.node_2.score) + (floor.node_3 ? parseInt(floor.node_3.score || "0") : 0)
 				}`,
 				forgottenHallUseRoundX +
 					ctx.measureText(forgottenHallUseRoundText).width +
@@ -1903,7 +1928,7 @@ async function drawForgottenHallImage(
 			ctx.fillStyle = "rgb(249, 200, 126)";
 			ctx.fillText(
 				`${
-					parseInt(floor.node_1.score) + parseInt(floor.node_2.score)
+					parseInt(floor.node_1.score) + parseInt(floor.node_2.score) + (floor.node_3 ? parseInt(floor.node_3.score || "0") : 0)
 				}`,
 				200 + ctx.measureText(tr("TotalScore")).width + 40,
 				515 + 1.5 + 65
@@ -1916,15 +1941,40 @@ async function drawForgottenHallImage(
 			);
 		}
 
+		const nodeCount = floor.node_3 ? 3 : 2;
+
 		if (star) {
-			for (let i = 0; i < floor.star_num; i++)
+			// Draw normal stars from right to left
+			// If we have an extra star, it sits on the rightmost position, and normal stars shift left
+			const hasExtraStar = mode == 3 && nodeCount === 3 && (Number(floor.star_num) > 3 || Number((floor as any).extra_star_num) > 0);
+			const normalStarsCount = Math.min(Number(floor.star_num), 3);
+			
+			if (hasExtraStar) {
+				const extraStar = await getCachedImage(
+					"./src/assets/image/forgottenhall/star_extra.png"
+				);
+				if (extraStar) {
+					(ctx as any).drawImage(
+						extraStar,
+						1650 + 3,
+						435 + 65,
+						68,
+						68
+					);
+				}
+			}
+
+			const starOffset = hasExtraStar ? 68 : 0;
+			
+			for (let i = 0; i < normalStarsCount; i++) {
 				(ctx as any).drawImage(
 					star,
-					1650 - (i * 68 - 3),
+					1650 - (i * 68 - 3) - starOffset,
 					mode == 3 ? 435 + 65 : 435,
 					68,
 					68
 				);
+			}
 		}
 
 		const char4StarBg = await getCachedImage(
@@ -1936,67 +1986,60 @@ async function drawForgottenHallImage(
 
 		const elementIcons = new Map<string, Image>();
 
-		for (let i = 1; i <= 2; i++) {
-			const x = i == 1 ? 200 : 1025;
+		for (let i = 1; i <= nodeCount; i++) {
+			const x = nodeCount === 3 
+				? (165 + (i - 1) * 550) 
+				: (i === 1 ? 200 : 1025);
 			const y = mode == 3 ? 600 + 65 : 600;
 			const node = floor[`node_${i}` as keyof FloorDetail] as NodeInfo;
+			if (!node) continue;
 
 			ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 			ctx.fillStyle = "white";
 			ctx.textAlign = "left";
-			ctx.fillText(
-				`${tr("forgottenHall_TeamSetup", {
-					z: i.toString()
-				})}`,
-				x,
-				y
-			);
+
+			const teamSetupText = `${tr("forgottenHall_TeamSetup", { z: i.toString() })}`;
+			let titleX = x;
+
+			if (mode === 3 && i === 3) {
+				const node3Bg = await getCachedImage("./src/assets/image/forgottenhall/memory_node3_time_bg.png");
+				const node3Icon = await getCachedImage("./src/assets/image/forgottenhall/memory_node3_time_icon.png");
+
+				if (node3Bg) {
+					(ctx as any).drawImage(node3Bg, x - 15, y - 28, 568, 36);
+				}
+				if (node3Icon) {
+					(ctx as any).drawImage(node3Icon, x, y - 30, 40, 40);
+				}
+				titleX = x + 45;
+			}
+
+			ctx.fillText(teamSetupText, titleX, y);
 
 			if (mode == 2 || mode == 3) {
 				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 				ctx.fillStyle = "rgba(255,255,255,.7)";
 				ctx.textAlign = "left";
-				ctx.fillText(
-					`${tr("Score")}`,
-					x +
-						ctx.measureText(
-							`${tr("forgottenHall_TeamSetup", {
-								z: i.toString()
-							})}`
-						).width +
-						25,
-					y
-				);
+
+				const scoreLabelX = titleX + ctx.measureText(teamSetupText).width + 25;
+
+				ctx.fillText(`${tr("Score")}`, scoreLabelX, y);
 
 				ctx.fillStyle = "rgb(249, 200, 126)";
 				ctx.fillText(
 					`${node.score}`,
-					x +
-						ctx.measureText(
-							`${tr("forgottenHall_TeamSetup", {
-								z: i.toString()
-							})}`
-						).width +
-						ctx.measureText(`${tr("Score")}`).width +
-						40,
+					scoreLabelX + ctx.measureText(`${tr("Score")}`).width + 15,
 					y + 1.5
 				);
 			} else {
 				const time = node.challenge_time;
 				if (time) {
-					ctx.font =
-						"28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 					ctx.fillStyle = "rgba(255,255,255,.7)";
 					ctx.textAlign = "left";
 					ctx.fillText(
 						`${time.year}/${time.month}/${time.day} ${time.hour}:${time.minute}`,
-						x +
-							ctx.measureText(
-								`${tr("forgottenHall_TeamSetup", {
-									z: i.toString()
-								})}`
-							).width +
-							25,
+						titleX + ctx.measureText(teamSetupText).width + 25,
 						y
 					);
 				}
@@ -2007,57 +2050,64 @@ async function drawForgottenHallImage(
 			);
 			const avatarImages = await Promise.all(avatarPromises);
 
+			const avatarSpacing = nodeCount === 3 ? 504 : 750;
+			const avatarWidth = nodeCount === 3 ? 111 : 148;
+			const avatarHeight = nodeCount === 3 ? 135 : 180;
+			const levelFontSize = nodeCount === 3 ? 24 : 30;
+			const rankFontSize = nodeCount === 3 ? 24 : 28;
+			const elementIconSize = nodeCount === 3 ? 20 : 27;
+
 			for (let j = 0; j < node.avatars.length; j++) {
 				const character = node.avatars[j];
 				if (!character) continue;
-				const avatarX = x + j * (750 / node.avatars.length);
+				const avatarX = x + j * (avatarSpacing / node.avatars.length);
 				const avatarY = mode == 3 ? 630 + 65 : 630;
-				const avatarWidth = 148;
-				const avatarHeight = 180;
 
 				const bg = character.rarity == 4 ? char4StarBg : char5StarBg;
 				if (bg) {
-					(ctx as any).drawImage(
-						bg,
-						avatarX,
-						avatarY,
-						avatarWidth,
-						avatarHeight
-					);
+					(ctx as any).drawImage(bg, avatarX, avatarY, avatarWidth, avatarHeight);
 				}
 
 				const avatar = avatarImages[j];
 				if (avatar) {
-					(ctx as any).drawImage(
-						avatar,
-						avatarX,
-						avatarY,
-						avatarWidth,
-						avatarHeight
-					);
+					ctx.save();
+					ctx.beginPath();
+					ctx.moveTo(avatarX, avatarY);
+					ctx.lineTo(avatarX + avatarWidth - (nodeCount === 3 ? 30 : 40), avatarY);
+					ctx.lineTo(avatarX + avatarWidth, avatarY + (nodeCount === 3 ? 30 : 40));
+					ctx.lineTo(avatarX + avatarWidth, avatarY + avatarHeight);
+					ctx.lineTo(avatarX, avatarY + avatarHeight);
+					ctx.closePath();
+					ctx.clip();
+					(ctx as any).drawImage(avatar, avatarX, avatarY, avatarWidth, avatarHeight);
+					ctx.restore();
 				}
 
 				ctx.fillStyle = "rgba(0,0,0,.7)";
 				ctx.fillRect(
 					avatarX,
-					avatarY + avatarHeight - 3 - 31,
+					avatarY + avatarHeight - 3 - (nodeCount === 3 ? 24 : 31),
 					avatarWidth,
-					31
+					nodeCount === 3 ? 24 : 31
 				);
 
-				ctx.font = "30px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+				ctx.font = `${levelFontSize}px 'Hanyi', URW DIN Arabic, Arial, sans-serif' `;
 				ctx.fillStyle = "white";
 				ctx.textAlign = "center";
 				ctx.fillText(
-					`${tr("level_Format", {
-						level: `${character.level}`
-					})}`,
-					avatarX + 74,
-					avatarY + avatarHeight - 7
+					`${tr("level_Format", { level: `${character.level}` })}`,
+					avatarX + avatarWidth / 2,
+					avatarY + avatarHeight - (nodeCount === 3 ? 5 : 7)
 				);
 
 				ctx.beginPath();
-				ctx.arc(avatarX + 30, avatarY + 25, 15, 0, 2 * Math.PI);
+				ctx.arc(
+					avatarX + (nodeCount === 3 ? 22 : 30), 
+					avatarY + (nodeCount === 3 ? 18 : 25), 
+					nodeCount === 3 ? 11 : 15, 
+					0, 
+					2 * Math.PI
+				);
 				ctx.fillStyle = "rgba(0,0,0,.4)";
 				ctx.fill();
 
@@ -2074,76 +2124,78 @@ async function drawForgottenHallImage(
 				if (elementImage) {
 					(ctx as any).drawImage(
 						elementImage,
-						avatarX + 16,
-						avatarY + 11,
-						27,
-						27
+						avatarX + (nodeCount === 3 ? 11 : 16),
+						avatarY + (nodeCount === 3 ? 8 : 11),
+						elementIconSize,
+						elementIconSize
 					);
 				}
 
 				if (character.rank != 0) {
 					ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-					const rankX = avatarX + 110;
+					const rankX = avatarX + (nodeCount === 3 ? 82 : 110);
 					const rankY = avatarY;
-					const rankWidth = 40;
-					const rankHeight = 50;
+					const rankWidth = nodeCount === 3 ? 30 : 40;
+					const rankHeight = nodeCount === 3 ? 37 : 50;
 
 					ctx.beginPath();
 					ctx.moveTo(rankX, rankY);
-					ctx.lineTo(rankX + rankWidth - 37, rankY);
+					ctx.lineTo(rankX + rankWidth - (nodeCount === 3 ? 28 : 37), rankY);
 					ctx.quadraticCurveTo(
 						rankX + rankWidth,
 						rankY,
 						rankX + rankWidth,
-						rankY + 37
+						rankY + (nodeCount === 3 ? 28 : 37)
 					);
 					ctx.lineTo(rankX + rankWidth, rankY + rankHeight);
-					ctx.lineTo(rankX + 20, rankY + rankHeight);
+					ctx.lineTo(rankX + (nodeCount === 3 ? 15 : 20), rankY + rankHeight);
 					ctx.quadraticCurveTo(
 						rankX,
 						rankY + rankHeight,
 						rankX,
-						rankY + rankHeight - 20
+						rankY + rankHeight - (nodeCount === 3 ? 15 : 20)
 					);
 					ctx.lineTo(rankX, rankY);
 					ctx.closePath();
 					ctx.fill();
 
-					ctx.font =
-						"28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.font = `${rankFontSize}px 'Hanyi', URW DIN Arabic, Arial, sans-serif' `;
 					ctx.fillStyle = "white";
 					ctx.textAlign = "center";
 					ctx.fillText(
 						`${character.rank}`,
-						avatarX + 130,
-						avatarY + 35
+						avatarX + (nodeCount === 3 ? 97 : 130),
+						avatarY + (nodeCount === 3 ? 26 : 35)
 					);
 				}
 			}
 
 			if (mode == 2 || mode == 3) {
 				ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-				ctx.fillRect(x, y + 240, 710, 70);
+				ctx.fillRect(x, y + 240, nodeCount === 3 ? 490 : 710, 70);
 
 				ctx.textAlign = "left";
 				ctx.fillStyle = "rgb(249, 200, 126)";
+				const cacophonyTextX = nodeCount === 3 ? x + 87 : x + 20;
 				ctx.fillText(
 					tr(mode == 2 ? "Cacophony" : "Finality"),
-					x + 20,
+					cacophonyTextX,
 					y + 285
 				);
 
+				const iconArcX = nodeCount === 3 ? x + 245 : x + 215;
 				ctx.beginPath();
-				ctx.arc(x + 215, y + 274, 28, 0, 2 * Math.PI);
+				ctx.arc(iconArcX, y + 274, 28, 0, 2 * Math.PI);
 				ctx.fillStyle = "rgba(0,0,0,.4)";
 				ctx.fill();
 
 				if (node.buff) {
 					const buffImage = await getCachedImage(node.buff.icon);
 					if (buffImage) {
+						const iconImgX = nodeCount === 3 ? x + 217 : x + 187.5;
 						(ctx as any).drawImage(
 							buffImage,
-							x + 187.5,
+							iconImgX,
 							y + 245,
 							56,
 							56
@@ -2151,7 +2203,8 @@ async function drawForgottenHallImage(
 					}
 
 					ctx.fillStyle = "lightgray";
-					ctx.fillText(`${node.buff.name_mi18n}`, x + 257.5, y + 285);
+					const buffTextX = nodeCount === 3 ? x + 288 : x + 257.5;
+					ctx.fillText(`${node.buff.name_mi18n}`, buffTextX, y + 285);
 				}
 			}
 		}

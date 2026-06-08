@@ -4428,7 +4428,7 @@
   },
   "22005": {
     "id": "22005",
-    "skill": "So good!",
+    "skill": "So Good!",
     "desc": "Increases the wearer's ATK by #1[i]%. After the wearer uses Skill, increases ATK by #2[i]%, stacking up to #3[i] times.",
     "params": [
       [
@@ -8771,6 +8771,80 @@
         {
           "type": "CriticalDamageBase",
           "value": 1.2
+        }
+      ]
+    ]
+  },
+  "23059": {
+    "id": "23059",
+    "skill": "Tempering",
+    "desc": "Increases the wearer's Max HP by #1[i]%. At the start of the wearer's turn, regenerates a fixed amount of #2[i] Energy. This effect can trigger 1 time each wave. After the wearer uses Skill to attack, inflicts the target with the \"Purgatory\" state, lasting for #3[i] turn(s). While in the \"Purgatory\" state, the target receives #4[i]% increased CRIT DMG and #5[i]% additionally increased CRIT DMG from the wearer.",
+    "params": [
+      [
+        0.3,
+        20,
+        2,
+        0.3,
+        0.3
+      ],
+      [
+        0.375,
+        20,
+        2,
+        0.375,
+        0.375
+      ],
+      [
+        0.45,
+        20,
+        2,
+        0.45,
+        0.45
+      ],
+      [
+        0.525,
+        20,
+        2,
+        0.525,
+        0.525
+      ],
+      [
+        0.6,
+        20,
+        2,
+        0.6,
+        0.6
+      ]
+    ],
+    "properties": [
+      [
+        {
+          "type": "HPAddedRatio",
+          "value": 0.3
+        }
+      ],
+      [
+        {
+          "type": "HPAddedRatio",
+          "value": 0.375
+        }
+      ],
+      [
+        {
+          "type": "HPAddedRatio",
+          "value": 0.45
+        }
+      ],
+      [
+        {
+          "type": "HPAddedRatio",
+          "value": 0.525
+        }
+      ],
+      [
+        {
+          "type": "HPAddedRatio",
+          "value": 0.6
         }
       ]
     ]
