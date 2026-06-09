@@ -1,5 +1,4 @@
 import { database } from "../../index.js";
-import { getUserBg, getTodayBg } from "./wallpaperManager.js";
 import {
 	requestPlayerData,
 	drawInQueueReply,
@@ -130,10 +129,14 @@ async function tryAutoSyncCurrentAnomalyBadge(
 			);
 
 			if (existingIndex >= 0) {
-				console.log(`[Profile] Sync: Updating mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`);
+				console.log(
+					`[Profile] Sync: Updating mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`
+				);
 				upsertRecords[existingIndex] = rankRecord;
 			} else {
-				console.log(`[Profile] Sync: Adding mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`);
+				console.log(
+					`[Profile] Sync: Adding mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`
+				);
 				upsertRecords.push(rankRecord);
 			}
 
@@ -141,13 +144,18 @@ async function tryAutoSyncCurrentAnomalyBadge(
 			if (expireTime > nowSec) {
 				const roundNum = record?.boss_record?.round_num;
 				if (typeof roundNum === "number") {
-					await database.set(roundKey, { roundNum, expireTime } as AnomalyRoundRecord);
+					await database.set(roundKey, {
+						roundNum,
+						expireTime
+					} as AnomalyRoundRecord);
 				}
 			}
 		}
 
 		await database.set(recordsKey, upsertRecords);
-		console.log(`[Profile] Sync done: ${upsertRecords.length} badge(s) stored for UID ${uid}`);
+		console.log(
+			`[Profile] Sync done: ${upsertRecords.length} badge(s) stored for UID ${uid}`
+		);
 	} catch (error) {
 		console.warn("[Profile] Auto sync anomaly badge failed:", error);
 	}
@@ -161,7 +169,10 @@ function getAnomalyIconPath(roundNum: number): string | null {
 	if (roundNum >= 5 && roundNum <= 6) return "./src/assets/image/226001.png";
 	return null; // 6以上不使用
 }
-import { createChunkedSelectMenus, createPagedSelectMenu } from "./selectmenu.js";
+import {
+	createChunkedSelectMenus,
+	createPagedSelectMenu
+} from "./selectmenu.js";
 import { join } from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import {
@@ -410,7 +421,10 @@ const drawQueue = new Queue({ autostart: true, concurrency: 1 });
 // 改為只記錄錯誤，讓 queue 繼續執行後續任務
 drawQueue.removeEventListener("error", (drawQueue as any)._errorHandler);
 drawQueue.addEventListener("error", (evt: any) => {
-	console.error("[DrawQueue] Task error (queue continues):", evt?.detail?.error);
+	console.error(
+		"[DrawQueue] Task error (queue continues):",
+		evt?.detail?.error
+	);
 });
 
 const image_Header =
@@ -725,7 +739,8 @@ export function clearImageCache(): void {
 	}
 }
 
-const MIHOMO_CDN_BASE = "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
+const MIHOMO_CDN_BASE =
+	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
 const EIDOLON_ICON_SIZE = 48;
 const EIDOLON_ICON_GAP = 6;
 /** Total width occupied by all 6 eidolon icons + gaps */
@@ -826,13 +841,7 @@ async function drawEidolonIcons(
 
 			// Shackle (U-shape arc)
 			ctx.beginPath();
-			ctx.arc(
-				cx,
-				shackleY + shackleH * 0.55,
-				shackleW / 2,
-				Math.PI,
-				0
-			);
+			ctx.arc(cx, shackleY + shackleH * 0.55, shackleW / 2, Math.PI, 0);
 			ctx.stroke();
 
 			// Lock body (rounded rect)
@@ -921,7 +930,10 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 				try {
 					if (!loadImageAsync.cache!.has(fallbackUrl)) {
 						let fallbackSource: string | Buffer = fallbackUrl;
-						if (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://")) {
+						if (
+							fallbackUrl.startsWith("http://") ||
+							fallbackUrl.startsWith("https://")
+						) {
 							const fbResponse = await axios.get(fallbackUrl, {
 								responseType: "arraybuffer",
 								timeout: 15000
@@ -1431,16 +1443,18 @@ async function handleProfileDraw(
 
 	const drawTask = async () => {
 		try {
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle(tr("Searching"))
-						.setColor(getRandomColor() as any)
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
-						)
-				]
-			}).catch(() => {});
+			await interaction
+				.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setTitle(tr("Searching"))
+							.setColor(getRandomColor() as any)
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
+							)
+					]
+				})
+				.catch(() => {});
 
 			await tryAutoSyncCurrentAnomalyBadge(
 				interaction,
@@ -1473,13 +1487,18 @@ async function handleProfileDraw(
 					useAllCharacters = false;
 				} else {
 					const data = await hsr.record.records();
-					let gameInfo: { uid: string; nickname: string; level: number };
-				try {
-					const cookieStr = await getUserCookie(user.id, accountIndex) ?? "";
-					gameInfo = await getUserGameInfo(cookieStr);
-				} catch (e) {
-					console.warn(
-						"[Profile] getUserGameInfo failed, using fallback:",
+					let gameInfo: {
+						uid: string;
+						nickname: string;
+						level: number;
+					};
+					try {
+						const cookieStr =
+							(await getUserCookie(user.id, accountIndex)) ?? "";
+						gameInfo = await getUserGameInfo(cookieStr);
+					} catch (e) {
+						console.warn(
+							"[Profile] getUserGameInfo failed, using fallback:",
 							(e as Error).message
 						);
 						gameInfo = {
@@ -1498,19 +1517,23 @@ async function handleProfileDraw(
 						characters: []
 					};
 
-				// 獲取完整的角色數據，包括 relics 和 ornaments
-				characters = (await hsr.record.characters()) as any;
-				// HoYoLAB returns `ranks[]` (each with .icon) instead of `rank_icons`.
-				// Inject rank_icons so drawEidolonIcons() works the same as the UID path.
-				if (Array.isArray(characters)) {
-					for (const c of characters as any[]) {
-						if (!c.rank_icons && Array.isArray(c.ranks) && c.ranks.length >= 6) {
-							c.rank_icons = [...c.ranks]
-								.sort((a: any, b: any) => a.pos - b.pos)
-								.map((r: any) => r.icon);
+					// 獲取完整的角色數據，包括 relics 和 ornaments
+					characters = (await hsr.record.characters()) as any;
+					// HoYoLAB returns `ranks[]` (each with .icon) instead of `rank_icons`.
+					// Inject rank_icons so drawEidolonIcons() works the same as the UID path.
+					if (Array.isArray(characters)) {
+						for (const c of characters as any[]) {
+							if (
+								!c.rank_icons &&
+								Array.isArray(c.ranks) &&
+								c.ranks.length >= 6
+							) {
+								c.rank_icons = [...c.ranks]
+									.sort((a: any, b: any) => a.pos - b.pos)
+									.map((r: any) => r.icon);
+							}
 						}
 					}
-				}
 
 					// 為 saveLeaderboard 準備完整的 playerData
 					const fullPlayerData: PlayerData = {
@@ -1673,12 +1696,10 @@ async function handleProfileDraw(
 				playerData = reqPlayerData;
 			}
 
-		const requestEndTime = Date.now();
-		const drawStartTime = Date.now();
-		let imageBuffer: Buffer | null = null;
-		// Get user's preferred background
-		const bgPath = await getUserBg(user.id);
-		if (useAllCharacters && characters) {
+			const requestEndTime = Date.now();
+			const drawStartTime = Date.now();
+			let imageBuffer: Buffer | null = null;
+			if (useAllCharacters && characters) {
 				// 預設按五星優先排序
 				const defaultSortedCharacters = characters.sort((a, b) => {
 					// 先按五星優先排序
@@ -1689,20 +1710,17 @@ async function handleProfileDraw(
 					return b.level - a.level;
 				});
 
-			imageBuffer = await drawAllCharactersImage(
-				tr,
-				playerData!,
-				defaultSortedCharacters,
-				null,
-				bgPath
-			);
+				imageBuffer = await drawAllCharactersImage(
+					tr,
+					playerData!,
+					defaultSortedCharacters
+				);
 			} else if (playerData) {
-			imageBuffer = await drawMainImage(
-				tr,
-				playerData,
-				playerActivity,
-				bgPath
-			);
+				imageBuffer = await drawMainImage(
+					tr,
+					playerData,
+					playerActivity
+				);
 			}
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 
@@ -1873,13 +1891,17 @@ async function handleProfileDraw(
 					} catch (uploadError: any) {
 						const isSocketError =
 							uploadError?.code === "UND_ERR_SOCKET" ||
-							uploadError?.message?.includes("other side closed") ||
+							uploadError?.message?.includes(
+								"other side closed"
+							) ||
 							uploadError?.message?.includes("socket hang up");
 						if (isSocketError && attempt < retries) {
 							console.warn(
 								`[Profile] Upload attempt ${attempt} failed (socket error), retrying...`
 							);
-							await new Promise(res => setTimeout(res, 1000 * attempt));
+							await new Promise(res =>
+								setTimeout(res, 1000 * attempt)
+							);
 							continue;
 						}
 						throw uploadError;
@@ -1889,22 +1911,26 @@ async function handleProfileDraw(
 			await uploadWithRetry();
 		} catch (error) {
 			console.error(error);
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setColor("#E76161")
-						.setTitle(tr("DrawError"))
-						.setDescription(`\`${error}\``)
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-				]
-			}).catch(() => {});
+			await interaction
+				.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setColor("#E76161")
+							.setTitle(tr("DrawError"))
+							.setDescription(`\`${error}\``)
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+					]
+				})
+				.catch(() => {});
 		}
 	};
 
 	if (drawQueue.length >= DRAW_QUEUE_MAX) {
-		await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		await interaction
+			.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" })
+			.catch(() => {});
 		return;
 	}
 	drawQueue.push(drawTask);
@@ -1917,120 +1943,57 @@ async function handleProfileDraw(
 	}
 }
 
-// ── helpers for drawMainImage ──────────────────────────────────────────────
-function drawRoundRect(
-	ctx: any,
-	x: number,
-	y: number,
-	w: number,
-	h: number,
-	r: number
-) {
-	ctx.beginPath();
-	ctx.moveTo(x + r, y);
-	ctx.arcTo(x + w, y, x + w, y + h, r);
-	ctx.arcTo(x + w, y + h, x, y + h, r);
-	ctx.arcTo(x, y + h, x, y, r);
-	ctx.arcTo(x, y, x + w, y, r);
-	ctx.closePath();
-}
-
-function fillGlass(
-	ctx: any,
-	x: number,
-	y: number,
-	w: number,
-	h: number,
-	r: number,
-	alpha = 0.45
-) {
-	ctx.save();
-	drawRoundRect(ctx, x, y, w, h, r);
-	ctx.clip();
-	ctx.fillStyle = `rgba(10, 10, 20, ${alpha})`;
-	ctx.fillRect(x, y, w, h);
-	ctx.restore();
-	ctx.save();
-	drawRoundRect(ctx, x, y, w, h, r);
-	ctx.strokeStyle = "rgba(255,255,255,0.12)";
-	ctx.lineWidth = 1.5;
-	ctx.stroke();
-	ctx.restore();
-}
-
 async function drawMainImage(
 	tr: any,
 	playerData: PlayerData,
-	playerActivity: PlayerActivity | null,
-	bgPath?: string
+	playerActivity: PlayerActivity | null
 ): Promise<Buffer | null> {
 	try {
-		const W = 1920, H = 1080;
-		const canvas = createCanvas(W, H);
+		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
 
-		const mf = (size: number, bold = false) => {
-			ctx.font = `${bold ? "bold " : ""}${size}px 'YaHei','URW DIN Arabic',Arial,sans-serif`;
-		};
+		const imageUrls = [
+			"./src/assets/image/warp/bg.jpg",
+			`${image_Header}/${playerData.player.avatar.icon}`
+		];
 
-		// ── 1. Background ────────────────────────────────────────────────────
-		const bgResult = await loadImageAsync(bgPath ?? await getTodayBg());
-		if (bgResult?.image) {
-			ctx.drawImage(bgResult.image, 0, 0, W, H);
-		} else {
-			ctx.fillStyle = "#0d1117";
-			ctx.fillRect(0, 0, W, H);
+		const visibleCharacters = playerData.characters.slice(
+			0,
+			Math.min(playerData.characters.length, 8)
+		);
+		imageUrls.push(
+			...visibleCharacters.map(char => `${image_Header}/${char.preview}`)
+		);
+
+		const visibleActivities = playerActivity?.info?.slice(0, 5) || [];
+		imageUrls.push(
+			...visibleActivities.map(
+				activity => `${image_Header}/${activity.content.icon}`
+			)
+		);
+
+		const allImages = await Promise.all(
+			imageUrls.map(url => loadImageAsync(url))
+		);
+
+		const bg = allImages[0]?.image;
+		const avatar = allImages[1]?.image;
+		const charImages = allImages
+			.slice(2, 2 + visibleCharacters.length)
+			.map(img => img?.image);
+		const playerActivityIcons = allImages
+			.slice(2 + visibleCharacters.length)
+			.map(img => img?.image);
+
+		if (bg) {
+			ctx.drawImage(bg, 0, 0, 1920, 1080);
 		}
-		// dark overlay
-		ctx.fillStyle = "rgba(0,0,0,0.55)";
-		ctx.fillRect(0, 0, W, H);
 
-		// ── 2. Fetch extra images in parallel ────────────────────────────────
-		const allChars = playerData.characters.slice(0, 8);
-		const supportChars = allChars.slice(0, 3);
-		const companionChars = allChars.slice(3, 8);
-		const activities = playerActivity?.info?.slice(0, 5) || [];
-
-		const [avatarResult, ...restImages] = await Promise.all([
-			loadImageAsync(`${image_Header}/${playerData.player.avatar.icon}`),
-			...allChars.map(c => loadImageAsync(`${image_Header}/${c.preview}`)),
-			...activities.map(a => loadImageAsync(`${image_Header}/${a.content.icon}`))
-		]);
-		const charImgs = restImages.slice(0, allChars.length).map(r => r?.image);
-		const activityIcons = restImages.slice(allChars.length).map(r => r?.image);
-
-		// ── 3. Left panel ────────────────────────────────────────────────────
-		const LP = { x: 28, y: 28, w: 460, h: H - 56, r: 16 };
-		fillGlass(ctx, LP.x, LP.y, LP.w, LP.h, LP.r, 0.5);
-
-		// Avatar circle
-		const avatarCX = LP.x + LP.w / 2;
-		const avatarCY = LP.y + 110;
-		const avatarR = 80;
-		if (avatarResult?.image) {
-			ctx.save();
-			ctx.beginPath();
-			ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
-			ctx.clip();
-			ctx.drawImage(
-				avatarResult.image,
-				avatarCX - avatarR,
-				avatarCY - avatarR,
-				avatarR * 2,
-				avatarR * 2
-			);
-			ctx.restore();
+		if (avatar) {
+			ctx.drawImage(avatar, 896, 70, 128, 128);
 		}
-		// avatar ring
-		ctx.save();
-		ctx.beginPath();
-		ctx.arc(avatarCX, avatarCY, avatarR + 3, 0, Math.PI * 2);
-		ctx.strokeStyle = "#D4AF37";
-		ctx.lineWidth = 3;
-		ctx.stroke();
-		ctx.restore();
 
-		// Anomaly icon overlay
+		// 繪製異常仲裁圖標（如果有的話）
 		const anomalyRecord = (await database.get(
 			`${playerData.player.uid}.anomalyRoundNum`
 		)) as AnomalyRoundRecord | null;
@@ -2039,238 +2002,281 @@ async function drawMainImage(
 			if (iconPath) {
 				const anomalyIcon = await loadImage(iconPath);
 				if (anomalyIcon) {
-					const iSize = avatarR * 2 * 1.1;
+					const iconSize = 128 * 1.1;
+					const iconX = 896 - 10;
+					const iconY = 70 - 70 * 0.1;
 					ctx.drawImage(
 						anomalyIcon,
-						avatarCX - avatarR - iSize * 0.05,
-						avatarCY - avatarR - iSize * 0.05,
-						iSize,
-						iSize
+						iconX,
+						iconY,
+						iconSize,
+						iconSize
 					);
 				}
 			}
 		}
 
-		// Nickname
-		mf(36, true);
-		ctx.fillStyle = "#FFFFFF";
+		const setupMainFont = (size: number, isBold: boolean = false) => {
+			ctx.font = `${isBold ? "bold " : ""}${size}px 'YaHei', 'URW DIN Arabic', Arial, sans-serif`;
+		};
+
+		const setupNumberFont = (size: number, isBold: boolean = false) => {
+			ctx.font = `${isBold ? "bold " : ""}${size}px 'URW DIN Arabic', Arial, sans-serif`;
+		};
+
+		setupMainFont(40, true);
+		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
-		ctx.fillText(playerData.player.nickname, avatarCX, avatarCY + avatarR + 42);
+		ctx.fillText(playerData.player.nickname, 960, 245);
 
-		// UID
-		mf(22);
-		ctx.fillStyle = "rgba(255,255,255,0.6)";
-		ctx.fillText(
-			`UID  ${playerData.player.uid}`,
-			avatarCX,
-			avatarCY + avatarR + 70
-		);
+		const xRange = {
+			start: 610,
+			end: 1300
+		};
 
-		// Anomaly rank badges
+		// 繪製 UID 和異常仲裁徽章（同一橫排，平均分配寬度）
 		const anomalyRankRecords = (await database.get(
 			`${playerData.player.uid}.anomalyRankIcon`
 		)) as AnomalyRankRecord[] | null;
+
+		const badgeSize = 46;
+		const badgeSpacing = 8;
+		const availableWidth = xRange.end - xRange.start; // 690px
+		const uidText = `UID ${playerData.player.uid}`;
+
+		// 計算 UID 文字寬度
+		setupNumberFont(24);
+		ctx.fillStyle = "lightgray";
+		const uidWidth = ctx.measureText(uidText).width;
+
 		if (anomalyRankRecords && anomalyRankRecords.length > 0) {
-			anomalyRankRecords.sort((a, b) => b.challengeTime - a.challengeTime);
-			const badges = anomalyRankRecords.slice(0, 5);
-			const badgeSz = 36;
-			const totalBW = badges.length * badgeSz + (badges.length - 1) * 6;
-			let bx = avatarCX - totalBW / 2;
-			const by = avatarCY + avatarR + 82;
-			for (const record of badges) {
-				try {
-					let src: string | Buffer = record.rankIcon;
-					if (record.rankIcon?.startsWith("http")) {
-						const resp = await axios.get(record.rankIcon, {
-							responseType: "arraybuffer",
-							timeout: 10000
-						});
-						src = Buffer.from(resp.data);
-					}
-					const bi = await loadImage(src);
-					if (bi) ctx.drawImage(bi, bx, by, badgeSz, badgeSz);
-				} catch { /* skip */ }
-				bx += badgeSz + 6;
-			}
-		}
+			// 按挑戰時間排序，最新的在前
+			anomalyRankRecords.sort(
+				(a, b) => b.challengeTime - a.challengeTime
+			);
 
-		// Divider
-		const divY1 = avatarCY + avatarR + 105;
-		ctx.strokeStyle = "rgba(255,255,255,0.2)";
-		ctx.lineWidth = 1;
-		ctx.beginPath();
-		ctx.moveTo(LP.x + 24, divY1);
-		ctx.lineTo(LP.x + LP.w - 24, divY1);
-		ctx.stroke();
+			// 最多顯示 5 個徽章
+			const displayRecords = anomalyRankRecords.slice(0, 5);
+			const totalBadgeWidth =
+				displayRecords.length * badgeSize +
+				(displayRecords.length - 1) * badgeSpacing;
+			const totalContentWidth = uidWidth + totalBadgeWidth + 20; // UID 和徽章間距
 
-		// Stats grid (2×2)
-		const stats = [
-			{ label: tr("profile_TrailblazeLevel"),  value: `${playerData.player.level}` },
-			{ label: tr("profile_EquilibriumLevel"),  value: `${playerData.player.world_level ?? "-"}` },
-			{ label: tr("profile_CharactersCount"),   value: `${playerData.player.space_info?.avatar_count ?? "-"}` },
-			{ label: tr("profile_AchievementsCount"), value: `${playerData.player.space_info?.achievement_count ?? "-"}` }
-		];
-		const gX0 = LP.x + 30, gY0 = divY1 + 22;
-		const gColW = (LP.w - 60) / 2, gRowH = 80;
-		stats.forEach((s, i) => {
-			const col = i % 2, row = Math.floor(i / 2);
-			const sx = gX0 + col * gColW + gColW / 2;
-			const sy = gY0 + row * gRowH;
-			mf(32, true);
-			ctx.fillStyle = "#FFFFFF";
-			ctx.textAlign = "center";
-			ctx.fillText(s.value, sx, sy + 34);
-			mf(18);
-			ctx.fillStyle = "rgba(255,255,255,0.55)";
-			ctx.fillText(s.label, sx, sy + 56);
-		});
+			// 計算起始位置（居中對齊）
+			const startX =
+				xRange.start + (availableWidth - totalContentWidth) / 2;
+			const uidX = startX;
+			const badgeStartX = startX + uidWidth + 22.5;
+			const contentY = 290; // UID 和徽章的垂直位置
+			const badgeY = contentY - badgeSize / 2 - 7.5;
 
-		// Divider 2
-		const divY2 = gY0 + 2 * gRowH + 14;
-		ctx.strokeStyle = "rgba(255,255,255,0.2)";
-		ctx.lineWidth = 1;
-		ctx.beginPath();
-		ctx.moveTo(LP.x + 24, divY2);
-		ctx.lineTo(LP.x + LP.w - 24, divY2);
-		ctx.stroke();
-
-		// Activity list
-		if (activities.length > 0) {
-			mf(22, true);
-			ctx.fillStyle = "#D4AF37";
+			// 繪製 UID
 			ctx.textAlign = "left";
-			ctx.fillText(tr("profile_Records"), LP.x + 30, divY2 + 28);
+			ctx.fillText(uidText, uidX, contentY);
 
-			activities.forEach((act, i) => {
-				const ay = divY2 + 52 + i * 48;
-				const icon = activityIcons[i];
-				if (icon) ctx.drawImage(icon, LP.x + 30, ay - 26, 34, 34);
-				mf(20);
-				ctx.fillStyle = "rgba(255,255,255,0.85)";
-				ctx.textAlign = "left";
-				// Truncate long text
-				let txt = act.text;
-				const maxW = LP.w - 90;
-				while (ctx.measureText(txt).width > maxW && txt.length > 4) {
-					txt = txt.slice(0, -1);
+			// 繪製徽章
+			for (let i = 0; i < displayRecords.length; i++) {
+				const record = displayRecords[i];
+				if (!record) continue;
+
+				const badgeX = badgeStartX + i * (badgeSize + badgeSpacing);
+
+				try {
+					let badgeSource: string | Buffer = record.rankIcon;
+					if (
+						record.rankIcon?.startsWith("http://") ||
+						record.rankIcon?.startsWith("https://")
+					) {
+						const badgeResponse = await axios.get(record.rankIcon, {
+							responseType: "arraybuffer",
+							timeout: 15000
+						});
+						badgeSource = Buffer.from(badgeResponse.data);
+					}
+					const badgeIcon = await loadImage(badgeSource);
+					if (badgeIcon) {
+						ctx.drawImage(
+							badgeIcon,
+							badgeX,
+							badgeY,
+							badgeSize,
+							badgeSize
+						);
+					}
+				} catch (error) {
+					console.warn(
+						`Failed to load badge icon: ${record.rankIcon}`,
+						error
+					);
 				}
-				if (txt !== act.text) txt += "…";
-				ctx.fillText(txt, LP.x + 72, ay + 4);
+			}
+		} else {
+			// 沒有徽章時，UID 居中顯示
+			ctx.textAlign = "center";
+			ctx.fillText(uidText, 960, 300);
+		}
+		ctx.textAlign = "center";
+
+		const profileStatsData = [
+			{
+				labelText: tr("profile_TrailblazeLevel"),
+				valueText: `${playerData.player.level}`
+			},
+			{
+				labelText: tr("profile_EquilibriumLevel"),
+				valueText: `${playerData.player.world_level}`
+			},
+			{
+				labelText: tr("profile_CharactersCount"),
+				valueText: `${playerData.player.space_info?.avatar_count}`
+			},
+			{
+				labelText: tr("profile_AchievementsCount"),
+				valueText: `${playerData.player.space_info?.achievement_count}`
+			}
+		];
+
+		function calculatePositions(
+			statsData: any[],
+			xRange: { start: number; end: number }
+		) {
+			const count = statsData.length;
+
+			if (count === 1) {
+				const centerX = (xRange.start + xRange.end) / 2;
+				return [
+					{
+						labelX: centerX,
+						labelY: 355,
+						valueX: centerX,
+						valueY: 400
+					}
+				];
+			}
+
+			const totalWidth = xRange.end - xRange.start;
+			const spacing = totalWidth / (count - 1);
+
+			return statsData.map((stat, index) => {
+				const x = xRange.start + spacing * index;
+				return {
+					...stat,
+					labelX: x,
+					labelY: 355,
+					valueX: x,
+					valueY: 400
+				};
 			});
 		}
 
-		// ── 4. Right panel ──────────────────────────────────────────────────
-		const RP = { x: 510, y: 28 };
+		const profileStats = calculatePositions(profileStatsData, xRange);
+		ctx.fillStyle = "white";
 
-		// -- Support characters (top 3, larger) --
-		const suppLabel = tr("profile_SupportCharacters") ?? "支援角色";
-		mf(24, true);
-		ctx.fillStyle = "#D4AF37";
-		ctx.textAlign = "left";
-		ctx.fillText(suppLabel, RP.x, RP.y + 28);
+		profileStats.forEach(stat => {
+			setupMainFont(30, true);
+			ctx.fillText(stat.labelText, stat.labelX, stat.labelY);
+		});
 
-		const suppCardW = 420, suppCardH = 490, suppGap = 20;
-		const suppTotalW = supportChars.length * suppCardW + (supportChars.length - 1) * suppGap;
-		const suppStartX = RP.x + ((W - RP.x - 28) - suppTotalW) / 2;
+		profileStats.forEach(stat => {
+			setupNumberFont(32);
+			ctx.fillText(stat.valueText, stat.valueX, stat.valueY);
+		});
 
-		for (let i = 0; i < supportChars.length; i++) {
-			const char = supportChars[i]!;
-			const cx = suppStartX + i * (suppCardW + suppGap);
-			const cy = RP.y + 40;
+		ctx.strokeStyle = "#fff";
+		ctx.beginPath();
+		ctx.moveTo(560, 435);
+		ctx.lineTo(1360, 435);
+		ctx.stroke();
 
-			// card glass
-			fillGlass(ctx, cx, cy, suppCardW, suppCardH, 12, 0.38);
+		const width =
+			(920 + (playerData.characters.length - 4) * 230) /
+			playerData.characters.length;
 
-			// character preview
-			const img = charImgs[i];
-			if (img) {
-				// clip to card
-				ctx.save();
-				drawRoundRect(ctx, cx, cy, suppCardW, suppCardH, 12);
-				ctx.clip();
-				// scale to fill upper ~80% of card, anchor bottom
-				const srcAR = img.width / img.height;
-				const dstH = suppCardH;
-				const dstW = dstH * srcAR;
-				const dx = cx + (suppCardW - dstW) / 2;
-				ctx.drawImage(img, dx, cy - suppCardH * 0.05, dstW, dstH);
-				ctx.restore();
+		const characterRenderData = visibleCharacters.map((char, i) => {
+			const x =
+				520 - (playerData.characters.length - 4) * 115 + i * width;
+			const y = 716;
+			return { char, x, y, image: charImages[i] };
+		});
+
+		characterRenderData.forEach(data => {
+			if (data.image) {
+				ctx.drawImage(data.image, data.x, 460, 187, 256);
 			}
+		});
 
-			// bottom info bar
-			const barH = 70;
-			ctx.save();
-			drawRoundRect(ctx, cx, cy + suppCardH - barH, suppCardW, barH, 12);
-			ctx.clip();
-			ctx.fillStyle = "rgba(0,0,0,0.65)";
-			ctx.fillRect(cx, cy + suppCardH - barH, suppCardW, barH);
-			ctx.restore();
+		ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+		characterRenderData.forEach(data => {
+			const { x, y } = data;
+			ctx.beginPath();
+			ctx.moveTo(x, y);
+			ctx.lineTo(x, y + 56);
+			ctx.quadraticCurveTo(x, y + 76, x + 20, y + 76);
+			ctx.lineTo(x + 167, y + 76);
+			ctx.quadraticCurveTo(x + 187, y + 76, x + 187, y + 56);
+			ctx.lineTo(x + 187, y);
+			ctx.closePath();
+			ctx.fill();
+		});
 
-			mf(26, true);
-			ctx.fillStyle = "#FFD89C";
-			ctx.textAlign = "center";
-			ctx.fillText(char.name, cx + suppCardW / 2, cy + suppCardH - barH + 28);
-			mf(20);
-			ctx.fillStyle = "rgba(255,255,255,0.75)";
+		setupMainFont(28, true);
+		characterRenderData.forEach(data => {
+			const { char, x, y } = data;
+			ctx.fillStyle = (char as any).pos <= 2 ? "#FFD89C" : "white";
+			ctx.fillText(char.name, x + 93, y + 35);
+		});
+
+		setupMainFont(20);
+		characterRenderData.forEach(data => {
+			const { char, x, y } = data;
 			ctx.fillText(
-				`Lv.${char.level}  ✦${char.rank}`,
-				cx + suppCardW / 2,
-				cy + suppCardH - barH + 52
+				tr("level_Format", { level: char.level }),
+				x + 93,
+				y + 65
 			);
-		}
+		});
 
-		// -- Companion characters (bottom 5, smaller) --
-		const compY = RP.y + 40 + suppCardH + 24;
-		const compLabel = tr("profile_CompanionCharacters") ?? "星海同行";
-		mf(24, true);
-		ctx.fillStyle = "#D4AF37";
-		ctx.textAlign = "left";
-		ctx.fillText(compLabel, RP.x, compY - 6);
+		// Line2
+		ctx.strokeStyle = "#fff";
+		ctx.beginPath();
+		ctx.moveTo(560, 817);
+		ctx.lineTo(1360, 817);
+		ctx.stroke();
 
-		const compCardW = 245, compCardH = 310, compGap = 18;
-		const compTotalW = companionChars.length * compCardW + (companionChars.length - 1) * compGap;
-		const compStartX = RP.x + ((W - RP.x - 28) - compTotalW) / 2;
+		// Records
+		ctx.font = "bold 30px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+		ctx.fillStyle = "white";
+		ctx.fillText(tr("profile_Records"), 960, 860);
 
-		for (let i = 0; i < companionChars.length; i++) {
-			const char = companionChars[i]!;
-			const cx = compStartX + i * (compCardW + compGap);
-			const cy = compY + 4;
+		const records: any[] = [];
+		const chaosRecords = playerActivity?.info || [];
 
-			fillGlass(ctx, cx, cy, compCardW, compCardH, 10, 0.38);
+		records?.forEach((record, index) => {
+			ctx.font = "24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+			ctx.textAlign = "left";
+			ctx.fillText(record.label, 720, 900 + index * 40);
+			ctx.font = "bold 24px 'URW DIN Arabic', Arial, sans-serif'";
+			ctx.textAlign = "right";
+			ctx.fillText(record.value, 1200, 900 + index * 40);
+		});
 
-			const img = charImgs[3 + i];
-			if (img) {
-				ctx.save();
-				drawRoundRect(ctx, cx, cy, compCardW, compCardH, 10);
-				ctx.clip();
-				const srcAR = img.width / img.height;
-				const dstH = compCardH;
-				const dstW = dstH * srcAR;
-				const dx = cx + (compCardW - dstW) / 2;
-				ctx.drawImage(img, dx, cy - compCardH * 0.05, dstW, dstH);
-				ctx.restore();
+		const iconPositions = chaosRecords?.map(record => {
+			const recordTextWidth = ctx.measureText(record.text).width;
+			return 980 - recordTextWidth / 2;
+		});
+
+		const minIconX = Math.min(...iconPositions);
+
+		chaosRecords?.forEach((record, index) => {
+			ctx.textAlign = "center";
+			ctx.font = "bold 24px 'YaHei', URW DIN Arabic, Arial, sans-serif'";
+			ctx.fillText(record.text, 980, 910 + index * 40);
+
+			const recordIcon = playerActivityIcons[index];
+			if (recordIcon) {
+				ctx.drawImage(recordIcon, minIconX, 880 + index * 40, 40, 40);
 			}
-
-			const barH = 54;
-			ctx.save();
-			drawRoundRect(ctx, cx, cy + compCardH - barH, compCardW, barH, 10);
-			ctx.clip();
-			ctx.fillStyle = "rgba(0,0,0,0.65)";
-			ctx.fillRect(cx, cy + compCardH - barH, compCardW, barH);
-			ctx.restore();
-
-			mf(20, true);
-			ctx.fillStyle = "white";
-			ctx.textAlign = "center";
-			ctx.fillText(char.name, cx + compCardW / 2, cy + compCardH - barH + 22);
-			mf(16);
-			ctx.fillStyle = "rgba(255,255,255,0.7)";
-			ctx.fillText(
-				`Lv.${char.level}  ✦${char.rank}`,
-				cx + compCardW / 2,
-				cy + compCardH - barH + 42
-			);
-		}
+		});
 
 		return canvas.toBuffer("image/webp");
 	} catch (error) {
@@ -2284,8 +2290,7 @@ async function drawCharacterImage(
 	playerData: PlayerData,
 	character: Character,
 	isAllCharacter: boolean = false,
-	userLang: string = "en",
-	bgPath?: string
+	userLang: string = "en"
 ): Promise<Buffer | null> {
 	try {
 		// 验证输入参数
@@ -2324,7 +2329,8 @@ async function drawCharacterImage(
 		const normalizedPathId = pathMapper[rawPathId] || rawPathId;
 		// HoYoLAB: path=undefined → rawPathId="" → normalizedPathId=""
 		// fallback 到 base_type 對應的命途名稱
-		const resolvedPathId = normalizedPathId ||
+		const resolvedPathId =
+			normalizedPathId ||
 			(await getPathMap())[character.base_type || 0] ||
 			"none";
 		const characterPathIcon = isAllCharacter
@@ -2335,7 +2341,7 @@ async function drawCharacterImage(
 
 		// 减少基础图片加载数量
 		const imagePaths = [
-			bgPath ?? await getTodayBg(),
+			"./src/assets/image/warp/bg.jpg",
 			`./src/assets/image/${characterElementIcon}`,
 			`./src/assets/image/${characterPathIcon}`,
 			`./src/assets/image/icon/deco/Star${character.rarity == 5 ? "5" : "4"}.png`
@@ -2544,12 +2550,13 @@ async function drawCharacterImage(
 			(typeof character.path === "object"
 				? character.path?.name
 				: (() => {
-					const raw = (character.path as string) || "";
-					const mapped = pathMapper[raw.toLowerCase()] || raw;
-					if (!mapped) return undefined;
-					const key = mapped.charAt(0).toUpperCase() + mapped.slice(1);
-					return tr(`path_${key}`);
-				})()) ||
+						const raw = (character.path as string) || "";
+						const mapped = pathMapper[raw.toLowerCase()] || raw;
+						if (!mapped) return undefined;
+						const key =
+							mapped.charAt(0).toUpperCase() + mapped.slice(1);
+						return tr(`path_${key}`);
+					})()) ||
 				tr(`path_${(await getPathMap())[character.base_type || 0]}`),
 			112,
 			196
@@ -2561,7 +2568,13 @@ async function drawCharacterImage(
 		const PANEL_CENTER_X = 270;
 		const EIDOLON_CENTER_Y = 260;
 		if (character.rank_icons && character.rank_icons.length >= 6) {
-			await drawEidolonIcons(ctx, character.rank_icons, character.rank, PANEL_CENTER_X, EIDOLON_CENTER_Y);
+			await drawEidolonIcons(
+				ctx,
+				character.rank_icons,
+				character.rank,
+				PANEL_CENTER_X,
+				EIDOLON_CENTER_Y
+			);
 		} else {
 			// Fallback: original text if rank_icons not available
 			setupFont(ctx, 26, true);
@@ -2625,14 +2638,18 @@ async function drawCharacterImage(
 			// mihomo attributes[] 的 hp/atk/def/spd 名稱帶有「基礎」前綴，
 			// 但合併後顯示的是加成後的總量，應去掉「基礎」改用完整名稱。
 			const fieldNameOverride: Record<string, string> = {
-				hp:  tr("property_MaxHP"),
+				hp: tr("property_MaxHP"),
 				atk: tr("property_Attack"),
 				def: tr("property_Defence"),
 				spd: tr("property_Speed")
 			};
 			for (const field of Object.keys(fieldNameOverride)) {
-				if (attributesWithAdditions[field] && fieldNameOverride[field]) {
-					(attributesWithAdditions[field] as Attribute).name = fieldNameOverride[field] as string;
+				if (
+					attributesWithAdditions[field] &&
+					fieldNameOverride[field]
+				) {
+					(attributesWithAdditions[field] as Attribute).name =
+						fieldNameOverride[field] as string;
 				}
 			}
 
@@ -2672,7 +2689,14 @@ async function drawCharacterImage(
 		drawSeparatorLine(ctx, 50, 500, attrTopY);
 		// 屬性列表 (relicsScore 在此提前取得，以便傳遞有效詞條集合)
 		const relicsScore = await getRelicsScore(character);
-		await renderAttributesList(ctx, filteredAttributes, 50, 340, 45, relicsScore?.effectivePropertyNames);
+		await renderAttributesList(
+			ctx,
+			filteredAttributes,
+			50,
+			340,
+			45,
+			relicsScore?.effectivePropertyNames
+		);
 		// 下分隔線動態位置
 		const attrBottomY = 373 + filteredAttributes.length * 45;
 		drawSeparatorLine(ctx, 50, 500, attrBottomY);
@@ -2696,7 +2720,11 @@ async function drawCharacterImage(
 			setupFont(ctx, 18, true);
 			ctx.textAlign = "left";
 			ctx.fillStyle = "rgba(255,255,255,0.55)";
-			ctx.fillText(tr("profile_EffectiveStatsTitle"), panelX, panelY + 16);
+			ctx.fillText(
+				tr("profile_EffectiveStatsTitle"),
+				panelX,
+				panelY + 16
+			);
 
 			ctx.save();
 			ctx.beginPath();
@@ -2709,11 +2737,17 @@ async function drawCharacterImage(
 			ctx.textAlign = "center";
 			ctx.fillStyle = "#F3C96B";
 			ctx.textBaseline = "middle";
-			const statsTotalRolls = [...relicsScore.effectiveStats.values()].reduce((s, v) => s + v.rolls, 0);
+			const statsTotalRolls = [
+				...relicsScore.effectiveStats.values()
+			].reduce((s, v) => s + v.rolls, 0);
 			ctx.fillText(`${statsTotalRolls}`, badgeCX, badgeCY - 4);
 			setupFont(ctx, 12, false);
 			ctx.fillStyle = "rgba(255,255,255,0.6)";
-			ctx.fillText(tr("profile_EffectiveStatsTotal"), badgeCX, badgeCY + 14);
+			ctx.fillText(
+				tr("profile_EffectiveStatsTotal"),
+				badgeCX,
+				badgeCY + 14
+			);
 			ctx.textBaseline = "alphabetic";
 
 			// 屬性 chip 多行排列
@@ -2739,7 +2773,13 @@ async function drawCharacterImage(
 				}
 				setupFont(ctx, 17, true);
 				const rollsStr = `${stat.rolls}`;
-				const chipW = chipIconSize + 2 + ctx.measureText(localName).width + 2 + ctx.measureText(rollsStr).width + chipSpacing;
+				const chipW =
+					chipIconSize +
+					2 +
+					ctx.measureText(localName).width +
+					2 +
+					ctx.measureText(rollsStr).width +
+					chipSpacing;
 
 				// 若超出右邊界則換行（只在第一行，不超過2行）
 				if (chipRow === 0 && chipX + chipW > chipRightLimit) {
@@ -2750,9 +2790,17 @@ async function drawCharacterImage(
 				const chipY = panelY + 28 + chipRow * chipLineHeight;
 
 				// icon
-				const iconResult = await loadImageAsync(`./src/assets/image/${stat.icon}`);
+				const iconResult = await loadImageAsync(
+					`./src/assets/image/${stat.icon}`
+				);
 				if (iconResult?.image) {
-					ctx.drawImage(iconResult.image, chipX, chipY, chipIconSize, chipIconSize);
+					ctx.drawImage(
+						iconResult.image,
+						chipX,
+						chipY,
+						chipIconSize,
+						chipIconSize
+					);
 				}
 				chipX += chipIconSize + 2;
 
@@ -2861,7 +2909,10 @@ async function drawCharacterImage(
 				let nameFont = 28;
 				setupFont(ctx, nameFont, true);
 				const maxNameWidth = 268 - 40;
-				while (ctx.measureText(lcName).width > maxNameWidth && nameFont > 14) {
+				while (
+					ctx.measureText(lcName).width > maxNameWidth &&
+					nameFont > 14
+				) {
 					nameFont -= 1;
 					setupFont(ctx, nameFont, true);
 				}
@@ -2961,8 +3012,15 @@ async function drawCharacterImage(
 						const descAreaHeight = light_cone_height - 80;
 
 						// interface 定義
-						interface WordToken { word: string; isGold: boolean; }
-						interface CharToken { char: string; isGold: boolean; width: number; }
+						interface WordToken {
+							word: string;
+							isGold: boolean;
+						}
+						interface CharToken {
+							char: string;
+							isGold: boolean;
+							width: number;
+						}
 
 						// 解析 Rich Text segments
 						const segments = description
@@ -2970,7 +3028,13 @@ async function drawCharacterImage(
 							.filter((s: string) => s !== "")
 							.map((part: string) => {
 								if (part.startsWith("{{GOLD}}")) {
-									return { text: part.replace(/{{GOLD}}|{{\/GOLD}}/g, ""), isGold: true };
+									return {
+										text: part.replace(
+											/{{GOLD}}|{{\/GOLD}}/g,
+											""
+										),
+										isGold: true
+									};
 								}
 								return { text: part, isGold: false };
 							});
@@ -2980,72 +3044,107 @@ async function drawCharacterImage(
 						let lineHeight = 24;
 						let visibleLines: CharToken[][] = [];
 
-						for (; descFont >= 14; descFont -= 1, lineHeight = Math.floor(descFont * 1.2)) {
+						for (
+							;
+							descFont >= 14;
+							descFont -= 1,
+								lineHeight = Math.floor(descFont * 1.2)
+						) {
 							setupFont(ctx, descFont, false);
 
 							// --- 分行邏輯 ---
-						const wordTokens2: WordToken[] = [];
-						segments.forEach((seg: { text: string; isGold: boolean }) => {
-							const parts = seg.text.split(/(\s+)/);
-							parts.forEach((part: string) => {
-								if (part !== "") wordTokens2.push({ word: part, isGold: seg.isGold });
-							});
-						});
-
-						const isCJK = (ch: string) => /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/.test(ch);
-
-						const spW = ctx.measureText(" ").width;
-						let lns: CharToken[][] = [];
-						let curLine: CharToken[] = [];
-						let curW = 0;
-
-						const pushLine = () => {
-							// 去掉行尾空白
-							while (curLine.length > 0 && /\s/.test(curLine[curLine.length - 1]!.char)) {
-								curW -= curLine[curLine.length - 1]!.width;
-								curLine.pop();
-							}
-							lns.push(curLine);
-							curLine = [];
-							curW = 0;
-						};
-
-						wordTokens2.forEach((token: WordToken) => {
-							const isSp = /^\s+$/.test(token.word);
-							if (isSp) {
-								if (curW === 0) return; // 行首空白略過
-								const spChars = token.word.split("");
-								spChars.forEach((char: string) => {
-									const cw = spW;
-									curLine.push({ char, isGold: token.isGold, width: cw });
-									curW += cw;
-								});
-								return;
-							}
-
-							// 非空白 token：逐字元處理
-							token.word.split("").forEach((char: string) => {
-								const cw = ctx.measureText(char).width;
-								if (isCJK(char)) {
-									// CJK 字元：每個字都可以換行
-									if (curW > 0 && curW + cw > maxDescWidth) {
-										pushLine();
-									}
-									curLine.push({ char, isGold: token.isGold, width: cw });
-									curW += cw;
-								} else {
-									// 非 CJK（英文/數字）：先累積整個字元，超寬才換行
-									// 這裡直接加字元，超過時換行（單字元級別，避免英文單字被切斷的問題
-									// 由於已在 wordTokens2 層面保留了完整單詞，單詞超過一行時才會在字元層換行）
-									if (curW > 0 && curW + cw > maxDescWidth) {
-										pushLine();
-									}
-									curLine.push({ char, isGold: token.isGold, width: cw });
-									curW += cw;
+							const wordTokens2: WordToken[] = [];
+							segments.forEach(
+								(seg: { text: string; isGold: boolean }) => {
+									const parts = seg.text.split(/(\s+)/);
+									parts.forEach((part: string) => {
+										if (part !== "")
+											wordTokens2.push({
+												word: part,
+												isGold: seg.isGold
+											});
+									});
 								}
+							);
+
+							const isCJK = (ch: string) =>
+								/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/.test(
+									ch
+								);
+
+							const spW = ctx.measureText(" ").width;
+							let lns: CharToken[][] = [];
+							let curLine: CharToken[] = [];
+							let curW = 0;
+
+							const pushLine = () => {
+								// 去掉行尾空白
+								while (
+									curLine.length > 0 &&
+									/\s/.test(curLine[curLine.length - 1]!.char)
+								) {
+									curW -= curLine[curLine.length - 1]!.width;
+									curLine.pop();
+								}
+								lns.push(curLine);
+								curLine = [];
+								curW = 0;
+							};
+
+							wordTokens2.forEach((token: WordToken) => {
+								const isSp = /^\s+$/.test(token.word);
+								if (isSp) {
+									if (curW === 0) return; // 行首空白略過
+									const spChars = token.word.split("");
+									spChars.forEach((char: string) => {
+										const cw = spW;
+										curLine.push({
+											char,
+											isGold: token.isGold,
+											width: cw
+										});
+										curW += cw;
+									});
+									return;
+								}
+
+								// 非空白 token：逐字元處理
+								token.word.split("").forEach((char: string) => {
+									const cw = ctx.measureText(char).width;
+									if (isCJK(char)) {
+										// CJK 字元：每個字都可以換行
+										if (
+											curW > 0 &&
+											curW + cw > maxDescWidth
+										) {
+											pushLine();
+										}
+										curLine.push({
+											char,
+											isGold: token.isGold,
+											width: cw
+										});
+										curW += cw;
+									} else {
+										// 非 CJK（英文/數字）：先累積整個字元，超寬才換行
+										// 這裡直接加字元，超過時換行（單字元級別，避免英文單字被切斷的問題
+										// 由於已在 wordTokens2 層面保留了完整單詞，單詞超過一行時才會在字元層換行）
+										if (
+											curW > 0 &&
+											curW + cw > maxDescWidth
+										) {
+											pushLine();
+										}
+										curLine.push({
+											char,
+											isGold: token.isGold,
+											width: cw
+										});
+										curW += cw;
+									}
+								});
 							});
-						});
-						if (curLine.length > 0) lns.push(curLine);
+							if (curLine.length > 0) lns.push(curLine);
 
 							const neededHeight = lns.length * lineHeight;
 							if (neededHeight <= descAreaHeight) {
@@ -3054,14 +3153,17 @@ async function drawCharacterImage(
 							}
 							// 最小字體時直接截斷
 							if (descFont === 14) {
-								const maxLines = Math.floor(descAreaHeight / lineHeight);
+								const maxLines = Math.floor(
+									descAreaHeight / lineHeight
+								);
 								visibleLines = lns.slice(0, maxLines);
 							}
 						}
 						setupFont(ctx, descFont, false);
 
 						// 垂直置中計算
-						const totalTextHeight = visibleLines.length * lineHeight;
+						const totalTextHeight =
+							visibleLines.length * lineHeight;
 						const descY =
 							light_cone_base_y +
 							(light_cone_height - totalTextHeight) / 2 +
@@ -3559,7 +3661,11 @@ async function drawCharacterImage(
 				ctx.fillStyle = "lightgray";
 				ctx.font =
 					"bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-				ctx.fillText(tr("profile_Tip"), centerX, effectivePanelBottomY + tipOffsetY);
+				ctx.fillText(
+					tr("profile_Tip"),
+					centerX,
+					effectivePanelBottomY + tipOffsetY
+				);
 			}
 		} else {
 			ctx.textAlign = "center";
@@ -3870,70 +3976,42 @@ async function drawAllCharactersImage(
 	tr: any,
 	playerData: PlayerData,
 	characters: Character[],
-	filterInfo: FilterInfo | null = null,
-	bgPath?: string
+	filterInfo: FilterInfo | null = null
 ): Promise<Buffer | null> {
 	try {
-		const mf = (ctx: any, size: number, bold = false) => {
-			ctx.font = `${bold ? "bold " : ""}${size}px 'YaHei','URW DIN Arabic',Arial,sans-serif`;
-		};
-
-		// ── Layout constants ───────────────────────────────────────────────
-		const W = 1920;
-		const LEFT_W = 340;
-		const GRID_X = LEFT_W + 20;
-		const GRID_COLS = 6;
-		const CARD_W = 245, CARD_H = 300, CARD_GAP = 14;
-		const GRID_TOP = 28;
-		const totalRows = Math.ceil(characters.length / GRID_COLS);
-		const H = Math.max(1080, GRID_TOP + totalRows * (CARD_H + CARD_GAP) + 28);
-
-		const canvas = createCanvas(W, H);
+		const canvasWidth = 1920;
+		const cardsPerRow = 6;
+		const totalRows = Math.ceil(characters.length / cardsPerRow);
+		const cardHeight = 100;
+		const cardGap = 10;
+		const baseY = 230;
+		const canvasHeight = baseY + totalRows * (cardHeight + cardGap) + 40;
+		const canvas = createCanvas(canvasWidth, canvasHeight);
 		const ctx = canvas.getContext("2d");
 
-		// ── 1. Background ──────────────────────────────────────────────────
-		const bgResult = await loadImageAsync(bgPath ?? await getTodayBg());
-		if (bgResult?.image) {
-			ctx.drawImage(bgResult.image, 0, 0, W, H);
-		} else {
-			ctx.fillStyle = "#0d1117";
-			ctx.fillRect(0, 0, W, H);
+		// 背景
+		const bgResult = await loadImageAsync("./src/assets/image/warp/bg.jpg");
+		const bg = bgResult?.image;
+		if (bg) {
+			ctx.drawImage(bg, 0, 0, canvasWidth, canvasHeight);
 		}
-		ctx.fillStyle = "rgba(0,0,0,0.55)";
-		ctx.fillRect(0, 0, W, H);
 
-		// ── 2. Left panel (glass) ──────────────────────────────────────────
-		fillGlass(ctx, 14, 14, LEFT_W, H - 28, 14, 0.5);
-
-		const avatarCX = 14 + LEFT_W / 2;
-		const avatarCY = 110;
-		const avatarR = 68;
-
-		// Avatar
+		// 左上角頭像
 		const avatarResult = await loadImageAsync(
-			`${image_Header}/${playerData.player.avatar.icon}`
+			playerData.player.avatar.icon
 		);
-		if (avatarResult?.image) {
+		const avatar = avatarResult?.image;
+		if (avatar) {
 			ctx.save();
 			ctx.beginPath();
-			ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
+			ctx.arc(110, 110, 70, 0, Math.PI * 2);
+			ctx.closePath();
 			ctx.clip();
-			ctx.drawImage(
-				avatarResult.image,
-				avatarCX - avatarR, avatarCY - avatarR,
-				avatarR * 2, avatarR * 2
-			);
+			ctx.drawImage(avatar, 40, 40, 140, 140);
 			ctx.restore();
 		}
-		ctx.save();
-		ctx.beginPath();
-		ctx.arc(avatarCX, avatarCY, avatarR + 3, 0, Math.PI * 2);
-		ctx.strokeStyle = "#D4AF37";
-		ctx.lineWidth = 3;
-		ctx.stroke();
-		ctx.restore();
 
-		// Anomaly icon overlay
+		// 繪製異常仲裁圖標（如果有的話）
 		const anomalyRecord = (await database.get(
 			`${playerData.player.uid}.anomalyRoundNum`
 		)) as AnomalyRoundRecord | null;
@@ -3942,221 +4020,291 @@ async function drawAllCharactersImage(
 			if (iconPath) {
 				const anomalyIcon = await loadImage(iconPath);
 				if (anomalyIcon) {
-					const iSize = avatarR * 2 * 1.1;
+					const iconSize = 140 * 1.1;
+					const iconX = 40 - 40 * 0.3;
+					const iconY = 40 - 40 * 0.1;
 					ctx.drawImage(
 						anomalyIcon,
-						avatarCX - avatarR - iSize * 0.05,
-						avatarCY - avatarR - iSize * 0.05,
-						iSize, iSize
+						iconX,
+						iconY,
+						iconSize,
+						iconSize
 					);
 				}
 			}
 		}
 
-		// Nickname
-		mf(ctx, 30, true);
-		ctx.fillStyle = "#FFFFFF";
-		ctx.textAlign = "center";
-		ctx.fillText(playerData.player.nickname, avatarCX, avatarCY + avatarR + 36);
-
-		// UID
-		mf(ctx, 20);
-		ctx.fillStyle = "rgba(255,255,255,0.6)";
-		ctx.fillText(`UID  ${playerData.player.uid}`, avatarCX, avatarCY + avatarR + 60);
-
-		// Anomaly rank badges
+		// 繪製異常仲裁徽章（如果有的話）
 		const anomalyRankRecords = (await database.get(
 			`${playerData.player.uid}.anomalyRankIcon`
 		)) as AnomalyRankRecord[] | null;
 		if (anomalyRankRecords && anomalyRankRecords.length > 0) {
-			anomalyRankRecords.sort((a, b) => b.challengeTime - a.challengeTime);
-			const badges = anomalyRankRecords.slice(0, 5);
-			const badgeSz = 32;
-			const totalBW = badges.length * badgeSz + (badges.length - 1) * 5;
-			let bx = avatarCX - totalBW / 2;
-			const by = avatarCY + avatarR + 70;
-			for (const record of badges) {
+			// 按挑戰時間排序，最新的在前
+			anomalyRankRecords.sort(
+				(a, b) => b.challengeTime - a.challengeTime
+			);
+
+			// 最多顯示 3 個徽章（單角色頁面空間較小）
+			const displayRecords = anomalyRankRecords.slice(0, 5);
+			const badgeSize = 60;
+			const badgeSpacing = 6;
+
+			// 計算名稱寬度來定位徽章
+			ctx.font = "bold 40px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+			const nameWidth = ctx.measureText(playerData.player.nickname).width;
+			const nameX = 40 + 140 + 15; // 名稱起始位置
+			const nameY = 40 + 40; // 名稱垂直位置
+			const startX = nameX + nameWidth + 20; // 名稱後面
+			const startY = nameY - badgeSize / 2; // 與名稱垂直居中
+
+			for (let i = 0; i < displayRecords.length; i++) {
+				const record = displayRecords[i];
+				if (!record) continue;
+
+				const badgeX = startX + i * (badgeSize + badgeSpacing);
+				const badgeY = startY;
+
 				try {
-					let src: string | Buffer = record.rankIcon;
-					if (record.rankIcon?.startsWith("http")) {
-						const resp = await axios.get(record.rankIcon, { responseType: "arraybuffer", timeout: 10000 });
-						src = Buffer.from(resp.data);
+					let badgeSource: string | Buffer = record.rankIcon;
+					if (
+						record.rankIcon?.startsWith("http://") ||
+						record.rankIcon?.startsWith("https://")
+					) {
+						const badgeResponse = await axios.get(record.rankIcon, {
+							responseType: "arraybuffer",
+							timeout: 15000
+						});
+						badgeSource = Buffer.from(badgeResponse.data);
 					}
-					const bi = await loadImage(src);
-					if (bi) ctx.drawImage(bi, bx, by, badgeSz, badgeSz);
-				} catch { /* skip */ }
-				bx += badgeSz + 5;
+					const badgeIcon = await loadImage(badgeSource);
+					if (badgeIcon) {
+						ctx.drawImage(
+							badgeIcon,
+							badgeX,
+							badgeY,
+							badgeSize,
+							badgeSize
+						);
+					}
+				} catch (error) {
+					console.warn(
+						`Failed to load badge icon: ${record.rankIcon}`,
+						error
+					);
+				}
 			}
 		}
 
-		// Divider
-		const divY1 = avatarCY + avatarR + 108;
-		ctx.strokeStyle = "rgba(255,255,255,0.2)";
-		ctx.lineWidth = 1;
+		// 文字資訊
+		ctx.textAlign = "left";
+		ctx.fillStyle = "white";
+		ctx.font = "bold 40px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		ctx.fillText(playerData.player.nickname, 200, 90);
+		ctx.font = "bold 28px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		ctx.fillText(`UID ${playerData.player.uid}`, 200, 135);
+		ctx.fillText(
+			`${tr("profile_TrailblazeLevel")} ${playerData.player.level}  ${tr("profile_CharactersCount")} ${characters.length}`,
+			200,
+			175
+		);
+
+		// 分隔線
+		ctx.strokeStyle = "rgba(255,255,255,0.5)";
+		ctx.lineWidth = 2;
 		ctx.beginPath();
-		ctx.moveTo(28, divY1);
-		ctx.lineTo(14 + LEFT_W - 14, divY1);
+		ctx.moveTo(40, 200);
+		ctx.lineTo(700, 200);
 		ctx.stroke();
 
-		// Stats grid
-		const stats = [
-			{ label: tr("profile_TrailblazeLevel"),  value: `${playerData.player.level}` },
-			{ label: tr("profile_EquilibriumLevel"),  value: `${playerData.player.world_level ?? "-"}` },
-			{ label: tr("profile_CharactersCount"),   value: `${characters.length}` },
-			{ label: tr("profile_AchievementsCount"), value: `${playerData.player.space_info?.achievement_count ?? "-"}` }
-		];
-		const gX0 = 28, gY0 = divY1 + 18;
-		const gColW = LEFT_W / 2, gRowH = 74;
-		stats.forEach((s, i) => {
-			const col = i % 2, row = Math.floor(i / 2);
-			const sx = gX0 + col * gColW + gColW / 2;
-			const sy = gY0 + row * gRowH;
-			mf(ctx, 28, true);
-			ctx.fillStyle = "#FFFFFF";
-			ctx.textAlign = "center";
-			ctx.fillText(s.value, sx, sy + 30);
-			mf(ctx, 16);
-			ctx.fillStyle = "rgba(255,255,255,0.55)";
-			ctx.fillText(s.label, sx, sy + 50);
-		});
-
-		// Filter / sort status
-		if (filterInfo && (filterInfo.filters.length > 0 || filterInfo.sortType)) {
-			const divY2 = gY0 + 2 * gRowH + 10;
-			ctx.strokeStyle = "rgba(255,255,255,0.2)";
-			ctx.lineWidth = 1;
-			ctx.beginPath();
-			ctx.moveTo(28, divY2);
-			ctx.lineTo(14 + LEFT_W - 14, divY2);
-			ctx.stroke();
-
-			const filterLabelMap: Record<string, string> = {};
-			try {
-				const [elemData, pathData] = await Promise.all([
-					loadElementsData("cht"),
-					loadPathsData("cht")
-				]);
-				if (elemData) for (const val of Object.values(elemData) as any[]) filterLabelMap[val.id.toLowerCase()] = val.name;
-				if (pathData) for (const val of Object.values(pathData) as any[]) filterLabelMap[val.text.toLowerCase()] = val.name;
-			} catch {
-				Object.assign(filterLabelMap, {
-					physical: tr("element_physical"), ice: tr("element_ice"),
-					fire: tr("element_fire"), lightning: tr("element_lightning"),
-					wind: tr("element_wind"), quantum: tr("element_quantum"),
-					imaginary: tr("element_imaginary"), destruction: tr("path_destruction"),
-					harmony: tr("path_harmony"), erudition: tr("path_erudition"),
-					hunt: tr("path_hunt"), preservation: tr("path_preservation"),
-					nihility: tr("path_nihility"), abundance: tr("path_abundance"),
-					remembrance: tr("path_remembrance")
-				});
-			}
-
-			let statusLines: string[] = [];
-			if (filterInfo.sortType === "sort_level") statusLines.push(tr("profile_SortByLevel"));
-			else if (filterInfo.sortType === "sort_eidolon") statusLines.push(tr("profile_SortByEidolon"));
-			if (filterInfo.filters.length > 0) {
-				statusLines.push(filterInfo.filters.map(f => filterLabelMap[f] || f).join(" / "));
-			}
-
-			mf(ctx, 18, true);
-			ctx.fillStyle = "#D4AF37";
+		// 顯示篩選和排序狀態
+		if (
+			filterInfo &&
+			(filterInfo.filters.length > 0 || filterInfo.sortType)
+		) {
 			ctx.textAlign = "left";
-			statusLines.forEach((line, i) => {
-				ctx.fillText(`※ ${line}`, 28, divY2 + 22 + i * 26);
-			});
+			ctx.fillStyle = "rgba(255,255,255,0.8)";
+			ctx.font = "bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+
+			let statusText = "※ ";
+			if (filterInfo.sortType) {
+				if (filterInfo.sortType === "sort_level") {
+					statusText += tr("profile_SortByLevel");
+				} else if (filterInfo.sortType === "sort_eidolon") {
+					statusText += tr("profile_SortByEidolon");
+				}
+			}
+
+			if (filterInfo.filters.length > 0) {
+				if (statusText) statusText += " | ";
+				// 動態生成 filterLabelMap，自動支持新命途和屬性
+				const filterLabelMap: Record<string, string> = {};
+				try {
+					const [elemData, pathData] = await Promise.all([
+						loadElementsData("cht"),
+						loadPathsData("cht")
+					]);
+					if (elemData) {
+						for (const val of Object.values(elemData) as any[]) {
+							filterLabelMap[val.id.toLowerCase()] = val.name;
+						}
+					}
+					if (pathData) {
+						for (const val of Object.values(pathData) as any[]) {
+							filterLabelMap[val.text.toLowerCase()] = val.name;
+						}
+					}
+				} catch {
+					// 回退到翻譯系統
+					Object.assign(filterLabelMap, {
+						physical: tr("element_physical"),
+						ice: tr("element_ice"),
+						fire: tr("element_fire"),
+						lightning: tr("element_lightning"),
+						wind: tr("element_wind"),
+						quantum: tr("element_quantum"),
+						imaginary: tr("element_imaginary"),
+						destruction: tr("path_destruction"),
+						harmony: tr("path_harmony"),
+						erudition: tr("path_erudition"),
+						hunt: tr("path_hunt"),
+						preservation: tr("path_preservation"),
+						nihility: tr("path_nihility"),
+						abundance: tr("path_abundance"),
+						remembrance: tr("path_remembrance")
+					});
+				}
+				statusText += filterInfo.filters
+					.map(f => (filterLabelMap as any)[f] || f)
+					.join(" / ");
+			}
+
+			ctx.fillText(statusText, 720, 205);
 		}
 
-		// ── 3. Character grid ───────────────────────────────────────────────
-		const pathMapper: Record<string, string> = {
-			warrior: "destruction", rogue: "hunt", mage: "erudition",
-			priest: "abundance", shaman: "harmony", warlock: "nihility",
-			knight: "preservation", memory: "remembrance", elation: "elation"
-		};
+		// 角色卡片區域
+		const cardWidth = 300;
+		const baseX = 20;
 
 		for (let i = 0; i < characters.length; i++) {
 			const char = characters[i];
 			if (!char) continue;
-			const col = i % GRID_COLS;
-			const row = Math.floor(i / GRID_COLS);
-			const cx = GRID_X + col * (CARD_W + CARD_GAP);
-			const cy = GRID_TOP + row * (CARD_H + CARD_GAP);
+			const col = i % cardsPerRow;
+			const row = Math.floor(i / cardsPerRow);
+			const x = baseX + col * (cardWidth + cardGap);
+			const y = baseY + row * (cardHeight + cardGap);
 
-			// glass card
-			fillGlass(ctx, cx, cy, CARD_W, CARD_H, 10, 0.38);
-
-			// character icon (top portion)
-			const charIconResult = await loadImageAsync(char.icon);
-			const charIcon = charIconResult?.image;
-			if (charIcon) {
-				ctx.save();
-				drawRoundRect(ctx, cx, cy, CARD_W, CARD_H, 10);
-				ctx.clip();
-				const iconH = CARD_H * 0.65;
-				const srcAR = charIcon.width / charIcon.height;
-				const dstH = iconH * 1.15;
-				const dstW = dstH * srcAR;
-				const dx = cx + (CARD_W - dstW) / 2;
-				ctx.drawImage(charIcon, dx, cy - iconH * 0.08, dstW, dstH);
-				ctx.restore();
-			}
-
-			// Bottom info bar
-			const barH = 90;
+			// 卡片底色
 			ctx.save();
-			drawRoundRect(ctx, cx, cy + CARD_H - barH, CARD_W, barH, 10);
-			ctx.clip();
-			ctx.fillStyle = "rgba(0,0,0,0.70)";
-			ctx.fillRect(cx, cy + CARD_H - barH, CARD_W, barH);
+			ctx.globalAlpha = 0.4;
+			ctx.fillStyle = "#222";
+			ctx.fillRect(x, y, cardWidth, cardHeight);
 			ctx.restore();
 
-			// Name
-			mf(ctx, 18, true);
-			ctx.fillStyle = "#FFD89C";
-			ctx.textAlign = "center";
-			ctx.fillText(char.name, cx + CARD_W / 2, cy + CARD_H - barH + 22);
+			// 角色頭像（圓形）
+			const iconCenterX = x + 20 + 36;
+			const iconCenterY = y + cardHeight / 2;
+			const charIconResult = await loadImageAsync(char.icon);
+			const charIcon = charIconResult?.image;
+			ctx.save();
+			ctx.beginPath();
+			ctx.arc(iconCenterX, iconCenterY, 36, 0, Math.PI * 2);
+			ctx.closePath();
+			ctx.clip();
+			const scale = Math.max((2 * 36) / 168, (2 * 36) / 188);
+			const drawW = 168 * scale;
+			const drawH = 188 * scale;
+			if (charIcon) {
+				ctx.drawImage(
+					charIcon,
+					iconCenterX - drawW / 2,
+					iconCenterY - drawH / 2,
+					drawW,
+					drawH
+				);
+			}
+			ctx.restore();
 
-			// Lv + Eidolon
-			mf(ctx, 16);
-			ctx.fillStyle = "rgba(255,255,255,0.85)";
-			ctx.fillText(`Lv.${char.level}  E${char.rank ?? 0}`, cx + CARD_W / 2, cy + CARD_H - barH + 44);
-
-			// Element + Path icons
+			// 中間上方：命途icon、屬性icon（加大尺寸）
 			const elementIconResult = await loadImageAsync(
 				`./src/assets/image/element/${(typeof char.element === "string" ? char.element : char.element?.id || "physical").toLowerCase()}.png`
 			);
-			let pathIconPath: string;
+			const elementIcon = elementIconResult?.image;
+			let pathIconPath = null;
+			const pathMapper: Record<string, string> = {
+				warrior: "destruction",
+				rogue: "hunt",
+				mage: "erudition",
+				priest: "abundance",
+				shaman: "harmony",
+				warlock: "nihility",
+				knight: "preservation",
+				memory: "remembrance",
+				elation: "elation"
+			};
+
 			if (char.base_type) {
 				const pathName = (await getPathMap())[char.base_type] || "none";
 				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
 			} else if (char.path) {
-				const rawPath = (typeof char.path === "string" ? char.path : char.path?.id || "none").toLowerCase();
-				pathIconPath = `./src/assets/image/icon/path/${pathMapper[rawPath] || rawPath}Small.png`;
+				const rawPath = (
+					typeof char.path === "string"
+						? char.path
+						: char.path?.id || "none"
+				).toLowerCase();
+				const pathName = pathMapper[rawPath] || rawPath;
+				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
 			} else {
 				pathIconPath = `./src/assets/image/icon/path/none.png`;
 			}
-			const [pathIconResult] = await Promise.all([loadImageAsync(pathIconPath)]);
-			const iconSz = 28;
-			const iconY2 = cy + CARD_H - barH + 52;
-			const totalIconW = (elementIconResult?.image ? iconSz : 0) + (pathIconResult?.image ? iconSz : 0) + 4;
-			let ix = cx + (CARD_W - totalIconW) / 2;
-			if (pathIconResult?.image) { ctx.drawImage(pathIconResult.image, ix, iconY2, iconSz, iconSz); ix += iconSz + 4; }
-			if (elementIconResult?.image) { ctx.drawImage(elementIconResult.image, ix, iconY2, iconSz, iconSz); }
+			const pathIconResult = await loadImageAsync(pathIconPath);
+			const pathIcon = pathIconResult?.image;
+			if (pathIcon) {
+				ctx.drawImage(pathIcon, x + 110, y + 12, 44, 44);
+			}
+			if (elementIcon) {
+				ctx.drawImage(elementIcon, x + 164, y + 12, 44, 44);
+			}
 
-			// Light cone (small, top-right corner of card)
-			if (char.equip?.icon) {
-				const lcResult = await loadImageAsync(char.equip.icon);
-				if (lcResult?.image) {
-					const lcSz = 52;
-					ctx.save();
-					drawRoundRect(ctx, cx + CARD_W - lcSz - 4, cy + 4, lcSz, lcSz, 6);
-					ctx.clip();
-					ctx.drawImage(lcResult.image, cx + CARD_W - lcSz - 4, cy + 4, lcSz, lcSz);
-					ctx.restore();
-					mf(ctx, 13, true);
-					ctx.fillStyle = "white";
-					ctx.textAlign = "center";
-					ctx.fillText(`${char.equip.level ?? ""}`, cx + CARD_W - lcSz / 2 - 4, cy + lcSz + 10);
+			// 中間下方：等級、命座（下移，增加間隔）
+			ctx.font = "bold 22px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+			ctx.fillStyle = "#fff";
+			ctx.textAlign = "left";
+			ctx.fillText(`Lv.${char.level}`, x + 110, y + 85);
+			ctx.fillStyle = "#DCC491";
+			ctx.fillText(`E${char.rank ?? 0}`, x + 175, y + 85);
+
+			// 右側分隔線
+			ctx.save();
+			ctx.strokeStyle = "rgba(255,255,255,0.3)";
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.moveTo(x + cardWidth - 70, y + 10);
+			ctx.lineTo(x + cardWidth - 70, y + cardHeight - 10);
+			ctx.stroke();
+			ctx.restore();
+
+			// 右側武器icon和等級
+			if (char.equip && char.equip.icon) {
+				const lcIconResult = await loadImageAsync(char.equip.icon);
+				const lcIcon = lcIconResult?.image;
+				if (lcIcon) {
+					ctx.drawImage(
+						lcIcon,
+						x + cardWidth - 62.5,
+						y + 12.5,
+						57.5,
+						57.5
+					);
 				}
+				ctx.font =
+					"bold 18px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+				ctx.fillStyle = "#fff";
+				ctx.textAlign = "center";
+				ctx.fillText(
+					`Lv.${char.equip.level ?? ""}`,
+					x + cardWidth - 35,
+					y + 85
+				);
 			}
 		}
 
@@ -4166,6 +4314,7 @@ async function drawAllCharactersImage(
 		return null;
 	}
 }
+
 async function setupLeaderboardMaintenance(): Promise<void> {
 	try {
 		console.log("[Leaderboard] Starting scheduled maintenance...");

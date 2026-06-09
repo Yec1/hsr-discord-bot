@@ -15,13 +15,15 @@ import {
 import axios from "axios";
 import emoji from "../assets/emoji.js";
 import { drawFloorImage } from "../utilities/hsr/forgottenhall.js";
-import { createChunkedSelectMenus, createPagedSelectMenu } from "../utilities/hsr/selectmenu.js";
+import {
+	createChunkedSelectMenus,
+	createPagedSelectMenu
+} from "../utilities/hsr/selectmenu.js";
 import {
 	drawMainImage,
 	drawCharacterImage,
 	drawAllCharactersImage
 } from "../utilities/hsr/profile.js";
-import { getUserBg, getBgPool, setUserBgPref } from "../utilities/hsr/wallpaperManager.js";
 import {
 	getRandomColor,
 	drawInQueueReply,
@@ -62,52 +64,11 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 		!customId.startsWith("leaderboard") &&
 		!customId.startsWith("profile_SelectCharacter") &&
 		!customId.startsWith("profile_Filter") &&
-		!customId.startsWith("profilebg_select") &&
 		!customId.startsWith("news") &&
 		!customId.startsWith("guide") &&
 		customId !== "forgottenHall_Floor"
 	)
 		await interaction.update({}).catch(() => {});
-	if (customId.startsWith("profilebg_select") && values[0]) {
-		const parts = customId.split(":");
-		const targetUserId = parts[1] ?? "";
-		const value = values[0];
-		if (value === "random") {
-			await setUserBgPref(targetUserId, null);
-			await interaction.update({
-				embeds: [
-					new EmbedBuilder()
-						.setColor("#5CBA4A")
-						.setDescription("✅ 已設定為**隨機背景**，每天自動從官方新聞選取")
-				],
-				components: []
-			});
-		} else {
-			// value = "fixed:N"
-			const idx = parseInt(value.split(":")[1] ?? "0");
-			const pool = await getBgPool();
-			const article = pool[idx];
-			if (!article) {
-				await interaction.update({
-					embeds: [new EmbedBuilder().setColor("#E76161").setDescription("❌ 找不到對應的圖片")],
-					components: []
-				});
-				return;
-			}
-			await setUserBgPref(targetUserId, article.url);
-			await interaction.update({
-				embeds: [
-					new EmbedBuilder()
-						.setColor("#5CBA4A")
-						.setTitle("✅ 背景已更新")
-						.setDescription(`已設定為：**${article.title}**`)
-						.setImage(article.url)
-				],
-				components: []
-			});
-		}
-		return;
-	}
 	if (customId.startsWith("guide") && values[0])
 		handleGuide(interaction, tr, values[0]);
 	if (customId.startsWith("news") && values[0])
@@ -146,13 +107,21 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 			const parts = v.split(":");
 			// parts[0] = __prev__ or __next__, [1]=uid, [2]=userId, [3]=accountIndex, [4]=useAllCharacters, [5]=currentPage
 			const direction = parts[0] === "__prev__" ? -1 : 1;
-		const uid = parts[1] ?? "";
-		const userId = parts[2] ?? "";
+			const uid = parts[1] ?? "";
+			const userId = parts[2] ?? "";
 			const accountIndex = parseInt(parts[3] ?? "0");
 			const useAllCharacters = parts[4] === "true";
 			const currentPage = parseInt(parts[5] ?? "0");
 			const newPage = currentPage + direction;
-			await handlePageTurn(interaction, tr, uid, userId, accountIndex, useAllCharacters, newPage);
+			await handlePageTurn(
+				interaction,
+				tr,
+				uid,
+				userId,
+				accountIndex,
+				useAllCharacters,
+				newPage
+			);
 		} else {
 			handleSelectCharacter(interaction, tr, v);
 		}
@@ -508,7 +477,8 @@ async function handleProfileFilter(
 			);
 			gameInfo = {
 				uid: String(hsr.uid || ""),
-				nickname: (data as any)?.role?.nickname || String(hsr.uid || ""),
+				nickname:
+					(data as any)?.role?.nickname || String(hsr.uid || ""),
 				level: (data as any)?.role?.level || 0
 			};
 		}
@@ -587,13 +557,11 @@ async function handleProfileFilter(
 		}
 
 		// 重新繪圖
-		const bgPath = await getUserBg(userId ?? "");
 		const imageBuffer = await drawAllCharactersImage(
 			tr,
 			playerData as any,
 			sortedCharacters as any,
-			filterInfo,
-			bgPath
+			filterInfo
 		);
 
 		if (!imageBuffer) {
@@ -737,8 +705,12 @@ async function handleProfileFilter(
 			content: "",
 			embeds: [],
 			components: [
-				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(charMenu),
-				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(filterMenu)
+				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+					charMenu
+				),
+				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+					filterMenu
+				)
 			],
 			files: [image]
 		});
@@ -807,12 +779,15 @@ async function handlePageTurn(
 		// 只更新 components，保留既有圖片與 embeds
 		const existingComponents = interaction.message.components;
 		// 最後一個 row 是 filter menu（若存在）
-		const filterRow = existingComponents.length > 1
-			? existingComponents[existingComponents.length - 1]
-			: null;
+		const filterRow =
+			existingComponents.length > 1
+				? existingComponents[existingComponents.length - 1]
+				: null;
 
 		const newComponents: any[] = [
-			new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(charMenu)
+			new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+				charMenu
+			)
 		];
 		if (filterRow) newComponents.push(filterRow);
 
@@ -1385,7 +1360,9 @@ async function handleForgottenHall(
 	};
 
 	if (drawQueue.length >= DRAW_QUEUE_MAX) {
-		await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		await interaction
+			.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" })
+			.catch(() => {});
 		return;
 	}
 	drawQueue.push(drawTask);
@@ -1423,7 +1400,10 @@ async function handleSelectCharacter(
 			const allCharactersBool = allCharacters == "true" ? true : false;
 
 			// 獲取用戶語言
-			const userLang = (await getUserLang(userId || "")) || toI18nLang(interaction.locale) || "tw";
+			const userLang =
+				(await getUserLang(userId || "")) ||
+				toI18nLang(interaction.locale) ||
+				"tw";
 
 			let playerData: PlayerData | null = null;
 			let playerActivity = null;
@@ -1456,30 +1436,40 @@ async function handleSelectCharacter(
 				}
 
 				characters = (await hsr.record.characters()) as any;
-			// HoYoLAB returns `ranks[]` instead of `rank_icons`; inject it so
-			// drawEidolonIcons() renders the same as the UID (mihomo) path.
-			if (Array.isArray(characters)) {
-				for (const c of characters as any[]) {
-					if (!c.rank_icons && Array.isArray(c.ranks) && c.ranks.length >= 6) {
-						c.rank_icons = [...c.ranks]
-							.sort((a: any, b: any) => a.pos - b.pos)
-							.map((r: any) => r.icon);
+				// HoYoLAB returns `ranks[]` instead of `rank_icons`; inject it so
+				// drawEidolonIcons() renders the same as the UID (mihomo) path.
+				if (Array.isArray(characters)) {
+					for (const c of characters as any[]) {
+						if (
+							!c.rank_icons &&
+							Array.isArray(c.ranks) &&
+							c.ranks.length >= 6
+						) {
+							c.rank_icons = [...c.ranks]
+								.sort((a: any, b: any) => a.pos - b.pos)
+								.map((r: any) => r.icon);
+						}
 					}
 				}
-			}
 				const data = await hsr.record.records();
 				let gameInfo: { uid: string; nickname: string; level: number };
-			try {
-				const cookieStr = await getUserCookie(userId || "", parseInt(accountIndex || "0")) ?? "";
-				gameInfo = await getUserGameInfo(cookieStr);
-			} catch (e) {
-				console.warn(
-					"[SelectMenu] getUserGameInfo failed, using fallback:",
+				try {
+					const cookieStr =
+						(await getUserCookie(
+							userId || "",
+							parseInt(accountIndex || "0")
+						)) ?? "";
+					gameInfo = await getUserGameInfo(cookieStr);
+				} catch (e) {
+					console.warn(
+						"[SelectMenu] getUserGameInfo failed, using fallback:",
 						(e as Error).message
 					);
 					gameInfo = {
 						uid: String(hsr.uid || uid || ""),
-						nickname: (data as any)?.role?.nickname || String(hsr.uid || uid || ""),
+						nickname:
+							(data as any)?.role?.nickname ||
+							String(hsr.uid || uid || ""),
 						level: (data as any)?.role?.level || 0
 					};
 				}
@@ -1607,34 +1597,29 @@ async function handleSelectCharacter(
 				return;
 			}
 
-		const drawStartTime = Date.now();
-		const bgPath = await getUserBg(userId ?? "");
-		const imageBuffer =
-			characterId == "main"
-				? allCharactersBool
-					? await drawAllCharactersImage(
-							tr,
-							playerData as any,
-							(characters || []) as any,
-							null,
-							bgPath
-						)
-					: await drawMainImage(
-							tr,
-							playerData as any,
-							playerActivity,
-							bgPath
-						)
-				: character
-					? await drawCharacterImage(
-							tr,
-							playerData as any,
-							character as any,
-							allCharactersBool,
-							userLang,
-							bgPath
-						)
-					: null;
+			const drawStartTime = Date.now();
+			const imageBuffer =
+				characterId == "main"
+					? allCharactersBool
+						? await drawAllCharactersImage(
+								tr,
+								playerData as any,
+								(characters || []) as any
+							)
+						: await drawMainImage(
+								tr,
+								playerData as any,
+								playerActivity
+							)
+					: character
+						? await drawCharacterImage(
+								tr,
+								playerData as any,
+								character as any,
+								allCharactersBool,
+								userLang
+							)
+						: null;
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 			const drawEndTime = Date.now();
 
@@ -1642,40 +1627,49 @@ async function handleSelectCharacter(
 				name: `CharacterPage_${playerData.player.uid}.webp`
 			});
 
-			const charOptionsForMenu = characterId === "main"
-				? (characters || []).map(character => {
-						const elementId = allCharactersBool
-							? character.element
-							: typeof character.element === "string"
-								? character.element
-								: character.element?.id || "physical";
-						const elementKey = (elementId as string).toLowerCase();
-						return {
-							emoji: (emoji as any)[elementKey] || emoji.physical,
-							label: `${character.name}`,
-							value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
-						};
-					})
-				: [
-						{
-							emoji: (emoji as any).avatarIcon,
-							label: tr("MainPage"),
-							value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-main`
-						},
-						...(characters || []).map(character => {
+			const charOptionsForMenu =
+				characterId === "main"
+					? (characters || []).map(character => {
 							const elementId = allCharactersBool
 								? character.element
 								: typeof character.element === "string"
 									? character.element
 									: character.element?.id || "physical";
-							const elementKey = (elementId as string).toLowerCase();
+							const elementKey = (
+								elementId as string
+							).toLowerCase();
 							return {
-								emoji: (emoji as any)[elementKey] || emoji.physical,
-								label: character.name,
+								emoji:
+									(emoji as any)[elementKey] ||
+									emoji.physical,
+								label: `${character.name}`,
 								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
 							};
 						})
-					];
+					: [
+							{
+								emoji: (emoji as any).avatarIcon,
+								label: tr("MainPage"),
+								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-main`
+							},
+							...(characters || []).map(character => {
+								const elementId = allCharactersBool
+									? character.element
+									: typeof character.element === "string"
+										? character.element
+										: character.element?.id || "physical";
+								const elementKey = (
+									elementId as string
+								).toLowerCase();
+								return {
+									emoji:
+										(emoji as any)[elementKey] ||
+										emoji.physical,
+									label: character.name,
+									value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
+								};
+							})
+						];
 
 			const charMenuAfterDraw = createPagedSelectMenu(
 				charOptionsForMenu,
@@ -1689,7 +1683,9 @@ async function handleSelectCharacter(
 				content: "",
 				embeds: [],
 				components: [
-					new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(charMenuAfterDraw)
+					new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+						charMenuAfterDraw
+					)
 				],
 				files: [image]
 			});
@@ -1712,7 +1708,9 @@ async function handleSelectCharacter(
 	};
 
 	if (drawQueue.length >= DRAW_QUEUE_MAX) {
-		await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		await interaction
+			.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" })
+			.catch(() => {});
 		return;
 	}
 	drawQueue.push(drawTask);
