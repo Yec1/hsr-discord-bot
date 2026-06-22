@@ -443,6 +443,7 @@ interface ForgottenHallResponse {
 	star_num: number;
 	battle_num: number;
 	all_floor_detail: FloorDetail[];
+	max_floor?: string;
 	begin_time?: TimeInfo;
 	end_time?: TimeInfo;
 	schedule_id?: string;
@@ -1662,23 +1663,52 @@ async function drawForgottenHallImage(
 		ctx.lineTo(lineX, lineY + lineHeight);
 		ctx.stroke();
 
+		const summaryHasExtraStar =
+			(mode == 2 || mode == 3) && Number((res as ForgottenHallResponse).extra_star_num || 0) > 0;
+		const summaryPaddingX = 24;
+		const summaryStarGapToDivider = 24;
+		const summaryRightShiftX = summaryHasExtraStar ? 10 : 0;
+		const summaryStarY = 220;
+		const summaryStarX = box1X + summaryPaddingX;
+		const summaryExtraStarX = lineX - summaryPaddingX - 54 + summaryRightShiftX;
+		const summaryDividerX = summaryExtraStarX - summaryStarGapToDivider;
+		const summaryTextX = summaryHasExtraStar
+			? (summaryStarX + 54 + summaryDividerX) / 2
+			: (box1X + lineX) / 2;
+
 		const star = await getCachedImage(
 			"./src/assets/image/forgottenhall/star.png"
 		);
 		if (star) {
-			(ctx as any).drawImage(star, 150, 220, 54, 54);
+			(ctx as any).drawImage(star, summaryStarX, summaryStarY, 54, 54);
 		}
 
 		ctx.font = "38px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
-		ctx.fillText(`× ${res.star_num}`, 253, 263);
+		ctx.fillText(`× ${res.star_num}`, summaryTextX, 263);
+
+		if (summaryHasExtraStar) {
+			ctx.strokeStyle = "rgba(255,255,255,.25)";
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(summaryDividerX, 218);
+			ctx.lineTo(summaryDividerX, 270);
+			ctx.stroke();
+
+			const summaryExtraStar = await getCachedImage(
+				"./src/assets/image/forgottenhall/star_extra.png"
+			);
+			if (summaryExtraStar) {
+				(ctx as any).drawImage(summaryExtraStar, summaryExtraStarX, summaryStarY, 54, 54);
+			}
+		}
 
 		ctx.font = "bold 31px 'PingFang', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "left";
 		ctx.fillText(
-			`${tr("forgottenHall_Level")}:  ${floor.name.replace(
+			`${tr("forgottenHall_Level")}:  ${(res.max_floor || floor.name).replace(
 				/<\/?[^>]+(>|$)/g,
 				""
 			)}`,
@@ -1942,14 +1972,26 @@ async function drawForgottenHallImage(
 		}
 
 		const nodeCount = floor.node_3 ? 3 : 2;
+		const isPureFictionTierceLayout = mode == 2 && nodeCount === 3;
+		const isApocalypticTierceLayout = mode == 3 && nodeCount === 3;
 
 		if (star) {
 			// Draw normal stars from right to left
 			// If we have an extra star, it sits on the rightmost position, and normal stars shift left
-			const hasExtraStar = mode == 3 && nodeCount === 3 && (Number(floor.star_num) > 3 || Number((floor as any).extra_star_num) > 0);
+			const hasExtraStar =
+				(mode == 2 || mode == 3) &&
+				nodeCount === 3 &&
+				(Number(floor.star_num) > 3 || Number((floor as any).extra_star_num) > 0);
 			const normalStarsCount = Math.min(Number(floor.star_num), 3);
 			
 			if (hasExtraStar) {
+				ctx.strokeStyle = "rgba(255,255,255,.22)";
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(1637, (mode == 3 ? 435 + 65 : 435) + 6);
+				ctx.lineTo(1637, (mode == 3 ? 435 + 65 : 435) + 62);
+				ctx.stroke();
+
 				const extraStar = await getCachedImage(
 					"./src/assets/image/forgottenhall/star_extra.png"
 				);
@@ -1957,7 +1999,7 @@ async function drawForgottenHallImage(
 					(ctx as any).drawImage(
 						extraStar,
 						1650 + 3,
-						435 + 65,
+						mode == 3 ? 435 + 65 : 435,
 						68,
 						68
 					);
@@ -1994,6 +2036,15 @@ async function drawForgottenHallImage(
 			const node = floor[`node_${i}` as keyof FloorDetail] as NodeInfo;
 			if (!node) continue;
 
+			if ((isPureFictionTierceLayout || isApocalypticTierceLayout) && i < nodeCount) {
+				ctx.strokeStyle = "rgba(255,255,255,.18)";
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(x + 520, y - 10);
+				ctx.lineTo(x + 520, y + 310);
+				ctx.stroke();
+			}
+
 			ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 			ctx.fillStyle = "white";
 			ctx.textAlign = "left";
@@ -2001,7 +2052,7 @@ async function drawForgottenHallImage(
 			const teamSetupText = `${tr("forgottenHall_TeamSetup", { z: i.toString() })}`;
 			let titleX = x;
 
-			if (mode === 3 && i === 3) {
+			if ((mode === 2 || mode === 3) && i === 3) {
 				const node3Bg = await getCachedImage("./src/assets/image/forgottenhall/memory_node3_time_bg.png");
 				const node3Icon = await getCachedImage("./src/assets/image/forgottenhall/memory_node3_time_icon.png");
 
@@ -2016,7 +2067,58 @@ async function drawForgottenHallImage(
 
 			ctx.fillText(teamSetupText, titleX, y);
 
-			if (mode == 2 || mode == 3) {
+			const time = node.challenge_time;
+			const timeText = time
+				? `${time.year}/${time.month.toString().padStart(2, "0")}/${time.day
+					.toString()
+					.padStart(2, "0")} ${(time.hour || 0)
+					.toString()
+					.padStart(2, "0")}:${(time.minute || 0)
+					.toString()
+					.padStart(2, "0")}`
+				: "";
+
+			if (isPureFictionTierceLayout) {
+				if (timeText) {
+					ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.fillStyle = "rgba(255,255,255,.78)";
+					ctx.textAlign = "left";
+					ctx.fillText(
+						timeText,
+						titleX + ctx.measureText(teamSetupText).width + 18,
+						y
+					);
+				}
+
+				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+				ctx.fillStyle = "rgba(255,255,255,.9)";
+				ctx.fillText(`${tr("Score")}`, x, y + 42);
+
+				ctx.fillStyle = "rgb(249, 200, 126)";
+				ctx.fillText(
+					`${node.score}`,
+					x + ctx.measureText(`${tr("Score")}`).width + 18,
+					y + 43.5
+				);
+			} else if (isApocalypticTierceLayout) {
+				if (timeText) {
+					ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.fillStyle = "rgba(255,255,255,.78)";
+					ctx.textAlign = "left";
+					ctx.fillText(timeText, x, y + 42);
+				}
+
+				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+				ctx.fillStyle = "rgba(255,255,255,.9)";
+				ctx.textAlign = "left";
+				const scoreLabelWidth = ctx.measureText(`${tr("Score")}`).width;
+				const scoreValueWidth = ctx.measureText(`${node.score}`).width;
+				const scoreX = x + 490 - scoreLabelWidth - scoreValueWidth - 18;
+				ctx.fillText(`${tr("Score")}`, scoreX, y + 42);
+
+				ctx.fillStyle = "rgb(249, 200, 126)";
+				ctx.fillText(`${node.score}`, scoreX + scoreLabelWidth + 18, y + 43.5);
+			} else if (mode == 2 || mode == 3) {
 				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 				ctx.fillStyle = "rgba(255,255,255,.7)";
 				ctx.textAlign = "left";
@@ -2032,13 +2134,12 @@ async function drawForgottenHallImage(
 					y + 1.5
 				);
 			} else {
-				const time = node.challenge_time;
 				if (time) {
 					ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 					ctx.fillStyle = "rgba(255,255,255,.7)";
 					ctx.textAlign = "left";
 					ctx.fillText(
-						`${time.year}/${time.month}/${time.day} ${time.hour}:${time.minute}`,
+						timeText,
 						titleX + ctx.measureText(teamSetupText).width + 25,
 						y
 					);
@@ -2061,7 +2162,13 @@ async function drawForgottenHallImage(
 				const character = node.avatars[j];
 				if (!character) continue;
 				const avatarX = x + j * (avatarSpacing / node.avatars.length);
-				const avatarY = mode == 3 ? 630 + 65 : 630;
+				const avatarY = isPureFictionTierceLayout
+					? y + 60
+					: isApocalypticTierceLayout
+						? y + 78
+						: mode == 3
+							? 630 + 65
+							: 630;
 
 				const bg = character.rarity == 4 ? char4StarBg : char5StarBg;
 				if (bg) {

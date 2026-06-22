@@ -1303,7 +1303,8 @@ async function handleForgottenHall(
 											parseInt(node?.score) || 0;
 										const totalScore =
 											floorScore(floor.node_1) +
-											floorScore(floor.node_2);
+											floorScore(floor.node_2) +
+											floorScore(floor.node_3);
 										return {
 											label: `${floor.name.replace(
 												/<\/?[^>]+(>|$)/g,
