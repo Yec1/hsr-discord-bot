@@ -1664,17 +1664,20 @@ async function drawForgottenHallImage(
 		ctx.stroke();
 
 		const summaryHasExtraStar =
-			(mode == 2 || mode == 3) && Number((res as ForgottenHallResponse).extra_star_num || 0) > 0;
-		const summaryPaddingX = 24;
-		const summaryStarGapToDivider = 24;
-		const summaryRightShiftX = summaryHasExtraStar ? 10 : 0;
+			Number((res as ForgottenHallResponse).extra_star_num || 0) > 0;
+		
+		ctx.font = "38px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+		const starText = `× ${res.star_num}`;
+		const textWidth = ctx.measureText(starText).width;
+
+		const totalContentWidth = 54 + 10 + textWidth + (summaryHasExtraStar ? 15 + 1 + 15 + 54 : 0);
+		const summaryGroupStartX = box1X + ((lineX - box1X) - totalContentWidth) / 2;
+		
 		const summaryStarY = 220;
-		const summaryStarX = box1X + summaryPaddingX;
-		const summaryExtraStarX = lineX - summaryPaddingX - 54 + summaryRightShiftX;
-		const summaryDividerX = summaryExtraStarX - summaryStarGapToDivider;
-		const summaryTextX = summaryHasExtraStar
-			? (summaryStarX + 54 + summaryDividerX) / 2
-			: (box1X + lineX) / 2;
+		const summaryStarX = summaryGroupStartX;
+		const summaryTextX = summaryStarX + 54 + 10 + textWidth / 2;
+		const summaryDividerX = summaryStarX + 54 + 10 + textWidth + 15;
+		const summaryExtraStarX = summaryDividerX + 1 + 15;
 
 		const star = await getCachedImage(
 			"./src/assets/image/forgottenhall/star.png"
@@ -1686,7 +1689,7 @@ async function drawForgottenHallImage(
 		ctx.font = "38px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
-		ctx.fillText(`× ${res.star_num}`, summaryTextX, 263);
+		ctx.fillText(starText, summaryTextX, 263);
 
 		if (summaryHasExtraStar) {
 			ctx.strokeStyle = "rgba(255,255,255,.25)";
@@ -1974,48 +1977,58 @@ async function drawForgottenHallImage(
 		const nodeCount = floor.node_3 ? 3 : 2;
 		const isPureFictionTierceLayout = mode == 2 && nodeCount === 3;
 		const isApocalypticTierceLayout = mode == 3 && nodeCount === 3;
+		const isForgottenHallTierceLayout = mode == 1 && nodeCount === 3;
 
 		if (star) {
-			// Draw normal stars from right to left
-			// If we have an extra star, it sits on the rightmost position, and normal stars shift left
 			const hasExtraStar =
-				(mode == 2 || mode == 3) &&
 				nodeCount === 3 &&
 				(Number(floor.star_num) > 3 || Number((floor as any).extra_star_num) > 0);
 			const normalStarsCount = Math.min(Number(floor.star_num), 3);
+			const rightmostX = 1653;
 			
 			if (hasExtraStar) {
-				ctx.strokeStyle = "rgba(255,255,255,.22)";
-				ctx.lineWidth = 1;
-				ctx.beginPath();
-				ctx.moveTo(1637, (mode == 3 ? 435 + 65 : 435) + 6);
-				ctx.lineTo(1637, (mode == 3 ? 435 + 65 : 435) + 62);
-				ctx.stroke();
-
 				const extraStar = await getCachedImage(
 					"./src/assets/image/forgottenhall/star_extra.png"
 				);
 				if (extraStar) {
 					(ctx as any).drawImage(
 						extraStar,
-						1650 + 3,
+						rightmostX,
 						mode == 3 ? 435 + 65 : 435,
 						68,
 						68
 					);
 				}
-			}
 
-			const starOffset = hasExtraStar ? 68 : 0;
-			
-			for (let i = 0; i < normalStarsCount; i++) {
-				(ctx as any).drawImage(
-					star,
-					1650 - (i * 68 - 3) - starOffset,
-					mode == 3 ? 435 + 65 : 435,
-					68,
-					68
-				);
+				const dividerX = rightmostX - 18;
+
+				ctx.strokeStyle = "rgba(255,255,255,.22)";
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(dividerX, (mode == 3 ? 435 + 65 : 435) + 6);
+				ctx.lineTo(dividerX, (mode == 3 ? 435 + 65 : 435) + 62);
+				ctx.stroke();
+
+				const extraStarOffset = 104; 
+				for (let i = 0; i < normalStarsCount; i++) {
+					(ctx as any).drawImage(
+						star,
+						rightmostX - extraStarOffset - (i * 68),
+						mode == 3 ? 435 + 65 : 435,
+						68,
+						68
+					);
+				}
+			} else {
+				for (let i = 0; i < normalStarsCount; i++) {
+					(ctx as any).drawImage(
+						star,
+						rightmostX - (i * 68),
+						mode == 3 ? 435 + 65 : 435,
+						68,
+						68
+					);
+				}
 			}
 		}
 
@@ -2036,12 +2049,13 @@ async function drawForgottenHallImage(
 			const node = floor[`node_${i}` as keyof FloorDetail] as NodeInfo;
 			if (!node) continue;
 
-			if ((isPureFictionTierceLayout || isApocalypticTierceLayout) && i < nodeCount) {
+			if (nodeCount === 3 && i < nodeCount) {
 				ctx.strokeStyle = "rgba(255,255,255,.18)";
 				ctx.lineWidth = 1;
 				ctx.beginPath();
 				ctx.moveTo(x + 520, y - 10);
-				ctx.lineTo(x + 520, y + 310);
+				const dividerBottom = (mode === 2 || mode === 3) ? y + 310 : y + 210;
+				ctx.lineTo(x + 520, dividerBottom);
 				ctx.stroke();
 			}
 
@@ -2052,7 +2066,7 @@ async function drawForgottenHallImage(
 			const teamSetupText = `${tr("forgottenHall_TeamSetup", { z: i.toString() })}`;
 			let titleX = x;
 
-			if ((mode === 2 || mode === 3) && i === 3) {
+			if (nodeCount === 3 && i === 3) {
 				const node3Bg = await getCachedImage("./src/assets/image/forgottenhall/memory_node3_time_bg.png");
 				const node3Icon = await getCachedImage("./src/assets/image/forgottenhall/memory_node3_time_icon.png");
 
@@ -2162,7 +2176,7 @@ async function drawForgottenHallImage(
 				const character = node.avatars[j];
 				if (!character) continue;
 				const avatarX = x + j * (avatarSpacing / node.avatars.length);
-				const avatarY = isPureFictionTierceLayout
+				const avatarY = isPureFictionTierceLayout || isForgottenHallTierceLayout
 					? y + 60
 					: isApocalypticTierceLayout
 						? y + 78
