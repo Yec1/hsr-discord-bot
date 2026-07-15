@@ -27,6 +27,8 @@ interface AnomalyRankRecord {
 }
 
 const ANOMALY_BADGE_AUTO_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const anomalyBadgeSyncInFlight = new Map<string, Promise<number>>();
+let anomalyBadgeSweepRunning = false;
 
 function toUnixTimestamp(
 	time?: {
@@ -48,14 +50,12 @@ function toUnixTimestamp(
 	return Math.floor(date.getTime() / 1000);
 }
 
-async function tryAutoSyncCurrentAnomalyBadge(
-	interaction: any,
-	tr: any,
-	user: any,
+async function performAnomalyBadgeSync(
+	userId: string,
 	uid: string,
 	accountIndex: number
-): Promise<void> {
-	if (!uid) return;
+): Promise<number> {
+	if (!uid) return 0;
 
 	const nowSec = Math.floor(Date.now() / 1000);
 	const nowMs = Date.now();
@@ -73,33 +73,32 @@ async function tryAutoSyncCurrentAnomalyBadge(
 		typeof lastSyncAt === "number" &&
 		nowMs - lastSyncAt < ANOMALY_BADGE_AUTO_SYNC_INTERVAL_MS
 	) {
-		return;
+		return 0;
 	}
-
-	await database.set(syncAtKey, nowMs);
 
 	try {
 		const hsr = await getUserHSRData(
-			interaction,
-			tr,
-			user.id,
+			undefined as any,
+			() => "",
+			userId,
 			accountIndex,
-			{ suppressErrorReply: true }
+			{ suppressErrorReply: true, validationType: "record" }
 		);
 
-		if (!hsr) return;
+		if (!hsr) return 0;
 
 		const anomalyRes = (await hsr.record.forgottenHall(
 			4 as any,
 			1 as any
 		)) as any;
 		const challengePeakRecords = anomalyRes?.challenge_peak_records;
+		await database.set(syncAtKey, nowMs);
 
 		if (
 			!Array.isArray(challengePeakRecords) ||
 			!challengePeakRecords.length
 		) {
-			return;
+			return 0;
 		}
 
 		// 遍歷所有期，全部 upsert 進去（永久保留）
@@ -156,8 +155,51 @@ async function tryAutoSyncCurrentAnomalyBadge(
 		console.log(
 			`[Profile] Sync done: ${upsertRecords.length} badge(s) stored for UID ${uid}`
 		);
+		return upsertRecords.length;
 	} catch (error) {
 		console.warn("[Profile] Auto sync anomaly badge failed:", error);
+		return 0;
+	}
+}
+
+async function tryAutoSyncCurrentAnomalyBadge(
+	userId: string,
+	uid: string,
+	accountIndex: number
+): Promise<number> {
+	const running = anomalyBadgeSyncInFlight.get(uid);
+	if (running) return running;
+
+	const task = performAnomalyBadgeSync(userId, uid, accountIndex);
+	anomalyBadgeSyncInFlight.set(uid, task);
+	try {
+		return await task;
+	} finally {
+		anomalyBadgeSyncInFlight.delete(uid);
+	}
+}
+
+async function syncAllBoundAnomalyBadges(): Promise<void> {
+	if (anomalyBadgeSweepRunning) return;
+	anomalyBadgeSweepRunning = true;
+
+	try {
+		const userIds = getBoundUserIds(await database.all());
+		let checked = 0;
+		for (const userId of userIds) {
+			const accounts = await getLegacyAccounts(database, userId);
+			for (let accountIndex = 0; accountIndex < accounts.length; accountIndex++) {
+				const account = accounts[accountIndex];
+				if (!account || account.invalid || !account.uid || !account.cookie) continue;
+				await tryAutoSyncCurrentAnomalyBadge(userId, account.uid, accountIndex);
+				checked++;
+			}
+		}
+		console.log(`[Profile] Automatic anomaly badge sweep checked ${checked} binding(s)`);
+	} catch (error) {
+		console.warn("[Profile] Automatic anomaly badge sweep failed:", error);
+	} finally {
+		anomalyBadgeSweepRunning = false;
 	}
 }
 
@@ -185,7 +227,13 @@ import { getRelicsScore } from "./relics.js";
 import emoji from "../../assets/emoji.js";
 import Queue from "queue";
 import axios from "axios";
-import { writeFile, mkdir, access } from "fs/promises";
+import {
+	downloadImage,
+	downloadImages,
+	downloadCharacterPortrait,
+	downloadCharacterPortraits
+} from "@/utilities/hsr/profileImageDownloads.js";
+import { writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import {
 	loadLightConeData,
@@ -193,6 +241,10 @@ import {
 	loadPathsData,
 	loadElementsData
 } from "./jsonManager.js";
+import {
+	getBoundUserIds,
+	getLegacyAccounts
+} from "@/utilities/accountStore.js";
 
 // 類型定義
 interface PlayerData {
@@ -221,6 +273,7 @@ interface Character {
 	preview?: string;
 	portrait?: string;
 	image?: string;
+	figure_path?: string;
 	element:
 		| {
 				id: string;
@@ -314,13 +367,17 @@ interface LightCone {
 
 interface Skill {
 	id?: string;
+	point_id?: string;
 	point_type: number;
 	item_url?: string;
-	icon: string;
+	icon?: string;
 	type?: string;
 	type_text?: string;
 	remake?: string;
 	level: number;
+	is_activated?: boolean;
+	anchor?: string;
+	skill_stages?: Array<{ name?: string; remake?: string }>;
 }
 
 interface SkillTree {
@@ -330,13 +387,16 @@ interface SkillTree {
 	max_level: number;
 	icon: string;
 	parent: string | null;
+	is_activated?: boolean;
+	point_type?: number;
 }
 
 interface ServantSkill {
 	item_url?: string;
-	icon: string;
+	icon?: string;
 	remake: string;
 	level: number;
+	is_activated?: boolean;
 }
 
 interface PlayerActivity {
@@ -393,26 +453,6 @@ interface ImageResult {
 	usedFallback: boolean;
 }
 
-interface RelicScore {
-	totalScore: string;
-	totalGrade: {
-		grade: string;
-		color: string;
-	};
-	[i: number]: {
-		scoreN: number;
-		grade: {
-			grade: string;
-			color: string;
-		};
-	};
-}
-
-interface TextSegment {
-	text: string;
-	color: string;
-}
-
 const db = database;
 
 const DRAW_QUEUE_MAX = 50;
@@ -431,32 +471,13 @@ const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master";
 
 // 圖片下載配置
-const IMAGE_DOWNLOAD_CONFIG = {
-	character_portrait: {
-		remoteBase: `${image_Header}/image/character_portrait/`,
-		localDir: "./src/assets/image/character_portrait",
-		extension: ".png"
-	}
-};
+// Portrait downloads live in profileImageDownloads.ts.
 
 // 圖片下載緩存
-const imageDownloadCache = new Map<string, Promise<string | null>>();
-
 // 確保目錄存在
-async function ensureImageDir(localDir: string): Promise<void> {
-	try {
-		await access(localDir);
-	} catch {
-		await mkdir(localDir, { recursive: true });
-		console.log(`[Image Download] Created directory: ${localDir}`);
-	}
-}
-
 // 通用圖片下載函數
-async function downloadImage(
-	imageType: keyof typeof IMAGE_DOWNLOAD_CONFIG,
-	imageId: string
-): Promise<string | null> {
+/* legacy portrait downloader removed; kept in history only. */
+/*
 	const config = IMAGE_DOWNLOAD_CONFIG[imageType];
 	const remoteUrl = `${config.remoteBase}${imageId}${config.extension}`;
 	const localPath = `${config.localDir}/${imageId}${config.extension}`;
@@ -513,13 +534,13 @@ async function downloadImage(
 }
 
 // 批量下載圖片
-async function downloadImages(
+async function legacyDownloadImages(
 	imageType: keyof typeof IMAGE_DOWNLOAD_CONFIG,
 	imageIds: string[]
 ): Promise<void> {
 	const downloadPromises = imageIds.map(async imageId => {
 		try {
-			await downloadImage(imageType, imageId);
+			await legacyDownloadImage(imageType, imageId);
 		} catch (error) {
 			console.warn(
 				`[Image Download] Failed to download ${imageType}:${imageId}`,
@@ -537,21 +558,23 @@ async function downloadImages(
 }
 
 // 下載角色頭像 (使用通用函數)
-async function downloadCharacterPortrait(
+async function legacyDownloadCharacterPortrait(
 	characterId: string
 ): Promise<string | null> {
-	return await downloadImage("character_portrait", characterId);
+	return await legacyDownloadImage("character_portrait", characterId);
 }
 
 // 批量下載角色頭像 (使用通用函數)
-async function downloadCharacterPortraits(
+async function legacyDownloadCharacterPortraits(
 	characters: Character[]
 ): Promise<void> {
 	const characterIds = characters.map(char => char.id);
-	await downloadImages("character_portrait", characterIds);
+	await legacyDownloadImages("character_portrait", characterIds);
 }
 
 // 處理角色皮膚圖片
+*/
+
 async function handleCharacterSkin(character: Character): Promise<string> {
 	// const localSkinPath = `./src/assets/image/character_skin/${character.id}.webp`;
 
@@ -831,7 +854,6 @@ async function drawEidolonIcons(
 			const ly = cy - lh * 0.1; // slightly below centre
 			const shackleW = lw * 0.55;
 			const shackleH = lh * 1.1;
-			const shackleX = cx - shackleW / 2;
 			const shackleY = ly - shackleH;
 
 			ctx.strokeStyle = "rgba(255,255,255,0.85)";
@@ -1015,10 +1037,6 @@ GlobalFonts.registerFromPath(
 	"Cinzel"
 );
 
-function containsChinese(text: string): boolean {
-	return /[\u4e00-\u9fa5]/.test(text);
-}
-
 // 渲染屬性列表的輔助函數
 async function renderAttributesList(
 	ctx: any,
@@ -1118,6 +1136,424 @@ function drawSeparatorLine(
 	ctx.moveTo(startX, y);
 	ctx.lineTo(endX, y);
 	ctx.stroke();
+}
+
+function drawProfileLock(ctx: any, cx: number, cy: number, size: number): void {
+	const bodyWidth = size * 0.3;
+	const bodyHeight = size * 0.23;
+	const bodyX = cx - bodyWidth / 2;
+	const bodyY = cy - bodyHeight * 0.05;
+	ctx.save();
+	ctx.strokeStyle = "rgba(255,255,255,0.88)";
+	ctx.fillStyle = "rgba(255,255,255,0.88)";
+	ctx.lineWidth = Math.max(2, size * 0.065);
+	ctx.lineCap = "round";
+	ctx.beginPath();
+	ctx.arc(cx, bodyY - bodyHeight * 0.42, bodyWidth * 0.28, Math.PI, 0);
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.roundRect(bodyX, bodyY, bodyWidth, bodyHeight, size * 0.055);
+	ctx.fill();
+	ctx.restore();
+}
+
+function profileSkillLabel(skill: Skill | ServantSkill): string {
+	return (
+		("type_text" in skill && skill.type_text) ||
+		skill.remake ||
+		("type" in skill && skill.type) ||
+		""
+	);
+}
+
+function isTechniqueSkill(skill: Skill): boolean {
+	const label = profileSkillLabel(skill).toLowerCase();
+	return label === "秘技" || label.includes("technique");
+}
+
+function profileSkillUrl(skill: Skill | ServantSkill): string | null {
+	const icon = skill.item_url || skill.icon;
+	if (!icon) return null;
+	return icon.startsWith("http") ? icon : `${image_Header}/${icon}`;
+}
+
+async function loadProfileSkillImage(
+	skill: Skill | ServantSkill
+): Promise<any> {
+	const url = profileSkillUrl(skill);
+	if (!url) return null;
+	return (await loadImageAsync(url))?.image || null;
+}
+
+function anchorNumber(anchor?: string): number {
+	return Number(anchor?.replace(/\D/g, "")) || 0;
+}
+
+function colorWithAlpha(color: string, alpha: number): string {
+	const hex = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(color);
+	if (!hex) return color;
+	return `rgba(${parseInt(hex[1]!, 16)},${parseInt(hex[2]!, 16)},${parseInt(hex[3]!, 16)},${alpha})`;
+}
+
+function lightenColor(color: string, amount = 0.35): string {
+	const hex = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(color);
+	if (!hex) return color;
+	const channel = (value: string) =>
+		Math.round(parseInt(value, 16) + (255 - parseInt(value, 16)) * amount)
+			.toString(16)
+			.padStart(2, "0");
+	return `#${channel(hex[1]!)}${channel(hex[2]!)}${channel(hex[3]!)}`;
+}
+
+async function drawProfileTraces(
+	ctx: any,
+	character: Character,
+	tr: any,
+	userLang: string
+): Promise<void> {
+	const elementId = (
+		typeof character.element === "string"
+			? character.element
+			: character.element?.id || "physical"
+	).toLowerCase();
+	const elementKey =
+		elementId === "lightning" || elementId === "thunder"
+			? "Thunder"
+			: elementId.charAt(0).toUpperCase() + elementId.slice(1);
+	const elements = await loadElementsData(userLang);
+	const traceColor = lightenColor(
+		(typeof character.element === "object" && character.element?.color) ||
+			elements?.[elementKey]?.color ||
+			"#BEBEBE"
+	);
+	const allSkills = [...(character.skills || [])];
+	for (const tree of character.skill_trees || []) {
+		const id = String(tree.id);
+		const isElation = id.endsWith("420") || tree.icon?.includes("_elation");
+		const isMemospriteSkill =
+			id.endsWith("301") || tree.icon?.includes("memosprite_skill");
+		const isMemospriteTalent =
+			id.endsWith("302") || tree.icon?.includes("memosprite_talent");
+		const label = isElation
+			? tr("profile_ElationSkill")
+			: isMemospriteSkill
+				? tr("profile_MemospriteSkill")
+				: isMemospriteTalent
+					? tr("profile_MemospriteTalent")
+					: null;
+		if (
+			!label ||
+			allSkills.some(skill => profileSkillLabel(skill) === label)
+		)
+			continue;
+		allSkills.push({
+			id,
+			point_type: isElation ? 4 : 10,
+			icon: tree.icon,
+			level: tree.level || 1,
+			type_text: label,
+			is_activated: tree.is_activated ?? tree.level > 0
+		});
+	}
+
+	const isMemosprite = (skill: Skill) => {
+		const label = profileSkillLabel(skill);
+		return (
+			skill.type === "MemospriteSkill" ||
+			skill.type === "MemospriteTalent" ||
+			label === tr("profile_MemospriteSkill") ||
+			label === tr("profile_MemospriteTalent")
+		);
+	};
+	const isElation = (skill: Skill) => {
+		const label = profileSkillLabel(skill);
+		return (
+			skill.point_type === 4 ||
+			skill.type === "ElationSkill" ||
+			label === tr("profile_ElationSkill") ||
+			label === "Elation Skill"
+		);
+	};
+	const regularSkills = allSkills.filter(
+		skill =>
+			!isTechniqueSkill(skill) &&
+			!isMemosprite(skill) &&
+			!isElation(skill) &&
+			(skill.point_type === 2 ||
+				(!skill.point_type && Boolean(profileSkillLabel(skill))))
+	);
+	const hasServantSkills = Boolean(
+		character.servant_detail?.servant_skills?.length
+	);
+	const specialSkills: Skill[] = [];
+	for (const skill of allSkills) {
+		if (!isElation(skill) && (hasServantSkills || !isMemosprite(skill)))
+			continue;
+		const label = profileSkillLabel(skill);
+		if (!specialSkills.some(item => profileSkillLabel(item) === label))
+			specialSkills.push(skill);
+	}
+	const servantSkills = character.servant_detail?.servant_skills || [];
+	const mainSkills: Array<Skill | ServantSkill> = [
+		...regularSkills,
+		...specialSkills,
+		...servantSkills
+	];
+
+	let majorTraces: Skill[] = allSkills.filter(
+		skill => skill.point_type === 3
+	);
+	let minorTraces: Skill[] = allSkills.filter(
+		skill => skill.point_type === 1
+	);
+	if (!majorTraces.length && !minorTraces.length) {
+		const fallbackNodes = (character.skill_trees || [])
+			.filter(tree => {
+				const anchor = anchorNumber(tree.anchor);
+				return (
+					anchor >= 6 &&
+					!tree.icon?.includes("memosprite") &&
+					!tree.icon?.includes("_elation")
+				);
+			})
+			.map(tree => ({
+				id: String(tree.id),
+				point_type: anchorNumber(tree.anchor) <= 8 ? 3 : 1,
+				icon: tree.icon,
+				level: tree.level,
+				anchor: tree.anchor,
+				is_activated: tree.is_activated ?? tree.level > 0
+			}));
+		majorTraces = fallbackNodes.filter(skill => skill.point_type === 3);
+		minorTraces = fallbackNodes.filter(skill => skill.point_type === 1);
+	}
+
+	const [mainImages, majorImages, minorImages] = await Promise.all([
+		Promise.all(mainSkills.map(loadProfileSkillImage)),
+		Promise.all(majorTraces.map(loadProfileSkillImage)),
+		Promise.all(minorTraces.map(loadProfileSkillImage))
+	]);
+	const mainSize = mainSkills.length > 6 ? 62 : 68;
+	const mainCell = mainSize + 10;
+	const majorCell = 56;
+	const firstWidth =
+		mainSkills.length * mainCell + majorTraces.length * majorCell;
+	let cursorX = 850 - firstWidth / 2;
+	const firstCenters: Array<{ x: number; y: number }> = [];
+	for (let i = 0; i < mainSkills.length; i++) {
+		firstCenters.push({
+			x: cursorX + mainCell / 2,
+			y: 844 + Math.sin(i * 0.9) * 6
+		});
+		cursorX += mainCell;
+	}
+	for (let i = 0; i < majorTraces.length; i++) {
+		const index = mainSkills.length + i;
+		firstCenters.push({
+			x: cursorX + majorCell / 2,
+			y: 844 + Math.sin(index * 0.9) * 6
+		});
+		cursorX += majorCell;
+	}
+	if (firstCenters.length > 1) {
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.48);
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(firstCenters[0]!.x, firstCenters[0]!.y);
+		for (const point of firstCenters.slice(1)) ctx.lineTo(point.x, point.y);
+		ctx.stroke();
+	}
+
+	for (let i = 0; i < mainSkills.length; i++) {
+		const skill = mainSkills[i]!;
+		const center = firstCenters[i]!;
+		const unlocked = skill.is_activated !== false;
+		ctx.fillStyle = "rgba(8,10,24,0.9)";
+		ctx.beginPath();
+		ctx.arc(center.x, center.y, mainSize / 2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = "rgba(226,215,255,0.82)";
+		ctx.lineWidth = 2;
+		ctx.stroke();
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.9);
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.arc(
+			center.x,
+			center.y,
+			mainSize / 2 + 6,
+			Math.PI * 0.12,
+			Math.PI * 1.56
+		);
+		ctx.stroke();
+		ctx.globalAlpha = unlocked ? 1 : 0.22;
+		if (mainImages[i]) {
+			const iconSize = mainSize - 16;
+			ctx.drawImage(
+				mainImages[i],
+				center.x - iconSize / 2,
+				center.y - iconSize / 2,
+				iconSize,
+				iconSize
+			);
+		}
+		ctx.globalAlpha = 1;
+		if (!unlocked) {
+			ctx.fillStyle = "rgba(5,7,18,0.55)";
+			ctx.beginPath();
+			ctx.arc(center.x, center.y, mainSize / 2 - 1, 0, Math.PI * 2);
+			ctx.fill();
+			drawProfileLock(ctx, center.x, center.y, 42);
+		}
+		let label = profileSkillLabel(skill);
+		if (userLang === "en") {
+			label = label
+				.replace(/Memosprite Talent/i, "M.Talent")
+				.replace(/Memosprite Skill/i, "M.Skill")
+				.replace(/Technique/i, "Tech")
+				.replace(/Ultimate/i, "Ult");
+		}
+		let labelSize = 18;
+		setupFont(ctx, labelSize, true);
+		while (ctx.measureText(label).width > mainCell - 4 && labelSize > 15) {
+			labelSize--;
+			setupFont(ctx, labelSize, true);
+		}
+		ctx.textAlign = "center";
+		ctx.fillStyle = "white";
+		ctx.fillText(label, center.x, 906);
+		setupFont(ctx, 16, true);
+		ctx.fillStyle = "#DCC491";
+		ctx.fillText(`${tr("level")} ${skill.level || 1}`, center.x, 930);
+	}
+
+	for (let i = 0; i < majorTraces.length; i++) {
+		const skill = majorTraces[i]!;
+		const center = firstCenters[mainSkills.length + i]!;
+		const radius = 25;
+		ctx.fillStyle = "rgba(8,10,24,0.9)";
+		ctx.beginPath();
+		ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = "#DCC491";
+		ctx.lineWidth = 2;
+		ctx.stroke();
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.85);
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.arc(center.x, center.y, radius + 5, Math.PI * 0.12, Math.PI * 1.56);
+		ctx.stroke();
+		ctx.globalAlpha = skill.is_activated === false ? 0.22 : 1;
+		if (majorImages[i])
+			ctx.drawImage(majorImages[i], center.x - 19, center.y - 19, 38, 38);
+		ctx.globalAlpha = 1;
+		if (skill.is_activated === false) {
+			ctx.fillStyle = "rgba(5,7,18,0.55)";
+			ctx.beginPath();
+			ctx.arc(center.x, center.y, radius - 1, 0, Math.PI * 2);
+			ctx.fill();
+			drawProfileLock(ctx, center.x, center.y, 34);
+		}
+	}
+
+	const minorCell = Math.min(48, 560 / Math.max(1, minorTraces.length));
+	const minorStartX = 850 - ((minorTraces.length - 1) * minorCell) / 2;
+	if (minorTraces.length > 1) {
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.42);
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(minorStartX, 966);
+		ctx.lineTo(minorStartX + (minorTraces.length - 1) * minorCell, 966);
+		ctx.stroke();
+	}
+	for (let i = 0; i < minorTraces.length; i++) {
+		const skill = minorTraces[i]!;
+		const x = minorStartX + i * minorCell;
+		const y = 966 + Math.sin(i * 0.85) * 4;
+		ctx.fillStyle = "rgba(8,10,24,0.9)";
+		ctx.beginPath();
+		ctx.arc(x, y, 18, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = "rgba(226,215,255,0.72)";
+		ctx.lineWidth = 1.5;
+		ctx.stroke();
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.75);
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(x, y, 22, Math.PI * 0.12, Math.PI * 1.56);
+		ctx.stroke();
+		ctx.globalAlpha = skill.is_activated === false ? 0.22 : 1;
+		if (minorImages[i])
+			ctx.drawImage(minorImages[i], x - 13, y - 13, 26, 26);
+		ctx.globalAlpha = 1;
+		if (skill.is_activated === false) {
+			ctx.fillStyle = "rgba(5,7,18,0.55)";
+			ctx.beginPath();
+			ctx.arc(x, y, 17, 0, Math.PI * 2);
+			ctx.fill();
+			drawProfileLock(ctx, x, y, 25);
+		}
+	}
+	ctx.textAlign = "left";
+	ctx.fillStyle = "white";
+}
+
+function visibleCharacterBounds(image: any) {
+	const sample = createCanvas(image.width, image.height);
+	const sampleCtx = sample.getContext("2d") as any;
+	sampleCtx.drawImage(image, 0, 0);
+	const pixels = sampleCtx.getImageData(0, 0, image.width, image.height).data;
+	const step = Math.max(
+		1,
+		Math.floor(Math.max(image.width, image.height) / 900)
+	);
+	let left = image.width;
+	let top = image.height;
+	let right = 0;
+	let bottom = 0;
+	for (let y = 0; y < image.height; y += step) {
+		for (let x = 0; x < image.width; x += step) {
+			if ((pixels[(y * image.width + x) * 4 + 3] || 0) < 12) continue;
+			left = Math.min(left, x);
+			right = Math.max(right, x);
+			top = Math.min(top, y);
+			bottom = Math.max(bottom, y);
+		}
+	}
+	if (left > right || top > bottom)
+		return { x: 0, y: 0, w: image.width, h: image.height };
+	const pad = Math.round(Math.max(right - left, bottom - top) * 0.025);
+	return {
+		x: Math.max(0, left - pad),
+		y: Math.max(0, top - pad),
+		w: Math.min(image.width, right + pad) - Math.max(0, left - pad),
+		h: Math.min(image.height, bottom + pad) - Math.max(0, top - pad)
+	};
+}
+
+function drawCharacterPortrait(
+	ctx: any,
+	image: any,
+	x: number,
+	y: number,
+	w: number,
+	h: number
+): void {
+	const bounds = visibleCharacterBounds(image);
+	const scale = Math.min(w / bounds.w, h / bounds.h);
+	const drawWidth = bounds.w * scale;
+	const drawHeight = bounds.h * scale;
+	ctx.drawImage(
+		image,
+		bounds.x,
+		bounds.y,
+		bounds.w,
+		bounds.h,
+		x + (w - drawWidth) / 2,
+		y + h - drawHeight,
+		drawWidth,
+		drawHeight
+	);
 }
 
 async function saveLeaderboard(
@@ -1457,9 +1893,7 @@ async function handleProfileDraw(
 				.catch(() => {});
 
 			await tryAutoSyncCurrentAnomalyBadge(
-				interaction,
-				tr,
-				user,
+				user.id,
 				uid,
 				accountIndex
 			);
@@ -2039,15 +2473,13 @@ async function drawMainImage(
 			`${playerData.player.uid}.anomalyRankIcon`
 		)) as AnomalyRankRecord[] | null;
 
-		const badgeSize = 46;
+		const badgeSize = 40;
 		const badgeSpacing = 8;
-		const availableWidth = xRange.end - xRange.start; // 690px
 		const uidText = `UID ${playerData.player.uid}`;
 
 		// 計算 UID 文字寬度
 		setupNumberFont(24);
 		ctx.fillStyle = "lightgray";
-		const uidWidth = ctx.measureText(uidText).width;
 
 		if (anomalyRankRecords && anomalyRankRecords.length > 0) {
 			// 按挑戰時間排序，最新的在前
@@ -2057,22 +2489,22 @@ async function drawMainImage(
 
 			// 最多顯示 5 個徽章
 			const displayRecords = anomalyRankRecords.slice(0, 5);
-			const totalBadgeWidth =
-				displayRecords.length * badgeSize +
-				(displayRecords.length - 1) * badgeSpacing;
-			const totalContentWidth = uidWidth + totalBadgeWidth + 20; // UID 和徽章間距
-
 			// 計算起始位置（居中對齊）
-			const startX =
-				xRange.start + (availableWidth - totalContentWidth) / 2;
-			const uidX = startX;
-			const badgeStartX = startX + uidWidth + 22.5;
-			const contentY = 290; // UID 和徽章的垂直位置
-			const badgeY = contentY - badgeSize / 2 - 7.5;
+			setupMainFont(40, true);
+			const nameMetrics = ctx.measureText(playerData.player.nickname);
+			const nameWidth = nameMetrics.width;
+			const badgeStartX = 960 + nameWidth / 2 + 18;
+			const badgeY =
+				245 +
+				(nameMetrics.actualBoundingBoxDescent -
+					nameMetrics.actualBoundingBoxAscent) /
+					2 -
+				badgeSize / 2;
 
 			// 繪製 UID
-			ctx.textAlign = "left";
-			ctx.fillText(uidText, uidX, contentY);
+			ctx.textAlign = "center";
+			setupNumberFont(24);
+			ctx.fillText(uidText, 960, 300);
 
 			// 繪製徽章
 			for (let i = 0; i < displayRecords.length; i++) {
@@ -2453,7 +2885,9 @@ async function drawCharacterImage(
 		let characterFallbackUrl: string | null = null;
 		const isSkinImage = character?.image?.includes("skin");
 		if (isSkinImage) {
-			characterImageUrl = await handleCharacterSkin(character);
+			// ponytail: HoYoLAB omits the skin ID; current playable skins all use variant 01.
+			characterImageUrl = `https://enka.network/ui/hsr/SpriteOutput/AvatarDrawCard/AvatarSkin/1${character.id}01.png`;
+			characterFallbackUrl = character.image || null;
 		} else {
 			const portraitResult = await handleCharacterPortrait(
 				character,
@@ -2481,25 +2915,7 @@ async function drawCharacterImage(
 
 		// 绘制角色图片 - 根据图片类型调整显示方式
 		if (characterImageResult) {
-			const originalWidth = characterImageResult.width;
-			const originalHeight = characterImageResult.height;
-			const aspectRatio = originalWidth / originalHeight;
-
-			if (aspectRatio > 0.8) {
-				const scaledWidth = 768 * aspectRatio;
-				ctx.drawImage(characterImageResult, 475, 0, scaledWidth, 768);
-			} else {
-				const size = 0.8;
-				const scaledHeight = (768 * size) / aspectRatio;
-				const xOffset = 475 + 768 * ((1 - size) / 2);
-				ctx.drawImage(
-					characterImageResult,
-					xOffset,
-					-220,
-					768 * size,
-					scaledHeight
-				);
-			}
+			drawCharacterPortrait(ctx, characterImageResult, 475, 0, 720, 750);
 		}
 
 		// 优化字体大小计算
@@ -3231,393 +3647,15 @@ async function drawCharacterImage(
 
 		ctx.fillStyle = "white";
 
-		const hasServantSkills =
-			(character.servant_detail?.servant_skills?.length || 0) > 0;
-		const servantSkillsCount = hasServantSkills
-			? character.servant_detail?.servant_skills?.length || 0
-			: 0;
-
-		let allSkills = [...(character.skills || [])];
-
-		// 處理 Mihomo API 資料結構中的特殊技能 (憶靈/歡愉)
-		if (character.skill_trees && character.skill_trees.length > 0) {
-			character.skill_trees.forEach(treeNode => {
-				const nodeId = treeNode.id.toString();
-				const icon = treeNode.icon;
-
-				// 1. 補齊已有技能但沒圖示的情況 (如歡愉技 150220 -> 1502420)
-				if (nodeId.endsWith("420") || icon?.includes("_elation")) {
-					const existingElation = allSkills.find(
-						s =>
-							s.type_text === tr("profile_ElationSkill") ||
-							s.type_text === "Elation Skill" ||
-							s.id?.toString().endsWith("20")
-					);
-					if (existingElation && !existingElation.icon) {
-						existingElation.icon = icon;
-					} else if (!existingElation) {
-						// 如果 skills 陣列中完全沒有歡愉技，則從技能樹補入
-						allSkills.push({
-							id: nodeId,
-							level: treeNode.level || 1,
-							icon: icon,
-							type_text: tr("profile_ElationSkill"),
-							point_type: 4
-						} as any);
-					}
-				}
-
-				// 2. 處理憶靈技能 (通常僅存在於 skill_trees 中，ID 以 301/302 結尾)
-				if (
-					nodeId.endsWith("301") ||
-					icon?.includes("memosprite_skill")
-				) {
-					if (
-						!allSkills.some(
-							s =>
-								s.icon === icon ||
-								s.type_text === tr("profile_MemospriteSkill")
-						)
-					) {
-						allSkills.push({
-							id: nodeId,
-							level: treeNode.level || 1,
-							icon: icon,
-							type_text: tr("profile_MemospriteSkill"),
-							point_type: 10 // 自定義標記
-						} as any);
-					}
-				}
-				if (
-					nodeId.endsWith("302") ||
-					icon?.includes("memosprite_talent")
-				) {
-					if (
-						!allSkills.some(
-							s =>
-								s.icon === icon ||
-								s.type_text === tr("profile_MemospriteTalent")
-						)
-					) {
-						allSkills.push({
-							id: nodeId,
-							level: treeNode.level || 1,
-							icon: icon,
-							type_text: tr("profile_MemospriteTalent"),
-							point_type: 11 // 自定義標記
-						} as any);
-					}
-				}
-			});
-		}
-
-		// 過濾主要技能（普攻、戰技、終結技、天賦、秘技）- 最多5個
-		const basicSkills = allSkills
-			.filter(skill => {
-				// point_type 2 是主要技能（戰鬥技能）
-				if (skill.point_type === 2) {
-					return true;
-				}
-
-				// 對於沒有 point_type 的舊格式，檢查基本技能類型
-				if (
-					!skill.point_type &&
-					skill.icon &&
-					(skill.type_text || skill.remake)
-				) {
-					const skillType = skill.type || "";
-					const skillTypeText = skill.type_text || "";
-
-					// 排除憶靈技能與歡愉技能
-					if (
-						skillType === "MemospriteSkill" ||
-						skillTypeText === tr("profile_MemospriteSkill") ||
-						skillType === "MemospriteTalent" ||
-						skillTypeText === tr("profile_MemospriteTalent") ||
-						skillType === "ElationSkill" ||
-						skillTypeText === tr("profile_ElationSkill") ||
-						skillTypeText === "Elation Skill"
-					) {
-						return false;
-					}
-
-					// 其他基本技能
-					return true;
-				}
-
-				return false;
-			})
-			.slice(0, 5); // 回復為最多 5 個基本技能
-
-		// 過濾憶靈技能 - 第一個憶靈技和第一個憶靈天賦
-		let foundMemospriteSkill = false;
-		let foundMemospriteTalent = false;
-		let foundElationSkill = false;
-
-		const extraSkills = allSkills.filter(skill => {
-			if (
-				(!skill.icon && !skill.item_url) ||
-				(!skill.type_text && !skill.remake)
-			) {
-				return false;
-			}
-
-			const skillType = skill.type || "";
-			const skillTypeText = skill.type_text || skill.remake || "";
-
-			// 憶靈技：只顯示第一個
-			if (
-				skillType === "MemospriteSkill" ||
-				skillTypeText === tr("profile_MemospriteSkill")
-			) {
-				if (!foundMemospriteSkill) {
-					foundMemospriteSkill = true;
-					return true;
-				}
-				return false;
-			}
-
-			// 憶靈天賦：只顯示第一個
-			if (
-				skillType === "MemospriteTalent" ||
-				skillTypeText === tr("profile_MemospriteTalent")
-			) {
-				if (!foundMemospriteTalent) {
-					foundMemospriteTalent = true;
-					return true;
-				}
-				return false;
-			}
-
-			// 歡愉技 (Elation Skill)：point_type 為 4
-			if (
-				skill.point_type === 4 ||
-				skillType === "ElationSkill" ||
-				skillTypeText === tr("profile_ElationSkill") ||
-				skillTypeText === "Elation Skill"
-			) {
-				if (!foundElationSkill) {
-					foundElationSkill = true;
-					return true;
-				}
-				return false;
-			}
-
-			return false;
-		});
-
-		// 合併技能列表：主要技能 + 額外技能（憶靈/歡愉）
-		const mainSkills = [...basicSkills, ...extraSkills];
-
-		// 計算額外技能數量來調整技能排版
-		const extraSkillsCount = extraSkills.length;
-
-		// 總的額外技能數量
-		const totalExtraSkillsCount = servantSkillsCount + extraSkillsCount;
-		const baseSkillX =
-			totalExtraSkillsCount > 0 ? 650 - totalExtraSkillsCount * 45 : 650;
-
-		const skillPromises = mainSkills
-			.map((skill, i) => {
-				// 處理圖片 URL
-				const imageUrl =
-					skill.item_url ||
-					(skill.icon
-						? skill.icon.startsWith("http")
-							? skill.icon
-							: `${image_Header}/${skill.icon}`
-						: null);
-
-				if (!imageUrl) {
-					return null;
-				}
-
-				return loadImageAsync(imageUrl).then(skillImageResult => ({
-					skillImage: skillImageResult?.image,
-					type_text:
-						skill.type_text || skill.remake || tr("profile_Skill"),
-					level: skill.level || 1
-				}));
-			})
-			.filter(Boolean);
-
-		const skills = await Promise.all(skillPromises);
-
-		skills.forEach((skill, index) => {
-			if (skill?.skillImage) {
-				ctx.drawImage(
-					skill.skillImage,
-					baseSkillX + index * 90,
-					760,
-					80,
-					80
-				);
-			}
-			ctx.textAlign = "center";
-
-			const originalLabel = `${skill?.type_text || ""}`;
-			let displayLabel = originalLabel;
-			if (userLang === "en") {
-				const lower = originalLabel.toLowerCase();
-				if (lower.includes("memosprite talent"))
-					displayLabel = "M.Talent";
-				else if (lower.includes("memosprite skill"))
-					displayLabel = "M.Skill";
-				else if (originalLabel.length > 12)
-					displayLabel = originalLabel
-						.replace("Technique", "Tech")
-						.replace("Ultimate", "Ult");
-			} else if (userLang === "tw") {
-				if (originalLabel === "Elation Skill")
-					displayLabel = tr("profile_ElationSkill");
-			}
-			let fontSize = 18;
-			setupFont(ctx, fontSize, true);
-			const maxLabelWidth = 80;
-			while (
-				ctx.measureText(displayLabel).width > maxLabelWidth &&
-				fontSize > 14
-			) {
-				fontSize -= 1;
-				setupFont(ctx, fontSize, true);
-			}
-			ctx.fillText(displayLabel, baseSkillX + 40 + index * 90, 870);
-			setupFont(ctx, 16, true);
-			let skillColor = "white";
-
-			// 檢查是否為憶靈或歡愉技能 (Extra Skill)
-			const currentSkill = skills[index];
-			const isExtraSkill =
-				currentSkill &&
-				((currentSkill.type_text &&
-					(currentSkill.type_text === tr("profile_MemospriteSkill") ||
-						currentSkill.type_text ===
-							tr("profile_MemospriteTalent") ||
-						currentSkill.type_text === tr("profile_ElationSkill") ||
-						currentSkill.type_text === "Elation Skill")) ||
-					(skill?.type_text &&
-						(skill.type_text === tr("profile_MemospriteSkill") ||
-							skill.type_text ===
-								tr("profile_MemospriteTalent") ||
-							skill.type_text === tr("profile_ElationSkill") ||
-							skill.type_text === "Elation Skill")));
-
-			if (isExtraSkill) {
-				// 額外技能使用和 servantSkill 相同的顏色邏輯
-				const extraIndex =
-					skills
-						.slice(0, index + 1)
-						.filter(
-							s =>
-								s?.type_text ===
-									tr("profile_MemospriteSkill") ||
-								s?.type_text ===
-									tr("profile_MemospriteTalent") ||
-								s?.type_text === tr("profile_ElationSkill") ||
-								s?.type_text === "Elation Skill"
-						).length - 1;
-
-				if (character.rank >= 3 && extraIndex === 1)
-					skillColor = "#DCC491";
-				if (character.rank >= 5 && extraIndex === 0)
-					skillColor = "#DCC491";
-			} else {
-				// 主要技能的顏色邏輯
-				if (character.rank >= 3 && (index === 0 || index === 2))
-					skillColor = "#DCC491";
-				if (character.rank >= 5 && (index === 1 || index === 3))
-					skillColor = "#DCC491";
-			}
-
-			ctx.fillStyle = skillColor;
-			ctx.fillText(
-				`${tr("level")} ${skill?.level || 0}`,
-				baseSkillX + 40 + index * 90,
-				890
-			);
-			ctx.fillStyle = "white";
-		});
-
-		if (hasServantSkills) {
-			const servantSkillPromises = (
-				character.servant_detail?.servant_skills || []
-			).map(servantSkill => {
-				return loadImageAsync(
-					servantSkill.item_url ||
-						image_Header + "/" + servantSkill.icon
-				).then(skillImageResult => ({
-					skillImage: skillImageResult?.image,
-					type_text: servantSkill.remake,
-					level: servantSkill.level
-				}));
-			});
-
-			const servantSkills = await Promise.all(servantSkillPromises);
-
-			servantSkills.forEach((servantSkill, index) => {
-				const servantSkillX =
-					650 + (skills.length - 1) * 90 + index * 90;
-
-				if (servantSkill.skillImage) {
-					ctx.drawImage(
-						servantSkill.skillImage,
-						servantSkillX,
-						760,
-						80,
-						80
-					);
-				}
-				ctx.textAlign = "center";
-				// 英語下憶靈技能名稱過長處理
-				let servantLabel = `${servantSkill.type_text}`;
-				if (userLang === "en") {
-					const lower = servantLabel.toLowerCase();
-					if (lower.includes("memosprite talent"))
-						servantLabel = "M.Talent";
-					else if (lower.includes("memosprite skill"))
-						servantLabel = "M.Skill";
-				}
-				let svFont = 18;
-				setupFont(ctx, svFont, true);
-				const svMax = 80;
-				while (
-					ctx.measureText(servantLabel).width > svMax &&
-					svFont > 14
-				) {
-					svFont -= 1;
-					setupFont(ctx, svFont, true);
-				}
-				ctx.fillText(servantLabel, servantSkillX + 40, 870);
-				setupFont(ctx, 16, true);
-				let skillColor = "white";
-				if (character.rank >= 3 && index === 1) skillColor = "#DCC491";
-				if (character.rank >= 5 && index === 0) skillColor = "#DCC491";
-				ctx.fillStyle = skillColor;
-				ctx.fillText(
-					`${tr("level")} ${servantSkill.level}`,
-					servantSkillX + 40,
-					890
-				);
-				ctx.fillStyle = "white";
-			});
-		}
-
-		ctx.strokeStyle = "#fff";
-		ctx.beginPath();
-		ctx.moveTo(hasServantSkills ? 680 : 670, 920);
-		ctx.lineTo(hasServantSkills ? 1070 : 1050, 920);
-		ctx.stroke();
-
-		setupFont(ctx, 32, true);
-		ctx.fillText(
-			playerData.player.nickname,
-			hasServantSkills ? 870 : 850,
-			970
-		);
-
-		setupFont(ctx, 26);
+		await drawProfileTraces(ctx, character, tr, userLang);
+		setupFont(ctx, 20, true);
+		ctx.textAlign = "left";
 		ctx.fillStyle = "lightgray";
-		ctx.fillText(playerData.player.uid, hasServantSkills ? 870 : 850, 1010);
+		ctx.fillText(
+			`${playerData.player.nickname}  ·  UID ${playerData.player.uid}`,
+			50,
+			1060
+		);
 
 		// 顯示總分 - 置中於左側面板 (x=50 到 x=500，中心=275)
 		const centerX = 275;
@@ -3982,19 +4020,61 @@ async function drawAllCharactersImage(
 		const canvasWidth = 1920;
 		const cardsPerRow = 6;
 		const totalRows = Math.ceil(characters.length / cardsPerRow);
-		const cardHeight = 100;
-		const cardGap = 10;
-		const baseY = 230;
-		const canvasHeight = baseY + totalRows * (cardHeight + cardGap) + 40;
+		const cardHeight = 124;
+		const cardGap = 12;
+		const rowGap = 14;
+		const baseX = 36;
+		const baseY = 210;
+		const cardWidth =
+			(canvasWidth - baseX * 2 - cardGap * (cardsPerRow - 1)) /
+			cardsPerRow;
+		const canvasHeight =
+			baseY + totalRows * cardHeight + (totalRows - 1) * rowGap + 42;
 		const canvas = createCanvas(canvasWidth, canvasHeight);
 		const ctx = canvas.getContext("2d");
+		const elementColors: Record<string, string> = {
+			physical: "#d9dde6",
+			fire: "#ff705f",
+			ice: "#67c8ff",
+			lightning: "#c57cff",
+			wind: "#63e5b2",
+			quantum: "#8273ff",
+			imaginary: "#f3d866"
+		};
 
 		// 背景
 		const bgResult = await loadImageAsync("./src/assets/image/warp/bg.jpg");
 		const bg = bgResult?.image;
 		if (bg) {
-			ctx.drawImage(bg, 0, 0, canvasWidth, canvasHeight);
+			const scale = Math.max(
+				canvasWidth / bg.width,
+				canvasHeight / bg.height
+			);
+			const sourceWidth = canvasWidth / scale;
+			const sourceHeight = canvasHeight / scale;
+			ctx.drawImage(
+				bg,
+				(bg.width - sourceWidth) / 2,
+				(bg.height - sourceHeight) / 2,
+				sourceWidth,
+				sourceHeight,
+				0,
+				0,
+				canvasWidth,
+				canvasHeight
+			);
 		}
+		const backgroundWash = ctx.createLinearGradient(
+			0,
+			0,
+			canvasWidth,
+			canvasHeight
+		);
+		backgroundWash.addColorStop(0, "rgba(5, 9, 25, 0.83)");
+		backgroundWash.addColorStop(0.55, "rgba(8, 18, 40, 0.78)");
+		backgroundWash.addColorStop(1, "rgba(4, 12, 28, 0.88)");
+		ctx.fillStyle = backgroundWash;
+		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
 		// 左上角頭像
 		const avatarResult = await loadImageAsync(
@@ -4004,11 +4084,16 @@ async function drawAllCharactersImage(
 		if (avatar) {
 			ctx.save();
 			ctx.beginPath();
-			ctx.arc(110, 110, 70, 0, Math.PI * 2);
+			ctx.arc(94, 92, 56, 0, Math.PI * 2);
 			ctx.closePath();
 			ctx.clip();
-			ctx.drawImage(avatar, 40, 40, 140, 140);
+			ctx.drawImage(avatar, 38, 36, 112, 112);
 			ctx.restore();
+			ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.arc(94, 92, 58, 0, Math.PI * 2);
+			ctx.stroke();
 		}
 
 		// 繪製異常仲裁圖標（如果有的話）
@@ -4020,9 +4105,9 @@ async function drawAllCharactersImage(
 			if (iconPath) {
 				const anomalyIcon = await loadImage(iconPath);
 				if (anomalyIcon) {
-					const iconSize = 140 * 1.1;
-					const iconX = 40 - 40 * 0.3;
-					const iconY = 40 - 40 * 0.1;
+					const iconSize = 136;
+					const iconX = 26;
+					const iconY = 24;
 					ctx.drawImage(
 						anomalyIcon,
 						iconX,
@@ -4046,16 +4131,19 @@ async function drawAllCharactersImage(
 
 			// 最多顯示 3 個徽章（單角色頁面空間較小）
 			const displayRecords = anomalyRankRecords.slice(0, 5);
-			const badgeSize = 60;
-			const badgeSpacing = 6;
+			const badgeSize = 48;
+			const badgeSpacing = 8;
 
-			// 計算名稱寬度來定位徽章
-			ctx.font = "bold 40px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-			const nameWidth = ctx.measureText(playerData.player.nickname).width;
-			const nameX = 40 + 140 + 15; // 名稱起始位置
-			const nameY = 40 + 40; // 名稱垂直位置
-			const startX = nameX + nameWidth + 20; // 名稱後面
-			const startY = nameY - badgeSize / 2; // 與名稱垂直居中
+			ctx.font = "bold 38px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+			const nameMetrics = ctx.measureText(playerData.player.nickname);
+			const nameWidth = nameMetrics.width;
+			const startX = 176 + nameWidth + 18;
+			const startY =
+				76 +
+				(nameMetrics.actualBoundingBoxDescent -
+					nameMetrics.actualBoundingBoxAscent) /
+					2 -
+				badgeSize / 2;
 
 			for (let i = 0; i < displayRecords.length; i++) {
 				const record = displayRecords[i];
@@ -4097,24 +4185,50 @@ async function drawAllCharactersImage(
 
 		// 文字資訊
 		ctx.textAlign = "left";
-		ctx.fillStyle = "white";
-		ctx.font = "bold 40px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-		ctx.fillText(playerData.player.nickname, 200, 90);
-		ctx.font = "bold 28px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-		ctx.fillText(`UID ${playerData.player.uid}`, 200, 135);
+		ctx.fillStyle = "#f7f8fc";
+		ctx.font = "bold 38px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		ctx.fillText(playerData.player.nickname, 176, 76);
+		ctx.fillStyle = "rgba(232, 237, 249, 0.72)";
+		ctx.font = "22px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
 		ctx.fillText(
-			`${tr("profile_TrailblazeLevel")} ${playerData.player.level}  ${tr("profile_CharactersCount")} ${characters.length}`,
-			200,
-			175
+			`UID ${playerData.player.uid}  ·  ${tr("profile_TrailblazeLevel")} ${playerData.player.level}`,
+			177,
+			112
+		);
+		ctx.fillStyle = "#d9c48e";
+		ctx.font = "18px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+		ctx.fillText("ASTRAL ROSTER  /  ALL CHARACTERS", 177, 144);
+
+		ctx.textAlign = "right";
+		ctx.fillStyle = "rgba(255, 255, 255, 0.46)";
+		ctx.font = "18px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+		ctx.fillText("COLLECTION ARCHIVE", canvasWidth - baseX, 66);
+		ctx.fillStyle = "#f7f8fc";
+		ctx.font = "bold 54px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+		ctx.fillText(
+			String(characters.length).padStart(3, "0"),
+			canvasWidth - baseX,
+			118
+		);
+		ctx.fillStyle = "#d9c48e";
+		ctx.font = "18px 'YaHei', Arial, sans-serif";
+		ctx.fillText(
+			tr("profile_CharactersCount"),
+			canvasWidth - baseX,
+			145
 		);
 
 		// 分隔線
-		ctx.strokeStyle = "rgba(255,255,255,0.5)";
-		ctx.lineWidth = 2;
+		ctx.strokeStyle = "rgba(220, 232, 255, 0.35)";
+		ctx.lineWidth = 1;
 		ctx.beginPath();
-		ctx.moveTo(40, 200);
-		ctx.lineTo(700, 200);
+		ctx.moveTo(baseX, 178);
+		ctx.lineTo(canvasWidth - baseX, 178);
 		ctx.stroke();
+		ctx.fillStyle = "#d9c48e";
+		ctx.beginPath();
+		ctx.arc(baseX, 178, 4, 0, Math.PI * 2);
+		ctx.fill();
 
 		// 顯示篩選和排序狀態
 		if (
@@ -4122,8 +4236,8 @@ async function drawAllCharactersImage(
 			(filterInfo.filters.length > 0 || filterInfo.sortType)
 		) {
 			ctx.textAlign = "left";
-			ctx.fillStyle = "rgba(255,255,255,0.8)";
-			ctx.font = "bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+			ctx.fillStyle = "rgba(232, 237, 249, 0.68)";
+			ctx.font = "16px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
 
 			let statusText = "※ ";
 			if (filterInfo.sortType) {
@@ -4178,55 +4292,81 @@ async function drawAllCharactersImage(
 					.join(" / ");
 			}
 
-			ctx.fillText(statusText, 720, 205);
+			ctx.fillText(statusText, 700, 145);
 		}
 
 		// 角色卡片區域
-		const cardWidth = 300;
-		const baseX = 20;
-
 		for (let i = 0; i < characters.length; i++) {
 			const char = characters[i];
 			if (!char) continue;
 			const col = i % cardsPerRow;
 			const row = Math.floor(i / cardsPerRow);
 			const x = baseX + col * (cardWidth + cardGap);
-			const y = baseY + row * (cardHeight + cardGap);
+			const y = baseY + row * (cardHeight + rowGap);
 
 			// 卡片底色
+			const elementId = (
+				typeof char.element === "string"
+					? char.element
+					: char.element?.id || "physical"
+			).toLowerCase();
 			ctx.save();
-			ctx.globalAlpha = 0.4;
-			ctx.fillStyle = "#222";
+			ctx.beginPath();
+			ctx.roundRect(x, y, cardWidth, cardHeight, 8);
+			ctx.clip();
+			const cardBackground = ctx.createLinearGradient(
+				x,
+				y,
+				x + cardWidth,
+				y + cardHeight
+			);
+			cardBackground.addColorStop(0, "rgba(19, 29, 53, 0.96)");
+			cardBackground.addColorStop(1, "rgba(8, 17, 36, 0.94)");
+			ctx.fillStyle = cardBackground;
 			ctx.fillRect(x, y, cardWidth, cardHeight);
+			ctx.fillStyle = elementColors[elementId] || "#d9dde6";
+			ctx.fillRect(x, y, 4, cardHeight);
 			ctx.restore();
 
 			// 角色頭像（圓形）
-			const iconCenterX = x + 20 + 36;
-			const iconCenterY = y + cardHeight / 2;
-			const charIconResult = await loadImageAsync(char.icon);
+			const charIconResult = await loadImageAsync(
+				char.figure_path || char.icon
+			);
 			const charIcon = charIconResult?.image;
 			ctx.save();
 			ctx.beginPath();
-			ctx.arc(iconCenterX, iconCenterY, 36, 0, Math.PI * 2);
-			ctx.closePath();
+			ctx.rect(x + 4, y, 100, cardHeight);
 			ctx.clip();
-			const scale = Math.max((2 * 36) / 168, (2 * 36) / 188);
-			const drawW = 168 * scale;
-			const drawH = 188 * scale;
 			if (charIcon) {
+				const scale = Math.max(
+					94 / charIcon.width,
+					150 / charIcon.height
+				);
+				const drawW = charIcon.width * scale;
+				const drawH = charIcon.height * scale;
 				ctx.drawImage(
 					charIcon,
-					iconCenterX - drawW / 2,
-					iconCenterY - drawH / 2,
+					x + 48 - drawW / 2,
+					y + cardHeight - drawH + 8,
 					drawW,
 					drawH
 				);
 			}
+			const portraitFade = ctx.createLinearGradient(x + 48, y, x + 104, y);
+			portraitFade.addColorStop(0, "rgba(10, 18, 37, 0)");
+			portraitFade.addColorStop(1, "rgba(10, 18, 37, 1)");
+			ctx.fillStyle = portraitFade;
+			ctx.fillRect(x + 48, y, 58, cardHeight);
 			ctx.restore();
+			ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.roundRect(x + 0.5, y + 0.5, cardWidth - 1, cardHeight - 1, 8);
+			ctx.stroke();
 
 			// 中間上方：命途icon、屬性icon（加大尺寸）
 			const elementIconResult = await loadImageAsync(
-				`./src/assets/image/element/${(typeof char.element === "string" ? char.element : char.element?.id || "physical").toLowerCase()}.png`
+				`./src/assets/image/element/${elementId}.png`
 			);
 			const elementIcon = elementIconResult?.image;
 			let pathIconPath = null;
@@ -4243,7 +4383,10 @@ async function drawAllCharactersImage(
 			};
 
 			if (char.base_type) {
-				const pathName = (await getPathMap())[char.base_type] || "none";
+				const pathName = ((await getPathMap())[char.base_type] || "none")
+					.toLowerCase()
+					.replace(/^the\s+/, "")
+					.replace(/\s+/g, "");
 				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
 			} else if (char.path) {
 				const rawPath = (
@@ -4251,35 +4394,63 @@ async function drawAllCharactersImage(
 						? char.path
 						: char.path?.id || "none"
 				).toLowerCase();
-				const pathName = pathMapper[rawPath] || rawPath;
+				const pathName = (pathMapper[rawPath] || rawPath)
+					.replace(/^the\s+/, "")
+					.replace(/\s+/g, "");
 				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
 			} else {
 				pathIconPath = `./src/assets/image/icon/path/none.png`;
 			}
 			const pathIconResult = await loadImageAsync(pathIconPath);
 			const pathIcon = pathIconResult?.image;
+			const infoX = x + 94;
+			const lightConeX = x + cardWidth - 58;
+			ctx.font = "bold 19px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+			let displayName = char.name;
+			while (
+				displayName.length > 1 &&
+				ctx.measureText(`${displayName}…`).width >
+					lightConeX - infoX - 8
+			) {
+				displayName = displayName.slice(0, -1);
+			}
+			if (displayName !== char.name) displayName += "…";
+			ctx.fillStyle = "#f6f8fc";
+			ctx.textAlign = "left";
+			ctx.fillText(displayName, infoX, y + 29);
 			if (pathIcon) {
-				ctx.drawImage(pathIcon, x + 110, y + 12, 44, 44);
+				ctx.drawImage(pathIcon, infoX, y + 40, 25, 25);
 			}
 			if (elementIcon) {
-				ctx.drawImage(elementIcon, x + 164, y + 12, 44, 44);
+				ctx.drawImage(elementIcon, infoX + 31, y + 40, 25, 25);
 			}
+			ctx.fillStyle = char.rarity === 5 ? "#e6ce91" : "#bda9ff";
+			ctx.font = "15px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+			ctx.fillText(`${char.rarity}★`, infoX + 65, y + 58);
 
 			// 中間下方：等級、命座（下移，增加間隔）
-			ctx.font = "bold 22px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-			ctx.fillStyle = "#fff";
+			ctx.font = "bold 23px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+			ctx.fillStyle = "#f7f8fc";
 			ctx.textAlign = "left";
-			ctx.fillText(`Lv.${char.level}`, x + 110, y + 85);
-			ctx.fillStyle = "#DCC491";
-			ctx.fillText(`E${char.rank ?? 0}`, x + 175, y + 85);
+			const levelText = `LV.${char.level}`;
+			ctx.fillText(levelText, infoX, y + 100);
+			const levelWidth = ctx.measureText(levelText).width;
+			ctx.fillStyle = "rgba(217, 196, 142, 0.16)";
+			ctx.beginPath();
+			ctx.roundRect(infoX + levelWidth + 10, y + 78, 42, 27, 13);
+			ctx.fill();
+			ctx.fillStyle = "#e6ce91";
+			ctx.font = "bold 17px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+			ctx.textAlign = "center";
+			ctx.fillText(`E${char.rank ?? 0}`, infoX + levelWidth + 31, y + 98);
 
 			// 右側分隔線
 			ctx.save();
-			ctx.strokeStyle = "rgba(255,255,255,0.3)";
-			ctx.lineWidth = 2;
+			ctx.strokeStyle = "rgba(255, 255, 255, 0.13)";
+			ctx.lineWidth = 1;
 			ctx.beginPath();
-			ctx.moveTo(x + cardWidth - 70, y + 10);
-			ctx.lineTo(x + cardWidth - 70, y + cardHeight - 10);
+			ctx.moveTo(lightConeX - 8, y + 14);
+			ctx.lineTo(lightConeX - 8, y + cardHeight - 14);
 			ctx.stroke();
 			ctx.restore();
 
@@ -4288,23 +4459,48 @@ async function drawAllCharactersImage(
 				const lcIconResult = await loadImageAsync(char.equip.icon);
 				const lcIcon = lcIconResult?.image;
 				if (lcIcon) {
+					const scale = Math.min(48 / lcIcon.width, 62 / lcIcon.height);
+					const drawW = lcIcon.width * scale;
+					const drawH = lcIcon.height * scale;
+					ctx.save();
+					ctx.beginPath();
+					ctx.roundRect(lightConeX, y + 14, 48, 62, 5);
+					ctx.clip();
 					ctx.drawImage(
 						lcIcon,
-						x + cardWidth - 62.5,
-						y + 12.5,
-						57.5,
-						57.5
+						lightConeX + (48 - drawW) / 2,
+						y + 14 + (62 - drawH) / 2,
+						drawW,
+						drawH
 					);
+					ctx.restore();
 				}
-				ctx.font =
-					"bold 18px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-				ctx.fillStyle = "#fff";
+				ctx.font = "bold 14px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+				ctx.fillStyle = "#eef2fa";
 				ctx.textAlign = "center";
 				ctx.fillText(
-					`Lv.${char.equip.level ?? ""}`,
-					x + cardWidth - 35,
-					y + 85
+					`LV.${char.equip.level ?? ""}`,
+					lightConeX + 24,
+					y + 96
 				);
+				ctx.fillStyle = "rgba(230, 206, 145, 0.9)";
+				ctx.font = "13px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+				ctx.fillText(
+					`S${char.equip.rank ?? 1}`,
+					lightConeX + 24,
+					y + 113
+				);
+			} else {
+				ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+				ctx.beginPath();
+				ctx.roundRect(lightConeX, y + 25, 48, 48, 24);
+				ctx.fill();
+				ctx.fillStyle = "rgba(255, 255, 255, 0.38)";
+				ctx.font = "22px 'URW DIN Arabic', Arial, sans-serif";
+				ctx.textAlign = "center";
+				ctx.fillText("—", lightConeX + 24, y + 57);
+				ctx.font = "12px 'YaHei', Arial, sans-serif";
+				ctx.fillText("無光錐", lightConeX + 24, y + 94);
 			}
 		}
 
@@ -4379,6 +4575,7 @@ async function getOptimizedLeaderboard(
 }
 
 // 添加文本處理函數
+/* obsolete colored-text helpers; no current renderer calls them.
 function parseSegments(text: string): TextSegment[] {
 	const result: TextSegment[] = [];
 	let lastIndex = 0;
@@ -4492,6 +4689,8 @@ function drawColoredTextLines(
 // 移除圖片預加載緩存，改為即時載入以節省記憶體
 
 // 移除預加載功能
+*/
+
 async function preloadCommonImages(): Promise<void> {
 	return;
 }
@@ -4519,6 +4718,7 @@ export {
 	maintainLeaderboard,
 	getLeaderboardStats,
 	setupLeaderboardMaintenance,
+	syncAllBoundAnomalyBadges,
 	getOptimizedLeaderboard,
 	preloadCommonImages,
 	loadImageOptimized,

@@ -3,7 +3,7 @@ import {
 	AttachmentBuilder,
 	EmbedBuilder
 } from "discord.js";
-import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
+import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
 import type { TranslationFunction } from "@/types/index.js";
 import { join } from "path";
 import Queue from "queue";
@@ -13,6 +13,7 @@ import {
 	getLightconeNameById
 } from "@/utilities/hsr/selectmenu.js";
 import { loadRelicSetData } from "@/utilities/hsr/jsonManager.js";
+import { getSharedImage as getCachedImage } from "@/utilities/hsr/imageCache.js";
 import { Converter } from "opencc-js";
 
 // 簡體轉繁體的輔助函數
@@ -116,10 +117,6 @@ const skillTagToNumber: { [key: string]: number } = {
 	Summon: 17
 };
 
-// 图片缓存系统
-const imageCache = new Map<string, any>();
-const CACHE_SIZE_LIMIT = 100; // 限制缓存大小
-
 // 颜色缓存系统
 const colorCache = new Map<string, { light: string; dark: string }>();
 
@@ -162,31 +159,6 @@ function adjustBrightness(color: string, factor: number): string {
 	}
 
 	return result;
-}
-
-// 获取或缓存图片
-async function getCachedImage(url: string): Promise<any> {
-	if (imageCache.has(url)) {
-		return imageCache.get(url);
-	}
-
-	try {
-		const image = await loadImage(url);
-
-		// 管理缓存大小
-		if (imageCache.size >= CACHE_SIZE_LIMIT) {
-			const firstKey = imageCache.keys().next().value;
-			if (firstKey) {
-				imageCache.delete(firstKey);
-			}
-		}
-
-		imageCache.set(url, image);
-		return image;
-	} catch (error) {
-		console.error(`Failed to load image: ${url}`, error);
-		throw error;
-	}
 }
 
 // 角色数据缓存

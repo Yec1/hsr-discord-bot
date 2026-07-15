@@ -8,6 +8,7 @@ import { getRandomColor, getUserHSRData } from "@/utilities/index.js";
 import { buildHSRDailyCard } from "@/utilities/canvas/dailyCard.js";
 import { database } from "@/index.js";
 import { TranslationFunction } from "@/types/index.js";
+import { getLegacyAccounts } from "@/utilities/accountStore.js";
 
 // 类型定义
 interface TimeChoice {
@@ -172,10 +173,8 @@ export default {
 		tr: TranslationFunction
 	): Promise<any> {
 		await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-		const haveAccount = await database.get(
-			`${interaction.user.id}.account`
-		);
-		if (!haveAccount) {
+		const accounts = await getLegacyAccounts(database, interaction.user.id);
+		if (accounts.length === 0) {
 			return interaction.editReply({
 				embeds: [
 					new EmbedBuilder()

@@ -4,14 +4,10 @@ import {
 	filterVersionChoices,
 	getLastVersionChoices
 } from "@/utilities/index.js";
+import { getLegacyAccounts } from "@/utilities/accountStore.js";
 import { getCharacterAutocompleteOptions } from "@/utilities/hsr/atlas.js";
 import { createTranslator, toI18nLang } from "@/utilities/core/i18n.js";
 import { drainPendingLogins } from "@/utilities/webhookLogin.js";
-
-interface Account {
-	uid: string;
-	nickname?: string;
-}
 
 client.on(Events.InteractionCreate, async (interaction: any) => {
 	if (!interaction.isAutocomplete()) return;
@@ -25,9 +21,7 @@ client.on(Events.InteractionCreate, async (interaction: any) => {
 			await drainPendingLogins(interaction.user.id);
 		} catch {}
 
-		const userAccounts = (await database.get(
-			`${interaction.user.id}.account`
-		)) as Account[];
+		const userAccounts = await getLegacyAccounts(database, interaction.user.id);
 		if (!userAccounts) return;
 
 		const choices = [];

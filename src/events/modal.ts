@@ -15,6 +15,11 @@ import {
 	requestPlayerDataEnka,
 	getUserGameInfo
 } from "@/utilities/index.js";
+import {
+	getLegacyAccounts,
+	replaceCharacterBinding,
+	storeAccountBinding
+} from "@/utilities/accountStore.js";
 import { createTranslator, toI18nLang } from "@/utilities/core/i18n.js";
 import type { TranslationFunction } from "@/types/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
@@ -32,12 +37,6 @@ function withTimeout<T>(
 			setTimeout(() => reject(new Error(errorMsg)), ms)
 		)
 	]);
-}
-
-interface Account {
-	uid: string;
-	cookie: string;
-	nickname?: string;
 }
 
 interface GameInfo {
@@ -75,25 +74,19 @@ async function handleNewCookieSet(
 	const cookieTokenV2 = fields.getTextInputValue("cookie_token_v2").trim();
 	const accountMidV2 = fields.getTextInputValue("account_mid_v2").trim();
 	const cookie = `ltoken_v2=${ltokenV2}; ltuid_v2=${ltuidV2}; cookie_token_v2=${cookieTokenV2}; account_mid_v2=${accountMidV2}; account_id_v2=${accountMidV2}; ltmid_v2=${accountMidV2}`;
+	const accounts = await getLegacyAccounts(database, interaction.user.id);
 
-	if (await database.has(`${interaction.user.id}.account`)) {
-		const accounts: Account[] =
-			(await database.get(`${interaction.user.id}.account`)) || [];
-		if (
-			!config.DEVIDS.includes(interaction.user.id) &&
-			accounts.length >= 5
-		) {
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-						.setTitle(`${tr("account_LimitExceeded")} `)
-				]
-			});
-			return;
-		}
+	if (!config.DEVIDS.includes(interaction.user.id) && accounts.length >= 5) {
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setThumbnail(
+						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+					)
+					.setTitle(`${tr("account_LimitExceeded")} `)
+			]
+		});
+		return;
 	}
 
 	try {
@@ -128,9 +121,6 @@ async function handleNewCookieSet(
 			return;
 		}
 
-		const accounts: Account[] =
-			(await database.get(`${interaction.user.id}.account`)) || [];
-
 		if (accounts.some(acc => acc.uid === uid)) {
 			await interaction.editReply({
 				embeds: [
@@ -147,13 +137,11 @@ async function handleNewCookieSet(
 			return;
 		}
 
-		accounts.push({
+		await storeAccountBinding(database, interaction.user.id, {
 			uid: gameInfo.uid,
 			nickname: gameInfo.nickname,
-			cookie: cookie
+			cookie
 		});
-
-		await database.set(`${interaction.user.id}.account`, accounts);
 
 		await interaction.editReply({
 			embeds: [
@@ -208,8 +196,7 @@ async function handleCookieSet(
 	const cookieTokenV2 = fields.getTextInputValue("cookie_token_v2").trim();
 	const accountMidV2 = fields.getTextInputValue("account_mid_v2").trim();
 	const cookie = `ltoken_v2=${ltokenV2}; ltuid_v2=${ltuidV2}; cookie_token_v2=${cookieTokenV2}; account_mid_v2=${accountMidV2}; account_id_v2=${accountMidV2}; ltmid_v2=${accountMidV2}`;
-	const account: Account[] =
-		(await database.get(`${interaction.user.id}.account`)) ?? [];
+	const account = await getLegacyAccounts(database, interaction.user.id);
 
 	const index = parseInt(accountIndex);
 	const targetAccount = account[index];
@@ -264,10 +251,11 @@ async function handleCookieSet(
 		// 清除過期標記
 		await database.delete(`${targetAccount.uid}.cookieExpired`);
 
-		targetAccount.cookie = cookie;
-		targetAccount.uid = gameInfo.uid;
-		targetAccount.nickname = gameInfo.nickname;
-		await database.set(`${interaction.user.id}.account`, account);
+		await replaceCharacterBinding(database, interaction.user.id, targetAccount.uid, {
+			uid: gameInfo.uid,
+			nickname: gameInfo.nickname,
+			cookie
+		});
 
 		await interaction.editReply({
 			embeds: [
@@ -304,4 +292,4 @@ async function handleCookieSet(
 			]
 		});
 	}
-}
+}

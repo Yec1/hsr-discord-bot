@@ -10,7 +10,6 @@ import {
 import { database } from "../../index.js";
 import {
 	createCanvas,
-	loadImage,
 	GlobalFonts,
 	CanvasRenderingContext2D,
 	Image
@@ -18,6 +17,7 @@ import {
 import { join } from "path";
 import Logger from "@/utilities/core/logger.js";
 import Queue from "queue";
+import { getSharedImage } from "@/utilities/hsr/imageCache.js";
 
 const formatDate = (time: TimeInfo) =>
 	`${time.year}/${time.month.toString().padStart(2, "0")}/${time.day.toString().padStart(2, "0")}`;
@@ -521,10 +521,10 @@ GlobalFonts.registerFromPath(
 );
 
 // 移除全域圖片快取以節省記憶體
-async function getCachedImage(path: string): Promise<Image | null> {
+async function getCachedImage(path: string): Promise<any | null> {
 	try {
-		return await loadImage(path);
-	} catch (error) {
+		return await getSharedImage(path);
+	} catch {
 		return null;
 	}
 }

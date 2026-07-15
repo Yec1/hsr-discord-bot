@@ -62,7 +62,7 @@
 ### 前置需求
 
 - [Node.js](https://nodejs.org/) 18 或更高版本
-- [yarn](https://yarnpkg.com/)
+- [npm](https://www.npmjs.com/)（隨 Node.js 安裝）
 
 ### 安裝步驟
 
@@ -72,15 +72,21 @@ git clone https://github.com/Yec1/hsr-discord-bot
 cd hsr-discord-bot
 
 # 2. 安裝依賴
-yarn install
+npm ci
 
 # 3. 設定設定檔
 cp config.example.json config.json
 # 填入你的 Bot Token 等資訊
 
 # 4. 啟動
-yarn start
+npm start
 ```
+
+### 舊使用者資料相容
+
+升級不需要重新綁定帳號。啟動後第一次讀取使用者資料時，`accountStore`
+會將舊的 `<userId>.account` 平面資料自動轉成 canonical
+`<userId>.hoyolabs` 結構；資料先成功寫入新格式後才刪除舊 key，失敗時會保留舊資料供下次重試。
 
 ---
 

@@ -15,6 +15,10 @@ import {
 import Logger from "@/utilities/core/logger.js";
 import type { TranslationFunction } from "@/types/index.js";
 import { database } from "@/index.js";
+import {
+	getLegacyAccountAtIndex,
+	getLegacyAccounts
+} from "@/utilities/accountStore.js";
 
 interface RedeemCode {
 	code: string;
@@ -330,8 +334,12 @@ export default {
 			// cookie_token_v2 causes -1071 on every redemption attempt even when
 			// the user just re-bound their account via the web login flow.
 			try {
-				const userAccounts = await database.get(`${targetUser.id}.account`);
-				const accountCookie = userAccounts?.[accountIndex]?.cookie;
+				const account = await getLegacyAccountAtIndex(
+					database,
+					targetUser.id,
+					accountIndex
+				);
+				const accountCookie = account?.cookie;
 				if (accountCookie) {
 					await autoRefreshCookie(targetUser.id, accountIndex, accountCookie);
 				}
@@ -341,8 +349,12 @@ export default {
 				);
 			}
 
-			const redeemAllAccounts = await database.get(`${targetUser.id}.account`);
-			const redeemAllCookie = redeemAllAccounts?.[accountIndex]?.cookie;
+			const redeemAllAccount = await getLegacyAccountAtIndex(
+				database,
+				targetUser.id,
+				accountIndex
+			);
+			const redeemAllCookie = redeemAllAccount?.cookie;
 			if (!redeemAllCookie) {
 				return failedReply(interaction, tr("error_NoAccount"));
 			}
@@ -367,10 +379,13 @@ export default {
 					// 如果距离上次刷新已经过了24小时，则刷新Cookie
 					if (shouldRefreshCookie) {
 						// 從數據庫獲取正確的 cookie 字符串
-						const userAccount = await database.get(
-							`${targetUser.id}.account`
+						const userAccount = await getLegacyAccountAtIndex(
+							database,
+							targetUser.id,
+							accountIndex
 						);
-						const accountCookie = userAccount[accountIndex].cookie;
+						const accountCookie = userAccount?.cookie;
+						if (!accountCookie) throw new Error("Account not found");
 
 						await updateCookie(
 							targetUser.id,
@@ -455,10 +470,13 @@ export default {
 			try {
 				if (results.success.length > 0 || shouldRefreshCookie) {
 					// 從數據庫獲取正確的 cookie 字符串
-					const userAccount = await database.get(
-						`${targetUser.id}.account`
+					const userAccount = await getLegacyAccountAtIndex(
+						database,
+						targetUser.id,
+						accountIndex
 					);
-					const accountCookie = userAccount[accountIndex].cookie;
+					const accountCookie = userAccount?.cookie;
+					if (!accountCookie) throw new Error("Account not found");
 
 					await updateCookie(
 						targetUser.id,
@@ -542,8 +560,12 @@ export default {
 			if (!uid) {
 				return failedReply(interaction, tr("error_NoAccount"));
 			}
-			const userAccountData = await database.get(`${targetUser.id}.account`);
-			const accountCookie = userAccountData?.[accountIndex]?.cookie;
+			const userAccount = await getLegacyAccountAtIndex(
+				database,
+				targetUser.id,
+				accountIndex
+			);
+			const accountCookie = userAccount?.cookie;
 			if (!accountCookie) {
 				return failedReply(interaction, tr("error_NoAccount"));
 			}
@@ -564,10 +586,13 @@ export default {
 					// 成功兌換時更新Cookie
 					try {
 						// 從數據庫獲取正確的 cookie 字符串
-						const userAccount = await database.get(
-							`${targetUser.id}.account`
+						const refreshedAccount = await getLegacyAccountAtIndex(
+							database,
+							targetUser.id,
+							accountIndex
 						);
-						const accountCookie = userAccount[accountIndex].cookie;
+						const accountCookie = refreshedAccount?.cookie;
+						if (!accountCookie) throw new Error("Account not found");
 
 						await updateCookie(
 							targetUser.id,
@@ -603,9 +628,14 @@ export default {
 					);
 					failedReply(interaction, res.message);
 				} else {
-					const userAccount = (
-						await database.get(`${targetUser.id}.account`)
-					)[accountIndex];
+					const userAccount = await getLegacyAccountAtIndex(
+						database,
+						targetUser.id,
+						accountIndex
+					);
+					if (!userAccount) {
+						return failedReply(interaction, tr("error_NoAccount"));
+					}
 
 					if (!hasValidRedeemToken(userAccount.cookie || "")) {
 						failedReply(
@@ -620,8 +650,9 @@ export default {
 				failedReply(interaction, (e as any).message);
 			}
 		} else if (subcommand == "autoredeem") {
-			const userAccount = await database.get(
-				`${interaction.user.id}.account`
+			const userAccount = await getLegacyAccounts(
+				database,
+				interaction.user.id
 			);
 			if (!hasValidRedeemToken(userAccount[0]?.cookie || "")) {
 				return failedReply(interaction, tr("redeem_NoCookie"));

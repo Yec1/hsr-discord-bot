@@ -1,4 +1,4 @@
-import { client, database } from "../index.js";
+import { client } from "../index.js";
 import {
 	Events,
 	ActionRowBuilder,
@@ -12,9 +12,7 @@ import {
 	StringSelectMenuInteraction,
 	MessageFlags
 } from "discord.js";
-import axios from "axios";
 import emoji from "../assets/emoji.js";
-import { drawFloorImage } from "../utilities/hsr/forgottenhall.js";
 import {
 	createChunkedSelectMenus,
 	createPagedSelectMenu
@@ -30,21 +28,26 @@ import {
 	requestPlayerData,
 	getUserHSRData,
 	getUserLang,
-	getNewsList,
-	getPostFull,
-	parsePostContent,
 	requestPlayerActivity,
 	getUserCookie,
 	getUserGameInfo,
 	getFriendlyErrorMessage
 } from "../utilities/index.js";
-import { getSelectMenu } from "../utilities/hsr/selectmenu.js";
 import { createTranslator, toI18nLang } from "../utilities/core/i18n.js";
 import {
 	loadPathsData,
 	loadElementsData,
 	buildPathMap
 } from "../utilities/hsr/jsonManager.js";
+import { handleAccountAction } from "../handlers/selectMenu/account.js";
+import { handleGuide } from "../handlers/selectMenu/guide.js";
+import { handleNews as handleNewsAction } from "../handlers/selectMenu/news.js";
+import {
+	handleLeaderboard as handleLeaderboardAction
+} from "../handlers/selectMenu/leaderboard.js";
+import {
+	handleForgottenHall as handleForgottenHallAction
+} from "../handlers/selectMenu/forgottenHall.js";
 import Queue from "queue";
 
 const DRAW_QUEUE_MAX = 50;
@@ -72,9 +75,9 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 	if (customId.startsWith("guide") && values[0])
 		handleGuide(interaction, tr, values[0]);
 	if (customId.startsWith("news") && values[0])
-		handleNews(interaction, tr, values[0]);
+		handleNewsAction(interaction, tr, values[0]);
 	if (customId.startsWith("leaderboard") && values[0])
-		handleLeaderboard(interaction, tr, values[0]);
+		handleLeaderboardAction(interaction, tr, values[0]);
 	if (customId.startsWith("account") && values[0])
 		handleAccountAction(interaction, tr, customId, values[0]);
 	if (customId === "account_AddAccount") {
@@ -98,7 +101,13 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 		return;
 	}
 	if (customId == "forgottenHall_Floor" && values[0])
-		handleForgottenHall(interaction, tr, values[0]);
+		handleForgottenHallAction(
+			interaction,
+			tr,
+			values[0],
+			drawQueue,
+			DRAW_QUEUE_MAX
+		);
 	if (customId.startsWith("profile_SelectCharacter") && values[0]) {
 		const v = values[0];
 		if (v.startsWith("__prev__:") || v.startsWith("__next__:")) {
@@ -273,50 +282,6 @@ interface GameInfo {
 	nickname: string;
 	uid: string;
 	level: number;
-}
-
-interface LeaderboardData {
-	id: string;
-	score: Array<{
-		nickname: string;
-		uid: string;
-		score: number;
-		avatar: string;
-	}>;
-	element: {
-		color: string;
-	};
-	icon: string;
-}
-
-interface NewsData {
-	data: {
-		list: Array<{
-			post: {
-				post_id: string;
-				subject: string;
-				created_at: number;
-			};
-		}>;
-	};
-}
-
-interface PostData {
-	post: {
-		post: {
-			subject: string;
-			content: string;
-			created_at: number;
-			post_id?: string;
-		};
-		user: {
-			avatar_url?: string;
-			nickname?: string;
-			uid: string;
-		};
-		image_list: Array<{ url: string }>;
-		cover_list: Array<{ url: string }>;
-	};
 }
 
 interface FilterInfo {
@@ -798,6 +763,7 @@ async function handlePageTurn(
 	}
 }
 
+/* Moved to handlers/selectMenu/news.ts.
 async function handleNews(
 	interaction: StringSelectMenuInteraction,
 	tr: any,
@@ -927,6 +893,9 @@ async function handleNews(
 	}
 }
 
+*/
+
+/* Moved to handlers/selectMenu/leaderboard.ts.
 async function handleLeaderboard(
 	interaction: StringSelectMenuInteraction,
 	tr: any,
@@ -1028,184 +997,9 @@ async function handleLeaderboard(
 	});
 }
 
-async function handleGuide(
-	interaction: StringSelectMenuInteraction,
-	tr: any,
-	value: string
-): Promise<void> {
-	await interaction.update({
-		embeds: [
-			new EmbedBuilder()
-				.setTitle(tr("Searching"))
-				.setColor(getRandomColor() as any)
-				.setThumbnail(
-					"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
-				)
-		],
-		components: []
-	});
+*/
 
-	const id = value;
-	const locale =
-		(await getUserLang(interaction.user.id)) ||
-		toI18nLang(interaction.locale) ||
-		"en";
-
-	const responses = await axios.get(
-		`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/${
-			locale == "tw" ? "cht" : "en"
-		}/characters.json`
-	);
-	const localeJson = responses.data;
-	const selectMenus = await getSelectMenu(interaction as any, tr, "guide");
-	try {
-		await axios.get(
-			`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/guide/Nwflower/character_overview/${id}.png`
-		);
-	} catch (e) {
-		await interaction.followUp({
-			embeds: [
-				new EmbedBuilder()
-					.setTitle(
-						`${tr("guide_NonImage", {
-							z: localeJson[id]?.name || ""
-						})}`
-					)
-					.setColor("#E76161")
-					.setThumbnail(
-						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-					)
-			],
-			flags: MessageFlags.Ephemeral
-		});
-		return;
-	}
-
-	const image = new AttachmentBuilder(
-		`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/guide/Nwflower/character_overview/${id}.png`,
-		{
-			name: `${id}.png`
-		}
-	);
-
-	interaction.editReply({
-		embeds: [],
-		files: [image],
-		components: selectMenus.map(selectMenu => {
-			return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-				selectMenu
-			);
-		})
-	});
-}
-
-async function handleAccountAction(
-	interaction: StringSelectMenuInteraction,
-	tr: any,
-	customId: string,
-	value: string
-): Promise<void> {
-	const account = await database.get(`${interaction.user.id}.account`);
-	if (!account) {
-		await interaction.reply({
-			embeds: [
-				new EmbedBuilder()
-					.setColor("#E76161")
-					.setThumbnail(
-						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-					)
-					.setTitle(`${tr("account_nonAcc")}`)
-			],
-			flags: MessageFlags.Ephemeral
-		});
-		return;
-	}
-
-	if (customId == "account_EditAccountSelect") {
-		const accountIndex = value;
-		const accountData = account[parseInt(accountIndex || "0")];
-
-		const userAccountCookie = accountData?.cookie || "";
-
-		const parseCookie = (cookie: string, key: string) => {
-			const match = cookie.match(new RegExp(`${key}=([^;]+)`));
-			return match?.[1]?.trim() ?? "";
-		};
-
-		const ltokenV2 = parseCookie(userAccountCookie, "ltoken_v2");
-		const ltuidV2 = parseCookie(userAccountCookie, "ltuid_v2");
-		const cookieTokenV2 = parseCookie(userAccountCookie, "cookie_token_v2");
-		const accountMidV2 = parseCookie(userAccountCookie, "account_mid_v2");
-
-		await interaction.showModal(
-			new ModalBuilder()
-				.setCustomId(`cookie_set-${accountIndex}`)
-				.setTitle(tr("account_SetUserCookie"))
-				.addComponents(
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("ltoken_v2")
-							.setLabel("ltoken_v2")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true)
-							.setValue(ltokenV2)
-					),
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("ltuid_v2")
-							.setLabel("ltuid_v2")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true)
-							.setValue(ltuidV2)
-					),
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("cookie_token_v2")
-							.setLabel("cookie_token_v2")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true)
-							.setValue(cookieTokenV2)
-					),
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("account_mid_v2")
-							.setLabel("account_mid_v2")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true)
-							.setValue(accountMidV2)
-					)
-				)
-		);
-		return;
-	} else if (customId == "account_DeleteAccountSelect") {
-		await interaction.update({}).catch(() => {});
-		const accountIndex = value;
-		const accounts =
-			(await database.get(`${interaction.user.id}.account`)) ?? "";
-		const uid = accounts[parseInt(accountIndex)]?.uid || "";
-
-		if (accounts.length <= 1)
-			await database.delete(`${interaction.user.id}.account`);
-		else {
-			accounts.splice(parseInt(accountIndex), 1);
-			await database.set(`${interaction.user.id}.account`, accounts);
-		}
-
-		interaction.editReply({
-			embeds: [
-				new EmbedBuilder()
-					.setColor("#F6F1F1")
-					.setThumbnail(
-						"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
-					)
-					.setTitle(`${tr("account_DeletedSuccess")} \`${uid}\``)
-			],
-			components: []
-		});
-		return;
-	}
-}
-
+/* Moved to handlers/selectMenu/forgottenHall.ts.
 async function handleForgottenHall(
 	interaction: StringSelectMenuInteraction,
 	tr: any,
@@ -1375,6 +1169,8 @@ async function handleForgottenHall(
 		);
 	}
 }
+
+*/
 
 async function handleSelectCharacter(
 	interaction: StringSelectMenuInteraction,

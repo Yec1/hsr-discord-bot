@@ -22,7 +22,7 @@ import { TranslationFunction } from "@/types/index.js";
 import emoji from "@/assets/emoji.js";
 import { database } from "@/index.js";
 import { getConfig } from "@/utilities/core/config.js";
-import { getAllCharacters, getHoyolabs, type Character, type Hoyolab } from "@/utilities/accountStore.js";
+import { getAllCharacters, getHoyolabs, getLegacyAccounts, type Character, type Hoyolab } from "@/utilities/accountStore.js";
 
 function formatRelativeFromIso(iso: string | undefined): string {
 	if (!iso) return "—";
@@ -96,12 +96,6 @@ function buildAccountComponents(
 	}
 
 	return container;
-}
-
-interface Account {
-	uid: string;
-	nickname?: string;
-	cookie?: string;
 }
 
 export default {
@@ -181,9 +175,8 @@ export default {
 	): Promise<void> {
 		const command = interaction.options.getString("options");
 		const userId = interaction.user.id;
-
-		const accountKey = `${userId}.account`;
-		const hasAccount = await database.has(accountKey);
+		const accounts = await getLegacyAccounts(database, userId);
+		const hasAccount = accounts.length > 0;
 
 		if (
 			command == "ViewAccount" ||
@@ -194,8 +187,6 @@ export default {
 			if (!hasAccount)
 				return failedReply(interaction, tr("account_NoAccount"));
 		}
-
-		const accounts = (await database.get(accountKey)) as Account[];
 
 		switch (command) {
 			case "HowToSetUpAccount":

@@ -7,9 +7,6 @@ import {
 	ButtonBuilder,
 	ButtonStyle
 } from "discord.js";
-import axios from "axios";
-import { join, extname } from "path";
-import { readdir } from "fs/promises";
 import crypto from "crypto";
 import emoji from "@/assets/emoji.js";
 import {
@@ -22,14 +19,15 @@ import { database } from "@/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
 import { withProxy } from "@/utilities/core/proxy.js";
 import {
-	upsertHoyolab,
-	upsertCharacter,
-	extractLtuidFromCookie,
-	fallbackBucketKey
+	getLegacyAccounts,
+	getLegacyAccountAtIndex,
+	storeAccountBinding,
+	updateAccountCookieAtIndex
 } from "@/utilities/accountStore.js";
+import { getAllFilesFromFs } from "@/utilities/files.js";
+import { parsePostContent as parseNewsPostContent } from "@/utilities/news.js";
+import { replyOrfollowUp } from "@/utilities/discordReply.js";
 const config = loadConfig();
-
-const BASE_URL = "https://bbs-api-os.hoyolab.com/community/post/wapi/";
 
 interface VersionChoice {
 	value: string;
@@ -43,29 +41,9 @@ interface ChoiceOption {
 	value: string;
 }
 
-interface CacheData {
-	codes: any[];
-	timestamp: number;
-}
-
-interface PlayerDataResponse {
-	status: number;
-	playerData: any;
-}
-
-interface PlayerActivityResponse {
-	status: number;
-	playerActivity: any;
-}
-
 interface AccountData {
 	uid?: string;
 	cookie?: string;
-}
-
-interface UserAccount {
-	uid: string;
-	cookie: string;
 }
 
 interface CookieUpdateResponse {
@@ -77,15 +55,6 @@ interface GameInfo {
 	uid: string;
 	nickname: string;
 	level: number;
-}
-
-interface CacheStatus {
-	exists: boolean;
-	isExpired?: boolean;
-	remainingHours?: number;
-	codesCount?: number;
-	lastUpdated?: string;
-	message: string;
 }
 
 const versionChoices: VersionChoice[] = [
@@ -136,20 +105,7 @@ const versionChoices: VersionChoice[] = [
  * @returns 所有 .js 文件的路徑
  */
 export async function getAllFiles(dir: string, exts: string[]) {
-	let files: string[] = [];
-
-	const entries = await readdir(dir, { withFileTypes: true });
-
-	for (const entry of entries) {
-		const fullPath = join(dir, entry.name);
-		if (entry.isDirectory()) {
-			files = files.concat(await getAllFiles(fullPath, exts));
-		} else if (exts.includes(extname(entry.name))) {
-			files.push(fullPath);
-		}
-	}
-
-	return files;
+	return getAllFilesFromFs(dir, exts);
 }
 
 export const createChoiceOption = ({
@@ -188,112 +144,22 @@ export const addVersionChoices = (option: any): any => {
 	return option;
 };
 
-export async function getNewsList(lang: string, type: string): Promise<any> {
-	return await axios({
-		headers: {
-			"x-rpc-app_version": "2.43.0",
-			"x-rpc-client_type": 4,
-			"X-Rpc-Language": lang
-		},
-		method: "get",
-		url: BASE_URL + "getNewsList",
-		params: { gids: 6, page_size: 25, type: type }
-	}).then(response => response.data);
-}
-
-export async function getPostFull(lang: string, postId: string): Promise<any> {
-	return await axios({
-		headers: {
-			"x-rpc-app_version": "2.43.0",
-			"x-rpc-client_type": 4,
-			"X-Rpc-Language": lang
-		},
-		method: "get",
-		url: BASE_URL + "getPostFull",
-		params: { gids: 6, post_id: postId }
-	}).then(response => response.data.data);
-}
+export { getNewsList, getPostFull } from "@/utilities/news.js";
+export {
+	getRedeemCodes,
+	clearRedeemCodesCache,
+	getRedeemCodesCacheStatus
+} from "@/utilities/redeemCodes.js";
+export {
+	requestPlayerDataEnka,
+	requestPlayerData,
+	requestPlayerActivity
+} from "@/utilities/hsr/playerData.js";
+export { replyOrfollowUp } from "@/utilities/discordReply.js";
 
 export async function parsePostContent(content: string): Promise<string> {
-	content = content.replace(/<br\s*\/?>/g, "\n");
-	content = content.replace(/<\p[^>]*>/g, "\n");
-	content = content.replace(/<\/p>/g, "");
-	content = content.replace(/<\/?strong[^>]*>/g, "**");
-	content = content.replace(/<\/?em[^>]*>/g, "*");
-	content = content.replace(/<\/?span[^>]*>/g, "");
-	content = content.replace(/<\/?div[^>]*>/g, "");
-	content = content.replace(/<\/?img[^>]*>/g, "");
-	content = content.replace(/<h4[^>]*>/g, "\n### ");
-	content = content.replace(/<\/h4>/g, "");
-	content = content.replace(/<h3[^>]*>/g, "\n## ");
-	content = content.replace(/<\/h3>/g, "");
-	content = content.replace(/&gt;/g, ">");
-	content = content.replace(/&lt;/g, "<");
-	content = content.replace(/&nbsp;/g, " ");
-
-	content = content.replace(
-		/<([a-z]+)\s+(?:[^>]*?\s+)?href="([^"]*)"[^>]*>(.*?)<\/\1>/gi,
-		(match: string, tag: string, href: string, text: string) =>
-			href == text
-				? `${emoji.link}${href}`
-				: `${emoji.link}[${text}](${href})`
-	);
-
-	content = content.replace(
-		/<iframe[^>]*src="([^"]*)"[^>]*><\/iframe>/gi,
-		(match: string, p1: string) => `### ${emoji.link}[影片](${p1})`
-	);
-
-	content = content.replace(/\s*class="[^"]*"/g, "");
-	// content = content.replace(/\n\s*\n/g, "\n");
-
-	return content;
+	return parseNewsPostContent(content);
 }
-
-export async function getRedeemCodes(): Promise<any[]> {
-	// 檢查快取是否存在且未過期
-	const cacheKey = "redeemCodesCache";
-	const cachedData: CacheData | null = await database.get(cacheKey);
-	const currentTime = Date.now();
-	const oneDayInMs = 24 * 60 * 60 * 1000; // 24小時的毫秒數
-
-	// 如果快取存在且未過期，直接返回快取的數據
-	if (cachedData && currentTime - cachedData.timestamp < 2 * 60 * 60 * 1000) {
-		const remainingTime = Math.floor(
-			(2 * 60 * 60 * 1000 - (currentTime - cachedData.timestamp)) /
-				(1000 * 60 * 60)
-		); // 剩餘小時數
-		console.log(`[快取] 使用快取的兌換碼數據，剩餘 ${remainingTime} 小時`);
-		return cachedData.codes;
-	}
-
-	// 如果快取不存在或已過期，重新獲取數據
-	console.log("[快取] 快取已過期或不存在，重新獲取兌換碼數據...");
-	try {
-		const res = await axios
-			.get("https://hoyo-codes.seria.moe/codes?game=hkrpg")
-			.then(response => response.data);
-
-		// 將新數據存入快取
-		await database.set(cacheKey, {
-			codes: res.codes,
-			timestamp: currentTime
-		});
-
-		console.log(`[快取] 成功獲取並快取 ${res.codes.length} 個兌換碼`);
-		return res.codes;
-	} catch (error: any) {
-		console.error("[快取] API請求失敗:", error.message);
-		// 如果API請求失敗但有快取數據，返回快取數據
-		if (cachedData) {
-			console.log("[快取] 使用過期的快取數據作為備用");
-			return cachedData.codes;
-		}
-		// 如果沒有快取數據且API請求失敗，拋出錯誤
-		throw error;
-	}
-}
-
 export function secondsToHms(d: number, tr: (key: string) => string): string {
 	d = Number(d);
 	var h = Math.floor(d / 3600);
@@ -309,88 +175,6 @@ export function secondsToHms(d: number, tr: (key: string) => string): string {
 	}
 
 	return hDisplay + mDisplay + sDisplay;
-}
-
-export async function requestPlayerDataEnka(
-	uid: string
-): Promise<PlayerDataResponse> {
-	const baseUrl = "https://enka.network/api/hsr/uid/";
-
-	try {
-		const response = await axios.get(baseUrl + uid);
-		console.log(response.data);
-		return { status: response.status, playerData: response.data };
-	} catch (err: any) {
-		return {
-			status: 400,
-			playerData: {
-				detail: err.response?.data?.detail,
-				message: err.message
-			}
-		};
-	}
-}
-
-export async function requestPlayerData(
-	uid: string,
-	interaction?: Interaction
-): Promise<PlayerDataResponse> {
-	const userLocaleKey = `${interaction?.user?.id}.locale`;
-	let langParam = "?lang=en";
-
-	if (await database?.has(userLocaleKey)) {
-		const storedLocale = await database.get(userLocaleKey);
-		langParam = storedLocale === "tw" ? "?lang=cht" : "?lang=en";
-	} else if (interaction && "locale" in interaction) {
-		langParam =
-			(interaction as any).locale === "zh-TW" ? "?lang=cht" : "?lang=en";
-	}
-
-	try {
-		const response = await axios.get(
-			`https://api.mihomo.me/sr_info_parsed/${uid}${langParam}`
-		);
-		return { status: response.status, playerData: response.data };
-	} catch (err: any) {
-		return {
-			status: 400,
-			playerData: {
-				detail: err.response?.data?.detail,
-				message: err.message
-			}
-		};
-	}
-}
-
-export async function requestPlayerActivity(
-	uid: string,
-	interaction?: Interaction
-): Promise<PlayerActivityResponse> {
-	const userLocaleKey = `${interaction?.user?.id}.locale`;
-	let langParam = "?lang=en";
-
-	if (await database?.has(userLocaleKey)) {
-		const storedLocale = await database.get(userLocaleKey);
-		langParam = storedLocale === "tw" ? "?lang=cht" : "?lang=en";
-	} else if (interaction && "locale" in interaction) {
-		langParam =
-			(interaction as any).locale === "zh-TW" ? "?lang=cht" : "?lang=en";
-	}
-
-	try {
-		const response = await axios.get(
-			`https://api.mihomo.me/sr_activity/${uid}${langParam}`
-		);
-		return { status: response.status, playerActivity: response.data };
-	} catch (err: any) {
-		return {
-			status: 400,
-			playerActivity: {
-				detail: err.response?.data?.detail,
-				message: err.message
-			}
-		};
-	}
 }
 
 export async function drawInQueueReply(
@@ -466,9 +250,7 @@ export async function getUserUid(
 	userId: string,
 	accountIndex: number = 0
 ): Promise<string | null> {
-	const accountKey = `${userId}.account`;
-
-	const account: UserAccount[] | null = await database.get(accountKey);
+	const account = await getLegacyAccounts(database, userId);
 	return account?.[accountIndex]?.uid || null;
 }
 
@@ -476,9 +258,7 @@ export async function getUserCookie(
 	userId: string,
 	accountIndex: number = 0
 ): Promise<string | null> {
-	const accountKey = `${userId}.account`;
-
-	const account: UserAccount[] | null = await database.get(accountKey);
+	const account = await getLegacyAccounts(database, userId);
 	return account?.[accountIndex]?.cookie || null;
 }
 
@@ -754,14 +534,12 @@ export async function updateCookie(
 		};
 
 	const newCookieToken = responseData.data.cookie_info.cookie_token;
-	const accountKey = `${userId}.account`;
-	const account: UserAccount[] | null = await database.get(accountKey);
-
-	if (!account || !account[accountIndex]) {
+	const account = await getLegacyAccountAtIndex(database, userId, accountIndex);
+	if (!account) {
 		throw new Error("Account not found");
 	}
 
-	let originalCookie = account[accountIndex].cookie
+	let originalCookie = account.cookie
 		.split("; ")
 		.filter(Boolean);
 
@@ -787,12 +565,20 @@ export async function updateCookie(
 			}
 		}
 
-		account[accountIndex].cookie = finalCookie.join("; ");
+		await updateAccountCookieAtIndex(
+			database,
+			userId,
+			accountIndex,
+			finalCookie.join("; ")
+		);
 	} else {
-		account[accountIndex].cookie = updatedCookie.join("; ");
+		await updateAccountCookieAtIndex(
+			database,
+			userId,
+			accountIndex,
+			updatedCookie.join("; ")
+		);
 	}
-
-	await database.set(accountKey, account);
 }
 
 function generateDynamicSecret(): string {
@@ -819,15 +605,7 @@ export async function updateAccountInfo(
 		nickname
 	}: { uid: string; cookie: string; nickname?: string }
 ): Promise<void> {
-	const ltuid = extractLtuidFromCookie(cookie) ?? fallbackBucketKey(cookie);
-	await upsertHoyolab(database, userId, { ltuid_v2: ltuid, cookie });
-	await upsertCharacter(database, userId, ltuid, {
-		uid: String(uid),
-		nickname: nickname ?? null,
-		region: null,
-		lastUpdate: new Date().toISOString(),
-		invalid: false
-	});
+	await storeAccountBinding(database, userId, { uid, cookie, nickname: nickname ?? null });
 }
 
 export async function updateTokensBySToken(
@@ -926,24 +704,13 @@ export async function updateTokensBySToken(
 		updatedCookieArray.push(`cookie_token_v2=${cookieToken}`);
 
 	const finalCookie = updatedCookieArray.join("; ");
-
-	const accountKey = `${userId}.account`;
-	const account: UserAccount[] | null = await database.get(accountKey);
-
-	if (account && account[accountIndex]) {
-		account[accountIndex].cookie = finalCookie;
-		await database.set(accountKey, account);
-
-		// Sync hoyolabs store so both stores stay consistent.
-		const ltuid = extractLtuidFromCookie(finalCookie);
-		if (ltuid) {
-			try {
-				await upsertHoyolab(database, userId, { ltuid_v2: ltuid, cookie: finalCookie });
-			} catch {
-				// Non-fatal: flat array is already updated above.
-			}
-		}
-
+	const account = await updateAccountCookieAtIndex(
+		database,
+		userId,
+		accountIndex,
+		finalCookie
+	);
+	if (account) {
 		if (uid) {
 			await database.delete(`${uid}.cookieExpired`);
 			await database.delete(`${uid}.needsCookieUpdate`);
@@ -1089,9 +856,8 @@ export async function autoRefreshCookie(
 	};
 
 	try {
-		const accountKey = `${userId}.account`;
-		const accounts = await database.get(accountKey);
-		const uid = accounts?.[accountIndex]?.uid;
+		const account = await getLegacyAccountAtIndex(database, userId, accountIndex);
+		const uid = account?.uid;
 		const cookieMap = parseCookieMap(cookie);
 		const deviceFp = cookieMap.DEVICEFP || "";
 		const deviceId =
@@ -1234,12 +1000,16 @@ export async function autoRefreshCookie(
 				await database.delete(`${uid}.needsCookieUpdate`);
 				await database.delete(`${uid}.lastCookieRefreshAttempt`);
 			}
-			const refreshedAccounts = await database.get(accountKey);
-			const newCookie = refreshedAccounts?.[accountIndex]?.cookie;
+			const refreshedAccount = await getLegacyAccountAtIndex(
+				database,
+				userId,
+				accountIndex
+			);
+			const newCookie = refreshedAccount?.cookie;
 			return {
 				success: true,
 				message: "Cookie 已自動刷新",
-				newCookie
+				...(newCookie !== undefined && { newCookie })
 			};
 		}
 
@@ -1252,8 +1022,12 @@ export async function autoRefreshCookie(
 			message: (refreshResult as any)?.message || "Cookie 刷新失敗"
 		};
 	} catch (error: any) {
-		const accounts = await database.get(`${userId}.account`);
-		const uid = accounts?.[accountIndex]?.uid;
+		const account = await getLegacyAccountAtIndex(
+			database,
+			userId,
+			accountIndex
+		);
+		const uid = account?.uid;
 		if (uid) {
 			await database.set(`${uid}.needsCookieUpdate`, true);
 		}
@@ -1272,17 +1046,6 @@ export function getRandomColor(): string {
 		color += letters[Math.floor(Math.random() * 16)];
 
 	return color;
-}
-
-export async function replyOrfollowUp(
-	interaction: Interaction,
-	options: any
-): Promise<any> {
-	if ("replied" in interaction && interaction.replied)
-		return interaction.editReply(options);
-	if ("deferred" in interaction && interaction.deferred)
-		return await interaction.followUp(options);
-	if ("reply" in interaction) return await interaction.reply(options);
 }
 
 export async function getUserGameInfo(
@@ -1350,14 +1113,6 @@ export async function getUserGameInfo(
 	}
 }
 
-// 快取管理函數
-export async function clearRedeemCodesCache(): Promise<void> {
-	const cacheKey = "redeemCodesCache";
-	await database.delete(cacheKey);
-	console.log("[快取] 兌換碼快取已清除");
-}
-
-// 錯誤信息處理函數
 export function getFriendlyErrorMessage(
 	originalMessage: string | null,
 	tr: (key: string) => string
@@ -1397,35 +1152,4 @@ export function getFriendlyErrorMessage(
 
 	// 如果都沒有匹配到，返回原始信息
 	return originalMessage;
-}
-
-export async function getRedeemCodesCacheStatus(): Promise<CacheStatus> {
-	const cacheKey = "redeemCodesCache";
-	const cachedData: CacheData | null = await database.get(cacheKey);
-	const currentTime = Date.now();
-	const oneDayInMs = 2 * 60 * 60 * 1000; // 2小時的毫秒數（快取 TTL）
-
-	if (!cachedData) {
-		return {
-			exists: false,
-			message: "快取不存在"
-		};
-	}
-
-	const timeDiff = currentTime - cachedData.timestamp;
-	const isExpired = timeDiff >= oneDayInMs;
-	const remainingHours = Math.floor(
-		(oneDayInMs - timeDiff) / (1000 * 60 * 60)
-	);
-
-	return {
-		exists: true,
-		isExpired,
-		remainingHours: isExpired ? 0 : remainingHours,
-		codesCount: cachedData.codes.length,
-		lastUpdated: new Date(cachedData.timestamp).toLocaleString("zh-TW"),
-		message: isExpired
-			? "快取已過期"
-			: `快取有效，剩餘 ${remainingHours} 小時，包含 ${cachedData.codes.length} 個兌換碼`
-	};
 }

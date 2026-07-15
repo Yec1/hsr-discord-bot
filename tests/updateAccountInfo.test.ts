@@ -1,9 +1,8 @@
 /**
  * Verifies that updateAccountInfo (legacy signature) routes through the
- * new accountStore and produces both:
- *   - the new `<userId>.hoyolabs` shape
- *   - the dual-write `<userId>.account` legacy mirror (so 30+ existing
- *     direct readers don't break).
+ * new accountStore and persists the canonical `<userId>.hoyolabs` shape.
+ * Legacy `.account` data is read only for one-time migration and is never
+ * recreated by writes.
  *
  * The wrapper is exercised through the accountStore primitives directly
  * because importing utilities/index.ts pulls in the live database/client
@@ -38,20 +37,17 @@ async function updateAccountInfoLike(
 }
 
 describe("updateAccountInfo wrapper semantics", () => {
-	it("creates hoyolab + character + legacy mirror for a new user", async () => {
+	it("creates hoyolab + character for a new user", async () => {
 		const db = createFakeDb();
 		await updateAccountInfoLike(db, "u1", { uid: "800000001", cookie: COOKIE_A, nickname: "A" });
-		const mirror = (await db.get("u1.account")) as any[];
-		expect(mirror).toHaveLength(1);
-		expect(mirror[0].uid).toBe("800000001");
 		expect((await db.get("u1.hoyolabs")) as any[]).toHaveLength(1);
+		expect(await db.has("u1.account")).toBe(false);
 	});
 
 	it("updates an existing character without duplicating", async () => {
 		const db = createFakeDb();
 		await updateAccountInfoLike(db, "u1", { uid: "800000001", cookie: COOKIE_A, nickname: "A" });
 		await updateAccountInfoLike(db, "u1", { uid: "800000001", cookie: COOKIE_A, nickname: "A-renamed" });
-		expect(((await db.get("u1.account")) as any[]).length).toBe(1);
 		expect(((await db.get("u1.hoyolabs")) as any[])[0].characters.length).toBe(1);
 	});
 

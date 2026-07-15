@@ -4,7 +4,10 @@ import Logger from "@/utilities/core/logger.js";
 import autoDailySign from "@/utilities/hsr/autoDaily.js";
 import autoRedeem from "@/utilities/hsr/autoRedeem.js";
 import autoMimo from "@/utilities/hsr/autoMimo.js";
-import { setupLeaderboardMaintenance } from "@/utilities/hsr/profile.js";
+import {
+	setupLeaderboardMaintenance,
+	syncAllBoundAnomalyBadges
+} from "@/utilities/hsr/profile.js";
 import schedule from "node-schedule";
 
 let presenceInterval: NodeJS.Timeout | null = null;
@@ -65,6 +68,7 @@ client.once(Events.ClientReady, async () => {
 		runAutoRedeem();
 		autoMimo();
 		setupLeaderboardMaintenance();
+		void syncAllBoundAnomalyBadges();
 
 		if (!hourlyJob) {
 			hourlyJob = schedule.scheduleJob("0 * * * *", function () {
@@ -77,6 +81,7 @@ client.once(Events.ClientReady, async () => {
 			dailyJob = schedule.scheduleJob("0 8 * * *", function () {
 				runAutoRedeem();
 				setupLeaderboardMaintenance();
+				void syncAllBoundAnomalyBadges();
 			});
 		}
 	}

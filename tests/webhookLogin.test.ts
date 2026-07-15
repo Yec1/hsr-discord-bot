@@ -15,6 +15,7 @@ const mockMarkConsumed = jest.fn() as jest.Mock<any>;
 const mockDecryptString = jest.fn((s: string) => `decrypted(${s})`) as jest.Mock<any>;
 const mockGetUserGameInfo = jest.fn() as jest.Mock<any>;
 const mockUpdateAccountInfo = jest.fn() as jest.Mock<any>;
+const mockGetLegacyAccounts = jest.fn(async () => []) as jest.Mock<any>;
 const mockUpsertHoyolab = jest.fn() as jest.Mock<any>;
 const mockUpsertCharacter = jest.fn() as jest.Mock<any>;
 const mockUserSend = jest.fn() as jest.Mock<any>;
@@ -31,6 +32,7 @@ jest.mock("@/utilities/index.js", () => ({
 	updateAccountInfo: (...a: any[]) => mockUpdateAccountInfo(...a)
 }));
 jest.mock("@/utilities/accountStore.js", () => ({
+	getLegacyAccounts: (...a: any[]) => mockGetLegacyAccounts(...a),
 	upsertHoyolab: (...a: any[]) => mockUpsertHoyolab(...a),
 	upsertCharacter: (...a: any[]) => mockUpsertCharacter(...a)
 }));
@@ -59,6 +61,7 @@ import { drainPendingLogins } from "@/utilities/webhookLogin";
 beforeEach(() => {
 	jest.clearAllMocks();
 	mockDbGet.mockImplementation(async () => []);
+	mockGetLegacyAccounts.mockResolvedValue([]);
 	mockDecryptString.mockImplementation((s: string) => `decrypted(${s})`);
 	mockUsersFetch.mockImplementation(async () => ({ send: mockUserSend }));
 });
@@ -125,7 +128,7 @@ describe("drainPendingLogins routing", () => {
 		expect(mockMarkConsumed).toHaveBeenCalledWith(1);
 	});
 
-	it("uses bindHoyolabOnly when enriched present but no HSR card", async () => {
+	it("falls back to bindCookieToUser when enriched present but no HSR card", async () => {
 		mockFetchPendingLogins.mockResolvedValueOnce([
 			row({
 				id: 2,
@@ -146,13 +149,19 @@ describe("drainPendingLogins routing", () => {
 				}
 			})
 		]);
+		mockGetUserGameInfo.mockResolvedValueOnce({
+			uid: "800777777",
+			nickname: "Fallback"
+		});
 
 		const out = await drainPendingLogins("u1");
 
-		expect(mockGetUserGameInfo).not.toHaveBeenCalled();
-		expect(mockUpsertHoyolab).toHaveBeenCalledTimes(1);
+		expect(mockGetUserGameInfo).toHaveBeenCalledTimes(1);
+		expect(mockUpsertHoyolab).not.toHaveBeenCalled();
 		expect(mockUpsertCharacter).not.toHaveBeenCalled();
-		expect(out).toHaveLength(0); // hoyolabOnly results filtered from BindResult[]
+		expect(mockUpdateAccountInfo).toHaveBeenCalledTimes(1);
+		expect(out).toHaveLength(1);
+		expect(out[0]!.uid).toBe("800777777");
 		expect(mockMarkConsumed).toHaveBeenCalledWith(2);
 	});
 
