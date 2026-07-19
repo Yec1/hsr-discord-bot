@@ -32,11 +32,6 @@ interface Expedition {
 	remaining_time: number;
 }
 
-interface HSRClient {
-	record: {
-		note(): Promise<NoteResponse>;
-	};
-}
 
 const DRAW_QUEUE_MAX = 50;
 const drawQueue = new Queue({ autostart: true, concurrency: 1 });
@@ -57,12 +52,13 @@ GlobalFonts.registerFromPath(
 async function handleNoteDraw(
 	interaction: ChatInputCommandInteraction,
 	tr: any,
-	hsr: HSRClient
+	requestNote: () => Promise<NoteResponse | null>
 ): Promise<void> {
 	const drawTask = async () => {
 		try {
 			const requestStartTime = Date.now();
-			const res = await hsr.record.note();
+			const res = await requestNote();
+			if (!res) return;
 			const requestEndTime = Date.now();
 			const drawStartTime = Date.now();
 			const imageBuffer = await drawNoteImage(tr, res);

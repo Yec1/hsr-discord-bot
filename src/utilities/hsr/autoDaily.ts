@@ -13,6 +13,7 @@ import {
 } from "@/utilities/index.js";
 import { loadConfig } from "@/utilities/core/config.js";
 import { sendRestMessage, sendRestDm } from "@/utilities/core/sendRestMessage.js";
+import { getLegacyAccounts } from "@/utilities/accountStore.js";
 import {
 	buildHSRDailyCard,
 	HSRDailyCardPayload
@@ -160,8 +161,8 @@ class AutoDailySignSystem {
 		userId: string,
 		dailyData: DailyData
 	): Promise<boolean> {
-		const accounts = await this.db.get(`${userId}.account`);
-		if (!accounts || !Array.isArray(accounts) || accounts.length === 0) {
+		const accounts = await getLegacyAccounts(this.db, userId);
+		if (accounts.length === 0) {
 			return false;
 		}
 
@@ -171,6 +172,7 @@ class AutoDailySignSystem {
 		const tag = dailyData[userId]?.tag === "true" ? `<@${userId}>` : "";
 
 		const successBefore = this.stats.success + this.stats.signed;
+		let notificationDelivered = true;
 
 		for (
 			let accountIndex = 0;
@@ -186,7 +188,7 @@ class AutoDailySignSystem {
 					continue;
 				}
 
-				await this.performSignIn(
+				const delivered = await this.performSignIn(
 					{ cookie, uid },
 					userLang,
 					userId,
@@ -195,6 +197,7 @@ class AutoDailySignSystem {
 					tr,
 					accountIndex
 				);
+				notificationDelivered = notificationDelivered && delivered;
 			} catch (error) {
 				const errorMessage = (error as Error).message;
 
@@ -206,7 +209,7 @@ class AutoDailySignSystem {
 			}
 		}
 
-		return this.stats.success + this.stats.signed > successBefore;
+		return this.stats.success + this.stats.signed > successBefore && notificationDelivered;
 	}
 
 	async getDiscordNickname(userId: string): Promise<string> {
@@ -226,7 +229,7 @@ class AutoDailySignSystem {
 		tag: string,
 		tr: any,
 		accountIndex: number
-	): Promise<void> {
+	): Promise<boolean> {
 		this.stats.total++;
 
 		const hsr = new HonkaiStarRail({
@@ -256,7 +259,7 @@ class AutoDailySignSystem {
 					count: r?.cnt ?? 1,
 					...(r?.icon ? { icon: r.icon as string } : {})
 				});
-				await this.sendSuccessMessage(
+				return await this.sendSuccessMessage(
 					channelId,
 					{
 						uid: account.uid,
@@ -275,7 +278,6 @@ class AutoDailySignSystem {
 					tag,
 					userId
 				);
-				return;
 			}
 
 			// total_sign_day is the count BEFORE claiming; after claim it's +1
@@ -296,7 +298,7 @@ class AutoDailySignSystem {
 
 			this.stats.success++;
 
-			await this.sendSuccessMessage(
+			return await this.sendSuccessMessage(
 				channelId,
 				{
 					uid: account.uid,
@@ -377,7 +379,32 @@ class AutoDailySignSystem {
 							result.info.is_sign === true
 						) {
 							this.stats.signed++;
-							return;
+							const signedDays = info.total_sign_day;
+							const idx = Math.max(0, info.total_sign_day - 1);
+							const mkReward = (r: any) => ({
+								name: r?.name || "",
+								count: r?.cnt ?? 1,
+								...(r?.icon ? { icon: r.icon as string } : {})
+							});
+							return await this.sendSuccessMessage(
+								channelId,
+								{
+									uid: account.uid,
+									nickname,
+									status: "already_signed",
+									totalDays: signedDays,
+									month: reward.month,
+									signCntMissed: info.sign_cnt_missed,
+									todayReward: mkReward(rewards.awards[idx] || rewards.awards[0]),
+									nextRewards: [
+										rewards.awards[idx + 1] || rewards.awards[0],
+										rewards.awards[idx + 2] || rewards.awards[0],
+										rewards.awards[idx + 3] || rewards.awards[0]
+								].map(mkReward) as [any, any, any]
+								},
+								tag,
+								userId
+							);
 						}
 
 						// total_sign_day is the count BEFORE claiming; after claim it's +1
@@ -399,7 +426,7 @@ class AutoDailySignSystem {
 
 						this.stats.success++;
 
-						await this.sendSuccessMessage(
+						return await this.sendSuccessMessage(
 							channelId,
 							{
 								uid: account.uid,
@@ -440,7 +467,6 @@ class AutoDailySignSystem {
 					tag,
 					userId
 				);
-				return;
 					} catch (retryError: any) {
 						errorMessage = retryError.message;
 					}
@@ -475,7 +501,7 @@ class AutoDailySignSystem {
 		cardData: HSRDailyCardPayload,
 		content: string,
 		userId?: string
-	): Promise<void> {
+	): Promise<boolean> {
 		let cardFile: { buffer: string; name: string } | null = null;
 		try {
 			const buf = await buildHSRDailyCard(cardData);
@@ -501,10 +527,12 @@ class AutoDailySignSystem {
 			? { buffer: Buffer.from(cardFile.buffer, "base64"), name: cardFile.name }
 			: undefined;
 		const restPayloadSuccess: { content?: string; embeds?: object[] } = {};
+		let delivered = false;
 		if ((payload as any).content) restPayloadSuccess.content = (payload as any).content;
 
 		try {
 			await sendRestMessage(channelId, restPayloadSuccess, fileArg);
+			delivered = true;
 			this.logger.info(`[通知] 發送成功 (User: ${userId ?? "?"}) method=channel channelId=${channelId}`);
 		} catch (channelError) {
 			this.logger.error(
@@ -513,6 +541,7 @@ class AutoDailySignSystem {
 			if (userId) {
 				try {
 					await sendRestDm(userId, restPayloadSuccess, fileArg);
+					delivered = true;
 					this.logger.info(`[通知] 發送成功 (User: ${userId}) method=dm`);
 				} catch (dmError) {
 					this.logger.error(
@@ -521,6 +550,7 @@ class AutoDailySignSystem {
 				}
 			}
 		}
+		return delivered;
 	}
 
 	async sendErrorMessage(
@@ -689,7 +719,7 @@ export default async function autoDailySign(
 		const userCfg = dailyData[userId] || ({} as any);
 		const scheduledTimeStr = userCfg.time || "13";
 		const parsedTime = parseInt(scheduledTimeStr, 10);
-		const scheduledTime = Number.isNaN(parsedTime) ? 13 : parsedTime;
+		const scheduledTime = parsedTime === 24 ? 0 : Number.isNaN(parsedTime) ? 13 : parsedTime;
 		const timeZone = normalizeTimeZone((userCfg as any).timeZone);
 
 		const userHour = getHourInTimezone(timeZone);

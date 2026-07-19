@@ -63,6 +63,43 @@ describe("loadAccounts (lazy migration)", () => {
 		expect(db._dump()).toEqual(before); // no write happened
 	});
 
+	it("reconciles a legacy mirror left beside an existing canonical store", async () => {
+		const db = createFakeDb({
+			u1: {
+				hoyolabs: [
+					{
+						ltuid_v2: "11111111",
+						cookie: COOKIE_A,
+						hoyolabName: null,
+						lastUpdate: "2026-01-01T00:00:00.000Z",
+						invalid: false,
+						characters: [
+							{
+								uid: "800000001",
+								nickname: "A",
+								region: null,
+								lastUpdate: "2026-01-01T00:00:00.000Z",
+								invalid: false
+							}
+						]
+					}
+				],
+				account: [
+					{
+						uid: "800000001",
+						cookie: "ltuid_v2=11111111; ltoken_v2=NEW",
+						lastUpdate: "2026-03-01T00:00:00.000Z"
+					}
+				]
+			}
+		});
+
+		const out = await loadAccounts(db, "u1");
+		expect(out.hoyolabs[0]!.cookie).toContain("ltoken_v2=NEW");
+		expect(out.hoyolabs[0]!.characters[0]!.legacyOrder).toBe(0);
+		expect(await db.has("u1.account")).toBe(false);
+	});
+
 	it("migrates a single legacy entry with valid cookie", async () => {
 		const db = createFakeDb({
 			u1: {
@@ -105,6 +142,50 @@ describe("loadAccounts (lazy migration)", () => {
 		expect(out.hoyolabs[0]!.characters).toHaveLength(2);
 		expect(out.hoyolabs[0]!.characters.map(c => c.uid).sort()).toEqual([
 			"800000001",
+			"800000002"
+		]);
+	});
+
+	it("keeps the newest cookie when legacy entries share an ltuid", async () => {
+		const olderCookie = "ltuid_v2=11111111; ltoken_v2=OLD";
+		const newerCookie = "ltuid_v2=11111111; ltoken_v2=NEW";
+		const db = createFakeDb({
+			u1: {
+				account: [
+					{
+						uid: "800000001",
+						cookie: olderCookie,
+						lastUpdate: "2026-01-01T00:00:00.000Z"
+					},
+					{
+						uid: "800000002",
+						cookie: newerCookie,
+						lastUpdate: "2026-02-01T00:00:00.000Z"
+					}
+				]
+			}
+		});
+
+		const out = await loadAccounts(db, "u1");
+		expect(out.hoyolabs[0]!.cookie).toBe(newerCookie);
+		expect(out.hoyolabs[0]!.characters).toHaveLength(2);
+	});
+
+	it("preserves the legacy flat ordering across grouped Hoyolab accounts", async () => {
+		const db = createFakeDb({
+			u1: {
+				account: [
+					{ uid: "800000001", cookie: COOKIE_A },
+					{ uid: "700000001", cookie: COOKIE_B },
+					{ uid: "800000002", cookie: COOKIE_A }
+				]
+			}
+		});
+
+		const out = await getLegacyAccounts(db, "u1");
+		expect(out.map(account => account.uid)).toEqual([
+			"800000001",
+			"700000001",
 			"800000002"
 		]);
 	});
@@ -158,12 +239,27 @@ describe("loadAccounts (lazy migration)", () => {
 		await loadAccounts(db, "u1");
 		expect(db._dump()).toEqual(before);
 	});
+
+	it("keeps legacy data when canonical migration write fails", async () => {
+		const db = createFakeDb({
+			u1: { account: [{ uid: "800000001", cookie: COOKIE_A }] }
+		});
+		const originalSet = db.set.bind(db);
+		db.set = async (key, value) => {
+			if (key === "u1.hoyolabs") throw new Error("write failed");
+			await originalSet(key, value);
+		};
+
+		await expect(loadAccounts(db, "u1")).rejects.toThrow("write failed");
+		expect(await db.has("u1.account")).toBe(true);
+		expect(await db.has("u1.hoyolabs")).toBe(false);
+	});
 });
 
 import { saveAccounts, type AccountStore, type Character } from "@/utilities/accountStore";
 
-describe("saveAccounts (writes hoyolabs + legacy mirror)", () => {
-	it("writes hoyolabs and a flattened legacy `.account` mirror", async () => {
+describe("saveAccounts", () => {
+	it("writes hoyolabs without recreating the legacy `.account` key", async () => {
 		const db = createFakeDb();
 		const store: AccountStore = {
 			hoyolabs: [
@@ -196,21 +292,10 @@ describe("saveAccounts (writes hoyolabs + legacy mirror)", () => {
 		// New shape preserved
 		expect(await db.get("u1.hoyolabs")).toEqual(store.hoyolabs);
 
-		// Legacy mirror flattened with cookie denormalized onto each char
-		const mirror = (await db.get("u1.account")) as any[];
-		expect(mirror).toHaveLength(3);
-		expect(mirror.map(m => m.uid).sort()).toEqual([
-			"700000001",
-			"800000001",
-			"800000002"
-		]);
-		for (const m of mirror) {
-			expect(typeof m.cookie).toBe("string");
-			expect(m.cookie.length).toBeGreaterThan(0);
-		}
+		expect(await db.has("u1.account")).toBe(false);
 	});
 
-	it("removes the legacy mirror when store is empty", async () => {
+	it("removes a legacy key when store is empty", async () => {
 		const db = createFakeDb({ u1: { account: [{ uid: "1" }], hoyolabs: [] } });
 		await saveAccounts(db, "u1", { hoyolabs: [] });
 		expect(await db.has("u1.account")).toBe(false);
@@ -298,9 +383,12 @@ import {
 	upsertHoyolab,
 	upsertCharacter,
 	removeHoyolab,
+	removeCharacter,
 	markCharacterInvalid,
 	markHoyolabInvalid,
-	backfillHoyolabName
+	backfillHoyolabName,
+	getLegacyAccounts,
+	replaceCharacterBinding
 } from "@/utilities/accountStore";
 
 describe("write API", () => {
@@ -394,16 +482,62 @@ describe("write API", () => {
 		expect((await getHoyolabByLtuid(db, "u1", "11111111"))?.hoyolabName).toBe("FirstName");
 	});
 
-	it("write API keeps legacy mirror in sync", async () => {
+	it("write API persists only the canonical account store", async () => {
 		const db = createFakeDb();
 		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
 		await upsertCharacter(db, "u1", "11111111", {
 			uid: "800000001", nickname: "A1", region: "asia",
 			lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false
 		});
-		const mirror = (await db.get("u1.account")) as any[];
-		expect(mirror).toHaveLength(1);
-		expect(mirror[0]).toMatchObject({ uid: "800000001", cookie: COOKIE_A, nickname: "A1" });
+		expect(await db.has("u1.account")).toBe(false);
+		expect((await getHoyolabByLtuid(db, "u1", "11111111"))?.characters).toEqual([
+			expect.objectContaining({ uid: "800000001", nickname: "A1" })
+		]);
+	});
+
+	it("getLegacyAccounts exposes a compatibility projection from the hoyolab store", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		await upsertCharacter(db, "u1", "11111111", {
+			uid: "800000001", nickname: "A1", region: "asia",
+			lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false
+		});
+		const accounts = await getLegacyAccounts(db, "u1");
+		expect(accounts).toEqual([
+			expect.objectContaining({
+				uid: "800000001",
+				cookie: COOKIE_A,
+				nickname: "A1"
+			})
+		]);
+	});
+
+	it("replaceCharacterBinding moves a character to the new cookie and removeCharacter cleans it up", async () => {
+		const db = createFakeDb();
+		await upsertHoyolab(db, "u1", { ltuid_v2: "11111111", cookie: COOKIE_A });
+		await upsertCharacter(db, "u1", "11111111", {
+			uid: "800000001", nickname: "A1", region: null,
+			lastUpdate: "2026-04-27T00:00:00.000Z", invalid: false
+		});
+
+		await replaceCharacterBinding(db, "u1", "800000001", {
+			uid: "800000009",
+			cookie: COOKIE_B,
+			nickname: "A9"
+		});
+
+		let accounts = await getLegacyAccounts(db, "u1");
+		expect(accounts).toHaveLength(1);
+		expect(accounts[0]).toMatchObject({
+			uid: "800000009",
+			cookie: COOKIE_B,
+			nickname: "A9"
+		});
+
+		await removeCharacter(db, "u1", "800000009");
+		accounts = await getLegacyAccounts(db, "u1");
+		expect(accounts).toEqual([]);
+		expect(await db.has("u1.account")).toBe(false);
 	});
 });
 

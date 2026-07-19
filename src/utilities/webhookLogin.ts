@@ -14,7 +14,12 @@
  */
 import { database, client } from "@/index.js";
 import { getUserGameInfo, updateAccountInfo } from "@/utilities/index.js";
-import { upsertHoyolab, upsertCharacter, type Character } from "@/utilities/accountStore.js";
+import {
+	getLegacyAccounts,
+	upsertHoyolab,
+	upsertCharacter,
+	type Character
+} from "@/utilities/accountStore.js";
 import { getConfig } from "@/utilities/core/config.js";
 import Logger from "@/utilities/core/logger.js";
 import {
@@ -23,12 +28,6 @@ import {
 	decryptString,
 	type EnrichedGameCard
 } from "@/utilities/core/supabase.js";
-
-interface Account {
-	uid: string;
-	nickname?: string;
-	cookie?: string;
-}
 
 export interface BindResult {
 	uid: string;
@@ -127,7 +126,7 @@ async function getTokensFromStokenInternal(
 async function checkAccountLimit(discordUserId: string): Promise<void> {
 	const config = getConfig();
 	if (config.DEVIDS.includes(discordUserId)) return;
-	const accounts: Account[] = (await database.get(`${discordUserId}.account`)) || [];
+	const accounts = await getLegacyAccounts(database, discordUserId);
 	if (accounts.length >= 5) {
 		throw new Error("Account limit (5) exceeded");
 	}
@@ -177,8 +176,7 @@ export async function bindCookieToUser(
 	const uid = gameInfo.uid;
 	log.info(`[bind] gameInfo uid=${uid} nickname=${gameInfo.nickname ?? "-"}`);
 
-	const accounts: Account[] =
-		(await database.get(`${discordUserId}.account`)) || [];
+	const accounts = await getLegacyAccounts(database, discordUserId);
 	const existingIndex = accounts.findIndex(acc => acc.uid === uid);
 	let updated = false;
 	if (existingIndex !== -1) {
@@ -231,8 +229,7 @@ export async function bindFromEnriched(
 	const uid = String(card.game_role_id);
 
 	// Mirror legacy account-limit semantics: only enforce when adding a NEW slot.
-	const existing: Account[] =
-		(await database.get(`${discordUserId}.account`)) || [];
+	const existing = await getLegacyAccounts(database, discordUserId);
 	const isNew = !existing.some(a => a.uid === uid);
 	if (isNew) await checkAccountLimit(discordUserId);
 

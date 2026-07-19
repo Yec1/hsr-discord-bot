@@ -1,4 +1,4 @@
-import { client, database } from "../index.js";
+import { client } from "../index.js";
 import {
 	Events,
 	ActionRowBuilder,
@@ -12,37 +12,41 @@ import {
 	StringSelectMenuInteraction,
 	MessageFlags
 } from "discord.js";
-import axios from "axios";
 import emoji from "../assets/emoji.js";
-import { drawFloorImage } from "../utilities/hsr/forgottenhall.js";
-import { createChunkedSelectMenus, createPagedSelectMenu } from "../utilities/hsr/selectmenu.js";
+import {
+	createChunkedSelectMenus,
+	createPagedSelectMenu
+} from "../utilities/hsr/selectmenu.js";
 import {
 	drawMainImage,
 	drawCharacterImage,
 	drawAllCharactersImage
 } from "../utilities/hsr/profile.js";
-import { getUserBg, getBgPool, setUserBgPref } from "../utilities/hsr/wallpaperManager.js";
 import {
 	getRandomColor,
 	drawInQueueReply,
 	requestPlayerData,
-	getUserHSRData,
+	withUserHSRRequest,
 	getUserLang,
-	getNewsList,
-	getPostFull,
-	parsePostContent,
-	requestPlayerActivity,
 	getUserCookie,
 	getUserGameInfo,
 	getFriendlyErrorMessage
 } from "../utilities/index.js";
-import { getSelectMenu } from "../utilities/hsr/selectmenu.js";
 import { createTranslator, toI18nLang } from "../utilities/core/i18n.js";
 import {
 	loadPathsData,
 	loadElementsData,
 	buildPathMap
 } from "../utilities/hsr/jsonManager.js";
+import { handleAccountAction } from "../handlers/selectMenu/account.js";
+import { handleGuide } from "../handlers/selectMenu/guide.js";
+import { handleNews as handleNewsAction } from "../handlers/selectMenu/news.js";
+import {
+	handleLeaderboard as handleLeaderboardAction
+} from "../handlers/selectMenu/leaderboard.js";
+import {
+	handleForgottenHall as handleForgottenHallAction
+} from "../handlers/selectMenu/forgottenHall.js";
 import Queue from "queue";
 
 const DRAW_QUEUE_MAX = 50;
@@ -62,58 +66,17 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 		!customId.startsWith("leaderboard") &&
 		!customId.startsWith("profile_SelectCharacter") &&
 		!customId.startsWith("profile_Filter") &&
-		!customId.startsWith("profilebg_select") &&
 		!customId.startsWith("news") &&
 		!customId.startsWith("guide") &&
 		customId !== "forgottenHall_Floor"
 	)
 		await interaction.update({}).catch(() => {});
-	if (customId.startsWith("profilebg_select") && values[0]) {
-		const parts = customId.split(":");
-		const targetUserId = parts[1] ?? "";
-		const value = values[0];
-		if (value === "random") {
-			await setUserBgPref(targetUserId, null);
-			await interaction.update({
-				embeds: [
-					new EmbedBuilder()
-						.setColor("#5CBA4A")
-						.setDescription("✅ 已設定為**隨機背景**，每天自動從官方新聞選取")
-				],
-				components: []
-			});
-		} else {
-			// value = "fixed:N"
-			const idx = parseInt(value.split(":")[1] ?? "0");
-			const pool = await getBgPool();
-			const article = pool[idx];
-			if (!article) {
-				await interaction.update({
-					embeds: [new EmbedBuilder().setColor("#E76161").setDescription("❌ 找不到對應的圖片")],
-					components: []
-				});
-				return;
-			}
-			await setUserBgPref(targetUserId, article.url);
-			await interaction.update({
-				embeds: [
-					new EmbedBuilder()
-						.setColor("#5CBA4A")
-						.setTitle("✅ 背景已更新")
-						.setDescription(`已設定為：**${article.title}**`)
-						.setImage(article.url)
-				],
-				components: []
-			});
-		}
-		return;
-	}
 	if (customId.startsWith("guide") && values[0])
 		handleGuide(interaction, tr, values[0]);
 	if (customId.startsWith("news") && values[0])
-		handleNews(interaction, tr, values[0]);
+		handleNewsAction(interaction, tr, values[0]);
 	if (customId.startsWith("leaderboard") && values[0])
-		handleLeaderboard(interaction, tr, values[0]);
+		handleLeaderboardAction(interaction, tr, values[0]);
 	if (customId.startsWith("account") && values[0])
 		handleAccountAction(interaction, tr, customId, values[0]);
 	if (customId === "account_AddAccount") {
@@ -137,7 +100,13 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 		return;
 	}
 	if (customId == "forgottenHall_Floor" && values[0])
-		handleForgottenHall(interaction, tr, values[0]);
+		handleForgottenHallAction(
+			interaction,
+			tr,
+			values[0],
+			drawQueue,
+			DRAW_QUEUE_MAX
+		);
 	if (customId.startsWith("profile_SelectCharacter") && values[0]) {
 		const v = values[0];
 		if (v.startsWith("__prev__:") || v.startsWith("__next__:")) {
@@ -146,13 +115,21 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 			const parts = v.split(":");
 			// parts[0] = __prev__ or __next__, [1]=uid, [2]=userId, [3]=accountIndex, [4]=useAllCharacters, [5]=currentPage
 			const direction = parts[0] === "__prev__" ? -1 : 1;
-		const uid = parts[1] ?? "";
-		const userId = parts[2] ?? "";
+			const uid = parts[1] ?? "";
+			const userId = parts[2] ?? "";
 			const accountIndex = parseInt(parts[3] ?? "0");
 			const useAllCharacters = parts[4] === "true";
 			const currentPage = parseInt(parts[5] ?? "0");
 			const newPage = currentPage + direction;
-			await handlePageTurn(interaction, tr, uid, userId, accountIndex, useAllCharacters, newPage);
+			await handlePageTurn(
+				interaction,
+				tr,
+				uid,
+				userId,
+				accountIndex,
+				useAllCharacters,
+				newPage
+			);
 		} else {
 			handleSelectCharacter(interaction, tr, v);
 		}
@@ -306,50 +283,6 @@ interface GameInfo {
 	level: number;
 }
 
-interface LeaderboardData {
-	id: string;
-	score: Array<{
-		nickname: string;
-		uid: string;
-		score: number;
-		avatar: string;
-	}>;
-	element: {
-		color: string;
-	};
-	icon: string;
-}
-
-interface NewsData {
-	data: {
-		list: Array<{
-			post: {
-				post_id: string;
-				subject: string;
-				created_at: number;
-			};
-		}>;
-	};
-}
-
-interface PostData {
-	post: {
-		post: {
-			subject: string;
-			content: string;
-			created_at: number;
-			post_id?: string;
-		};
-		user: {
-			avatar_url?: string;
-			nickname?: string;
-			uid: string;
-		};
-		image_list: Array<{ url: string }>;
-		cover_list: Array<{ url: string }>;
-	};
-}
-
 interface FilterInfo {
 	sortType?: string;
 	filters: string[];
@@ -461,13 +394,11 @@ async function handleProfileFilter(
 		const locale = interaction.locale;
 		const userLocale = await getUserLang(interaction.user.id);
 		// 取得原始角色資料
-		const hsr = await getUserHSRData(
-			interaction,
-			tr,
-			userId || "",
-			accountIndex
+		const recordResult = await withUserHSRRequest(
+			{ interaction, tr, userId: userId || "", accountIndex },
+			async hsr => ({ data: await hsr.record.records(), uid: hsr.uid })
 		);
-		if (!hsr) {
+		if (!recordResult) {
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -482,7 +413,7 @@ async function handleProfileFilter(
 			return;
 		}
 
-		const data = await hsr.record.records();
+		const { data, uid: hsrUid } = recordResult;
 		const userCookie = await getUserCookie(userId, accountIndex);
 		if (!userCookie) {
 			await interaction.editReply({
@@ -507,8 +438,9 @@ async function handleProfileFilter(
 				(e as Error).message
 			);
 			gameInfo = {
-				uid: String(hsr.uid || ""),
-				nickname: (data as any)?.role?.nickname || String(hsr.uid || ""),
+				uid: String(hsrUid || ""),
+				nickname:
+					(data as any)?.role?.nickname || String(hsrUid || ""),
 				level: (data as any)?.role?.level || 0
 			};
 		}
@@ -587,13 +519,11 @@ async function handleProfileFilter(
 		}
 
 		// 重新繪圖
-		const bgPath = await getUserBg(userId ?? "");
 		const imageBuffer = await drawAllCharactersImage(
 			tr,
 			playerData as any,
 			sortedCharacters as any,
-			filterInfo,
-			bgPath
+			filterInfo
 		);
 
 		if (!imageBuffer) {
@@ -616,7 +546,7 @@ async function handleProfileFilter(
 			name: `AllCharacters_${playerData.player.uid}.webp`
 		});
 
-		const charOptionsMapped = sortedCharacters.map((character, i) => {
+		const charOptionsMapped = sortedCharacters.map(character => {
 			// 安全地获取元素ID
 			const elementId =
 				typeof character.element === "string"
@@ -627,7 +557,7 @@ async function handleProfileFilter(
 			return {
 				emoji: (emoji as any)[elementKey] || emoji.physical,
 				label: `${character.name}`,
-				value: `${playerData.player.uid}-${userId}-${i}`
+				value: `${playerData.player.uid}-${userId}-${accountIndex}-true-${character.id}`
 			};
 		});
 
@@ -737,8 +667,12 @@ async function handleProfileFilter(
 			content: "",
 			embeds: [],
 			components: [
-				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(charMenu),
-				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(filterMenu)
+				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+					charMenu
+				),
+				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+					filterMenu
+				)
 			],
 			files: [image]
 		});
@@ -771,17 +705,14 @@ async function handlePageTurn(
 	newPage: number
 ): Promise<void> {
 	try {
-		// 取得角色列表
-		const hsr = await getUserHSRData(interaction, tr, userId, accountIndex);
-		if (!hsr) return;
-
-		let allCharacters: any[];
-		if (useAllCharacters) {
-			const data = await hsr.record.records();
-			allCharacters = (data as any).avatar_list;
-		} else {
-			allCharacters = (await hsr.record.characters()) as any;
-		}
+		// 綁定帳號使用 HoYoLAB；公開 UID 使用 Enka canonical cache。
+		const allCharacters = useAllCharacters
+			? await withUserHSRRequest(
+					{ interaction, tr, userId, accountIndex },
+					async hsr => ((await hsr.record.records()) as any).avatar_list
+				)
+			: (await requestPlayerData(uid, interaction)).playerData?.characters;
+		if (!allCharacters) return;
 
 		const charOptions = allCharacters.map((character: any) => {
 			const elementId =
@@ -807,12 +738,15 @@ async function handlePageTurn(
 		// 只更新 components，保留既有圖片與 embeds
 		const existingComponents = interaction.message.components;
 		// 最後一個 row 是 filter menu（若存在）
-		const filterRow = existingComponents.length > 1
-			? existingComponents[existingComponents.length - 1]
-			: null;
+		const filterRow =
+			existingComponents.length > 1
+				? existingComponents[existingComponents.length - 1]
+				: null;
 
 		const newComponents: any[] = [
-			new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(charMenu)
+			new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+				charMenu
+			)
 		];
 		if (filterRow) newComponents.push(filterRow);
 
@@ -823,6 +757,7 @@ async function handlePageTurn(
 	}
 }
 
+/* Moved to handlers/selectMenu/news.ts.
 async function handleNews(
 	interaction: StringSelectMenuInteraction,
 	tr: any,
@@ -952,6 +887,9 @@ async function handleNews(
 	}
 }
 
+*/
+
+/* Moved to handlers/selectMenu/leaderboard.ts.
 async function handleLeaderboard(
 	interaction: StringSelectMenuInteraction,
 	tr: any,
@@ -1053,184 +991,9 @@ async function handleLeaderboard(
 	});
 }
 
-async function handleGuide(
-	interaction: StringSelectMenuInteraction,
-	tr: any,
-	value: string
-): Promise<void> {
-	await interaction.update({
-		embeds: [
-			new EmbedBuilder()
-				.setTitle(tr("Searching"))
-				.setColor(getRandomColor() as any)
-				.setThumbnail(
-					"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
-				)
-		],
-		components: []
-	});
+*/
 
-	const id = value;
-	const locale =
-		(await getUserLang(interaction.user.id)) ||
-		toI18nLang(interaction.locale) ||
-		"en";
-
-	const responses = await axios.get(
-		`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_min/${
-			locale == "tw" ? "cht" : "en"
-		}/characters.json`
-	);
-	const localeJson = responses.data;
-	const selectMenus = await getSelectMenu(interaction as any, tr, "guide");
-	try {
-		await axios.get(
-			`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/guide/Nwflower/character_overview/${id}.png`
-		);
-	} catch (e) {
-		await interaction.followUp({
-			embeds: [
-				new EmbedBuilder()
-					.setTitle(
-						`${tr("guide_NonImage", {
-							z: localeJson[id]?.name || ""
-						})}`
-					)
-					.setColor("#E76161")
-					.setThumbnail(
-						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-					)
-			],
-			flags: MessageFlags.Ephemeral
-		});
-		return;
-	}
-
-	const image = new AttachmentBuilder(
-		`https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/guide/Nwflower/character_overview/${id}.png`,
-		{
-			name: `${id}.png`
-		}
-	);
-
-	interaction.editReply({
-		embeds: [],
-		files: [image],
-		components: selectMenus.map(selectMenu => {
-			return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-				selectMenu
-			);
-		})
-	});
-}
-
-async function handleAccountAction(
-	interaction: StringSelectMenuInteraction,
-	tr: any,
-	customId: string,
-	value: string
-): Promise<void> {
-	const account = await database.get(`${interaction.user.id}.account`);
-	if (!account) {
-		await interaction.reply({
-			embeds: [
-				new EmbedBuilder()
-					.setColor("#E76161")
-					.setThumbnail(
-						"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-					)
-					.setTitle(`${tr("account_nonAcc")}`)
-			],
-			flags: MessageFlags.Ephemeral
-		});
-		return;
-	}
-
-	if (customId == "account_EditAccountSelect") {
-		const accountIndex = value;
-		const accountData = account[parseInt(accountIndex || "0")];
-
-		const userAccountCookie = accountData?.cookie || "";
-
-		const parseCookie = (cookie: string, key: string) => {
-			const match = cookie.match(new RegExp(`${key}=([^;]+)`));
-			return match?.[1]?.trim() ?? "";
-		};
-
-		const ltokenV2 = parseCookie(userAccountCookie, "ltoken_v2");
-		const ltuidV2 = parseCookie(userAccountCookie, "ltuid_v2");
-		const cookieTokenV2 = parseCookie(userAccountCookie, "cookie_token_v2");
-		const accountMidV2 = parseCookie(userAccountCookie, "account_mid_v2");
-
-		await interaction.showModal(
-			new ModalBuilder()
-				.setCustomId(`cookie_set-${accountIndex}`)
-				.setTitle(tr("account_SetUserCookie"))
-				.addComponents(
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("ltoken_v2")
-							.setLabel("ltoken_v2")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true)
-							.setValue(ltokenV2)
-					),
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("ltuid_v2")
-							.setLabel("ltuid_v2")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true)
-							.setValue(ltuidV2)
-					),
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("cookie_token_v2")
-							.setLabel("cookie_token_v2")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true)
-							.setValue(cookieTokenV2)
-					),
-					new ActionRowBuilder<TextInputBuilder>().addComponents(
-						new TextInputBuilder()
-							.setCustomId("account_mid_v2")
-							.setLabel("account_mid_v2")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true)
-							.setValue(accountMidV2)
-					)
-				)
-		);
-		return;
-	} else if (customId == "account_DeleteAccountSelect") {
-		await interaction.update({}).catch(() => {});
-		const accountIndex = value;
-		const accounts =
-			(await database.get(`${interaction.user.id}.account`)) ?? "";
-		const uid = accounts[parseInt(accountIndex)]?.uid || "";
-
-		if (accounts.length <= 1)
-			await database.delete(`${interaction.user.id}.account`);
-		else {
-			accounts.splice(parseInt(accountIndex), 1);
-			await database.set(`${interaction.user.id}.account`, accounts);
-		}
-
-		interaction.editReply({
-			embeds: [
-				new EmbedBuilder()
-					.setColor("#F6F1F1")
-					.setThumbnail(
-						"https://media.discordapp.net/attachments/1057244827688910850/1149971549131124778/march-7th-astral-express.png"
-					)
-					.setTitle(`${tr("account_DeletedSuccess")} \`${uid}\``)
-			],
-			components: []
-		});
-		return;
-	}
-}
-
+/* Moved to handlers/selectMenu/forgottenHall.ts.
 async function handleForgottenHall(
 	interaction: StringSelectMenuInteraction,
 	tr: any,
@@ -1328,7 +1091,8 @@ async function handleForgottenHall(
 											parseInt(node?.score) || 0;
 										const totalScore =
 											floorScore(floor.node_1) +
-											floorScore(floor.node_2);
+											floorScore(floor.node_2) +
+											floorScore(floor.node_3);
 										return {
 											label: `${floor.name.replace(
 												/<\/?[^>]+(>|$)/g,
@@ -1385,7 +1149,9 @@ async function handleForgottenHall(
 	};
 
 	if (drawQueue.length >= DRAW_QUEUE_MAX) {
-		await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		await interaction
+			.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" })
+			.catch(() => {});
 		return;
 	}
 	drawQueue.push(drawTask);
@@ -1397,6 +1163,8 @@ async function handleForgottenHall(
 		);
 	}
 }
+
+*/
 
 async function handleSelectCharacter(
 	interaction: StringSelectMenuInteraction,
@@ -1423,22 +1191,31 @@ async function handleSelectCharacter(
 			const allCharactersBool = allCharacters == "true" ? true : false;
 
 			// 獲取用戶語言
-			const userLang = (await getUserLang(userId || "")) || toI18nLang(interaction.locale) || "tw";
+			const userLang =
+				(await getUserLang(userId || "")) ||
+				toI18nLang(interaction.locale) ||
+				"tw";
 
 			let playerData: PlayerData | null = null;
-			let playerActivity = null;
 			let character: Character | null = null;
 			let characters: Character[] | null = null;
 
 			if (allCharactersBool) {
-				const hsr = await getUserHSRData(
-					interaction,
-					tr,
-					userId || "",
-					parseInt(accountIndex || "0")
+				const accountData = await withUserHSRRequest(
+					{
+						interaction,
+						tr,
+						userId: userId || "",
+						accountIndex: parseInt(accountIndex || "0")
+					},
+					async hsr => ({
+						characters: await hsr.record.characters(),
+						data: await hsr.record.records(),
+						uid: hsr.uid
+					})
 				);
 
-				if (!hsr) {
+				if (!accountData) {
 					await interaction.editReply({
 						embeds: [
 							new EmbedBuilder()
@@ -1455,31 +1232,41 @@ async function handleSelectCharacter(
 					return;
 				}
 
-				characters = (await hsr.record.characters()) as any;
-			// HoYoLAB returns `ranks[]` instead of `rank_icons`; inject it so
-			// drawEidolonIcons() renders the same as the UID (mihomo) path.
-			if (Array.isArray(characters)) {
-				for (const c of characters as any[]) {
-					if (!c.rank_icons && Array.isArray(c.ranks) && c.ranks.length >= 6) {
-						c.rank_icons = [...c.ranks]
-							.sort((a: any, b: any) => a.pos - b.pos)
-							.map((r: any) => r.icon);
+				characters = accountData.characters as any;
+				// HoYoLAB returns `ranks[]` instead of `rank_icons`; inject it so
+				// drawEidolonIcons() renders the same as the public UID path.
+				if (Array.isArray(characters)) {
+					for (const c of characters as any[]) {
+						if (
+							!c.rank_icons &&
+							Array.isArray(c.ranks) &&
+							c.ranks.length >= 6
+						) {
+							c.rank_icons = [...c.ranks]
+								.sort((a: any, b: any) => a.pos - b.pos)
+								.map((r: any) => r.icon);
+						}
 					}
 				}
-			}
-				const data = await hsr.record.records();
+				const data = accountData.data;
 				let gameInfo: { uid: string; nickname: string; level: number };
-			try {
-				const cookieStr = await getUserCookie(userId || "", parseInt(accountIndex || "0")) ?? "";
-				gameInfo = await getUserGameInfo(cookieStr);
-			} catch (e) {
-				console.warn(
-					"[SelectMenu] getUserGameInfo failed, using fallback:",
+				try {
+					const cookieStr =
+						(await getUserCookie(
+							userId || "",
+							parseInt(accountIndex || "0")
+						)) ?? "";
+					gameInfo = await getUserGameInfo(cookieStr);
+				} catch (e) {
+					console.warn(
+						"[SelectMenu] getUserGameInfo failed, using fallback:",
 						(e as Error).message
 					);
 					gameInfo = {
-						uid: String(hsr.uid || uid || ""),
-						nickname: (data as any)?.role?.nickname || String(hsr.uid || uid || ""),
+						uid: String(accountData.uid || uid || ""),
+						nickname:
+							(data as any)?.role?.nickname ||
+							String(accountData.uid || uid || ""),
 						level: (data as any)?.role?.level || 0
 					};
 				}
@@ -1517,12 +1304,7 @@ async function handleSelectCharacter(
 					status: reqPlayerDataStatus,
 					playerData: reqPlayerData
 				} = await requestPlayerData(uid || "", interaction);
-				const {
-					status: reqPlayerActivityStatus,
-					playerActivity: reqPlayerActivity
-				} = await requestPlayerActivity(uid || "", interaction);
-
-				if (reqPlayerDataStatus == 400) {
+				if (reqPlayerDataStatus !== 200) {
 					const friendlyDetail = getFriendlyErrorMessage(
 						reqPlayerData.detail,
 						tr
@@ -1564,13 +1346,12 @@ async function handleSelectCharacter(
 					return;
 				}
 
-				playerData = reqPlayerData;
-				characters = reqPlayerData.characters;
+				playerData = reqPlayerData as PlayerData;
+				characters = playerData.characters;
 				character =
 					characters?.find(
 						character => character.id == characterId
 					) || null;
-				playerActivity = reqPlayerActivity;
 			}
 
 			const requestEndTime = Date.now();
@@ -1607,34 +1388,25 @@ async function handleSelectCharacter(
 				return;
 			}
 
-		const drawStartTime = Date.now();
-		const bgPath = await getUserBg(userId ?? "");
-		const imageBuffer =
-			characterId == "main"
-				? allCharactersBool
-					? await drawAllCharactersImage(
-							tr,
-							playerData as any,
-							(characters || []) as any,
-							null,
-							bgPath
-						)
-					: await drawMainImage(
-							tr,
-							playerData as any,
-							playerActivity,
-							bgPath
-						)
-				: character
-					? await drawCharacterImage(
-							tr,
-							playerData as any,
-							character as any,
-							allCharactersBool,
-							userLang,
-							bgPath
-						)
-					: null;
+			const drawStartTime = Date.now();
+			const imageBuffer =
+				characterId == "main"
+					? allCharactersBool
+						? await drawAllCharactersImage(
+								tr,
+								playerData as any,
+								(characters || []) as any
+							)
+						: await drawMainImage(tr, playerData as any)
+					: character
+						? await drawCharacterImage(
+								tr,
+								playerData as any,
+								character as any,
+								allCharactersBool,
+								userLang
+							)
+						: null;
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 			const drawEndTime = Date.now();
 
@@ -1642,40 +1414,49 @@ async function handleSelectCharacter(
 				name: `CharacterPage_${playerData.player.uid}.webp`
 			});
 
-			const charOptionsForMenu = characterId === "main"
-				? (characters || []).map(character => {
-						const elementId = allCharactersBool
-							? character.element
-							: typeof character.element === "string"
-								? character.element
-								: character.element?.id || "physical";
-						const elementKey = (elementId as string).toLowerCase();
-						return {
-							emoji: (emoji as any)[elementKey] || emoji.physical,
-							label: `${character.name}`,
-							value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
-						};
-					})
-				: [
-						{
-							emoji: (emoji as any).avatarIcon,
-							label: tr("MainPage"),
-							value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-main`
-						},
-						...(characters || []).map(character => {
+			const charOptionsForMenu =
+				characterId === "main"
+					? (characters || []).map(character => {
 							const elementId = allCharactersBool
 								? character.element
 								: typeof character.element === "string"
 									? character.element
 									: character.element?.id || "physical";
-							const elementKey = (elementId as string).toLowerCase();
+							const elementKey = (
+								elementId as string
+							).toLowerCase();
 							return {
-								emoji: (emoji as any)[elementKey] || emoji.physical,
-								label: character.name,
+								emoji:
+									(emoji as any)[elementKey] ||
+									emoji.physical,
+								label: `${character.name}`,
 								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
 							};
 						})
-					];
+					: [
+							{
+								emoji: (emoji as any).avatarIcon,
+								label: tr("MainPage"),
+								value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-main`
+							},
+							...(characters || []).map(character => {
+								const elementId = allCharactersBool
+									? character.element
+									: typeof character.element === "string"
+										? character.element
+										: character.element?.id || "physical";
+								const elementKey = (
+									elementId as string
+								).toLowerCase();
+								return {
+									emoji:
+										(emoji as any)[elementKey] ||
+										emoji.physical,
+									label: character.name,
+									value: `${playerData.player.uid}-${userId}-${accountIndex}-${allCharacters}-${character.id}`
+								};
+							})
+						];
 
 			const charMenuAfterDraw = createPagedSelectMenu(
 				charOptionsForMenu,
@@ -1689,7 +1470,9 @@ async function handleSelectCharacter(
 				content: "",
 				embeds: [],
 				components: [
-					new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(charMenuAfterDraw)
+					new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+						charMenuAfterDraw
+					)
 				],
 				files: [image]
 			});
@@ -1699,7 +1482,7 @@ async function handleSelectCharacter(
 				embeds: [
 					new EmbedBuilder()
 						.setColor("#E76161")
-						.setTitle(tr("profile_DrawError"))
+						.setTitle(tr("DrawError"))
 						.setDescription(
 							`\`${error instanceof Error ? error.message : String(error)}\``
 						)
@@ -1712,7 +1495,9 @@ async function handleSelectCharacter(
 	};
 
 	if (drawQueue.length >= DRAW_QUEUE_MAX) {
-		await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		await interaction
+			.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" })
+			.catch(() => {});
 		return;
 	}
 	drawQueue.push(drawTask);

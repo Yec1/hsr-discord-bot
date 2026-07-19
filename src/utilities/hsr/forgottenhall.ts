@@ -10,7 +10,6 @@ import {
 import { database } from "../../index.js";
 import {
 	createCanvas,
-	loadImage,
 	GlobalFonts,
 	CanvasRenderingContext2D,
 	Image
@@ -18,6 +17,7 @@ import {
 import { join } from "path";
 import Logger from "@/utilities/core/logger.js";
 import Queue from "queue";
+import { getSharedImage } from "@/utilities/hsr/imageCache.js";
 
 const formatDate = (time: TimeInfo) =>
 	`${time.year}/${time.month.toString().padStart(2, "0")}/${time.day.toString().padStart(2, "0")}`;
@@ -348,15 +348,6 @@ async function drawSmallCharacter(
 	}
 }
 
-interface HSRClient {
-	uid: string;
-	record: {
-		forgottenHall: (
-			mode: number,
-			time: number
-		) => Promise<ForgottenHallResponse | AnomalyArbitrationResponse>;
-	};
-}
 
 interface AnomalyArbitrationResponse {
 	challenge_peak_records: ChallengePeakRecord[];
@@ -443,6 +434,7 @@ interface ForgottenHallResponse {
 	star_num: number;
 	battle_num: number;
 	all_floor_detail: FloorDetail[];
+	max_floor?: string;
 	begin_time?: TimeInfo;
 	end_time?: TimeInfo;
 	schedule_id?: string;
@@ -520,10 +512,10 @@ GlobalFonts.registerFromPath(
 );
 
 // 移除全域圖片快取以節省記憶體
-async function getCachedImage(path: string): Promise<Image | null> {
+async function getCachedImage(path: string): Promise<any | null> {
 	try {
-		return await loadImage(path);
-	} catch (error) {
+		return await getSharedImage(path);
+	} catch {
 		return null;
 	}
 }
@@ -649,12 +641,17 @@ async function handleForgottenHallDraw(
 	user: User,
 	mode: number,
 	time: number,
-	hsr: HSRClient
+	requestRecord: () => Promise<{
+		res: ForgottenHallResponse | AnomalyArbitrationResponse;
+		uid: string;
+	} | null>
 ): Promise<void> {
 	const drawTask = async (): Promise<void> => {
 		try {
 			const requestStartTime = Date.now();
-			const res = await hsr.record.forgottenHall(mode, time);
+			const requestResult = await requestRecord();
+			if (!requestResult) return;
+			const { res, uid } = requestResult;
 
 			if (
 				(mode !== 4 &&
@@ -717,7 +714,7 @@ async function handleForgottenHallDraw(
 
 			const imageBuffer = await drawFloorImage(
 				tr,
-				hsr.uid,
+				uid,
 				res,
 				mode,
 				floor
@@ -1662,23 +1659,55 @@ async function drawForgottenHallImage(
 		ctx.lineTo(lineX, lineY + lineHeight);
 		ctx.stroke();
 
+		const summaryHasExtraStar =
+			Number((res as ForgottenHallResponse).extra_star_num || 0) > 0;
+
+		ctx.font = "38px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+		const starText = `× ${res.star_num}`;
+		const textWidth = ctx.measureText(starText).width;
+
+		const totalContentWidth = 54 + 10 + textWidth + (summaryHasExtraStar ? 15 + 1 + 15 + 54 : 0);
+		const summaryGroupStartX = box1X + ((lineX - box1X) - totalContentWidth) / 2;
+
+		const summaryStarY = 220;
+		const summaryStarX = summaryGroupStartX;
+		const summaryTextX = summaryStarX + 54 + 10 + textWidth / 2;
+		const summaryDividerX = summaryStarX + 54 + 10 + textWidth + 15;
+		const summaryExtraStarX = summaryDividerX + 1 + 15;
+
 		const star = await getCachedImage(
 			"./src/assets/image/forgottenhall/star.png"
 		);
 		if (star) {
-			(ctx as any).drawImage(star, 150, 220, 54, 54);
+			(ctx as any).drawImage(star, summaryStarX, summaryStarY, 54, 54);
 		}
 
 		ctx.font = "38px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
-		ctx.fillText(`× ${res.star_num}`, 253, 263);
+		ctx.fillText(starText, summaryTextX, 263);
+
+		if (summaryHasExtraStar) {
+			ctx.strokeStyle = "rgba(255,255,255,.25)";
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(summaryDividerX, 218);
+			ctx.lineTo(summaryDividerX, 270);
+			ctx.stroke();
+
+			const summaryExtraStar = await getCachedImage(
+				"./src/assets/image/forgottenhall/star_extra.png"
+			);
+			if (summaryExtraStar) {
+				(ctx as any).drawImage(summaryExtraStar, summaryExtraStarX, summaryStarY, 54, 54);
+			}
+		}
 
 		ctx.font = "bold 31px 'PingFang', URW DIN Arabic, Arial, sans-serif' ";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "left";
 		ctx.fillText(
-			`${tr("forgottenHall_Level")}:  ${floor.name.replace(
+			`${tr("forgottenHall_Level")}:  ${(res.max_floor || floor.name).replace(
 				/<\/?[^>]+(>|$)/g,
 				""
 			)}`,
@@ -1942,12 +1971,16 @@ async function drawForgottenHallImage(
 		}
 
 		const nodeCount = floor.node_3 ? 3 : 2;
+		const isPureFictionTierceLayout = mode == 2 && nodeCount === 3;
+		const isApocalypticTierceLayout = mode == 3 && nodeCount === 3;
+		const isForgottenHallTierceLayout = mode == 1 && nodeCount === 3;
 
 		if (star) {
-			// Draw normal stars from right to left
-			// If we have an extra star, it sits on the rightmost position, and normal stars shift left
-			const hasExtraStar = mode == 3 && nodeCount === 3 && (Number(floor.star_num) > 3 || Number((floor as any).extra_star_num) > 0);
+			const hasExtraStar =
+				nodeCount === 3 &&
+				(Number(floor.star_num) > 3 || Number((floor as any).extra_star_num) > 0);
 			const normalStarsCount = Math.min(Number(floor.star_num), 3);
+			const rightmostX = 1653;
 			
 			if (hasExtraStar) {
 				const extraStar = await getCachedImage(
@@ -1956,24 +1989,42 @@ async function drawForgottenHallImage(
 				if (extraStar) {
 					(ctx as any).drawImage(
 						extraStar,
-						1650 + 3,
-						435 + 65,
+						rightmostX,
+						mode == 3 ? 435 + 65 : 435,
 						68,
 						68
 					);
 				}
-			}
 
-			const starOffset = hasExtraStar ? 68 : 0;
-			
-			for (let i = 0; i < normalStarsCount; i++) {
-				(ctx as any).drawImage(
-					star,
-					1650 - (i * 68 - 3) - starOffset,
-					mode == 3 ? 435 + 65 : 435,
-					68,
-					68
-				);
+				const dividerX = rightmostX - 18;
+
+				ctx.strokeStyle = "rgba(255,255,255,.22)";
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(dividerX, (mode == 3 ? 435 + 65 : 435) + 6);
+				ctx.lineTo(dividerX, (mode == 3 ? 435 + 65 : 435) + 62);
+				ctx.stroke();
+
+				const extraStarOffset = 104;
+				for (let i = 0; i < normalStarsCount; i++) {
+					(ctx as any).drawImage(
+						star,
+						rightmostX - extraStarOffset - (i * 68),
+						mode == 3 ? 435 + 65 : 435,
+						68,
+						68
+					);
+				}
+			} else {
+				for (let i = 0; i < normalStarsCount; i++) {
+					(ctx as any).drawImage(
+						star,
+						rightmostX - (i * 68),
+						mode == 3 ? 435 + 65 : 435,
+						68,
+						68
+					);
+				}
 			}
 		}
 
@@ -1994,6 +2045,16 @@ async function drawForgottenHallImage(
 			const node = floor[`node_${i}` as keyof FloorDetail] as NodeInfo;
 			if (!node) continue;
 
+			if (nodeCount === 3 && i < nodeCount) {
+				ctx.strokeStyle = "rgba(255,255,255,.18)";
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(x + 520, y - 10);
+				const dividerBottom = (mode === 2 || mode === 3) ? y + 310 : y + 210;
+				ctx.lineTo(x + 520, dividerBottom);
+				ctx.stroke();
+			}
+
 			ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 			ctx.fillStyle = "white";
 			ctx.textAlign = "left";
@@ -2001,7 +2062,7 @@ async function drawForgottenHallImage(
 			const teamSetupText = `${tr("forgottenHall_TeamSetup", { z: i.toString() })}`;
 			let titleX = x;
 
-			if (mode === 3 && i === 3) {
+			if (nodeCount === 3 && i === 3) {
 				const node3Bg = await getCachedImage("./src/assets/image/forgottenhall/memory_node3_time_bg.png");
 				const node3Icon = await getCachedImage("./src/assets/image/forgottenhall/memory_node3_time_icon.png");
 
@@ -2016,7 +2077,58 @@ async function drawForgottenHallImage(
 
 			ctx.fillText(teamSetupText, titleX, y);
 
-			if (mode == 2 || mode == 3) {
+			const time = node.challenge_time;
+			const timeText = time
+				? `${time.year}/${time.month.toString().padStart(2, "0")}/${time.day
+					.toString()
+					.padStart(2, "0")} ${(time.hour || 0)
+					.toString()
+					.padStart(2, "0")}:${(time.minute || 0)
+					.toString()
+					.padStart(2, "0")}`
+				: "";
+
+			if (isPureFictionTierceLayout) {
+				if (timeText) {
+					ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.fillStyle = "rgba(255,255,255,.78)";
+					ctx.textAlign = "left";
+					ctx.fillText(
+						timeText,
+						titleX + ctx.measureText(teamSetupText).width + 18,
+						y
+					);
+				}
+
+				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+				ctx.fillStyle = "rgba(255,255,255,.9)";
+				ctx.fillText(`${tr("Score")}`, x, y + 42);
+
+				ctx.fillStyle = "rgb(249, 200, 126)";
+				ctx.fillText(
+					`${node.score}`,
+					x + ctx.measureText(`${tr("Score")}`).width + 18,
+					y + 43.5
+				);
+			} else if (isApocalypticTierceLayout) {
+				if (timeText) {
+					ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+					ctx.fillStyle = "rgba(255,255,255,.78)";
+					ctx.textAlign = "left";
+					ctx.fillText(timeText, x, y + 42);
+				}
+
+				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
+				ctx.fillStyle = "rgba(255,255,255,.9)";
+				ctx.textAlign = "left";
+				const scoreLabelWidth = ctx.measureText(`${tr("Score")}`).width;
+				const scoreValueWidth = ctx.measureText(`${node.score}`).width;
+				const scoreX = x + 490 - scoreLabelWidth - scoreValueWidth - 18;
+				ctx.fillText(`${tr("Score")}`, scoreX, y + 42);
+
+				ctx.fillStyle = "rgb(249, 200, 126)";
+				ctx.fillText(`${node.score}`, scoreX + scoreLabelWidth + 18, y + 43.5);
+			} else if (mode == 2 || mode == 3) {
 				ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 				ctx.fillStyle = "rgba(255,255,255,.7)";
 				ctx.textAlign = "left";
@@ -2032,13 +2144,12 @@ async function drawForgottenHallImage(
 					y + 1.5
 				);
 			} else {
-				const time = node.challenge_time;
 				if (time) {
 					ctx.font = "28px 'Hanyi', URW DIN Arabic, Arial, sans-serif' ";
 					ctx.fillStyle = "rgba(255,255,255,.7)";
 					ctx.textAlign = "left";
 					ctx.fillText(
-						`${time.year}/${time.month}/${time.day} ${time.hour}:${time.minute}`,
+						timeText,
 						titleX + ctx.measureText(teamSetupText).width + 25,
 						y
 					);
@@ -2061,7 +2172,13 @@ async function drawForgottenHallImage(
 				const character = node.avatars[j];
 				if (!character) continue;
 				const avatarX = x + j * (avatarSpacing / node.avatars.length);
-				const avatarY = mode == 3 ? 630 + 65 : 630;
+				const avatarY = isPureFictionTierceLayout || isForgottenHallTierceLayout
+					? y + 60
+					: isApocalypticTierceLayout
+						? y + 78
+						: mode == 3
+							? 630 + 65
+							: 630;
 
 				const bg = character.rarity == 4 ? char4StarBg : char5StarBg;
 				if (bg) {

@@ -9,6 +9,10 @@ import {
 	autoRefreshCookie
 } from "@/utilities/index.js";
 import { buildHSRRedeemCard } from "@/utilities/canvas/redeemCard.js";
+import {
+	getLegacyAccountAtIndex,
+	getLegacyAccounts
+} from "@/utilities/accountStore.js";
 
 // Constants
 const CONFIG = {
@@ -50,7 +54,7 @@ interface RedeemResult {
 interface Account {
 	uid: string;
 	cookie: string;
-	nickname?: string;
+	nickname?: string | null;
 }
 
 interface ProcessAccountContext {
@@ -113,14 +117,7 @@ class AutoRedeemSystem {
 		try {
 			const userLang =
 				(await getUserLang(userId)) || CONFIG.DEFAULT_LANGUAGE;
-			const hoyolabs = ((await this.db.get(`${userId}.hoyolabs`)) as any[]) ?? [];
-			const accounts: Account[] = hoyolabs.flatMap((h: any) =>
-				(h.characters ?? []).map((c: any) => ({
-					uid: c.uid,
-					cookie: h.cookie,
-					nickname: c.nickname ?? undefined
-				}))
-			);
+			const accounts = await getLegacyAccounts(this.db, userId);
 			return { userLang, accounts };
 		} catch (error) {
 			this.logger.error(
@@ -324,8 +321,12 @@ class AutoRedeemSystem {
 				};
 			}
 
-			const refreshedAccounts = await this.db.get(`${userId}.account`);
-			if (!refreshedAccounts?.[accountIndex]) {
+			const refreshedAccount = await getLegacyAccountAtIndex(
+				this.db,
+				userId,
+				accountIndex
+			);
+			if (!refreshedAccount) {
 				return {
 					uid: account.uid,
 					nickname: accountNickname,
@@ -336,7 +337,7 @@ class AutoRedeemSystem {
 				};
 			}
 
-			account = refreshedAccounts[accountIndex];
+			account = refreshedAccount;
 		}
 
 		const userRedeemedCodes: string[] =
@@ -571,8 +572,13 @@ export default async function autoRedeem(): Promise<void> {
 			}
 
 			// 重新讀取帳號資料，確保使用 refresh 後的最新 cookie
-			const refreshedAccounts = await (system as any).db.get(`${userId}.account`);
-			const latestAccounts: Account[] = refreshedAccounts?.length ? refreshedAccounts : accounts;
+			const refreshedAccounts = await getLegacyAccounts(
+				(system as any).db,
+				userId
+			);
+			const latestAccounts: Account[] = refreshedAccounts.length
+				? refreshedAccounts
+				: accounts;
 
 			const successfulResults: ProcessAccountResult[] = [];
 			for (let index = 0; index < latestAccounts.length; index++) {

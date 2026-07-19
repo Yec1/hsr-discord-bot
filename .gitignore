@@ -1,8 +1,8 @@
 # pkg
 node_modules
+.DS_Store
 
 # installers
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 run.bat
@@ -23,5 +23,7 @@ env.production
 # config
 config.json
 dist/
+backups/
+src/assets/data/starrailres/
 
 src/server.ts

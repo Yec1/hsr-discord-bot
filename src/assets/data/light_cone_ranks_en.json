@@ -8849,6 +8849,238 @@
       ]
     ]
   },
+  "23060": {
+    "id": "23060",
+    "skill": "First Wish",
+    "desc": "The wearer ignores #7[i]% of the target's DEF when dealing DMG. When the wearer uses Assist Skill, they regenerate #2[i] Energy and gain \"Sail,\" lasting for 2 turns and stacking up to #3[i] time(s). Each stack of \"Sail\" increases Assist Skill DMG by #4[i]%. When \"Sail\" reaches #5[i] stacks, each stack of \"Sail\" increases Ultimate DMG by #6[i]%.",
+    "params": [
+      [
+        0,
+        6,
+        3,
+        0.2,
+        3,
+        0.2,
+        0.32
+      ],
+      [
+        0,
+        6,
+        3,
+        0.25,
+        3,
+        0.25,
+        0.36
+      ],
+      [
+        0,
+        6,
+        3,
+        0.3,
+        3,
+        0.3,
+        0.4
+      ],
+      [
+        0,
+        6,
+        3,
+        0.35,
+        3,
+        0.35,
+        0.44
+      ],
+      [
+        0,
+        6,
+        3,
+        0.4,
+        3,
+        0.4,
+        0.48
+      ]
+    ],
+    "properties": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+  },
+  "23061": {
+    "id": "23061",
+    "skill": "Sprout",
+    "desc": "Increases the wearer's CRIT Rate by #1[i]%. When any ally character consumes a total of #3[i] or more Skill Points in a single turn, the wearer gains \"Radiant Crown,\" lasting for #4[i] turn(s). While the wearer holds \"Radiant Crown,\" all allies' DMG dealt ignores #5[i]% of the target's DEF, and the Skill DMG dealt by the wearer increases by #2[i]%. Effects of the same type cannot stack.",
+    "params": [
+      [
+        0.18,
+        0.72,
+        4,
+        3,
+        0.2
+      ],
+      [
+        0.21,
+        0.84,
+        4,
+        3,
+        0.24
+      ],
+      [
+        0.24,
+        0.96,
+        4,
+        3,
+        0.28
+      ],
+      [
+        0.27,
+        1.08,
+        4,
+        3,
+        0.32
+      ],
+      [
+        0.3,
+        1.2,
+        4,
+        3,
+        0.36
+      ]
+    ],
+    "properties": [
+      [
+        {
+          "type": "CriticalChanceBase",
+          "value": 0.18
+        }
+      ],
+      [
+        {
+          "type": "CriticalChanceBase",
+          "value": 0.21
+        }
+      ],
+      [
+        {
+          "type": "CriticalChanceBase",
+          "value": 0.24
+        }
+      ],
+      [
+        {
+          "type": "CriticalChanceBase",
+          "value": 0.27
+        }
+      ],
+      [
+        {
+          "type": "CriticalChanceBase",
+          "value": 0.3
+        }
+      ]
+    ]
+  },
+  "23062": {
+    "id": "23062",
+    "skill": "At Will",
+    "desc": "Increases the wearer's ATK by #1[i]% and Energy Regeneration Rate by #2[f1]%. When the wearer uses Ultimate, for every 1 Energy consumed, increases the Ultimate DMG dealt this time by #3[f2]%, up to a max increase of #6[i]%. When the wearer enters combat or uses Ultimate, the wearer gains \"King's Entertainment,\" lasting for #4[i] turn(s). While the wearer holds \"King's Entertainment,\" increases all allies' CRIT DMG by #5[i]%. Effects of the same type cannot stack.",
+    "params": [
+      [
+        0.18,
+        0.1,
+        0.002,
+        3,
+        0.24,
+        0.72
+      ],
+      [
+        0.21,
+        0.125,
+        0.0025,
+        3,
+        0.3,
+        0.9
+      ],
+      [
+        0.24,
+        0.15,
+        0.003,
+        3,
+        0.36,
+        1.08
+      ],
+      [
+        0.27,
+        0.175,
+        0.0035,
+        3,
+        0.42,
+        1.26
+      ],
+      [
+        0.3,
+        0.2,
+        0.004,
+        3,
+        0.48,
+        1.44
+      ]
+    ],
+    "properties": [
+      [
+        {
+          "type": "AttackAddedRatio",
+          "value": 0.18
+        },
+        {
+          "type": "SPRatioBase",
+          "value": 0.1
+        }
+      ],
+      [
+        {
+          "type": "AttackAddedRatio",
+          "value": 0.21
+        },
+        {
+          "type": "SPRatioBase",
+          "value": 0.125
+        }
+      ],
+      [
+        {
+          "type": "AttackAddedRatio",
+          "value": 0.24
+        },
+        {
+          "type": "SPRatioBase",
+          "value": 0.15
+        }
+      ],
+      [
+        {
+          "type": "AttackAddedRatio",
+          "value": 0.27
+        },
+        {
+          "type": "SPRatioBase",
+          "value": 0.175
+        }
+      ],
+      [
+        {
+          "type": "AttackAddedRatio",
+          "value": 0.3
+        },
+        {
+          "type": "SPRatioBase",
+          "value": 0.2
+        }
+      ]
+    ]
+  },
   "24000": {
     "id": "24000",
     "skill": "Moth to Flames",

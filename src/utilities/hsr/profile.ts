@@ -1,11 +1,10 @@
 import { database } from "../../index.js";
-import { getUserBg, getTodayBg } from "./wallpaperManager.js";
 import {
 	requestPlayerData,
 	drawInQueueReply,
 	getRandomColor,
-	requestPlayerActivity,
-	getUserHSRData,
+	withUserHSRRequest,
+	getUserUid,
 	getUserGameInfo,
 	getUserCookie,
 	getFriendlyErrorMessage
@@ -28,6 +27,8 @@ interface AnomalyRankRecord {
 }
 
 const ANOMALY_BADGE_AUTO_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const anomalyBadgeSyncInFlight = new Map<string, Promise<number>>();
+let anomalyBadgeSweepRunning = false;
 
 function toUnixTimestamp(
 	time?: {
@@ -49,14 +50,14 @@ function toUnixTimestamp(
 	return Math.floor(date.getTime() / 1000);
 }
 
-async function tryAutoSyncCurrentAnomalyBadge(
-	interaction: any,
-	tr: any,
-	user: any,
+async function performAnomalyBadgeSync(
+	userId: string,
 	uid: string,
 	accountIndex: number
-): Promise<void> {
-	if (!uid) return;
+): Promise<number> {
+	if (!uid) return 0;
+	const boundUid = await getUserUid(userId, accountIndex);
+	if (boundUid !== uid) return 0;
 
 	const nowSec = Math.floor(Date.now() / 1000);
 	const nowMs = Date.now();
@@ -74,33 +75,30 @@ async function tryAutoSyncCurrentAnomalyBadge(
 		typeof lastSyncAt === "number" &&
 		nowMs - lastSyncAt < ANOMALY_BADGE_AUTO_SYNC_INTERVAL_MS
 	) {
-		return;
+		return 0;
 	}
 
-	await database.set(syncAtKey, nowMs);
-
 	try {
-		const hsr = await getUserHSRData(
-			interaction,
-			tr,
-			user.id,
-			accountIndex,
-			{ suppressErrorReply: true }
+		const anomalyRes = await withUserHSRRequest(
+			{
+				interaction: undefined as any,
+				tr: () => "",
+				userId,
+				accountIndex,
+				suppressErrorReply: true
+			},
+			async hsr => (await hsr.record.forgottenHall(4 as any, 1 as any)) as any
 		);
 
-		if (!hsr) return;
-
-		const anomalyRes = (await hsr.record.forgottenHall(
-			4 as any,
-			1 as any
-		)) as any;
+		if (!anomalyRes) return 0;
 		const challengePeakRecords = anomalyRes?.challenge_peak_records;
+		await database.set(syncAtKey, nowMs);
 
 		if (
 			!Array.isArray(challengePeakRecords) ||
 			!challengePeakRecords.length
 		) {
-			return;
+			return 0;
 		}
 
 		// 遍歷所有期，全部 upsert 進去（永久保留）
@@ -130,10 +128,14 @@ async function tryAutoSyncCurrentAnomalyBadge(
 			);
 
 			if (existingIndex >= 0) {
-				console.log(`[Profile] Sync: Updating mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`);
+				console.log(
+					`[Profile] Sync: Updating mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`
+				);
 				upsertRecords[existingIndex] = rankRecord;
 			} else {
-				console.log(`[Profile] Sync: Adding mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`);
+				console.log(
+					`[Profile] Sync: Adding mazeId ${rankRecord.mazeId} (${rankRecord.groupName})`
+				);
 				upsertRecords.push(rankRecord);
 			}
 
@@ -141,15 +143,63 @@ async function tryAutoSyncCurrentAnomalyBadge(
 			if (expireTime > nowSec) {
 				const roundNum = record?.boss_record?.round_num;
 				if (typeof roundNum === "number") {
-					await database.set(roundKey, { roundNum, expireTime } as AnomalyRoundRecord);
+					await database.set(roundKey, {
+						roundNum,
+						expireTime
+					} as AnomalyRoundRecord);
 				}
 			}
 		}
 
 		await database.set(recordsKey, upsertRecords);
-		console.log(`[Profile] Sync done: ${upsertRecords.length} badge(s) stored for UID ${uid}`);
+		console.log(
+			`[Profile] Sync done: ${upsertRecords.length} badge(s) stored for UID ${uid}`
+		);
+		return upsertRecords.length;
 	} catch (error) {
 		console.warn("[Profile] Auto sync anomaly badge failed:", error);
+		return 0;
+	}
+}
+
+async function tryAutoSyncCurrentAnomalyBadge(
+	userId: string,
+	uid: string,
+	accountIndex: number
+): Promise<number> {
+	const running = anomalyBadgeSyncInFlight.get(uid);
+	if (running) return running;
+
+	const task = performAnomalyBadgeSync(userId, uid, accountIndex);
+	anomalyBadgeSyncInFlight.set(uid, task);
+	try {
+		return await task;
+	} finally {
+		anomalyBadgeSyncInFlight.delete(uid);
+	}
+}
+
+async function syncAllBoundAnomalyBadges(): Promise<void> {
+	if (anomalyBadgeSweepRunning) return;
+	anomalyBadgeSweepRunning = true;
+
+	try {
+		const userIds = getBoundUserIds(await database.all());
+		let checked = 0;
+		for (const userId of userIds) {
+			const accounts = await getLegacyAccounts(database, userId);
+			for (let accountIndex = 0; accountIndex < accounts.length; accountIndex++) {
+				const account = accounts[accountIndex];
+				if (!account || account.invalid || !account.uid || !account.cookie) continue;
+				await tryAutoSyncCurrentAnomalyBadge(userId, account.uid, accountIndex);
+				checked++;
+			}
+		}
+		console.log(`[Profile] Automatic anomaly badge sweep checked ${checked} binding(s)`);
+	} catch (error) {
+		console.warn("[Profile] Automatic anomaly badge sweep failed:", error);
+	} finally {
+		anomalyBadgeSweepRunning = false;
 	}
 }
 
@@ -161,7 +211,10 @@ function getAnomalyIconPath(roundNum: number): string | null {
 	if (roundNum >= 5 && roundNum <= 6) return "./src/assets/image/226001.png";
 	return null; // 6以上不使用
 }
-import { createChunkedSelectMenus, createPagedSelectMenu } from "./selectmenu.js";
+import {
+	createChunkedSelectMenus,
+	createPagedSelectMenu
+} from "./selectmenu.js";
 import { join } from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import {
@@ -171,10 +224,19 @@ import {
 	StringSelectMenuBuilder
 } from "discord.js";
 import { getRelicsScore } from "./relics.js";
+import { filterVisibleProfileSkills } from "./profileSkills.js";
+import { getProfileCharacterNameColor } from "./profileCharacters.js";
+import { fitProfileSignature } from "./profileSignature.js";
 import emoji from "../../assets/emoji.js";
 import Queue from "queue";
 import axios from "axios";
-import { writeFile, mkdir, access } from "fs/promises";
+import {
+	downloadImage,
+	downloadImages,
+	downloadCharacterPortrait,
+	downloadCharacterPortraits
+} from "@/utilities/hsr/profileImageDownloads.js";
+import { writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import {
 	loadLightConeData,
@@ -182,11 +244,16 @@ import {
 	loadPathsData,
 	loadElementsData
 } from "./jsonManager.js";
+import {
+	getBoundUserIds,
+	getLegacyAccounts
+} from "@/utilities/accountStore.js";
 
 // 類型定義
 interface PlayerData {
 	player: {
 		nickname: string;
+		signature?: string;
 		uid: string;
 		level: number;
 		world_level?: number;
@@ -201,6 +268,8 @@ interface PlayerData {
 
 interface Character {
 	id: string;
+	_assist?: boolean;
+	pos?: number;
 	name: string;
 	level: number;
 	rank: number;
@@ -210,6 +279,7 @@ interface Character {
 	preview?: string;
 	portrait?: string;
 	image?: string;
+	figure_path?: string;
 	element:
 		| {
 				id: string;
@@ -303,13 +373,17 @@ interface LightCone {
 
 interface Skill {
 	id?: string;
+	point_id?: string;
 	point_type: number;
 	item_url?: string;
-	icon: string;
+	icon?: string;
 	type?: string;
 	type_text?: string;
 	remake?: string;
 	level: number;
+	is_activated?: boolean;
+	anchor?: string;
+	skill_stages?: Array<{ name?: string; remake?: string }>;
 }
 
 interface SkillTree {
@@ -319,24 +393,16 @@ interface SkillTree {
 	max_level: number;
 	icon: string;
 	parent: string | null;
+	is_activated?: boolean;
+	point_type?: number;
 }
 
 interface ServantSkill {
 	item_url?: string;
-	icon: string;
+	icon?: string;
 	remake: string;
 	level: number;
-}
-
-interface PlayerActivity {
-	info: ActivityInfo[];
-}
-
-interface ActivityInfo {
-	content: {
-		icon: string;
-	};
-	text: string;
+	is_activated?: boolean;
 }
 
 interface LeaderboardEntry {
@@ -382,26 +448,6 @@ interface ImageResult {
 	usedFallback: boolean;
 }
 
-interface RelicScore {
-	totalScore: string;
-	totalGrade: {
-		grade: string;
-		color: string;
-	};
-	[i: number]: {
-		scoreN: number;
-		grade: {
-			grade: string;
-			color: string;
-		};
-	};
-}
-
-interface TextSegment {
-	text: string;
-	color: string;
-}
-
 const db = database;
 
 const DRAW_QUEUE_MAX = 50;
@@ -410,39 +456,29 @@ const drawQueue = new Queue({ autostart: true, concurrency: 1 });
 // 改為只記錄錯誤，讓 queue 繼續執行後續任務
 drawQueue.removeEventListener("error", (drawQueue as any)._errorHandler);
 drawQueue.addEventListener("error", (evt: any) => {
-	console.error("[DrawQueue] Task error (queue continues):", evt?.detail?.error);
+	console.error(
+		"[DrawQueue] Task error (queue continues):",
+		evt?.detail?.error
+	);
 });
 
 const image_Header =
 	"https://raw.githubusercontent.com/Mar-7th/StarRailRes/master";
 
-// 圖片下載配置
-const IMAGE_DOWNLOAD_CONFIG = {
-	character_portrait: {
-		remoteBase: `${image_Header}/image/character_portrait/`,
-		localDir: "./src/assets/image/character_portrait",
-		extension: ".png"
-	}
-};
-
-// 圖片下載緩存
-const imageDownloadCache = new Map<string, Promise<string | null>>();
-
-// 確保目錄存在
-async function ensureImageDir(localDir: string): Promise<void> {
-	try {
-		await access(localDir);
-	} catch {
-		await mkdir(localDir, { recursive: true });
-		console.log(`[Image Download] Created directory: ${localDir}`);
-	}
+function resolveStarRailResImage(path?: string | null): string | null {
+	if (!path) return null;
+	if (/^https?:\/\//i.test(path) || path.startsWith("./")) return path;
+	return `${image_Header}/${path.replace(/^\/+/, "")}`;
 }
 
+// 圖片下載配置
+// Portrait downloads live in profileImageDownloads.ts.
+
+// 圖片下載緩存
+// 確保目錄存在
 // 通用圖片下載函數
-async function downloadImage(
-	imageType: keyof typeof IMAGE_DOWNLOAD_CONFIG,
-	imageId: string
-): Promise<string | null> {
+/* legacy portrait downloader removed; kept in history only. */
+/*
 	const config = IMAGE_DOWNLOAD_CONFIG[imageType];
 	const remoteUrl = `${config.remoteBase}${imageId}${config.extension}`;
 	const localPath = `${config.localDir}/${imageId}${config.extension}`;
@@ -499,13 +535,13 @@ async function downloadImage(
 }
 
 // 批量下載圖片
-async function downloadImages(
+async function legacyDownloadImages(
 	imageType: keyof typeof IMAGE_DOWNLOAD_CONFIG,
 	imageIds: string[]
 ): Promise<void> {
 	const downloadPromises = imageIds.map(async imageId => {
 		try {
-			await downloadImage(imageType, imageId);
+			await legacyDownloadImage(imageType, imageId);
 		} catch (error) {
 			console.warn(
 				`[Image Download] Failed to download ${imageType}:${imageId}`,
@@ -523,21 +559,23 @@ async function downloadImages(
 }
 
 // 下載角色頭像 (使用通用函數)
-async function downloadCharacterPortrait(
+async function legacyDownloadCharacterPortrait(
 	characterId: string
 ): Promise<string | null> {
-	return await downloadImage("character_portrait", characterId);
+	return await legacyDownloadImage("character_portrait", characterId);
 }
 
 // 批量下載角色頭像 (使用通用函數)
-async function downloadCharacterPortraits(
+async function legacyDownloadCharacterPortraits(
 	characters: Character[]
 ): Promise<void> {
 	const characterIds = characters.map(char => char.id);
-	await downloadImages("character_portrait", characterIds);
+	await legacyDownloadImages("character_portrait", characterIds);
 }
 
 // 處理角色皮膚圖片
+*/
+
 async function handleCharacterSkin(character: Character): Promise<string> {
 	// const localSkinPath = `./src/assets/image/character_skin/${character.id}.webp`;
 
@@ -725,7 +763,6 @@ export function clearImageCache(): void {
 	}
 }
 
-const MIHOMO_CDN_BASE = "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
 const EIDOLON_ICON_SIZE = 48;
 const EIDOLON_ICON_GAP = 6;
 /** Total width occupied by all 6 eidolon icons + gaps */
@@ -763,15 +800,11 @@ async function drawEidolonIcons(
 		const r = size / 2;
 
 		// Load icon from CDN — rankIcons[i] may be a full URL (HoYoLAB path)
-		// or a relative path (mihomo path); only prepend the CDN base for relative paths.
+		// or a StarRailRes relative path; only prepend the CDN base for relative paths.
 		const rawIcon = rankIcons[i];
-		const iconPath = rawIcon
-			? rawIcon.startsWith("http")
-				? rawIcon
-				: `${MIHOMO_CDN_BASE}${rawIcon}`
-			: null;
+		const iconUrl = rawIcon ? resolveStarRailResImage(rawIcon) : null;
 
-		const iconResult = iconPath ? await loadImageAsync(iconPath) : null;
+		const iconResult = iconUrl ? await loadImageAsync(iconUrl) : null;
 
 		ctx.save();
 
@@ -816,7 +849,6 @@ async function drawEidolonIcons(
 			const ly = cy - lh * 0.1; // slightly below centre
 			const shackleW = lw * 0.55;
 			const shackleH = lh * 1.1;
-			const shackleX = cx - shackleW / 2;
 			const shackleY = ly - shackleH;
 
 			ctx.strokeStyle = "rgba(255,255,255,0.85)";
@@ -826,13 +858,7 @@ async function drawEidolonIcons(
 
 			// Shackle (U-shape arc)
 			ctx.beginPath();
-			ctx.arc(
-				cx,
-				shackleY + shackleH * 0.55,
-				shackleW / 2,
-				Math.PI,
-				0
-			);
+			ctx.arc(cx, shackleY + shackleH * 0.55, shackleW / 2, Math.PI, 0);
 			ctx.stroke();
 
 			// Lock body (rounded rect)
@@ -921,7 +947,10 @@ const loadImageAsync: LoadImageAsyncFunction = async (
 				try {
 					if (!loadImageAsync.cache!.has(fallbackUrl)) {
 						let fallbackSource: string | Buffer = fallbackUrl;
-						if (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://")) {
+						if (
+							fallbackUrl.startsWith("http://") ||
+							fallbackUrl.startsWith("https://")
+						) {
 							const fbResponse = await axios.get(fallbackUrl, {
 								responseType: "arraybuffer",
 								timeout: 15000
@@ -1002,10 +1031,6 @@ GlobalFonts.registerFromPath(
 	join(".", "src", ".", "assets", "Cinzel.ttf"),
 	"Cinzel"
 );
-
-function containsChinese(text: string): boolean {
-	return /[\u4e00-\u9fa5]/.test(text);
-}
 
 // 渲染屬性列表的輔助函數
 async function renderAttributesList(
@@ -1106,6 +1131,424 @@ function drawSeparatorLine(
 	ctx.moveTo(startX, y);
 	ctx.lineTo(endX, y);
 	ctx.stroke();
+}
+
+function drawProfileLock(ctx: any, cx: number, cy: number, size: number): void {
+	const bodyWidth = size * 0.3;
+	const bodyHeight = size * 0.23;
+	const bodyX = cx - bodyWidth / 2;
+	const bodyY = cy - bodyHeight * 0.05;
+	ctx.save();
+	ctx.strokeStyle = "rgba(255,255,255,0.88)";
+	ctx.fillStyle = "rgba(255,255,255,0.88)";
+	ctx.lineWidth = Math.max(2, size * 0.065);
+	ctx.lineCap = "round";
+	ctx.beginPath();
+	ctx.arc(cx, bodyY - bodyHeight * 0.42, bodyWidth * 0.28, Math.PI, 0);
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.roundRect(bodyX, bodyY, bodyWidth, bodyHeight, size * 0.055);
+	ctx.fill();
+	ctx.restore();
+}
+
+function profileSkillLabel(skill: Skill | ServantSkill): string {
+	return (
+		("type_text" in skill && skill.type_text) ||
+		skill.remake ||
+		("type" in skill && skill.type) ||
+		""
+	);
+}
+
+function isTechniqueSkill(skill: Skill): boolean {
+	const label = profileSkillLabel(skill).toLowerCase();
+	return label === "秘技" || label.includes("technique");
+}
+
+function profileSkillUrl(skill: Skill | ServantSkill): string | null {
+	const icon = skill.item_url || skill.icon;
+	if (!icon) return null;
+	return icon.startsWith("http") ? icon : `${image_Header}/${icon}`;
+}
+
+async function loadProfileSkillImage(
+	skill: Skill | ServantSkill
+): Promise<any> {
+	const url = profileSkillUrl(skill);
+	if (!url) return null;
+	return (await loadImageAsync(url))?.image || null;
+}
+
+function anchorNumber(anchor?: string): number {
+	return Number(anchor?.replace(/\D/g, "")) || 0;
+}
+
+function colorWithAlpha(color: string, alpha: number): string {
+	const hex = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(color);
+	if (!hex) return color;
+	return `rgba(${parseInt(hex[1]!, 16)},${parseInt(hex[2]!, 16)},${parseInt(hex[3]!, 16)},${alpha})`;
+}
+
+function lightenColor(color: string, amount = 0.35): string {
+	const hex = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(color);
+	if (!hex) return color;
+	const channel = (value: string) =>
+		Math.round(parseInt(value, 16) + (255 - parseInt(value, 16)) * amount)
+			.toString(16)
+			.padStart(2, "0");
+	return `#${channel(hex[1]!)}${channel(hex[2]!)}${channel(hex[3]!)}`;
+}
+
+async function drawProfileTraces(
+	ctx: any,
+	character: Character,
+	tr: any,
+	userLang: string
+): Promise<void> {
+	const elementId = (
+		typeof character.element === "string"
+			? character.element
+			: character.element?.id || "physical"
+	).toLowerCase();
+	const elementKey =
+		elementId === "lightning" || elementId === "thunder"
+			? "Thunder"
+			: elementId.charAt(0).toUpperCase() + elementId.slice(1);
+	const elements = await loadElementsData(userLang);
+	const traceColor = lightenColor(
+		(typeof character.element === "object" && character.element?.color) ||
+			elements?.[elementKey]?.color ||
+			"#BEBEBE"
+	);
+	const allSkills = filterVisibleProfileSkills([...(character.skills || [])]);
+	for (const tree of character.skill_trees || []) {
+		const id = String(tree.id);
+		const isElation = id.endsWith("420") || tree.icon?.includes("_elation");
+		const isMemospriteSkill =
+			id.endsWith("301") || tree.icon?.includes("memosprite_skill");
+		const isMemospriteTalent =
+			id.endsWith("302") || tree.icon?.includes("memosprite_talent");
+		const label = isElation
+			? tr("profile_ElationSkill")
+			: isMemospriteSkill
+				? tr("profile_MemospriteSkill")
+				: isMemospriteTalent
+					? tr("profile_MemospriteTalent")
+					: null;
+		if (
+			!label ||
+			allSkills.some(skill => profileSkillLabel(skill) === label)
+		)
+			continue;
+		allSkills.push({
+			id,
+			point_type: isElation ? 4 : 10,
+			icon: tree.icon,
+			level: tree.level || 1,
+			type_text: label,
+			is_activated: tree.is_activated ?? tree.level > 0
+		});
+	}
+
+	const isMemosprite = (skill: Skill) => {
+		const label = profileSkillLabel(skill);
+		return (
+			skill.type === "MemospriteSkill" ||
+			skill.type === "MemospriteTalent" ||
+			label === tr("profile_MemospriteSkill") ||
+			label === tr("profile_MemospriteTalent")
+		);
+	};
+	const isElation = (skill: Skill) => {
+		const label = profileSkillLabel(skill);
+		return (
+			skill.point_type === 4 ||
+			skill.type === "ElationSkill" ||
+			label === tr("profile_ElationSkill") ||
+			label === "Elation Skill"
+		);
+	};
+	const regularSkills = allSkills.filter(
+		skill =>
+			!isTechniqueSkill(skill) &&
+			!isMemosprite(skill) &&
+			!isElation(skill) &&
+			(skill.point_type === 2 ||
+				(!skill.point_type && Boolean(profileSkillLabel(skill))))
+	);
+	const hasServantSkills = Boolean(
+		character.servant_detail?.servant_skills?.length
+	);
+	const specialSkills: Skill[] = [];
+	for (const skill of allSkills) {
+		if (!isElation(skill) && (hasServantSkills || !isMemosprite(skill)))
+			continue;
+		const label = profileSkillLabel(skill);
+		if (!specialSkills.some(item => profileSkillLabel(item) === label))
+			specialSkills.push(skill);
+	}
+	const servantSkills = character.servant_detail?.servant_skills || [];
+	const mainSkills: Array<Skill | ServantSkill> = [
+		...regularSkills,
+		...specialSkills,
+		...servantSkills
+	];
+
+	let majorTraces: Skill[] = allSkills.filter(
+		skill => skill.point_type === 3
+	);
+	let minorTraces: Skill[] = allSkills.filter(
+		skill => skill.point_type === 1
+	);
+	if (!majorTraces.length && !minorTraces.length) {
+		const fallbackNodes = (character.skill_trees || [])
+			.filter(tree => {
+				const anchor = anchorNumber(tree.anchor);
+				return (
+					anchor >= 6 &&
+					!tree.icon?.includes("memosprite") &&
+					!tree.icon?.includes("_elation")
+				);
+			})
+			.map(tree => ({
+				id: String(tree.id),
+				point_type: anchorNumber(tree.anchor) <= 8 ? 3 : 1,
+				icon: tree.icon,
+				level: tree.level,
+				anchor: tree.anchor,
+				is_activated: tree.is_activated ?? tree.level > 0
+			}));
+		majorTraces = fallbackNodes.filter(skill => skill.point_type === 3);
+		minorTraces = fallbackNodes.filter(skill => skill.point_type === 1);
+	}
+
+	const [mainImages, majorImages, minorImages] = await Promise.all([
+		Promise.all(mainSkills.map(loadProfileSkillImage)),
+		Promise.all(majorTraces.map(loadProfileSkillImage)),
+		Promise.all(minorTraces.map(loadProfileSkillImage))
+	]);
+	const mainSize = mainSkills.length > 6 ? 62 : 68;
+	const mainCell = mainSize + 10;
+	const majorCell = 56;
+	const firstWidth =
+		mainSkills.length * mainCell + majorTraces.length * majorCell;
+	let cursorX = 850 - firstWidth / 2;
+	const firstCenters: Array<{ x: number; y: number }> = [];
+	for (let i = 0; i < mainSkills.length; i++) {
+		firstCenters.push({
+			x: cursorX + mainCell / 2,
+			y: 844 + Math.sin(i * 0.9) * 6
+		});
+		cursorX += mainCell;
+	}
+	for (let i = 0; i < majorTraces.length; i++) {
+		const index = mainSkills.length + i;
+		firstCenters.push({
+			x: cursorX + majorCell / 2,
+			y: 844 + Math.sin(index * 0.9) * 6
+		});
+		cursorX += majorCell;
+	}
+	if (firstCenters.length > 1) {
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.48);
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(firstCenters[0]!.x, firstCenters[0]!.y);
+		for (const point of firstCenters.slice(1)) ctx.lineTo(point.x, point.y);
+		ctx.stroke();
+	}
+
+	for (let i = 0; i < mainSkills.length; i++) {
+		const skill = mainSkills[i]!;
+		const center = firstCenters[i]!;
+		const unlocked = skill.is_activated !== false;
+		ctx.fillStyle = "rgba(8,10,24,0.9)";
+		ctx.beginPath();
+		ctx.arc(center.x, center.y, mainSize / 2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = "rgba(226,215,255,0.82)";
+		ctx.lineWidth = 2;
+		ctx.stroke();
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.9);
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.arc(
+			center.x,
+			center.y,
+			mainSize / 2 + 6,
+			Math.PI * 0.12,
+			Math.PI * 1.56
+		);
+		ctx.stroke();
+		ctx.globalAlpha = unlocked ? 1 : 0.22;
+		if (mainImages[i]) {
+			const iconSize = mainSize - 16;
+			ctx.drawImage(
+				mainImages[i],
+				center.x - iconSize / 2,
+				center.y - iconSize / 2,
+				iconSize,
+				iconSize
+			);
+		}
+		ctx.globalAlpha = 1;
+		if (!unlocked) {
+			ctx.fillStyle = "rgba(5,7,18,0.55)";
+			ctx.beginPath();
+			ctx.arc(center.x, center.y, mainSize / 2 - 1, 0, Math.PI * 2);
+			ctx.fill();
+			drawProfileLock(ctx, center.x, center.y, 42);
+		}
+		let label = profileSkillLabel(skill);
+		if (userLang === "en") {
+			label = label
+				.replace(/Memosprite Talent/i, "M.Talent")
+				.replace(/Memosprite Skill/i, "M.Skill")
+				.replace(/Technique/i, "Tech")
+				.replace(/Ultimate/i, "Ult");
+		}
+		let labelSize = 18;
+		setupFont(ctx, labelSize, true);
+		while (ctx.measureText(label).width > mainCell - 4 && labelSize > 15) {
+			labelSize--;
+			setupFont(ctx, labelSize, true);
+		}
+		ctx.textAlign = "center";
+		ctx.fillStyle = "white";
+		ctx.fillText(label, center.x, 906);
+		setupFont(ctx, 16, true);
+		ctx.fillStyle = "#DCC491";
+		ctx.fillText(`${tr("level")} ${skill.level || 1}`, center.x, 930);
+	}
+
+	for (let i = 0; i < majorTraces.length; i++) {
+		const skill = majorTraces[i]!;
+		const center = firstCenters[mainSkills.length + i]!;
+		const radius = 25;
+		ctx.fillStyle = "rgba(8,10,24,0.9)";
+		ctx.beginPath();
+		ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = "#DCC491";
+		ctx.lineWidth = 2;
+		ctx.stroke();
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.85);
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.arc(center.x, center.y, radius + 5, Math.PI * 0.12, Math.PI * 1.56);
+		ctx.stroke();
+		ctx.globalAlpha = skill.is_activated === false ? 0.22 : 1;
+		if (majorImages[i])
+			ctx.drawImage(majorImages[i], center.x - 19, center.y - 19, 38, 38);
+		ctx.globalAlpha = 1;
+		if (skill.is_activated === false) {
+			ctx.fillStyle = "rgba(5,7,18,0.55)";
+			ctx.beginPath();
+			ctx.arc(center.x, center.y, radius - 1, 0, Math.PI * 2);
+			ctx.fill();
+			drawProfileLock(ctx, center.x, center.y, 34);
+		}
+	}
+
+	const minorCell = Math.min(48, 560 / Math.max(1, minorTraces.length));
+	const minorStartX = 850 - ((minorTraces.length - 1) * minorCell) / 2;
+	if (minorTraces.length > 1) {
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.42);
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(minorStartX, 966);
+		ctx.lineTo(minorStartX + (minorTraces.length - 1) * minorCell, 966);
+		ctx.stroke();
+	}
+	for (let i = 0; i < minorTraces.length; i++) {
+		const skill = minorTraces[i]!;
+		const x = minorStartX + i * minorCell;
+		const y = 966 + Math.sin(i * 0.85) * 4;
+		ctx.fillStyle = "rgba(8,10,24,0.9)";
+		ctx.beginPath();
+		ctx.arc(x, y, 18, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = "rgba(226,215,255,0.72)";
+		ctx.lineWidth = 1.5;
+		ctx.stroke();
+		ctx.strokeStyle = colorWithAlpha(traceColor, 0.75);
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(x, y, 22, Math.PI * 0.12, Math.PI * 1.56);
+		ctx.stroke();
+		ctx.globalAlpha = skill.is_activated === false ? 0.22 : 1;
+		if (minorImages[i])
+			ctx.drawImage(minorImages[i], x - 13, y - 13, 26, 26);
+		ctx.globalAlpha = 1;
+		if (skill.is_activated === false) {
+			ctx.fillStyle = "rgba(5,7,18,0.55)";
+			ctx.beginPath();
+			ctx.arc(x, y, 17, 0, Math.PI * 2);
+			ctx.fill();
+			drawProfileLock(ctx, x, y, 25);
+		}
+	}
+	ctx.textAlign = "left";
+	ctx.fillStyle = "white";
+}
+
+function visibleCharacterBounds(image: any) {
+	const sample = createCanvas(image.width, image.height);
+	const sampleCtx = sample.getContext("2d") as any;
+	sampleCtx.drawImage(image, 0, 0);
+	const pixels = sampleCtx.getImageData(0, 0, image.width, image.height).data;
+	const step = Math.max(
+		1,
+		Math.floor(Math.max(image.width, image.height) / 900)
+	);
+	let left = image.width;
+	let top = image.height;
+	let right = 0;
+	let bottom = 0;
+	for (let y = 0; y < image.height; y += step) {
+		for (let x = 0; x < image.width; x += step) {
+			if ((pixels[(y * image.width + x) * 4 + 3] || 0) < 12) continue;
+			left = Math.min(left, x);
+			right = Math.max(right, x);
+			top = Math.min(top, y);
+			bottom = Math.max(bottom, y);
+		}
+	}
+	if (left > right || top > bottom)
+		return { x: 0, y: 0, w: image.width, h: image.height };
+	const pad = Math.round(Math.max(right - left, bottom - top) * 0.025);
+	return {
+		x: Math.max(0, left - pad),
+		y: Math.max(0, top - pad),
+		w: Math.min(image.width, right + pad) - Math.max(0, left - pad),
+		h: Math.min(image.height, bottom + pad) - Math.max(0, top - pad)
+	};
+}
+
+function drawCharacterPortrait(
+	ctx: any,
+	image: any,
+	x: number,
+	y: number,
+	w: number,
+	h: number
+): void {
+	const bounds = visibleCharacterBounds(image);
+	const scale = Math.min(w / bounds.w, h / bounds.h);
+	const drawWidth = bounds.w * scale;
+	const drawHeight = bounds.h * scale;
+	ctx.drawImage(
+		image,
+		bounds.x,
+		bounds.y,
+		bounds.w,
+		bounds.h,
+		x + (w - drawWidth) / 2,
+		y + h - drawHeight,
+		drawWidth,
+		drawHeight
+	);
 }
 
 async function saveLeaderboard(
@@ -1431,59 +1874,70 @@ async function handleProfileDraw(
 
 	const drawTask = async () => {
 		try {
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle(tr("Searching"))
-						.setColor(getRandomColor() as any)
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
-						)
-				]
-			}).catch(() => {});
+			await interaction
+				.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setTitle(tr("Searching"))
+							.setColor(getRandomColor() as any)
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
+							)
+					]
+				})
+				.catch(() => {});
 
 			await tryAutoSyncCurrentAnomalyBadge(
-				interaction,
-				tr,
-				user,
+				user.id,
 				uid,
 				accountIndex
 			);
 
 			// 如果目標玩家已經綁定帳號 使用hoyoapi 獲取資料
 			let playerData: PlayerData | null = null;
-			let playerActivity: PlayerActivity | null = null;
 			let characters: Character[] | null = null;
 			let useAllCharacters = allCharacters;
 			let cookieExpiredFallbackNotice = false;
 			if (useAllCharacters) {
-				const hsr = await getUserHSRData(
-					interaction,
-					tr,
-					user.id,
-					accountIndex,
-					{ suppressErrorReply: true }
+				const accountData = await withUserHSRRequest(
+					{
+						interaction,
+						tr,
+						userId: user.id,
+						accountIndex,
+						suppressErrorReply: true
+					},
+					async hsr => ({
+						data: await hsr.record.records(),
+						characters: await hsr.record.characters(),
+						uid: hsr.uid
+					})
 				);
 
-				if (!hsr) {
+				if (!accountData) {
 					const needsCookieUpdate = await database.get(
 						`${uid}.needsCookieUpdate`
 					);
 					cookieExpiredFallbackNotice = Boolean(needsCookieUpdate);
 					useAllCharacters = false;
 				} else {
-					const data = await hsr.record.records();
-					let gameInfo: { uid: string; nickname: string; level: number };
-				try {
-					const cookieStr = await getUserCookie(user.id, accountIndex) ?? "";
-					gameInfo = await getUserGameInfo(cookieStr);
-				} catch (e) {
-					console.warn(
-						"[Profile] getUserGameInfo failed, using fallback:",
+					const data = accountData.data;
+					let gameInfo: {
+						uid: string;
+						nickname: string;
+						level: number;
+					};
+					try {
+						const cookieStr =
+							(await getUserCookie(user.id, accountIndex)) ?? "";
+						gameInfo = await getUserGameInfo(cookieStr);
+					} catch (e) {
+						console.warn(
+							"[Profile] getUserGameInfo failed, using fallback:",
 							(e as Error).message
 						);
 						gameInfo = {
-							uid: String(hsr.uid || uid),
+							uid: String(accountData.uid || uid),
 							nickname: (data as any)?.role?.nickname || uid,
 							level: (data as any)?.role?.level || 0
 						};
@@ -1498,19 +1952,23 @@ async function handleProfileDraw(
 						characters: []
 					};
 
-				// 獲取完整的角色數據，包括 relics 和 ornaments
-				characters = (await hsr.record.characters()) as any;
-				// HoYoLAB returns `ranks[]` (each with .icon) instead of `rank_icons`.
-				// Inject rank_icons so drawEidolonIcons() works the same as the UID path.
-				if (Array.isArray(characters)) {
-					for (const c of characters as any[]) {
-						if (!c.rank_icons && Array.isArray(c.ranks) && c.ranks.length >= 6) {
-							c.rank_icons = [...c.ranks]
-								.sort((a: any, b: any) => a.pos - b.pos)
-								.map((r: any) => r.icon);
+					// 獲取完整的角色數據，包括 relics 和 ornaments
+					characters = accountData.characters as any;
+					// HoYoLAB returns `ranks[]` (each with .icon) instead of `rank_icons`.
+					// Inject rank_icons so drawEidolonIcons() works the same as the UID path.
+					if (Array.isArray(characters)) {
+						for (const c of characters as any[]) {
+							if (
+								!c.rank_icons &&
+								Array.isArray(c.ranks) &&
+								c.ranks.length >= 6
+							) {
+								c.rank_icons = [...c.ranks]
+									.sort((a: any, b: any) => a.pos - b.pos)
+									.map((r: any) => r.icon);
+							}
 						}
 					}
-				}
 
 					// 為 saveLeaderboard 準備完整的 playerData
 					const fullPlayerData: PlayerData = {
@@ -1573,12 +2031,7 @@ async function handleProfileDraw(
 					status: reqPlayerDataStatus,
 					playerData: reqPlayerData
 				} = await requestPlayerData(uid, interaction);
-				const {
-					status: reqPlayerActivityStatus,
-					playerActivity: reqPlayerActivity
-				} = await requestPlayerActivity(uid, interaction);
-
-				if (reqPlayerDataStatus == 400) {
+				if (reqPlayerDataStatus !== 200) {
 					const friendlyDetail = getFriendlyErrorMessage(
 						reqPlayerData.detail,
 						tr
@@ -1668,17 +2121,15 @@ async function handleProfileDraw(
 					// }
 				}
 
-				characters = reqPlayerData.characters;
-				playerActivity = reqPlayerActivity;
-				playerData = reqPlayerData;
+				const publicPlayerData = reqPlayerData as PlayerData;
+				characters = publicPlayerData.characters;
+				playerData = publicPlayerData;
 			}
 
-		const requestEndTime = Date.now();
-		const drawStartTime = Date.now();
-		let imageBuffer: Buffer | null = null;
-		// Get user's preferred background
-		const bgPath = await getUserBg(user.id);
-		if (useAllCharacters && characters) {
+			const requestEndTime = Date.now();
+			const drawStartTime = Date.now();
+			let imageBuffer: Buffer | null = null;
+			if (useAllCharacters && characters) {
 				// 預設按五星優先排序
 				const defaultSortedCharacters = characters.sort((a, b) => {
 					// 先按五星優先排序
@@ -1689,20 +2140,13 @@ async function handleProfileDraw(
 					return b.level - a.level;
 				});
 
-			imageBuffer = await drawAllCharactersImage(
-				tr,
-				playerData!,
-				defaultSortedCharacters,
-				null,
-				bgPath
-			);
+				imageBuffer = await drawAllCharactersImage(
+					tr,
+					playerData!,
+					defaultSortedCharacters
+				);
 			} else if (playerData) {
-			imageBuffer = await drawMainImage(
-				tr,
-				playerData,
-				playerActivity,
-				bgPath
-			);
+				imageBuffer = await drawMainImage(tr, playerData);
 			}
 			if (!imageBuffer) throw new Error(tr("profile_NoImageData"));
 
@@ -1873,13 +2317,17 @@ async function handleProfileDraw(
 					} catch (uploadError: any) {
 						const isSocketError =
 							uploadError?.code === "UND_ERR_SOCKET" ||
-							uploadError?.message?.includes("other side closed") ||
+							uploadError?.message?.includes(
+								"other side closed"
+							) ||
 							uploadError?.message?.includes("socket hang up");
 						if (isSocketError && attempt < retries) {
 							console.warn(
 								`[Profile] Upload attempt ${attempt} failed (socket error), retrying...`
 							);
-							await new Promise(res => setTimeout(res, 1000 * attempt));
+							await new Promise(res =>
+								setTimeout(res, 1000 * attempt)
+							);
 							continue;
 						}
 						throw uploadError;
@@ -1889,22 +2337,26 @@ async function handleProfileDraw(
 			await uploadWithRetry();
 		} catch (error) {
 			console.error(error);
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setColor("#E76161")
-						.setTitle(tr("DrawError"))
-						.setDescription(`\`${error}\``)
-						.setThumbnail(
-							"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
-						)
-				]
-			}).catch(() => {});
+			await interaction
+				.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setColor("#E76161")
+							.setTitle(tr("DrawError"))
+							.setDescription(`\`${error}\``)
+							.setThumbnail(
+								"https://cdn.discordapp.com/attachments/1057244827688910850/1149967646884905021/1689079680rzgx5_icon.png"
+							)
+					]
+				})
+				.catch(() => {});
 		}
 	};
 
 	if (drawQueue.length >= DRAW_QUEUE_MAX) {
-		await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+		await interaction
+			.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" })
+			.catch(() => {});
 		return;
 	}
 	drawQueue.push(drawTask);
@@ -1917,120 +2369,46 @@ async function handleProfileDraw(
 	}
 }
 
-// ── helpers for drawMainImage ──────────────────────────────────────────────
-function drawRoundRect(
-	ctx: any,
-	x: number,
-	y: number,
-	w: number,
-	h: number,
-	r: number
-) {
-	ctx.beginPath();
-	ctx.moveTo(x + r, y);
-	ctx.arcTo(x + w, y, x + w, y + h, r);
-	ctx.arcTo(x + w, y + h, x, y + h, r);
-	ctx.arcTo(x, y + h, x, y, r);
-	ctx.arcTo(x, y, x + w, y, r);
-	ctx.closePath();
-}
-
-function fillGlass(
-	ctx: any,
-	x: number,
-	y: number,
-	w: number,
-	h: number,
-	r: number,
-	alpha = 0.45
-) {
-	ctx.save();
-	drawRoundRect(ctx, x, y, w, h, r);
-	ctx.clip();
-	ctx.fillStyle = `rgba(10, 10, 20, ${alpha})`;
-	ctx.fillRect(x, y, w, h);
-	ctx.restore();
-	ctx.save();
-	drawRoundRect(ctx, x, y, w, h, r);
-	ctx.strokeStyle = "rgba(255,255,255,0.12)";
-	ctx.lineWidth = 1.5;
-	ctx.stroke();
-	ctx.restore();
-}
-
 async function drawMainImage(
 	tr: any,
-	playerData: PlayerData,
-	playerActivity: PlayerActivity | null,
-	bgPath?: string
+	playerData: PlayerData
 ): Promise<Buffer | null> {
 	try {
-		const W = 1920, H = 1080;
-		const canvas = createCanvas(W, H);
+		const canvas = createCanvas(1920, 1080);
 		const ctx = canvas.getContext("2d");
 
-		const mf = (size: number, bold = false) => {
-			ctx.font = `${bold ? "bold " : ""}${size}px 'YaHei','URW DIN Arabic',Arial,sans-serif`;
-		};
+		const imageUrls = [
+			"./src/assets/image/warp/bg.jpg",
+			`${image_Header}/${playerData.player.avatar.icon}`
+		];
 
-		// ── 1. Background ────────────────────────────────────────────────────
-		const bgResult = await loadImageAsync(bgPath ?? await getTodayBg());
-		if (bgResult?.image) {
-			ctx.drawImage(bgResult.image, 0, 0, W, H);
-		} else {
-			ctx.fillStyle = "#0d1117";
-			ctx.fillRect(0, 0, W, H);
+		const visibleCharacters = playerData.characters.slice(
+			0,
+			Math.min(playerData.characters.length, 8)
+		);
+		imageUrls.push(
+			...visibleCharacters.map(char => `${image_Header}/${char.preview}`)
+		);
+
+		const allImages = await Promise.all(
+			imageUrls.map(url => loadImageAsync(url))
+		);
+
+		const bg = allImages[0]?.image;
+		const avatar = allImages[1]?.image;
+		const charImages = allImages
+			.slice(2, 2 + visibleCharacters.length)
+			.map(img => img?.image);
+
+		if (bg) {
+			ctx.drawImage(bg, 0, 0, 1920, 1080);
 		}
-		// dark overlay
-		ctx.fillStyle = "rgba(0,0,0,0.55)";
-		ctx.fillRect(0, 0, W, H);
 
-		// ── 2. Fetch extra images in parallel ────────────────────────────────
-		const allChars = playerData.characters.slice(0, 8);
-		const supportChars = allChars.slice(0, 3);
-		const companionChars = allChars.slice(3, 8);
-		const activities = playerActivity?.info?.slice(0, 5) || [];
-
-		const [avatarResult, ...restImages] = await Promise.all([
-			loadImageAsync(`${image_Header}/${playerData.player.avatar.icon}`),
-			...allChars.map(c => loadImageAsync(`${image_Header}/${c.preview}`)),
-			...activities.map(a => loadImageAsync(`${image_Header}/${a.content.icon}`))
-		]);
-		const charImgs = restImages.slice(0, allChars.length).map(r => r?.image);
-		const activityIcons = restImages.slice(allChars.length).map(r => r?.image);
-
-		// ── 3. Left panel ────────────────────────────────────────────────────
-		const LP = { x: 28, y: 28, w: 460, h: H - 56, r: 16 };
-		fillGlass(ctx, LP.x, LP.y, LP.w, LP.h, LP.r, 0.5);
-
-		// Avatar circle
-		const avatarCX = LP.x + LP.w / 2;
-		const avatarCY = LP.y + 110;
-		const avatarR = 80;
-		if (avatarResult?.image) {
-			ctx.save();
-			ctx.beginPath();
-			ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
-			ctx.clip();
-			ctx.drawImage(
-				avatarResult.image,
-				avatarCX - avatarR,
-				avatarCY - avatarR,
-				avatarR * 2,
-				avatarR * 2
-			);
-			ctx.restore();
+		if (avatar) {
+			ctx.drawImage(avatar, 896, 70, 128, 128);
 		}
-		// avatar ring
-		ctx.save();
-		ctx.beginPath();
-		ctx.arc(avatarCX, avatarCY, avatarR + 3, 0, Math.PI * 2);
-		ctx.strokeStyle = "#D4AF37";
-		ctx.lineWidth = 3;
-		ctx.stroke();
-		ctx.restore();
 
-		// Anomaly icon overlay
+		// 繪製異常仲裁圖標（如果有的話）
 		const anomalyRecord = (await database.get(
 			`${playerData.player.uid}.anomalyRoundNum`
 		)) as AnomalyRoundRecord | null;
@@ -2039,238 +2417,249 @@ async function drawMainImage(
 			if (iconPath) {
 				const anomalyIcon = await loadImage(iconPath);
 				if (anomalyIcon) {
-					const iSize = avatarR * 2 * 1.1;
+					const iconSize = 128 * 1.1;
+					const iconX = 896 - 10;
+					const iconY = 70 - 70 * 0.1;
 					ctx.drawImage(
 						anomalyIcon,
-						avatarCX - avatarR - iSize * 0.05,
-						avatarCY - avatarR - iSize * 0.05,
-						iSize,
-						iSize
+						iconX,
+						iconY,
+						iconSize,
+						iconSize
 					);
 				}
 			}
 		}
 
-		// Nickname
-		mf(36, true);
-		ctx.fillStyle = "#FFFFFF";
+		const setupMainFont = (size: number, isBold: boolean = false) => {
+			ctx.font = `${isBold ? "bold " : ""}${size}px 'YaHei', 'URW DIN Arabic', Arial, sans-serif`;
+		};
+
+		const setupNumberFont = (size: number, isBold: boolean = false) => {
+			ctx.font = `${isBold ? "bold " : ""}${size}px 'URW DIN Arabic', Arial, sans-serif`;
+		};
+
+		setupMainFont(40, true);
+		ctx.fillStyle = "white";
 		ctx.textAlign = "center";
-		ctx.fillText(playerData.player.nickname, avatarCX, avatarCY + avatarR + 42);
+		ctx.fillText(playerData.player.nickname, 960, 245);
 
-		// UID
-		mf(22);
-		ctx.fillStyle = "rgba(255,255,255,0.6)";
-		ctx.fillText(
-			`UID  ${playerData.player.uid}`,
-			avatarCX,
-			avatarCY + avatarR + 70
-		);
+		const xRange = {
+			start: 610,
+			end: 1300
+		};
 
-		// Anomaly rank badges
+		// 繪製 UID 和異常仲裁徽章（同一橫排，平均分配寬度）
 		const anomalyRankRecords = (await database.get(
 			`${playerData.player.uid}.anomalyRankIcon`
 		)) as AnomalyRankRecord[] | null;
+
+		const badgeSize = 40;
+		const badgeSpacing = 8;
+		const uidText = `UID ${playerData.player.uid}`;
+
+		// 計算 UID 文字寬度
+		setupNumberFont(24);
+		ctx.fillStyle = "lightgray";
+
 		if (anomalyRankRecords && anomalyRankRecords.length > 0) {
-			anomalyRankRecords.sort((a, b) => b.challengeTime - a.challengeTime);
-			const badges = anomalyRankRecords.slice(0, 5);
-			const badgeSz = 36;
-			const totalBW = badges.length * badgeSz + (badges.length - 1) * 6;
-			let bx = avatarCX - totalBW / 2;
-			const by = avatarCY + avatarR + 82;
-			for (const record of badges) {
-				try {
-					let src: string | Buffer = record.rankIcon;
-					if (record.rankIcon?.startsWith("http")) {
-						const resp = await axios.get(record.rankIcon, {
-							responseType: "arraybuffer",
-							timeout: 10000
-						});
-						src = Buffer.from(resp.data);
-					}
-					const bi = await loadImage(src);
-					if (bi) ctx.drawImage(bi, bx, by, badgeSz, badgeSz);
-				} catch { /* skip */ }
-				bx += badgeSz + 6;
-			}
-		}
+			// 按挑戰時間排序，最新的在前
+			anomalyRankRecords.sort(
+				(a, b) => b.challengeTime - a.challengeTime
+			);
 
-		// Divider
-		const divY1 = avatarCY + avatarR + 105;
-		ctx.strokeStyle = "rgba(255,255,255,0.2)";
-		ctx.lineWidth = 1;
-		ctx.beginPath();
-		ctx.moveTo(LP.x + 24, divY1);
-		ctx.lineTo(LP.x + LP.w - 24, divY1);
-		ctx.stroke();
+			// 最多顯示 5 個徽章
+			const displayRecords = anomalyRankRecords.slice(0, 5);
+			// 計算起始位置（居中對齊）
+			setupMainFont(40, true);
+			const nameMetrics = ctx.measureText(playerData.player.nickname);
+			const nameWidth = nameMetrics.width;
+			const badgeStartX = 960 + nameWidth / 2 + 18;
+			const badgeY =
+				245 +
+				(nameMetrics.actualBoundingBoxDescent -
+					nameMetrics.actualBoundingBoxAscent) /
+					2 -
+				badgeSize / 2;
 
-		// Stats grid (2×2)
-		const stats = [
-			{ label: tr("profile_TrailblazeLevel"),  value: `${playerData.player.level}` },
-			{ label: tr("profile_EquilibriumLevel"),  value: `${playerData.player.world_level ?? "-"}` },
-			{ label: tr("profile_CharactersCount"),   value: `${playerData.player.space_info?.avatar_count ?? "-"}` },
-			{ label: tr("profile_AchievementsCount"), value: `${playerData.player.space_info?.achievement_count ?? "-"}` }
-		];
-		const gX0 = LP.x + 30, gY0 = divY1 + 22;
-		const gColW = (LP.w - 60) / 2, gRowH = 80;
-		stats.forEach((s, i) => {
-			const col = i % 2, row = Math.floor(i / 2);
-			const sx = gX0 + col * gColW + gColW / 2;
-			const sy = gY0 + row * gRowH;
-			mf(32, true);
-			ctx.fillStyle = "#FFFFFF";
+			// 繪製 UID
 			ctx.textAlign = "center";
-			ctx.fillText(s.value, sx, sy + 34);
-			mf(18);
-			ctx.fillStyle = "rgba(255,255,255,0.55)";
-			ctx.fillText(s.label, sx, sy + 56);
-		});
+			setupNumberFont(24);
+			ctx.fillText(uidText, 960, 300);
 
-		// Divider 2
-		const divY2 = gY0 + 2 * gRowH + 14;
-		ctx.strokeStyle = "rgba(255,255,255,0.2)";
-		ctx.lineWidth = 1;
-		ctx.beginPath();
-		ctx.moveTo(LP.x + 24, divY2);
-		ctx.lineTo(LP.x + LP.w - 24, divY2);
-		ctx.stroke();
+			// 繪製徽章
+			for (let i = 0; i < displayRecords.length; i++) {
+				const record = displayRecords[i];
+				if (!record) continue;
 
-		// Activity list
-		if (activities.length > 0) {
-			mf(22, true);
-			ctx.fillStyle = "#D4AF37";
-			ctx.textAlign = "left";
-			ctx.fillText(tr("profile_Records"), LP.x + 30, divY2 + 28);
+				const badgeX = badgeStartX + i * (badgeSize + badgeSpacing);
 
-			activities.forEach((act, i) => {
-				const ay = divY2 + 52 + i * 48;
-				const icon = activityIcons[i];
-				if (icon) ctx.drawImage(icon, LP.x + 30, ay - 26, 34, 34);
-				mf(20);
-				ctx.fillStyle = "rgba(255,255,255,0.85)";
-				ctx.textAlign = "left";
-				// Truncate long text
-				let txt = act.text;
-				const maxW = LP.w - 90;
-				while (ctx.measureText(txt).width > maxW && txt.length > 4) {
-					txt = txt.slice(0, -1);
+				try {
+					let badgeSource: string | Buffer = record.rankIcon;
+					if (
+						record.rankIcon?.startsWith("http://") ||
+						record.rankIcon?.startsWith("https://")
+					) {
+						const badgeResponse = await axios.get(record.rankIcon, {
+							responseType: "arraybuffer",
+							timeout: 15000
+						});
+						badgeSource = Buffer.from(badgeResponse.data);
+					}
+					const badgeIcon = await loadImage(badgeSource);
+					if (badgeIcon) {
+						ctx.drawImage(
+							badgeIcon,
+							badgeX,
+							badgeY,
+							badgeSize,
+							badgeSize
+						);
+					}
+				} catch (error) {
+					console.warn(
+						`Failed to load badge icon: ${record.rankIcon}`,
+						error
+					);
 				}
-				if (txt !== act.text) txt += "…";
-				ctx.fillText(txt, LP.x + 72, ay + 4);
+			}
+		} else {
+			// 沒有徽章時，UID 居中顯示
+			ctx.textAlign = "center";
+			ctx.fillText(uidText, 960, 300);
+		}
+		ctx.textAlign = "center";
+		setupMainFont(20);
+		const signatureText = fitProfileSignature(
+			playerData.player.signature,
+			text => ctx.measureText(text).width,
+			760
+		);
+		if (signatureText) {
+			ctx.fillStyle = "rgba(235, 239, 248, 0.78)";
+			ctx.fillText(signatureText, 960, 330);
+		}
+		const statsLabelY = signatureText ? 368 : 355;
+		const statsValueY = signatureText ? 408 : 400;
+
+		const profileStatsData = [
+			{
+				labelText: tr("profile_TrailblazeLevel"),
+				valueText: `${playerData.player.level}`
+			},
+			{
+				labelText: tr("profile_EquilibriumLevel"),
+				valueText: `${playerData.player.world_level}`
+			},
+			{
+				labelText: tr("profile_CharactersCount"),
+				valueText: `${playerData.player.space_info?.avatar_count}`
+			},
+			{
+				labelText: tr("profile_AchievementsCount"),
+				valueText: `${playerData.player.space_info?.achievement_count}`
+			}
+		];
+
+		function calculatePositions(
+			statsData: any[],
+			xRange: { start: number; end: number }
+		) {
+			const count = statsData.length;
+
+			if (count === 1) {
+				const centerX = (xRange.start + xRange.end) / 2;
+				return [
+					{
+						labelX: centerX,
+						labelY: statsLabelY,
+						valueX: centerX,
+						valueY: statsValueY
+					}
+				];
+			}
+
+			const totalWidth = xRange.end - xRange.start;
+			const spacing = totalWidth / (count - 1);
+
+			return statsData.map((stat, index) => {
+				const x = xRange.start + spacing * index;
+				return {
+					...stat,
+					labelX: x,
+					labelY: statsLabelY,
+					valueX: x,
+					valueY: statsValueY
+				};
 			});
 		}
 
-		// ── 4. Right panel ──────────────────────────────────────────────────
-		const RP = { x: 510, y: 28 };
+		const profileStats = calculatePositions(profileStatsData, xRange);
+		ctx.fillStyle = "white";
 
-		// -- Support characters (top 3, larger) --
-		const suppLabel = tr("profile_SupportCharacters") ?? "支援角色";
-		mf(24, true);
-		ctx.fillStyle = "#D4AF37";
-		ctx.textAlign = "left";
-		ctx.fillText(suppLabel, RP.x, RP.y + 28);
+		profileStats.forEach(stat => {
+			setupMainFont(30, true);
+			ctx.fillText(stat.labelText, stat.labelX, stat.labelY);
+		});
 
-		const suppCardW = 420, suppCardH = 490, suppGap = 20;
-		const suppTotalW = supportChars.length * suppCardW + (supportChars.length - 1) * suppGap;
-		const suppStartX = RP.x + ((W - RP.x - 28) - suppTotalW) / 2;
+		profileStats.forEach(stat => {
+			setupNumberFont(32);
+			ctx.fillText(stat.valueText, stat.valueX, stat.valueY);
+		});
 
-		for (let i = 0; i < supportChars.length; i++) {
-			const char = supportChars[i]!;
-			const cx = suppStartX + i * (suppCardW + suppGap);
-			const cy = RP.y + 40;
+		ctx.strokeStyle = "#fff";
+		ctx.beginPath();
+		ctx.moveTo(560, 435);
+		ctx.lineTo(1360, 435);
+		ctx.stroke();
 
-			// card glass
-			fillGlass(ctx, cx, cy, suppCardW, suppCardH, 12, 0.38);
+		const width =
+			(920 + (playerData.characters.length - 4) * 230) /
+			playerData.characters.length;
 
-			// character preview
-			const img = charImgs[i];
-			if (img) {
-				// clip to card
-				ctx.save();
-				drawRoundRect(ctx, cx, cy, suppCardW, suppCardH, 12);
-				ctx.clip();
-				// scale to fill upper ~80% of card, anchor bottom
-				const srcAR = img.width / img.height;
-				const dstH = suppCardH;
-				const dstW = dstH * srcAR;
-				const dx = cx + (suppCardW - dstW) / 2;
-				ctx.drawImage(img, dx, cy - suppCardH * 0.05, dstW, dstH);
-				ctx.restore();
+		const characterRenderData = visibleCharacters.map((char, i) => {
+			const x =
+				520 - (playerData.characters.length - 4) * 115 + i * width;
+			const y = 716;
+			return { char, x, y, image: charImages[i] };
+		});
+
+		characterRenderData.forEach(data => {
+			if (data.image) {
+				ctx.drawImage(data.image, data.x, 460, 187, 256);
 			}
+		});
 
-			// bottom info bar
-			const barH = 70;
-			ctx.save();
-			drawRoundRect(ctx, cx, cy + suppCardH - barH, suppCardW, barH, 12);
-			ctx.clip();
-			ctx.fillStyle = "rgba(0,0,0,0.65)";
-			ctx.fillRect(cx, cy + suppCardH - barH, suppCardW, barH);
-			ctx.restore();
+		ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+		characterRenderData.forEach(data => {
+			const { x, y } = data;
+			ctx.beginPath();
+			ctx.moveTo(x, y);
+			ctx.lineTo(x, y + 56);
+			ctx.quadraticCurveTo(x, y + 76, x + 20, y + 76);
+			ctx.lineTo(x + 167, y + 76);
+			ctx.quadraticCurveTo(x + 187, y + 76, x + 187, y + 56);
+			ctx.lineTo(x + 187, y);
+			ctx.closePath();
+			ctx.fill();
+		});
 
-			mf(26, true);
-			ctx.fillStyle = "#FFD89C";
-			ctx.textAlign = "center";
-			ctx.fillText(char.name, cx + suppCardW / 2, cy + suppCardH - barH + 28);
-			mf(20);
-			ctx.fillStyle = "rgba(255,255,255,0.75)";
+		setupMainFont(28, true);
+		characterRenderData.forEach(data => {
+			const { char, x, y } = data;
+			ctx.fillStyle = getProfileCharacterNameColor(char);
+			ctx.fillText(char.name, x + 93, y + 35);
+		});
+
+		setupMainFont(20);
+		characterRenderData.forEach(data => {
+			const { char, x, y } = data;
 			ctx.fillText(
-				`Lv.${char.level}  ✦${char.rank}`,
-				cx + suppCardW / 2,
-				cy + suppCardH - barH + 52
+				tr("level_Format", { level: char.level }),
+				x + 93,
+				y + 65
 			);
-		}
-
-		// -- Companion characters (bottom 5, smaller) --
-		const compY = RP.y + 40 + suppCardH + 24;
-		const compLabel = tr("profile_CompanionCharacters") ?? "星海同行";
-		mf(24, true);
-		ctx.fillStyle = "#D4AF37";
-		ctx.textAlign = "left";
-		ctx.fillText(compLabel, RP.x, compY - 6);
-
-		const compCardW = 245, compCardH = 310, compGap = 18;
-		const compTotalW = companionChars.length * compCardW + (companionChars.length - 1) * compGap;
-		const compStartX = RP.x + ((W - RP.x - 28) - compTotalW) / 2;
-
-		for (let i = 0; i < companionChars.length; i++) {
-			const char = companionChars[i]!;
-			const cx = compStartX + i * (compCardW + compGap);
-			const cy = compY + 4;
-
-			fillGlass(ctx, cx, cy, compCardW, compCardH, 10, 0.38);
-
-			const img = charImgs[3 + i];
-			if (img) {
-				ctx.save();
-				drawRoundRect(ctx, cx, cy, compCardW, compCardH, 10);
-				ctx.clip();
-				const srcAR = img.width / img.height;
-				const dstH = compCardH;
-				const dstW = dstH * srcAR;
-				const dx = cx + (compCardW - dstW) / 2;
-				ctx.drawImage(img, dx, cy - compCardH * 0.05, dstW, dstH);
-				ctx.restore();
-			}
-
-			const barH = 54;
-			ctx.save();
-			drawRoundRect(ctx, cx, cy + compCardH - barH, compCardW, barH, 10);
-			ctx.clip();
-			ctx.fillStyle = "rgba(0,0,0,0.65)";
-			ctx.fillRect(cx, cy + compCardH - barH, compCardW, barH);
-			ctx.restore();
-
-			mf(20, true);
-			ctx.fillStyle = "white";
-			ctx.textAlign = "center";
-			ctx.fillText(char.name, cx + compCardW / 2, cy + compCardH - barH + 22);
-			mf(16);
-			ctx.fillStyle = "rgba(255,255,255,0.7)";
-			ctx.fillText(
-				`Lv.${char.level}  ✦${char.rank}`,
-				cx + compCardW / 2,
-				cy + compCardH - barH + 42
-			);
-		}
+		});
 
 		return canvas.toBuffer("image/webp");
 	} catch (error) {
@@ -2284,8 +2673,7 @@ async function drawCharacterImage(
 	playerData: PlayerData,
 	character: Character,
 	isAllCharacter: boolean = false,
-	userLang: string = "en",
-	bgPath?: string
+	userLang: string = "en"
 ): Promise<Buffer | null> {
 	try {
 		// 验证输入参数
@@ -2324,7 +2712,8 @@ async function drawCharacterImage(
 		const normalizedPathId = pathMapper[rawPathId] || rawPathId;
 		// HoYoLAB: path=undefined → rawPathId="" → normalizedPathId=""
 		// fallback 到 base_type 對應的命途名稱
-		const resolvedPathId = normalizedPathId ||
+		const resolvedPathId =
+			normalizedPathId ||
 			(await getPathMap())[character.base_type || 0] ||
 			"none";
 		const characterPathIcon = isAllCharacter
@@ -2335,7 +2724,7 @@ async function drawCharacterImage(
 
 		// 减少基础图片加载数量
 		const imagePaths = [
-			bgPath ?? await getTodayBg(),
+			"./src/assets/image/warp/bg.jpg",
 			`./src/assets/image/${characterElementIcon}`,
 			`./src/assets/image/${characterPathIcon}`,
 			`./src/assets/image/icon/deco/Star${character.rarity == 5 ? "5" : "4"}.png`
@@ -2447,7 +2836,9 @@ async function drawCharacterImage(
 		let characterFallbackUrl: string | null = null;
 		const isSkinImage = character?.image?.includes("skin");
 		if (isSkinImage) {
-			characterImageUrl = await handleCharacterSkin(character);
+			// ponytail: HoYoLAB omits the skin ID; current playable skins all use variant 01.
+			characterImageUrl = `https://enka.network/ui/hsr/SpriteOutput/AvatarDrawCard/AvatarSkin/1${character.id}01.png`;
+			characterFallbackUrl = character.image || null;
 		} else {
 			const portraitResult = await handleCharacterPortrait(
 				character,
@@ -2475,25 +2866,7 @@ async function drawCharacterImage(
 
 		// 绘制角色图片 - 根据图片类型调整显示方式
 		if (characterImageResult) {
-			const originalWidth = characterImageResult.width;
-			const originalHeight = characterImageResult.height;
-			const aspectRatio = originalWidth / originalHeight;
-
-			if (aspectRatio > 0.8) {
-				const scaledWidth = 768 * aspectRatio;
-				ctx.drawImage(characterImageResult, 475, 0, scaledWidth, 768);
-			} else {
-				const size = 0.8;
-				const scaledHeight = (768 * size) / aspectRatio;
-				const xOffset = 475 + 768 * ((1 - size) / 2);
-				ctx.drawImage(
-					characterImageResult,
-					xOffset,
-					-220,
-					768 * size,
-					scaledHeight
-				);
-			}
+			drawCharacterPortrait(ctx, characterImageResult, 475, 0, 720, 750);
 		}
 
 		// 优化字体大小计算
@@ -2544,12 +2917,13 @@ async function drawCharacterImage(
 			(typeof character.path === "object"
 				? character.path?.name
 				: (() => {
-					const raw = (character.path as string) || "";
-					const mapped = pathMapper[raw.toLowerCase()] || raw;
-					if (!mapped) return undefined;
-					const key = mapped.charAt(0).toUpperCase() + mapped.slice(1);
-					return tr(`path_${key}`);
-				})()) ||
+						const raw = (character.path as string) || "";
+						const mapped = pathMapper[raw.toLowerCase()] || raw;
+						if (!mapped) return undefined;
+						const key =
+							mapped.charAt(0).toUpperCase() + mapped.slice(1);
+						return tr(`path_${key}`);
+					})()) ||
 				tr(`path_${(await getPathMap())[character.base_type || 0]}`),
 			112,
 			196
@@ -2561,7 +2935,13 @@ async function drawCharacterImage(
 		const PANEL_CENTER_X = 270;
 		const EIDOLON_CENTER_Y = 260;
 		if (character.rank_icons && character.rank_icons.length >= 6) {
-			await drawEidolonIcons(ctx, character.rank_icons, character.rank, PANEL_CENTER_X, EIDOLON_CENTER_Y);
+			await drawEidolonIcons(
+				ctx,
+				character.rank_icons,
+				character.rank,
+				PANEL_CENTER_X,
+				EIDOLON_CENTER_Y
+			);
 		} else {
 			// Fallback: original text if rank_icons not available
 			setupFont(ctx, 26, true);
@@ -2622,17 +3002,21 @@ async function drawCharacterImage(
 					return acc;
 				}, {});
 
-			// mihomo attributes[] 的 hp/atk/def/spd 名稱帶有「基礎」前綴，
+			// canonical attributes[] 的 hp/atk/def/spd 名稱可能帶有「基礎」前綴，
 			// 但合併後顯示的是加成後的總量，應去掉「基礎」改用完整名稱。
 			const fieldNameOverride: Record<string, string> = {
-				hp:  tr("property_MaxHP"),
+				hp: tr("property_MaxHP"),
 				atk: tr("property_Attack"),
 				def: tr("property_Defence"),
 				spd: tr("property_Speed")
 			};
 			for (const field of Object.keys(fieldNameOverride)) {
-				if (attributesWithAdditions[field] && fieldNameOverride[field]) {
-					(attributesWithAdditions[field] as Attribute).name = fieldNameOverride[field] as string;
+				if (
+					attributesWithAdditions[field] &&
+					fieldNameOverride[field]
+				) {
+					(attributesWithAdditions[field] as Attribute).name =
+						fieldNameOverride[field] as string;
 				}
 			}
 
@@ -2672,7 +3056,14 @@ async function drawCharacterImage(
 		drawSeparatorLine(ctx, 50, 500, attrTopY);
 		// 屬性列表 (relicsScore 在此提前取得，以便傳遞有效詞條集合)
 		const relicsScore = await getRelicsScore(character);
-		await renderAttributesList(ctx, filteredAttributes, 50, 340, 45, relicsScore?.effectivePropertyNames);
+		await renderAttributesList(
+			ctx,
+			filteredAttributes,
+			50,
+			340,
+			45,
+			relicsScore?.effectivePropertyNames
+		);
 		// 下分隔線動態位置
 		const attrBottomY = 373 + filteredAttributes.length * 45;
 		drawSeparatorLine(ctx, 50, 500, attrBottomY);
@@ -2696,7 +3087,11 @@ async function drawCharacterImage(
 			setupFont(ctx, 18, true);
 			ctx.textAlign = "left";
 			ctx.fillStyle = "rgba(255,255,255,0.55)";
-			ctx.fillText(tr("profile_EffectiveStatsTitle"), panelX, panelY + 16);
+			ctx.fillText(
+				tr("profile_EffectiveStatsTitle"),
+				panelX,
+				panelY + 16
+			);
 
 			ctx.save();
 			ctx.beginPath();
@@ -2709,11 +3104,17 @@ async function drawCharacterImage(
 			ctx.textAlign = "center";
 			ctx.fillStyle = "#F3C96B";
 			ctx.textBaseline = "middle";
-			const statsTotalRolls = [...relicsScore.effectiveStats.values()].reduce((s, v) => s + v.rolls, 0);
+			const statsTotalRolls = [
+				...relicsScore.effectiveStats.values()
+			].reduce((s, v) => s + v.rolls, 0);
 			ctx.fillText(`${statsTotalRolls}`, badgeCX, badgeCY - 4);
 			setupFont(ctx, 12, false);
 			ctx.fillStyle = "rgba(255,255,255,0.6)";
-			ctx.fillText(tr("profile_EffectiveStatsTotal"), badgeCX, badgeCY + 14);
+			ctx.fillText(
+				tr("profile_EffectiveStatsTotal"),
+				badgeCX,
+				badgeCY + 14
+			);
 			ctx.textBaseline = "alphabetic";
 
 			// 屬性 chip 多行排列
@@ -2739,7 +3140,13 @@ async function drawCharacterImage(
 				}
 				setupFont(ctx, 17, true);
 				const rollsStr = `${stat.rolls}`;
-				const chipW = chipIconSize + 2 + ctx.measureText(localName).width + 2 + ctx.measureText(rollsStr).width + chipSpacing;
+				const chipW =
+					chipIconSize +
+					2 +
+					ctx.measureText(localName).width +
+					2 +
+					ctx.measureText(rollsStr).width +
+					chipSpacing;
 
 				// 若超出右邊界則換行（只在第一行，不超過2行）
 				if (chipRow === 0 && chipX + chipW > chipRightLimit) {
@@ -2750,9 +3157,17 @@ async function drawCharacterImage(
 				const chipY = panelY + 28 + chipRow * chipLineHeight;
 
 				// icon
-				const iconResult = await loadImageAsync(`./src/assets/image/${stat.icon}`);
+				const iconResult = await loadImageAsync(
+					`./src/assets/image/${stat.icon}`
+				);
 				if (iconResult?.image) {
-					ctx.drawImage(iconResult.image, chipX, chipY, chipIconSize, chipIconSize);
+					ctx.drawImage(
+						iconResult.image,
+						chipX,
+						chipY,
+						chipIconSize,
+						chipIconSize
+					);
 				}
 				chipX += chipIconSize + 2;
 
@@ -2839,10 +3254,12 @@ async function drawCharacterImage(
 			const hasLightCone = !!(character.light_cone || character.equip);
 
 			if (hasLightCone) {
-				const light_coneResult = await loadImageAsync(
-					character.equip?.icon ||
-						`${image_Header}/icon/light_cone/${character.light_cone?.id}.png`
+				const lightConeIcon = resolveStarRailResImage(
+					character.equip?.icon || character.light_cone?.icon
 				);
+				const light_coneResult = lightConeIcon
+					? await loadImageAsync(lightConeIcon)
+					: null;
 				const light_cone = light_coneResult?.image;
 				// 圖片靠左
 				if (light_cone) {
@@ -2861,7 +3278,10 @@ async function drawCharacterImage(
 				let nameFont = 28;
 				setupFont(ctx, nameFont, true);
 				const maxNameWidth = 268 - 40;
-				while (ctx.measureText(lcName).width > maxNameWidth && nameFont > 14) {
+				while (
+					ctx.measureText(lcName).width > maxNameWidth &&
+					nameFont > 14
+				) {
 					nameFont -= 1;
 					setupFont(ctx, nameFont, true);
 				}
@@ -2961,8 +3381,15 @@ async function drawCharacterImage(
 						const descAreaHeight = light_cone_height - 80;
 
 						// interface 定義
-						interface WordToken { word: string; isGold: boolean; }
-						interface CharToken { char: string; isGold: boolean; width: number; }
+						interface WordToken {
+							word: string;
+							isGold: boolean;
+						}
+						interface CharToken {
+							char: string;
+							isGold: boolean;
+							width: number;
+						}
 
 						// 解析 Rich Text segments
 						const segments = description
@@ -2970,7 +3397,13 @@ async function drawCharacterImage(
 							.filter((s: string) => s !== "")
 							.map((part: string) => {
 								if (part.startsWith("{{GOLD}}")) {
-									return { text: part.replace(/{{GOLD}}|{{\/GOLD}}/g, ""), isGold: true };
+									return {
+										text: part.replace(
+											/{{GOLD}}|{{\/GOLD}}/g,
+											""
+										),
+										isGold: true
+									};
 								}
 								return { text: part, isGold: false };
 							});
@@ -2980,72 +3413,107 @@ async function drawCharacterImage(
 						let lineHeight = 24;
 						let visibleLines: CharToken[][] = [];
 
-						for (; descFont >= 14; descFont -= 1, lineHeight = Math.floor(descFont * 1.2)) {
+						for (
+							;
+							descFont >= 14;
+							descFont -= 1,
+								lineHeight = Math.floor(descFont * 1.2)
+						) {
 							setupFont(ctx, descFont, false);
 
 							// --- 分行邏輯 ---
-						const wordTokens2: WordToken[] = [];
-						segments.forEach((seg: { text: string; isGold: boolean }) => {
-							const parts = seg.text.split(/(\s+)/);
-							parts.forEach((part: string) => {
-								if (part !== "") wordTokens2.push({ word: part, isGold: seg.isGold });
-							});
-						});
-
-						const isCJK = (ch: string) => /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/.test(ch);
-
-						const spW = ctx.measureText(" ").width;
-						let lns: CharToken[][] = [];
-						let curLine: CharToken[] = [];
-						let curW = 0;
-
-						const pushLine = () => {
-							// 去掉行尾空白
-							while (curLine.length > 0 && /\s/.test(curLine[curLine.length - 1]!.char)) {
-								curW -= curLine[curLine.length - 1]!.width;
-								curLine.pop();
-							}
-							lns.push(curLine);
-							curLine = [];
-							curW = 0;
-						};
-
-						wordTokens2.forEach((token: WordToken) => {
-							const isSp = /^\s+$/.test(token.word);
-							if (isSp) {
-								if (curW === 0) return; // 行首空白略過
-								const spChars = token.word.split("");
-								spChars.forEach((char: string) => {
-									const cw = spW;
-									curLine.push({ char, isGold: token.isGold, width: cw });
-									curW += cw;
-								});
-								return;
-							}
-
-							// 非空白 token：逐字元處理
-							token.word.split("").forEach((char: string) => {
-								const cw = ctx.measureText(char).width;
-								if (isCJK(char)) {
-									// CJK 字元：每個字都可以換行
-									if (curW > 0 && curW + cw > maxDescWidth) {
-										pushLine();
-									}
-									curLine.push({ char, isGold: token.isGold, width: cw });
-									curW += cw;
-								} else {
-									// 非 CJK（英文/數字）：先累積整個字元，超寬才換行
-									// 這裡直接加字元，超過時換行（單字元級別，避免英文單字被切斷的問題
-									// 由於已在 wordTokens2 層面保留了完整單詞，單詞超過一行時才會在字元層換行）
-									if (curW > 0 && curW + cw > maxDescWidth) {
-										pushLine();
-									}
-									curLine.push({ char, isGold: token.isGold, width: cw });
-									curW += cw;
+							const wordTokens2: WordToken[] = [];
+							segments.forEach(
+								(seg: { text: string; isGold: boolean }) => {
+									const parts = seg.text.split(/(\s+)/);
+									parts.forEach((part: string) => {
+										if (part !== "")
+											wordTokens2.push({
+												word: part,
+												isGold: seg.isGold
+											});
+									});
 								}
+							);
+
+							const isCJK = (ch: string) =>
+								/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/.test(
+									ch
+								);
+
+							const spW = ctx.measureText(" ").width;
+							let lns: CharToken[][] = [];
+							let curLine: CharToken[] = [];
+							let curW = 0;
+
+							const pushLine = () => {
+								// 去掉行尾空白
+								while (
+									curLine.length > 0 &&
+									/\s/.test(curLine[curLine.length - 1]!.char)
+								) {
+									curW -= curLine[curLine.length - 1]!.width;
+									curLine.pop();
+								}
+								lns.push(curLine);
+								curLine = [];
+								curW = 0;
+							};
+
+							wordTokens2.forEach((token: WordToken) => {
+								const isSp = /^\s+$/.test(token.word);
+								if (isSp) {
+									if (curW === 0) return; // 行首空白略過
+									const spChars = token.word.split("");
+									spChars.forEach((char: string) => {
+										const cw = spW;
+										curLine.push({
+											char,
+											isGold: token.isGold,
+											width: cw
+										});
+										curW += cw;
+									});
+									return;
+								}
+
+								// 非空白 token：逐字元處理
+								token.word.split("").forEach((char: string) => {
+									const cw = ctx.measureText(char).width;
+									if (isCJK(char)) {
+										// CJK 字元：每個字都可以換行
+										if (
+											curW > 0 &&
+											curW + cw > maxDescWidth
+										) {
+											pushLine();
+										}
+										curLine.push({
+											char,
+											isGold: token.isGold,
+											width: cw
+										});
+										curW += cw;
+									} else {
+										// 非 CJK（英文/數字）：先累積整個字元，超寬才換行
+										// 這裡直接加字元，超過時換行（單字元級別，避免英文單字被切斷的問題
+										// 由於已在 wordTokens2 層面保留了完整單詞，單詞超過一行時才會在字元層換行）
+										if (
+											curW > 0 &&
+											curW + cw > maxDescWidth
+										) {
+											pushLine();
+										}
+										curLine.push({
+											char,
+											isGold: token.isGold,
+											width: cw
+										});
+										curW += cw;
+									}
+								});
 							});
-						});
-						if (curLine.length > 0) lns.push(curLine);
+							if (curLine.length > 0) lns.push(curLine);
 
 							const neededHeight = lns.length * lineHeight;
 							if (neededHeight <= descAreaHeight) {
@@ -3054,14 +3522,17 @@ async function drawCharacterImage(
 							}
 							// 最小字體時直接截斷
 							if (descFont === 14) {
-								const maxLines = Math.floor(descAreaHeight / lineHeight);
+								const maxLines = Math.floor(
+									descAreaHeight / lineHeight
+								);
 								visibleLines = lns.slice(0, maxLines);
 							}
 						}
 						setupFont(ctx, descFont, false);
 
 						// 垂直置中計算
-						const totalTextHeight = visibleLines.length * lineHeight;
+						const totalTextHeight =
+							visibleLines.length * lineHeight;
 						const descY =
 							light_cone_base_y +
 							(light_cone_height - totalTextHeight) / 2 +
@@ -3129,393 +3600,15 @@ async function drawCharacterImage(
 
 		ctx.fillStyle = "white";
 
-		const hasServantSkills =
-			(character.servant_detail?.servant_skills?.length || 0) > 0;
-		const servantSkillsCount = hasServantSkills
-			? character.servant_detail?.servant_skills?.length || 0
-			: 0;
-
-		let allSkills = [...(character.skills || [])];
-
-		// 處理 Mihomo API 資料結構中的特殊技能 (憶靈/歡愉)
-		if (character.skill_trees && character.skill_trees.length > 0) {
-			character.skill_trees.forEach(treeNode => {
-				const nodeId = treeNode.id.toString();
-				const icon = treeNode.icon;
-
-				// 1. 補齊已有技能但沒圖示的情況 (如歡愉技 150220 -> 1502420)
-				if (nodeId.endsWith("420") || icon?.includes("_elation")) {
-					const existingElation = allSkills.find(
-						s =>
-							s.type_text === tr("profile_ElationSkill") ||
-							s.type_text === "Elation Skill" ||
-							s.id?.toString().endsWith("20")
-					);
-					if (existingElation && !existingElation.icon) {
-						existingElation.icon = icon;
-					} else if (!existingElation) {
-						// 如果 skills 陣列中完全沒有歡愉技，則從技能樹補入
-						allSkills.push({
-							id: nodeId,
-							level: treeNode.level || 1,
-							icon: icon,
-							type_text: tr("profile_ElationSkill"),
-							point_type: 4
-						} as any);
-					}
-				}
-
-				// 2. 處理憶靈技能 (通常僅存在於 skill_trees 中，ID 以 301/302 結尾)
-				if (
-					nodeId.endsWith("301") ||
-					icon?.includes("memosprite_skill")
-				) {
-					if (
-						!allSkills.some(
-							s =>
-								s.icon === icon ||
-								s.type_text === tr("profile_MemospriteSkill")
-						)
-					) {
-						allSkills.push({
-							id: nodeId,
-							level: treeNode.level || 1,
-							icon: icon,
-							type_text: tr("profile_MemospriteSkill"),
-							point_type: 10 // 自定義標記
-						} as any);
-					}
-				}
-				if (
-					nodeId.endsWith("302") ||
-					icon?.includes("memosprite_talent")
-				) {
-					if (
-						!allSkills.some(
-							s =>
-								s.icon === icon ||
-								s.type_text === tr("profile_MemospriteTalent")
-						)
-					) {
-						allSkills.push({
-							id: nodeId,
-							level: treeNode.level || 1,
-							icon: icon,
-							type_text: tr("profile_MemospriteTalent"),
-							point_type: 11 // 自定義標記
-						} as any);
-					}
-				}
-			});
-		}
-
-		// 過濾主要技能（普攻、戰技、終結技、天賦、秘技）- 最多5個
-		const basicSkills = allSkills
-			.filter(skill => {
-				// point_type 2 是主要技能（戰鬥技能）
-				if (skill.point_type === 2) {
-					return true;
-				}
-
-				// 對於沒有 point_type 的舊格式，檢查基本技能類型
-				if (
-					!skill.point_type &&
-					skill.icon &&
-					(skill.type_text || skill.remake)
-				) {
-					const skillType = skill.type || "";
-					const skillTypeText = skill.type_text || "";
-
-					// 排除憶靈技能與歡愉技能
-					if (
-						skillType === "MemospriteSkill" ||
-						skillTypeText === tr("profile_MemospriteSkill") ||
-						skillType === "MemospriteTalent" ||
-						skillTypeText === tr("profile_MemospriteTalent") ||
-						skillType === "ElationSkill" ||
-						skillTypeText === tr("profile_ElationSkill") ||
-						skillTypeText === "Elation Skill"
-					) {
-						return false;
-					}
-
-					// 其他基本技能
-					return true;
-				}
-
-				return false;
-			})
-			.slice(0, 5); // 回復為最多 5 個基本技能
-
-		// 過濾憶靈技能 - 第一個憶靈技和第一個憶靈天賦
-		let foundMemospriteSkill = false;
-		let foundMemospriteTalent = false;
-		let foundElationSkill = false;
-
-		const extraSkills = allSkills.filter(skill => {
-			if (
-				(!skill.icon && !skill.item_url) ||
-				(!skill.type_text && !skill.remake)
-			) {
-				return false;
-			}
-
-			const skillType = skill.type || "";
-			const skillTypeText = skill.type_text || skill.remake || "";
-
-			// 憶靈技：只顯示第一個
-			if (
-				skillType === "MemospriteSkill" ||
-				skillTypeText === tr("profile_MemospriteSkill")
-			) {
-				if (!foundMemospriteSkill) {
-					foundMemospriteSkill = true;
-					return true;
-				}
-				return false;
-			}
-
-			// 憶靈天賦：只顯示第一個
-			if (
-				skillType === "MemospriteTalent" ||
-				skillTypeText === tr("profile_MemospriteTalent")
-			) {
-				if (!foundMemospriteTalent) {
-					foundMemospriteTalent = true;
-					return true;
-				}
-				return false;
-			}
-
-			// 歡愉技 (Elation Skill)：point_type 為 4
-			if (
-				skill.point_type === 4 ||
-				skillType === "ElationSkill" ||
-				skillTypeText === tr("profile_ElationSkill") ||
-				skillTypeText === "Elation Skill"
-			) {
-				if (!foundElationSkill) {
-					foundElationSkill = true;
-					return true;
-				}
-				return false;
-			}
-
-			return false;
-		});
-
-		// 合併技能列表：主要技能 + 額外技能（憶靈/歡愉）
-		const mainSkills = [...basicSkills, ...extraSkills];
-
-		// 計算額外技能數量來調整技能排版
-		const extraSkillsCount = extraSkills.length;
-
-		// 總的額外技能數量
-		const totalExtraSkillsCount = servantSkillsCount + extraSkillsCount;
-		const baseSkillX =
-			totalExtraSkillsCount > 0 ? 650 - totalExtraSkillsCount * 45 : 650;
-
-		const skillPromises = mainSkills
-			.map((skill, i) => {
-				// 處理圖片 URL
-				const imageUrl =
-					skill.item_url ||
-					(skill.icon
-						? skill.icon.startsWith("http")
-							? skill.icon
-							: `${image_Header}/${skill.icon}`
-						: null);
-
-				if (!imageUrl) {
-					return null;
-				}
-
-				return loadImageAsync(imageUrl).then(skillImageResult => ({
-					skillImage: skillImageResult?.image,
-					type_text:
-						skill.type_text || skill.remake || tr("profile_Skill"),
-					level: skill.level || 1
-				}));
-			})
-			.filter(Boolean);
-
-		const skills = await Promise.all(skillPromises);
-
-		skills.forEach((skill, index) => {
-			if (skill?.skillImage) {
-				ctx.drawImage(
-					skill.skillImage,
-					baseSkillX + index * 90,
-					760,
-					80,
-					80
-				);
-			}
-			ctx.textAlign = "center";
-
-			const originalLabel = `${skill?.type_text || ""}`;
-			let displayLabel = originalLabel;
-			if (userLang === "en") {
-				const lower = originalLabel.toLowerCase();
-				if (lower.includes("memosprite talent"))
-					displayLabel = "M.Talent";
-				else if (lower.includes("memosprite skill"))
-					displayLabel = "M.Skill";
-				else if (originalLabel.length > 12)
-					displayLabel = originalLabel
-						.replace("Technique", "Tech")
-						.replace("Ultimate", "Ult");
-			} else if (userLang === "tw") {
-				if (originalLabel === "Elation Skill")
-					displayLabel = tr("profile_ElationSkill");
-			}
-			let fontSize = 18;
-			setupFont(ctx, fontSize, true);
-			const maxLabelWidth = 80;
-			while (
-				ctx.measureText(displayLabel).width > maxLabelWidth &&
-				fontSize > 14
-			) {
-				fontSize -= 1;
-				setupFont(ctx, fontSize, true);
-			}
-			ctx.fillText(displayLabel, baseSkillX + 40 + index * 90, 870);
-			setupFont(ctx, 16, true);
-			let skillColor = "white";
-
-			// 檢查是否為憶靈或歡愉技能 (Extra Skill)
-			const currentSkill = skills[index];
-			const isExtraSkill =
-				currentSkill &&
-				((currentSkill.type_text &&
-					(currentSkill.type_text === tr("profile_MemospriteSkill") ||
-						currentSkill.type_text ===
-							tr("profile_MemospriteTalent") ||
-						currentSkill.type_text === tr("profile_ElationSkill") ||
-						currentSkill.type_text === "Elation Skill")) ||
-					(skill?.type_text &&
-						(skill.type_text === tr("profile_MemospriteSkill") ||
-							skill.type_text ===
-								tr("profile_MemospriteTalent") ||
-							skill.type_text === tr("profile_ElationSkill") ||
-							skill.type_text === "Elation Skill")));
-
-			if (isExtraSkill) {
-				// 額外技能使用和 servantSkill 相同的顏色邏輯
-				const extraIndex =
-					skills
-						.slice(0, index + 1)
-						.filter(
-							s =>
-								s?.type_text ===
-									tr("profile_MemospriteSkill") ||
-								s?.type_text ===
-									tr("profile_MemospriteTalent") ||
-								s?.type_text === tr("profile_ElationSkill") ||
-								s?.type_text === "Elation Skill"
-						).length - 1;
-
-				if (character.rank >= 3 && extraIndex === 1)
-					skillColor = "#DCC491";
-				if (character.rank >= 5 && extraIndex === 0)
-					skillColor = "#DCC491";
-			} else {
-				// 主要技能的顏色邏輯
-				if (character.rank >= 3 && (index === 0 || index === 2))
-					skillColor = "#DCC491";
-				if (character.rank >= 5 && (index === 1 || index === 3))
-					skillColor = "#DCC491";
-			}
-
-			ctx.fillStyle = skillColor;
-			ctx.fillText(
-				`${tr("level")} ${skill?.level || 0}`,
-				baseSkillX + 40 + index * 90,
-				890
-			);
-			ctx.fillStyle = "white";
-		});
-
-		if (hasServantSkills) {
-			const servantSkillPromises = (
-				character.servant_detail?.servant_skills || []
-			).map(servantSkill => {
-				return loadImageAsync(
-					servantSkill.item_url ||
-						image_Header + "/" + servantSkill.icon
-				).then(skillImageResult => ({
-					skillImage: skillImageResult?.image,
-					type_text: servantSkill.remake,
-					level: servantSkill.level
-				}));
-			});
-
-			const servantSkills = await Promise.all(servantSkillPromises);
-
-			servantSkills.forEach((servantSkill, index) => {
-				const servantSkillX =
-					650 + (skills.length - 1) * 90 + index * 90;
-
-				if (servantSkill.skillImage) {
-					ctx.drawImage(
-						servantSkill.skillImage,
-						servantSkillX,
-						760,
-						80,
-						80
-					);
-				}
-				ctx.textAlign = "center";
-				// 英語下憶靈技能名稱過長處理
-				let servantLabel = `${servantSkill.type_text}`;
-				if (userLang === "en") {
-					const lower = servantLabel.toLowerCase();
-					if (lower.includes("memosprite talent"))
-						servantLabel = "M.Talent";
-					else if (lower.includes("memosprite skill"))
-						servantLabel = "M.Skill";
-				}
-				let svFont = 18;
-				setupFont(ctx, svFont, true);
-				const svMax = 80;
-				while (
-					ctx.measureText(servantLabel).width > svMax &&
-					svFont > 14
-				) {
-					svFont -= 1;
-					setupFont(ctx, svFont, true);
-				}
-				ctx.fillText(servantLabel, servantSkillX + 40, 870);
-				setupFont(ctx, 16, true);
-				let skillColor = "white";
-				if (character.rank >= 3 && index === 1) skillColor = "#DCC491";
-				if (character.rank >= 5 && index === 0) skillColor = "#DCC491";
-				ctx.fillStyle = skillColor;
-				ctx.fillText(
-					`${tr("level")} ${servantSkill.level}`,
-					servantSkillX + 40,
-					890
-				);
-				ctx.fillStyle = "white";
-			});
-		}
-
-		ctx.strokeStyle = "#fff";
-		ctx.beginPath();
-		ctx.moveTo(hasServantSkills ? 680 : 670, 920);
-		ctx.lineTo(hasServantSkills ? 1070 : 1050, 920);
-		ctx.stroke();
-
-		setupFont(ctx, 32, true);
-		ctx.fillText(
-			playerData.player.nickname,
-			hasServantSkills ? 870 : 850,
-			970
-		);
-
-		setupFont(ctx, 26);
+		await drawProfileTraces(ctx, character, tr, userLang);
+		setupFont(ctx, 20, true);
+		ctx.textAlign = "left";
 		ctx.fillStyle = "lightgray";
-		ctx.fillText(playerData.player.uid, hasServantSkills ? 870 : 850, 1010);
+		ctx.fillText(
+			`${playerData.player.nickname}  ·  UID ${playerData.player.uid}`,
+			50,
+			1060
+		);
 
 		// 顯示總分 - 置中於左側面板 (x=50 到 x=500，中心=275)
 		const centerX = 275;
@@ -3559,7 +3652,11 @@ async function drawCharacterImage(
 				ctx.fillStyle = "lightgray";
 				ctx.font =
 					"bold 20px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
-				ctx.fillText(tr("profile_Tip"), centerX, effectivePanelBottomY + tipOffsetY);
+				ctx.fillText(
+					tr("profile_Tip"),
+					centerX,
+					effectivePanelBottomY + tipOffsetY
+				);
 			}
 		} else {
 			ctx.textAlign = "center";
@@ -3870,70 +3967,89 @@ async function drawAllCharactersImage(
 	tr: any,
 	playerData: PlayerData,
 	characters: Character[],
-	filterInfo: FilterInfo | null = null,
-	bgPath?: string
+	filterInfo: FilterInfo | null = null
 ): Promise<Buffer | null> {
 	try {
-		const mf = (ctx: any, size: number, bold = false) => {
-			ctx.font = `${bold ? "bold " : ""}${size}px 'YaHei','URW DIN Arabic',Arial,sans-serif`;
+		const canvasWidth = 1920;
+		const cardsPerRow = 6;
+		const totalRows = Math.ceil(characters.length / cardsPerRow);
+		const cardHeight = 124;
+		const cardGap = 12;
+		const rowGap = 14;
+		const baseX = 36;
+		const baseY = 210;
+		const cardWidth =
+			(canvasWidth - baseX * 2 - cardGap * (cardsPerRow - 1)) /
+			cardsPerRow;
+		const canvasHeight =
+			baseY + totalRows * cardHeight + (totalRows - 1) * rowGap + 42;
+		const canvas = createCanvas(canvasWidth, canvasHeight);
+		const ctx = canvas.getContext("2d");
+		const elementColors: Record<string, string> = {
+			physical: "#d9dde6",
+			fire: "#ff705f",
+			ice: "#67c8ff",
+			lightning: "#c57cff",
+			wind: "#63e5b2",
+			quantum: "#8273ff",
+			imaginary: "#f3d866"
 		};
 
-		// ── Layout constants ───────────────────────────────────────────────
-		const W = 1920;
-		const LEFT_W = 340;
-		const GRID_X = LEFT_W + 20;
-		const GRID_COLS = 6;
-		const CARD_W = 245, CARD_H = 300, CARD_GAP = 14;
-		const GRID_TOP = 28;
-		const totalRows = Math.ceil(characters.length / GRID_COLS);
-		const H = Math.max(1080, GRID_TOP + totalRows * (CARD_H + CARD_GAP) + 28);
-
-		const canvas = createCanvas(W, H);
-		const ctx = canvas.getContext("2d");
-
-		// ── 1. Background ──────────────────────────────────────────────────
-		const bgResult = await loadImageAsync(bgPath ?? await getTodayBg());
-		if (bgResult?.image) {
-			ctx.drawImage(bgResult.image, 0, 0, W, H);
-		} else {
-			ctx.fillStyle = "#0d1117";
-			ctx.fillRect(0, 0, W, H);
+		// 背景
+		const bgResult = await loadImageAsync("./src/assets/image/warp/bg.jpg");
+		const bg = bgResult?.image;
+		if (bg) {
+			const scale = Math.max(
+				canvasWidth / bg.width,
+				canvasHeight / bg.height
+			);
+			const sourceWidth = canvasWidth / scale;
+			const sourceHeight = canvasHeight / scale;
+			ctx.drawImage(
+				bg,
+				(bg.width - sourceWidth) / 2,
+				(bg.height - sourceHeight) / 2,
+				sourceWidth,
+				sourceHeight,
+				0,
+				0,
+				canvasWidth,
+				canvasHeight
+			);
 		}
-		ctx.fillStyle = "rgba(0,0,0,0.55)";
-		ctx.fillRect(0, 0, W, H);
-
-		// ── 2. Left panel (glass) ──────────────────────────────────────────
-		fillGlass(ctx, 14, 14, LEFT_W, H - 28, 14, 0.5);
-
-		const avatarCX = 14 + LEFT_W / 2;
-		const avatarCY = 110;
-		const avatarR = 68;
-
-		// Avatar
-		const avatarResult = await loadImageAsync(
-			`${image_Header}/${playerData.player.avatar.icon}`
+		const backgroundWash = ctx.createLinearGradient(
+			0,
+			0,
+			canvasWidth,
+			canvasHeight
 		);
-		if (avatarResult?.image) {
+		backgroundWash.addColorStop(0, "rgba(5, 9, 25, 0.83)");
+		backgroundWash.addColorStop(0.55, "rgba(8, 18, 40, 0.78)");
+		backgroundWash.addColorStop(1, "rgba(4, 12, 28, 0.88)");
+		ctx.fillStyle = backgroundWash;
+		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+		// 左上角頭像
+		const avatarResult = await loadImageAsync(
+			playerData.player.avatar.icon
+		);
+		const avatar = avatarResult?.image;
+		if (avatar) {
 			ctx.save();
 			ctx.beginPath();
-			ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
+			ctx.arc(94, 92, 56, 0, Math.PI * 2);
+			ctx.closePath();
 			ctx.clip();
-			ctx.drawImage(
-				avatarResult.image,
-				avatarCX - avatarR, avatarCY - avatarR,
-				avatarR * 2, avatarR * 2
-			);
+			ctx.drawImage(avatar, 38, 36, 112, 112);
 			ctx.restore();
+			ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.arc(94, 92, 58, 0, Math.PI * 2);
+			ctx.stroke();
 		}
-		ctx.save();
-		ctx.beginPath();
-		ctx.arc(avatarCX, avatarCY, avatarR + 3, 0, Math.PI * 2);
-		ctx.strokeStyle = "#D4AF37";
-		ctx.lineWidth = 3;
-		ctx.stroke();
-		ctx.restore();
 
-		// Anomaly icon overlay
+		// 繪製異常仲裁圖標（如果有的話）
 		const anomalyRecord = (await database.get(
 			`${playerData.player.uid}.anomalyRoundNum`
 		)) as AnomalyRoundRecord | null;
@@ -3942,221 +4058,402 @@ async function drawAllCharactersImage(
 			if (iconPath) {
 				const anomalyIcon = await loadImage(iconPath);
 				if (anomalyIcon) {
-					const iSize = avatarR * 2 * 1.1;
+					const iconSize = 136;
+					const iconX = 26;
+					const iconY = 24;
 					ctx.drawImage(
 						anomalyIcon,
-						avatarCX - avatarR - iSize * 0.05,
-						avatarCY - avatarR - iSize * 0.05,
-						iSize, iSize
+						iconX,
+						iconY,
+						iconSize,
+						iconSize
 					);
 				}
 			}
 		}
 
-		// Nickname
-		mf(ctx, 30, true);
-		ctx.fillStyle = "#FFFFFF";
-		ctx.textAlign = "center";
-		ctx.fillText(playerData.player.nickname, avatarCX, avatarCY + avatarR + 36);
-
-		// UID
-		mf(ctx, 20);
-		ctx.fillStyle = "rgba(255,255,255,0.6)";
-		ctx.fillText(`UID  ${playerData.player.uid}`, avatarCX, avatarCY + avatarR + 60);
-
-		// Anomaly rank badges
+		// 繪製異常仲裁徽章（如果有的話）
 		const anomalyRankRecords = (await database.get(
 			`${playerData.player.uid}.anomalyRankIcon`
 		)) as AnomalyRankRecord[] | null;
 		if (anomalyRankRecords && anomalyRankRecords.length > 0) {
-			anomalyRankRecords.sort((a, b) => b.challengeTime - a.challengeTime);
-			const badges = anomalyRankRecords.slice(0, 5);
-			const badgeSz = 32;
-			const totalBW = badges.length * badgeSz + (badges.length - 1) * 5;
-			let bx = avatarCX - totalBW / 2;
-			const by = avatarCY + avatarR + 70;
-			for (const record of badges) {
+			// 按挑戰時間排序，最新的在前
+			anomalyRankRecords.sort(
+				(a, b) => b.challengeTime - a.challengeTime
+			);
+
+			// 最多顯示 3 個徽章（單角色頁面空間較小）
+			const displayRecords = anomalyRankRecords.slice(0, 5);
+			const badgeSize = 48;
+			const badgeSpacing = 8;
+
+			ctx.font = "bold 38px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+			const nameMetrics = ctx.measureText(playerData.player.nickname);
+			const nameWidth = nameMetrics.width;
+			const startX = 176 + nameWidth + 18;
+			const startY =
+				76 +
+				(nameMetrics.actualBoundingBoxDescent -
+					nameMetrics.actualBoundingBoxAscent) /
+					2 -
+				badgeSize / 2;
+
+			for (let i = 0; i < displayRecords.length; i++) {
+				const record = displayRecords[i];
+				if (!record) continue;
+
+				const badgeX = startX + i * (badgeSize + badgeSpacing);
+				const badgeY = startY;
+
 				try {
-					let src: string | Buffer = record.rankIcon;
-					if (record.rankIcon?.startsWith("http")) {
-						const resp = await axios.get(record.rankIcon, { responseType: "arraybuffer", timeout: 10000 });
-						src = Buffer.from(resp.data);
+					let badgeSource: string | Buffer = record.rankIcon;
+					if (
+						record.rankIcon?.startsWith("http://") ||
+						record.rankIcon?.startsWith("https://")
+					) {
+						const badgeResponse = await axios.get(record.rankIcon, {
+							responseType: "arraybuffer",
+							timeout: 15000
+						});
+						badgeSource = Buffer.from(badgeResponse.data);
 					}
-					const bi = await loadImage(src);
-					if (bi) ctx.drawImage(bi, bx, by, badgeSz, badgeSz);
-				} catch { /* skip */ }
-				bx += badgeSz + 5;
+					const badgeIcon = await loadImage(badgeSource);
+					if (badgeIcon) {
+						ctx.drawImage(
+							badgeIcon,
+							badgeX,
+							badgeY,
+							badgeSize,
+							badgeSize
+						);
+					}
+				} catch (error) {
+					console.warn(
+						`Failed to load badge icon: ${record.rankIcon}`,
+						error
+					);
+				}
 			}
 		}
 
-		// Divider
-		const divY1 = avatarCY + avatarR + 108;
-		ctx.strokeStyle = "rgba(255,255,255,0.2)";
+		// 文字資訊
+		ctx.textAlign = "left";
+		ctx.fillStyle = "#f7f8fc";
+		ctx.font = "bold 38px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+		ctx.fillText(playerData.player.nickname, 176, 76);
+		ctx.fillStyle = "rgba(232, 237, 249, 0.72)";
+		ctx.font = "22px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+		ctx.fillText(
+			`UID ${playerData.player.uid}  ·  ${tr("profile_TrailblazeLevel")} ${playerData.player.level}`,
+			177,
+			112
+		);
+		ctx.fillStyle = "#d9c48e";
+		ctx.font = "18px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+		ctx.fillText("ASTRAL ROSTER  /  ALL CHARACTERS", 177, 144);
+
+		ctx.textAlign = "right";
+		ctx.fillStyle = "rgba(255, 255, 255, 0.46)";
+		ctx.font = "18px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+		ctx.fillText("COLLECTION ARCHIVE", canvasWidth - baseX, 66);
+		ctx.fillStyle = "#f7f8fc";
+		ctx.font = "bold 54px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+		ctx.fillText(
+			String(characters.length).padStart(3, "0"),
+			canvasWidth - baseX,
+			118
+		);
+		ctx.fillStyle = "#d9c48e";
+		ctx.font = "18px 'YaHei', Arial, sans-serif";
+		ctx.fillText(
+			tr("profile_CharactersCount"),
+			canvasWidth - baseX,
+			145
+		);
+
+		// 分隔線
+		ctx.strokeStyle = "rgba(220, 232, 255, 0.35)";
 		ctx.lineWidth = 1;
 		ctx.beginPath();
-		ctx.moveTo(28, divY1);
-		ctx.lineTo(14 + LEFT_W - 14, divY1);
+		ctx.moveTo(baseX, 178);
+		ctx.lineTo(canvasWidth - baseX, 178);
 		ctx.stroke();
+		ctx.fillStyle = "#d9c48e";
+		ctx.beginPath();
+		ctx.arc(baseX, 178, 4, 0, Math.PI * 2);
+		ctx.fill();
 
-		// Stats grid
-		const stats = [
-			{ label: tr("profile_TrailblazeLevel"),  value: `${playerData.player.level}` },
-			{ label: tr("profile_EquilibriumLevel"),  value: `${playerData.player.world_level ?? "-"}` },
-			{ label: tr("profile_CharactersCount"),   value: `${characters.length}` },
-			{ label: tr("profile_AchievementsCount"), value: `${playerData.player.space_info?.achievement_count ?? "-"}` }
-		];
-		const gX0 = 28, gY0 = divY1 + 18;
-		const gColW = LEFT_W / 2, gRowH = 74;
-		stats.forEach((s, i) => {
-			const col = i % 2, row = Math.floor(i / 2);
-			const sx = gX0 + col * gColW + gColW / 2;
-			const sy = gY0 + row * gRowH;
-			mf(ctx, 28, true);
-			ctx.fillStyle = "#FFFFFF";
-			ctx.textAlign = "center";
-			ctx.fillText(s.value, sx, sy + 30);
-			mf(ctx, 16);
-			ctx.fillStyle = "rgba(255,255,255,0.55)";
-			ctx.fillText(s.label, sx, sy + 50);
-		});
-
-		// Filter / sort status
-		if (filterInfo && (filterInfo.filters.length > 0 || filterInfo.sortType)) {
-			const divY2 = gY0 + 2 * gRowH + 10;
-			ctx.strokeStyle = "rgba(255,255,255,0.2)";
-			ctx.lineWidth = 1;
-			ctx.beginPath();
-			ctx.moveTo(28, divY2);
-			ctx.lineTo(14 + LEFT_W - 14, divY2);
-			ctx.stroke();
-
-			const filterLabelMap: Record<string, string> = {};
-			try {
-				const [elemData, pathData] = await Promise.all([
-					loadElementsData("cht"),
-					loadPathsData("cht")
-				]);
-				if (elemData) for (const val of Object.values(elemData) as any[]) filterLabelMap[val.id.toLowerCase()] = val.name;
-				if (pathData) for (const val of Object.values(pathData) as any[]) filterLabelMap[val.text.toLowerCase()] = val.name;
-			} catch {
-				Object.assign(filterLabelMap, {
-					physical: tr("element_physical"), ice: tr("element_ice"),
-					fire: tr("element_fire"), lightning: tr("element_lightning"),
-					wind: tr("element_wind"), quantum: tr("element_quantum"),
-					imaginary: tr("element_imaginary"), destruction: tr("path_destruction"),
-					harmony: tr("path_harmony"), erudition: tr("path_erudition"),
-					hunt: tr("path_hunt"), preservation: tr("path_preservation"),
-					nihility: tr("path_nihility"), abundance: tr("path_abundance"),
-					remembrance: tr("path_remembrance")
-				});
-			}
-
-			let statusLines: string[] = [];
-			if (filterInfo.sortType === "sort_level") statusLines.push(tr("profile_SortByLevel"));
-			else if (filterInfo.sortType === "sort_eidolon") statusLines.push(tr("profile_SortByEidolon"));
-			if (filterInfo.filters.length > 0) {
-				statusLines.push(filterInfo.filters.map(f => filterLabelMap[f] || f).join(" / "));
-			}
-
-			mf(ctx, 18, true);
-			ctx.fillStyle = "#D4AF37";
+		// 顯示篩選和排序狀態
+		if (
+			filterInfo &&
+			(filterInfo.filters.length > 0 || filterInfo.sortType)
+		) {
 			ctx.textAlign = "left";
-			statusLines.forEach((line, i) => {
-				ctx.fillText(`※ ${line}`, 28, divY2 + 22 + i * 26);
-			});
+			ctx.fillStyle = "rgba(232, 237, 249, 0.68)";
+			ctx.font = "16px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+
+			let statusText = "※ ";
+			if (filterInfo.sortType) {
+				if (filterInfo.sortType === "sort_level") {
+					statusText += tr("profile_SortByLevel");
+				} else if (filterInfo.sortType === "sort_eidolon") {
+					statusText += tr("profile_SortByEidolon");
+				}
+			}
+
+			if (filterInfo.filters.length > 0) {
+				if (statusText) statusText += " | ";
+				// 動態生成 filterLabelMap，自動支持新命途和屬性
+				const filterLabelMap: Record<string, string> = {};
+				try {
+					const [elemData, pathData] = await Promise.all([
+						loadElementsData("cht"),
+						loadPathsData("cht")
+					]);
+					if (elemData) {
+						for (const val of Object.values(elemData) as any[]) {
+							filterLabelMap[val.id.toLowerCase()] = val.name;
+						}
+					}
+					if (pathData) {
+						for (const val of Object.values(pathData) as any[]) {
+							filterLabelMap[val.text.toLowerCase()] = val.name;
+						}
+					}
+				} catch {
+					// 回退到翻譯系統
+					Object.assign(filterLabelMap, {
+						physical: tr("element_physical"),
+						ice: tr("element_ice"),
+						fire: tr("element_fire"),
+						lightning: tr("element_lightning"),
+						wind: tr("element_wind"),
+						quantum: tr("element_quantum"),
+						imaginary: tr("element_imaginary"),
+						destruction: tr("path_destruction"),
+						harmony: tr("path_harmony"),
+						erudition: tr("path_erudition"),
+						hunt: tr("path_hunt"),
+						preservation: tr("path_preservation"),
+						nihility: tr("path_nihility"),
+						abundance: tr("path_abundance"),
+						remembrance: tr("path_remembrance")
+					});
+				}
+				statusText += filterInfo.filters
+					.map(f => (filterLabelMap as any)[f] || f)
+					.join(" / ");
+			}
+
+			ctx.fillText(statusText, 700, 145);
 		}
 
-		// ── 3. Character grid ───────────────────────────────────────────────
-		const pathMapper: Record<string, string> = {
-			warrior: "destruction", rogue: "hunt", mage: "erudition",
-			priest: "abundance", shaman: "harmony", warlock: "nihility",
-			knight: "preservation", memory: "remembrance", elation: "elation"
-		};
-
+		// 角色卡片區域
 		for (let i = 0; i < characters.length; i++) {
 			const char = characters[i];
 			if (!char) continue;
-			const col = i % GRID_COLS;
-			const row = Math.floor(i / GRID_COLS);
-			const cx = GRID_X + col * (CARD_W + CARD_GAP);
-			const cy = GRID_TOP + row * (CARD_H + CARD_GAP);
+			const col = i % cardsPerRow;
+			const row = Math.floor(i / cardsPerRow);
+			const x = baseX + col * (cardWidth + cardGap);
+			const y = baseY + row * (cardHeight + rowGap);
 
-			// glass card
-			fillGlass(ctx, cx, cy, CARD_W, CARD_H, 10, 0.38);
-
-			// character icon (top portion)
-			const charIconResult = await loadImageAsync(char.icon);
-			const charIcon = charIconResult?.image;
-			if (charIcon) {
-				ctx.save();
-				drawRoundRect(ctx, cx, cy, CARD_W, CARD_H, 10);
-				ctx.clip();
-				const iconH = CARD_H * 0.65;
-				const srcAR = charIcon.width / charIcon.height;
-				const dstH = iconH * 1.15;
-				const dstW = dstH * srcAR;
-				const dx = cx + (CARD_W - dstW) / 2;
-				ctx.drawImage(charIcon, dx, cy - iconH * 0.08, dstW, dstH);
-				ctx.restore();
-			}
-
-			// Bottom info bar
-			const barH = 90;
+			// 卡片底色
+			const elementId = (
+				typeof char.element === "string"
+					? char.element
+					: char.element?.id || "physical"
+			).toLowerCase();
 			ctx.save();
-			drawRoundRect(ctx, cx, cy + CARD_H - barH, CARD_W, barH, 10);
+			ctx.beginPath();
+			ctx.roundRect(x, y, cardWidth, cardHeight, 8);
 			ctx.clip();
-			ctx.fillStyle = "rgba(0,0,0,0.70)";
-			ctx.fillRect(cx, cy + CARD_H - barH, CARD_W, barH);
+			const cardBackground = ctx.createLinearGradient(
+				x,
+				y,
+				x + cardWidth,
+				y + cardHeight
+			);
+			cardBackground.addColorStop(0, "rgba(19, 29, 53, 0.96)");
+			cardBackground.addColorStop(1, "rgba(8, 17, 36, 0.94)");
+			ctx.fillStyle = cardBackground;
+			ctx.fillRect(x, y, cardWidth, cardHeight);
+			ctx.fillStyle = elementColors[elementId] || "#d9dde6";
+			ctx.fillRect(x, y, 4, cardHeight);
 			ctx.restore();
 
-			// Name
-			mf(ctx, 18, true);
-			ctx.fillStyle = "#FFD89C";
-			ctx.textAlign = "center";
-			ctx.fillText(char.name, cx + CARD_W / 2, cy + CARD_H - barH + 22);
-
-			// Lv + Eidolon
-			mf(ctx, 16);
-			ctx.fillStyle = "rgba(255,255,255,0.85)";
-			ctx.fillText(`Lv.${char.level}  E${char.rank ?? 0}`, cx + CARD_W / 2, cy + CARD_H - barH + 44);
-
-			// Element + Path icons
-			const elementIconResult = await loadImageAsync(
-				`./src/assets/image/element/${(typeof char.element === "string" ? char.element : char.element?.id || "physical").toLowerCase()}.png`
+			// 角色頭像（圓形）
+			const charIconResult = await loadImageAsync(
+				char.figure_path || char.icon
 			);
-			let pathIconPath: string;
+			const charIcon = charIconResult?.image;
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(x + 4, y, 100, cardHeight);
+			ctx.clip();
+			if (charIcon) {
+				const scale = Math.max(
+					94 / charIcon.width,
+					150 / charIcon.height
+				);
+				const drawW = charIcon.width * scale;
+				const drawH = charIcon.height * scale;
+				ctx.drawImage(
+					charIcon,
+					x + 48 - drawW / 2,
+					y + cardHeight - drawH + 8,
+					drawW,
+					drawH
+				);
+			}
+			const portraitFade = ctx.createLinearGradient(x + 48, y, x + 104, y);
+			portraitFade.addColorStop(0, "rgba(10, 18, 37, 0)");
+			portraitFade.addColorStop(1, "rgba(10, 18, 37, 1)");
+			ctx.fillStyle = portraitFade;
+			ctx.fillRect(x + 48, y, 58, cardHeight);
+			ctx.restore();
+			ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.roundRect(x + 0.5, y + 0.5, cardWidth - 1, cardHeight - 1, 8);
+			ctx.stroke();
+
+			// 中間上方：命途icon、屬性icon（加大尺寸）
+			const elementIconResult = await loadImageAsync(
+				`./src/assets/image/element/${elementId}.png`
+			);
+			const elementIcon = elementIconResult?.image;
+			let pathIconPath = null;
+			const pathMapper: Record<string, string> = {
+				warrior: "destruction",
+				rogue: "hunt",
+				mage: "erudition",
+				priest: "abundance",
+				shaman: "harmony",
+				warlock: "nihility",
+				knight: "preservation",
+				memory: "remembrance",
+				elation: "elation"
+			};
+
 			if (char.base_type) {
-				const pathName = (await getPathMap())[char.base_type] || "none";
+				const pathName = ((await getPathMap())[char.base_type] || "none")
+					.toLowerCase()
+					.replace(/^the\s+/, "")
+					.replace(/\s+/g, "");
 				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
 			} else if (char.path) {
-				const rawPath = (typeof char.path === "string" ? char.path : char.path?.id || "none").toLowerCase();
-				pathIconPath = `./src/assets/image/icon/path/${pathMapper[rawPath] || rawPath}Small.png`;
+				const rawPath = (
+					typeof char.path === "string"
+						? char.path
+						: char.path?.id || "none"
+				).toLowerCase();
+				const pathName = (pathMapper[rawPath] || rawPath)
+					.replace(/^the\s+/, "")
+					.replace(/\s+/g, "");
+				pathIconPath = `./src/assets/image/icon/path/${pathName}Small.png`;
 			} else {
 				pathIconPath = `./src/assets/image/icon/path/none.png`;
 			}
-			const [pathIconResult] = await Promise.all([loadImageAsync(pathIconPath)]);
-			const iconSz = 28;
-			const iconY2 = cy + CARD_H - barH + 52;
-			const totalIconW = (elementIconResult?.image ? iconSz : 0) + (pathIconResult?.image ? iconSz : 0) + 4;
-			let ix = cx + (CARD_W - totalIconW) / 2;
-			if (pathIconResult?.image) { ctx.drawImage(pathIconResult.image, ix, iconY2, iconSz, iconSz); ix += iconSz + 4; }
-			if (elementIconResult?.image) { ctx.drawImage(elementIconResult.image, ix, iconY2, iconSz, iconSz); }
+			const pathIconResult = await loadImageAsync(pathIconPath);
+			const pathIcon = pathIconResult?.image;
+			const infoX = x + 94;
+			const lightConeX = x + cardWidth - 58;
+			ctx.font = "bold 19px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
+			let displayName = char.name;
+			while (
+				displayName.length > 1 &&
+				ctx.measureText(`${displayName}…`).width >
+					lightConeX - infoX - 8
+			) {
+				displayName = displayName.slice(0, -1);
+			}
+			if (displayName !== char.name) displayName += "…";
+			ctx.fillStyle = "#f6f8fc";
+			ctx.textAlign = "left";
+			ctx.fillText(displayName, infoX, y + 29);
+			if (pathIcon) {
+				ctx.drawImage(pathIcon, infoX, y + 40, 25, 25);
+			}
+			if (elementIcon) {
+				ctx.drawImage(elementIcon, infoX + 31, y + 40, 25, 25);
+			}
+			ctx.fillStyle = char.rarity === 5 ? "#e6ce91" : "#bda9ff";
+			ctx.font = "15px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+			ctx.fillText(`${char.rarity}★`, infoX + 65, y + 58);
 
-			// Light cone (small, top-right corner of card)
-			if (char.equip?.icon) {
-				const lcResult = await loadImageAsync(char.equip.icon);
-				if (lcResult?.image) {
-					const lcSz = 52;
+			// 中間下方：等級、命座（下移，增加間隔）
+			ctx.font = "bold 23px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+			ctx.fillStyle = "#f7f8fc";
+			ctx.textAlign = "left";
+			const levelText = `LV.${char.level}`;
+			ctx.fillText(levelText, infoX, y + 100);
+			const levelWidth = ctx.measureText(levelText).width;
+			ctx.fillStyle = "rgba(217, 196, 142, 0.16)";
+			ctx.beginPath();
+			ctx.roundRect(infoX + levelWidth + 10, y + 78, 42, 27, 13);
+			ctx.fill();
+			ctx.fillStyle = "#e6ce91";
+			ctx.font = "bold 17px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+			ctx.textAlign = "center";
+			ctx.fillText(`E${char.rank ?? 0}`, infoX + levelWidth + 31, y + 98);
+
+			// 右側分隔線
+			ctx.save();
+			ctx.strokeStyle = "rgba(255, 255, 255, 0.13)";
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(lightConeX - 8, y + 14);
+			ctx.lineTo(lightConeX - 8, y + cardHeight - 14);
+			ctx.stroke();
+			ctx.restore();
+
+			// 右側武器icon和等級
+			if (char.equip && char.equip.icon) {
+				const lcIconResult = await loadImageAsync(char.equip.icon);
+				const lcIcon = lcIconResult?.image;
+				if (lcIcon) {
+					const scale = Math.min(48 / lcIcon.width, 62 / lcIcon.height);
+					const drawW = lcIcon.width * scale;
+					const drawH = lcIcon.height * scale;
 					ctx.save();
-					drawRoundRect(ctx, cx + CARD_W - lcSz - 4, cy + 4, lcSz, lcSz, 6);
+					ctx.beginPath();
+					ctx.roundRect(lightConeX, y + 14, 48, 62, 5);
 					ctx.clip();
-					ctx.drawImage(lcResult.image, cx + CARD_W - lcSz - 4, cy + 4, lcSz, lcSz);
+					ctx.drawImage(
+						lcIcon,
+						lightConeX + (48 - drawW) / 2,
+						y + 14 + (62 - drawH) / 2,
+						drawW,
+						drawH
+					);
 					ctx.restore();
-					mf(ctx, 13, true);
-					ctx.fillStyle = "white";
-					ctx.textAlign = "center";
-					ctx.fillText(`${char.equip.level ?? ""}`, cx + CARD_W - lcSz / 2 - 4, cy + lcSz + 10);
 				}
+				ctx.font = "bold 14px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+				ctx.fillStyle = "#eef2fa";
+				ctx.textAlign = "center";
+				ctx.fillText(
+					`LV.${char.equip.level ?? ""}`,
+					lightConeX + 24,
+					y + 96
+				);
+				ctx.fillStyle = "rgba(230, 206, 145, 0.9)";
+				ctx.font = "13px 'URW DIN Arabic', 'YaHei', Arial, sans-serif";
+				ctx.fillText(
+					`S${char.equip.rank ?? 1}`,
+					lightConeX + 24,
+					y + 113
+				);
+			} else {
+				ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+				ctx.beginPath();
+				ctx.roundRect(lightConeX, y + 25, 48, 48, 24);
+				ctx.fill();
+				ctx.fillStyle = "rgba(255, 255, 255, 0.38)";
+				ctx.font = "22px 'URW DIN Arabic', Arial, sans-serif";
+				ctx.textAlign = "center";
+				ctx.fillText("—", lightConeX + 24, y + 57);
+				ctx.font = "12px 'YaHei', Arial, sans-serif";
+				ctx.fillText("無光錐", lightConeX + 24, y + 94);
 			}
 		}
 
@@ -4166,6 +4463,7 @@ async function drawAllCharactersImage(
 		return null;
 	}
 }
+
 async function setupLeaderboardMaintenance(): Promise<void> {
 	try {
 		console.log("[Leaderboard] Starting scheduled maintenance...");
@@ -4230,6 +4528,7 @@ async function getOptimizedLeaderboard(
 }
 
 // 添加文本處理函數
+/* obsolete colored-text helpers; no current renderer calls them.
 function parseSegments(text: string): TextSegment[] {
 	const result: TextSegment[] = [];
 	let lastIndex = 0;
@@ -4343,6 +4642,8 @@ function drawColoredTextLines(
 // 移除圖片預加載緩存，改為即時載入以節省記憶體
 
 // 移除預加載功能
+*/
+
 async function preloadCommonImages(): Promise<void> {
 	return;
 }
@@ -4370,6 +4671,7 @@ export {
 	maintainLeaderboard,
 	getLeaderboardStats,
 	setupLeaderboardMaintenance,
+	syncAllBoundAnomalyBadges,
 	getOptimizedLeaderboard,
 	preloadCommonImages,
 	loadImageOptimized,

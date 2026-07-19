@@ -3,7 +3,7 @@ import {
 	SlashCommandBuilder,
 	EmbedBuilder
 } from "discord.js";
-import { getUserHSRData, getRandomColor } from "@/utilities/index.js";
+import { getRandomColor, withUserHSRRequest } from "@/utilities/index.js";
 import { handleNoteDraw } from "@/utilities/hsr/note.js";
 import type { TranslationFunction } from "@/types/index.js";
 
@@ -61,15 +61,6 @@ export default {
 			const accountIndex =
 				interaction.options.getString("account") || "0";
 
-			const hsr = await getUserHSRData(
-				interaction,
-				tr,
-				targetUser.id,
-				parseInt(accountIndex),
-				{ validationType: "record" }
-			);
-			if (hsr == null) return;
-
 			await interaction.reply({
 				embeds: [
 					new EmbedBuilder()
@@ -81,7 +72,17 @@ export default {
 				]
 			});
 
-			handleNoteDraw(interaction, tr, hsr as any);
+			handleNoteDraw(interaction, tr, () =>
+				withUserHSRRequest(
+					{
+						interaction,
+						tr,
+						userId: targetUser.id,
+						accountIndex: parseInt(accountIndex)
+					},
+					async hsr => (await hsr.record.note()) as any
+				)
+			);
 		}
 	}
 };

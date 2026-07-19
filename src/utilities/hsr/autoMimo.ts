@@ -9,6 +9,7 @@ import {
 	autoRefreshCookie,
 	getUserCookie
 } from "@/utilities/index.js";
+import { getLegacyAccounts } from "@/utilities/accountStore.js";
 
 const CONFIG = {
 	BASE_URL: "https://sg-public-api.hoyolab.com/event/e2023mimotravel",
@@ -129,7 +130,7 @@ class AutoMimoSystem {
 	async processUser(userId: string, data: any) {
 		const lang = (await getUserLang(userId)) || CONFIG.DEFAULT_LANGUAGE;
 		const tr = createTranslator(lang);
-		const accounts = await this.db.get(`${userId}.account`);
+		const accounts = await getLegacyAccounts(this.db, userId);
 		if (!accounts?.length) return;
 
 		const versionId = await this.getVersionId(lang);

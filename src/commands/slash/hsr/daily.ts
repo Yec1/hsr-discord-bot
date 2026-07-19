@@ -4,10 +4,12 @@ import {
 	EmbedBuilder,
 	MessageFlags
 } from "discord.js";
-import { getRandomColor, getUserHSRData } from "@/utilities/index.js";
+import { getRandomColor, withUserHSRRequest } from "@/utilities/index.js";
 import { buildHSRDailyCard } from "@/utilities/canvas/dailyCard.js";
+import { claimDaily } from "@/utilities/hsr/dailyClaim.js";
 import { database } from "@/index.js";
 import { TranslationFunction } from "@/types/index.js";
+import { getLegacyAccounts } from "@/utilities/accountStore.js";
 
 // 类型定义
 interface TimeChoice {
@@ -22,30 +24,6 @@ interface AutoDailyConfig {
 	timeZone?: string;
 }
 
-interface DailyInfo {
-	total_sign_day: number;
-	month_last_day: boolean;
-	sign_cnt_missed: number;
-}
-
-interface DailyReward {
-	month: number;
-}
-
-interface DailyRewards {
-	awards: Array<{
-		name: string;
-		cnt: number;
-		icon: string;
-	}>;
-}
-
-interface DailyClaimResponse {
-	code: number;
-	info: {
-		is_sign: boolean;
-	};
-}
 
 const timeChoices: TimeChoice[] = Array.from({ length: 24 }, (_, i) => ({
 	name: i < 10 ? `0${i}` : `${i}`,
@@ -172,10 +150,8 @@ export default {
 		tr: TranslationFunction
 	): Promise<any> {
 		await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-		const haveAccount = await database.get(
-			`${interaction.user.id}.account`
-		);
-		if (!haveAccount) {
+		const accounts = await getLegacyAccounts(database, interaction.user.id);
+		if (accounts.length === 0) {
 			return interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -259,19 +235,17 @@ export default {
 			});
 		}
 
-		const hsr = await getUserHSRData(
-			interaction,
-			tr,
-			user.id,
-			parseInt(accountIndex),
-			{ validationType: "daily" }
+		const dailyResult = await withUserHSRRequest(
+			{
+				interaction,
+				tr,
+				userId: user.id,
+				accountIndex: parseInt(accountIndex)
+			},
+			hsr => claimDaily(hsr as any)
 		);
-		if (!hsr) return;
-
-		const info: DailyInfo = await hsr.daily.info();
-		const reward: DailyReward = await hsr.daily.reward();
-		const rewards: DailyRewards = await hsr.daily.rewards();
-		const res: DailyClaimResponse = await hsr.daily.claim();
+		if (!dailyResult) return;
+		const { info, reward, rewards, res, uid: hsrUid } = dailyResult;
 
 		if (res.code === -5003 || res.info.is_sign)
 			return interaction.editReply({
@@ -300,7 +274,7 @@ export default {
 		let cardFile: { attachment: Buffer; name: string } | null = null;
 		try {
 			const buf = await buildHSRDailyCard({
-				uid: (hsr as any).uid?.toString() || "",
+				uid: hsrUid,
 				nickname: interaction.user.displayName || tr("autoDaily_Fallback"),
 				status: "success",
 				totalDays: info.total_sign_day,

@@ -2,11 +2,15 @@ import { Message, EmbedBuilder } from "discord.js";
 import { database } from "@/index.js";
 import { HonkaiStarRail } from "@yeci226/hoyoapi";
 import { getUserGameInfo } from "@/utilities/index.js";
+import {
+	getLegacyAccounts,
+	upsertLegacyBinding
+} from "@/utilities/accountStore.js";
 
 interface Account {
 	uid: string;
 	cookie: string;
-	nickname?: string;
+	nickname?: string | null;
 }
 
 export default {
@@ -45,9 +49,10 @@ export default {
 			} catch {}
 
 			const userId = message.author.id;
-			const accountKey = `${userId}.account`;
-			const existedAccounts: Account[] =
-				(await database.get(accountKey)) || [];
+			const existedAccounts: Account[] = await getLegacyAccounts(
+				database,
+				userId
+			);
 
 			// 若已存在同 UID，則更新 Cookie 與暱稱
 			const existingIndex = existedAccounts.findIndex(
@@ -57,9 +62,17 @@ export default {
 				existedAccounts[existingIndex].cookie = cookie;
 				if (nickname)
 					existedAccounts[existingIndex].nickname = nickname;
-				await database.set(accountKey, existedAccounts);
+				await upsertLegacyBinding(database, userId, {
+					uid,
+					cookie,
+					...(nickname && { nickname })
+				});
 			} else {
-				await database.push(accountKey, { uid, cookie, nickname });
+				await upsertLegacyBinding(database, userId, {
+					uid,
+					cookie,
+					...(nickname && { nickname })
+				});
 			}
 
 			// 清除過期標記

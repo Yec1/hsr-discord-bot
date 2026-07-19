@@ -2,7 +2,10 @@ import { Message, EmbedBuilder } from "discord.js";
 import { ActionRowBuilder, StringSelectMenuBuilder } from "discord.js";
 import { client, database } from "@/index.js";
 import emoji from "@/assets/emoji.js";
-import { loadAccounts } from "@/utilities/accountStore.js";
+import {
+	getLegacyAccounts,
+	loadAccounts
+} from "@/utilities/accountStore.js";
 
 interface AutoDaily {
 	time: string;
@@ -51,17 +54,8 @@ export default {
 		const store = await loadAccounts(database, id);
 		const hoyolabs = store.hoyolabs;
 
-		// Build a flat list of accounts for the dropdown menus (legacy-compatible)
-		const flatAccounts = hoyolabs.flatMap(h =>
-			h.characters.map(c => ({
-				uid: c.uid,
-				nickname: c.nickname ?? undefined,
-				cookie: h.cookie,
-				ltuid_v2: h.ltuid_v2,
-				hoyolabName: h.hoyolabName,
-				invalid: c.invalid || h.invalid
-			}))
-		);
+		// Reuse the compatibility projection so legacy ordering remains stable.
+		const flatAccounts = await getLegacyAccounts(database, id);
 
 		const hasAccounts = flatAccounts.length > 0;
 

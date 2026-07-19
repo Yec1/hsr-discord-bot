@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { handleForgottenHallDraw } from "@/utilities/hsr/forgottenhall.js";
-import { getUserHSRData, getRandomColor } from "@/utilities/index.js";
+import { getRandomColor, withUserHSRRequest } from "@/utilities/index.js";
 import { EmbedBuilder } from "discord.js";
 import type { TranslationFunction } from "@/types/index.js";
 
@@ -131,15 +131,6 @@ export default {
 		const mode = modeMap[interaction.options.getString("mode") || ""] || 1;
 		const time = timeMap[interaction.options.getString("time") || ""] || 1;
 
-		const hsr = await getUserHSRData(
-			interaction,
-			tr,
-			targetUser.id,
-			parseInt(accountIndex),
-			{ validationType: "record" }
-		);
-		if (hsr == null) return;
-
 		await interaction.deferReply();
 		interaction.editReply({
 			embeds: [
@@ -159,7 +150,19 @@ export default {
 			targetUser,
 			mode,
 			time,
-			hsr as any
+			() =>
+				withUserHSRRequest(
+					{
+						interaction,
+						tr,
+						userId: targetUser.id,
+						accountIndex: parseInt(accountIndex)
+					},
+					async hsr => ({
+						res: (await hsr.record.forgottenHall(mode, time)) as any,
+						uid: hsr.uid?.toString() || ""
+					})
+				)
 		);
 	}
 };
