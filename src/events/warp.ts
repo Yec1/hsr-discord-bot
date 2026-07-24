@@ -8,6 +8,7 @@ import {
 	ComponentType,
 	Events,
 	MessageComponentInteraction,
+	StringSelectMenuInteraction,
 	MessageFlags
 } from "discord.js";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/utilities/index.js";
 import { warpLog, warpLogImage } from "@/utilities/hsr/warp.js";
 import { createTranslator, toI18nLang } from "@/utilities/core/i18n.js";
+import { registerPersistentWarpMenuCollector } from "@/events/warpMenuCollector.js";
 import Queue from "queue";
 
 interface Translation {
@@ -289,7 +291,9 @@ client.on(Events.InteractionCreate, async interaction => {
 				};
 
 				if (drawQueue.length >= DRAW_QUEUE_MAX) {
-					await interaction.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" }).catch(() => {});
+					await interaction
+						.editReply({ content: "⚠️ 繪製佇列已滿，請稍後再試。" })
+						.catch(() => {});
 					return;
 				}
 				drawQueue.push(drawTask);
@@ -341,71 +345,74 @@ client.on(Events.InteractionCreate, async interaction => {
 				componentType: ComponentType.StringSelect
 			});
 
-			collector.on("collect", async interaction => {
-				const type = interaction.values[0];
-				// Stop the collector immediately after the user picks — releases
-				// the warpResults closure and the message component listener.
-				collector.stop("selected");
-				await interaction.deferUpdate().catch(() => {});
-				interaction.message.edit({
-					embeds: [
-						new EmbedBuilder()
-							.setTitle(tr("Searching"))
-							.setColor(getRandomColor() as any)
-							.setThumbnail(
-								"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
-							)
-					],
-					components: []
-				});
-				switch (type) {
-					case "collaboration_character":
-						handleDrawRequest(
-							interaction,
-							tr,
-							warpResults.collaboration_character,
-							tr("warp_TypeCollaborationCharacter"),
-							type
-						);
-						break;
-					case "collaboration_light_cone":
-						handleDrawRequest(
-							interaction,
-							tr,
-							warpResults.collaboration_light_cone,
-							tr("warp_TypeCollaborationLightcone"),
-							type
-						);
-						break;
-					case "character":
-						handleDrawRequest(
-							interaction,
-							tr,
-							warpResults.character,
-							tr("warp_TypeCharacter"),
-							type
-						);
-						break;
-					case "lightcone":
-						handleDrawRequest(
-							interaction,
-							tr,
-							warpResults.light_cone,
-							tr("warp_TypeLightcone"),
-							type
-						);
-						break;
-					case "regular":
-						handleDrawRequest(
-							interaction,
-							tr,
-							warpResults.regular,
-							tr("warp_TypeRegular"),
-							type
-						);
-						break;
+			registerPersistentWarpMenuCollector<StringSelectMenuInteraction>(
+				collector,
+				async interaction => {
+					const type = interaction.values[0];
+					await interaction.deferUpdate().catch(() => {});
+					interaction.message.edit({
+						embeds: [
+							new EmbedBuilder()
+								.setTitle(tr("Searching"))
+								.setColor(getRandomColor() as any)
+								.setThumbnail(
+									"https://cdn.discordapp.com/attachments/1231256542419095623/1246723955084099678/Bailu.png"
+								)
+						],
+						components: []
+					});
+					switch (type) {
+						case "collaboration_character":
+							handleDrawRequest(
+								interaction,
+								tr,
+								warpResults.collaboration_character,
+								tr("warp_TypeCollaborationCharacter"),
+								type
+							);
+							break;
+						case "collaboration_light_cone":
+							handleDrawRequest(
+								interaction,
+								tr,
+								warpResults.collaboration_light_cone,
+								tr("warp_TypeCollaborationLightcone"),
+								type
+							);
+							break;
+						case "character":
+							handleDrawRequest(
+								interaction,
+								tr,
+								warpResults.character,
+								tr("warp_TypeCharacter"),
+								type
+							);
+							break;
+						case "lightcone":
+							handleDrawRequest(
+								interaction,
+								tr,
+								warpResults.light_cone,
+								tr("warp_TypeLightcone"),
+								type
+							);
+							break;
+						case "regular":
+							handleDrawRequest(
+								interaction,
+								tr,
+								warpResults.regular,
+								tr("warp_TypeRegular"),
+								type
+							);
+							break;
+					}
+				},
+				async () => {
+					await resMessage.edit({ components: [] }).catch(() => {});
 				}
-			});
+			);
 		}
 	}
 	return;
