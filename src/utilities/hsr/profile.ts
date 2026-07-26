@@ -224,6 +224,7 @@ import {
 	StringSelectMenuBuilder
 } from "discord.js";
 import { getRelicsScore } from "./relics.js";
+import { getRelicSubAffixEnhancementCount } from "./relicEnhancement.js";
 import { filterVisibleProfileSkills } from "./profileSkills.js";
 import { getProfileCharacterNameColor } from "./profileCharacters.js";
 import { fitProfileSignature } from "./profileSignature.js";
@@ -3888,11 +3889,7 @@ async function drawCharacterImage(
 						);
 
 						// 疊層顯示優化
-						const count = Number(
-							(subAffix.count || 0) - 1 ||
-								(subAffix.times || 0) - 1 ||
-								0
-						);
+						const count = getRelicSubAffixEnhancementCount(subAffix);
 						if (count >= 1) {
 							ctx.font =
 								"16px 'YaHei', 'URW DIN Arabic', Arial, sans-serif";
