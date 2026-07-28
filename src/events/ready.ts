@@ -9,9 +9,11 @@ import {
 	syncAllBoundAnomalyBadges
 } from "@/utilities/hsr/profile.js";
 import schedule from "node-schedule";
+import { AUTO_REDEEM_CRON } from "@/utilities/core/redeemSchedule.js";
 
 let presenceInterval: NodeJS.Timeout | null = null;
 let hourlyJob: schedule.Job | null = null;
+let autoRedeemJob: schedule.Job | null = null;
 let dailyJob: schedule.Job | null = null;
 let isAutoRedeemRunning = false;
 let isAutoDailyRunning = false;
@@ -77,9 +79,14 @@ client.once(Events.ClientReady, async () => {
 			});
 		}
 
+		if (!autoRedeemJob) {
+			autoRedeemJob = schedule.scheduleJob(AUTO_REDEEM_CRON, function () {
+				runAutoRedeem();
+			});
+		}
+
 		if (!dailyJob) {
 			dailyJob = schedule.scheduleJob("0 8 * * *", function () {
-				runAutoRedeem();
 				setupLeaderboardMaintenance();
 				void syncAllBoundAnomalyBadges();
 			});

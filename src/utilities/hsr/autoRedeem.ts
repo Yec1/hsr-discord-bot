@@ -9,6 +9,7 @@ import {
 	autoRefreshCookie
 } from "@/utilities/index.js";
 import { buildHSRRedeemCard } from "@/utilities/canvas/redeemCard.js";
+import { hasUnredeemedCodes } from "@/utilities/core/redeemSchedule.js";
 import {
 	getLegacyAccountAtIndex,
 	getLegacyAccounts
@@ -534,11 +535,27 @@ export default async function autoRedeem(): Promise<void> {
 					`用戶 ${userId} 有 ${accounts.length} 個帳號需要處理`
 				);
 
+				const candidateAccountIndexes: number[] = [];
+				for (let i = 0; i < accounts.length; i++) {
+					const account = accounts[i];
+					if (!account?.uid || !account.cookie) continue;
+					const redeemedCodes: string[] =
+						(await (system as any).db.get(`${account.uid}.redeemedCodes`)) || [];
+					if (hasUnredeemedCodes(redeemedCodes, codesList)) {
+						candidateAccountIndexes.push(i);
+					}
+				}
+
+				if (candidateAccountIndexes.length === 0) {
+					processedUsers++;
+					continue;
+				}
+
 				// 預先嘗試刷新 Cookie：
 			// 1. 已標記失效（cookieExpired）的帳號強制刷新
 			// 2. 有 stoken 的帳號也做 proactive refresh，確保 cookie_token_v2
 			//    在兌換前是最新的（ltoken_v2 與 cookie_token_v2 獨立過期）
-			for (let i = 0; i < accounts.length; i++) {
+			for (const i of candidateAccountIndexes) {
 				const account = accounts[i];
 				if (!account || !account.uid || !account.cookie) continue;
 
@@ -581,7 +598,7 @@ export default async function autoRedeem(): Promise<void> {
 				: accounts;
 
 			const successfulResults: ProcessAccountResult[] = [];
-			for (let index = 0; index < latestAccounts.length; index++) {
+			for (const index of candidateAccountIndexes) {
 				const account = latestAccounts[index];
 				if (!account || !account.uid || !account.cookie) {
 					(system as any).logger.warn(
@@ -618,7 +635,7 @@ export default async function autoRedeem(): Promise<void> {
 					system.stats.failed++;
 				}
 
-				if (index < latestAccounts.length - 1) {
+				if (index !== candidateAccountIndexes[candidateAccountIndexes.length - 1]) {
 					await system.sleep(CONFIG.ACCOUNT_DELAY);
 				}
 			}
