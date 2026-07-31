@@ -1,9 +1,11 @@
+import fs from "fs";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
 import {
-	buildHSRRedeemCard,
-	getFirstHSRRedeemRewardIcon,
-	getHSRRedeemCardLayout,
-	maskHSRRedeemUid
+  buildHSRRedeemCard,
+  getFirstHSRRedeemRewardIcon,
+  getHSRRedeemCardLayout,
+  HSR_REDEEM_BACKGROUND,
+  maskHSRRedeemUid,
 } from "@/utilities/canvas/redeemCard.js";
 
 function createRewardIconDataUrl(color = "#ff00ff"): string {
@@ -40,7 +42,12 @@ describe("HSR redeem result card", () => {
 		expect(getFirstHSRRedeemRewardIcon(undefined)).toBeUndefined();
 	});
 
-	it("renders the optional reward icon with the real renderer", async () => {
+  it("uses the local starfield image as its background", () => {
+    expect(HSR_REDEEM_BACKGROUND.endsWith("daily-bg.jpg")).toBe(true);
+    expect(fs.existsSync(HSR_REDEEM_BACKGROUND)).toBe(true);
+  });
+
+  it("renders the optional reward icon with the real renderer", async () => {
 		const layout = getHSRRedeemCardLayout(2);
 		const image = await buildHSRRedeemCard({
 			uid: "800123456",
@@ -62,12 +69,12 @@ describe("HSR redeem result card", () => {
 		const pixelCanvas = createCanvas(layout.width, layout.height);
 		const pixelContext = pixelCanvas.getContext("2d");
 		pixelContext.drawImage(rendered, 0, 0);
-		const iconPixel = pixelContext.getImageData(831, 160, 1, 1).data;
+    const iconPixel = pixelContext.getImageData(78, 192, 1, 1).data;
 
-		expect(image.subarray(1, 4).toString()).toBe("PNG");
-		expect(image.readUInt32BE(16)).toBe(layout.width);
-		expect(image.readUInt32BE(20)).toBe(layout.height);
-		expect(Array.from(iconPixel)).toEqual([255, 0, 255, 255]);
+    expect(image.subarray(1, 4).toString()).toBe("PNG");
+    expect(image.readUInt32BE(16)).toBe(layout.width);
+    expect(image.readUInt32BE(20)).toBe(layout.height);
+    expect(Array.from(iconPixel)).toEqual([255, 0, 255, 255]);
 	});
 
 	it("renders naturally when reward text and icon are absent", async () => {
