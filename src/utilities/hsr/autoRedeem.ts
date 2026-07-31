@@ -8,7 +8,10 @@ import {
 	getRedeemCodes,
 	autoRefreshCookie
 } from "@/utilities/index.js";
-import { buildHSRRedeemCard } from "@/utilities/canvas/redeemCard.js";
+import {
+	buildHSRRedeemCard,
+	getFirstHSRRedeemRewardIcon
+} from "@/utilities/canvas/redeemCard.js";
 import { hasUnredeemedCodes } from "@/utilities/core/redeemSchedule.js";
 import {
 	getLegacyAccountAtIndex,
@@ -38,6 +41,14 @@ interface RedeemCode {
 	status?: string;
 	message?: string;
 	rewards?: string;
+	rewardIcons?: string[];
+}
+
+interface CanvasRedeemCodeResult {
+	code: string;
+	rewards?: string;
+	rewardIcon?: string;
+	status: "success" | "already_claimed" | "invalid" | "failed";
 }
 
 interface RedeemResult {
@@ -71,7 +82,7 @@ interface ProcessAccountResult {
 	uid: string;
 	nickname: string;
 	description: string;
-	codeResults: Array<{ code: string; rewards?: string; status: "success" | "already_claimed" | "invalid" | "failed" }>;
+	codeResults: CanvasRedeemCodeResult[];
 	hasSuccess: boolean;
 	hasResults: boolean;
 }
@@ -223,7 +234,7 @@ class AutoRedeemSystem {
 		tr: (key: string, params?: any) => string
 	): {
 		description: string;
-		codeResults: Array<{ code: string; rewards?: string; status: "success" | "already_claimed" | "invalid" | "failed" }>;
+		codeResults: CanvasRedeemCodeResult[];
 		stats: {
 			success: number;
 			alreadyClaimed: number;
@@ -233,11 +244,12 @@ class AutoRedeemSystem {
 		hasResults: boolean;
 	} {
 		const description: string[] = [];
-		const codeResults: Array<{ code: string; rewards?: string; status: "success" | "already_claimed" | "invalid" | "failed" }> = [];
+		const codeResults: CanvasRedeemCodeResult[] = [];
 		const stats = { success: 0, alreadyClaimed: 0, invalid: 0, failed: 0 };
 
 		results.forEach(result => {
 			const { code, status } = result;
+			const rewardIcon = getFirstHSRRedeemRewardIcon(code.rewardIcons);
 			if (status.success) {
 				description.push(
 					`✅**${code.code}** - (${tr("redeem_Success")})`
@@ -245,6 +257,7 @@ class AutoRedeemSystem {
 				codeResults.push({
 					code: code.code,
 					...(code.rewards?.trim() ? { rewards: code.rewards.trim() } : {}),
+					...(rewardIcon ? { rewardIcon } : {}),
 					status: "success"
 				});
 				stats.success++;
@@ -258,6 +271,7 @@ class AutoRedeemSystem {
 				codeResults.push({
 					code: code.code,
 					...(code.rewards?.trim() ? { rewards: code.rewards.trim() } : {}),
+					...(rewardIcon ? { rewardIcon } : {}),
 					status: "invalid"
 				});
 				stats.invalid++;
@@ -451,7 +465,7 @@ class AutoRedeemSystem {
 		data: {
 			tr: (key: string, params?: any) => string;
 			tag: string;
-			account: { uid: string; nickname?: string; codes: Array<{ code: string; rewards?: string; status: "success" | "already_claimed" | "invalid" | "failed" }> };
+			account: { uid: string; nickname?: string; codes: CanvasRedeemCodeResult[] };
 			hasSuccess: boolean;
 		}
 	): Promise<void> {
