@@ -7,7 +7,7 @@ const resources: StarRailResBundle = {
 		"1502": {
 			id: "1502", name: "爻光", rarity: 5, path: "Elation", element: "Physical",
 			ranks: ["150201", "150202", "150203", "150204", "150205", "150206"],
-			skills: ["150201", "150206"],
+			skills: ["150201", "150206", "150207"],
 			skill_trees: ["1502001", "1502002", "1502003"], icon: "icon/character/1502.png",
 			preview: "image/character_preview/1502.png", portrait: "image/character_portrait/1502.png"
 		}
@@ -22,7 +22,8 @@ const resources: StarRailResBundle = {
 	characterRanks: Object.fromEntries([1,2,3,4,5,6].map(n => [`15020${n}`, { id: `15020${n}`, icon: `icon/skill/1502_rank${n}.png` }])),
 	characterSkills: {
 		"150201": { id: "150201", name: "普通攻擊", max_level: 10, type: "Normal", type_text: "普通攻擊", icon: "icon/skill/basic.png" },
-		"150206": { id: "150206", name: "秘技攻擊", max_level: 1, type: "MazeNormal", type_text: "", icon: "icon/skill/basic.png" }
+		"150206": { id: "150206", name: "秘技攻擊", max_level: 1, type: "MazeNormal", type_text: "", icon: "icon/skill/basic.png" },
+		"150207": { id: "150207", name: "追加攻擊", max_level: 1, type: "Insert", type_text: "追加攻擊", icon: "icon/skill/insert.png" }
 	},
 	characterSkillTrees: {
 		"1502001": { id: "1502001", max_level: 6, anchor: "Point01", level_up_skills: [{ id: "150201", num: 1 }], levels: [], icon: "icon/skill/basic.png" },
@@ -68,6 +69,7 @@ describe("adaptEnkaProfile", () => {
 		expect(character.relics![0]!.type).toBe(1);
 		expect(character.skills?.some(skill => skill.type_text === "普通攻擊")).toBe(true);
 		expect(character.skills?.some(skill => skill.type === "MazeNormal")).toBe(false);
+		expect(character.skills?.some(skill => skill.type === "Insert")).toBe(false);
 		expect(character.skill_trees?.[0]).toMatchObject({ id: "1502001", level: 1, anchor: "Point01" });
 		expect(character.attributes?.find(a => a.field === "hp")?.value).toBeGreaterThan(1800);
 		expect(character.attributes?.find(a => a.field === "energy_recovery")).toMatchObject({ name: "能量恢復效率", icon: "icon/property/IconEnergyRecovery.png" });

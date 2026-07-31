@@ -1162,11 +1162,6 @@ function profileSkillLabel(skill: Skill | ServantSkill): string {
 	);
 }
 
-function isTechniqueSkill(skill: Skill): boolean {
-	const label = profileSkillLabel(skill).toLowerCase();
-	return label === "秘技" || label.includes("technique");
-}
-
 function profileSkillUrl(skill: Skill | ServantSkill): string | null {
 	const icon = skill.item_url || skill.icon;
 	if (!icon) return null;
@@ -1222,7 +1217,9 @@ async function drawProfileTraces(
 			elements?.[elementKey]?.color ||
 			"#BEBEBE"
 	);
-	const allSkills = filterVisibleProfileSkills([...(character.skills || [])]);
+	// Keep trace nodes available for the trace rows, but apply the strict skill
+	// allowlist again when selecting the main skills rendered in the profile.
+	const allSkills = [...(character.skills || [])];
 	for (const tree of character.skill_trees || []) {
 		const id = String(tree.id);
 		const isElation = id.endsWith("420") || tree.icon?.includes("_elation");
@@ -1247,10 +1244,16 @@ async function drawProfileTraces(
 			point_type: isElation ? 4 : 10,
 			icon: tree.icon,
 			level: tree.level || 1,
+			type: isElation
+				? "ElationSkill"
+				: isMemospriteSkill
+					? "MemospriteSkill"
+					: "MemospriteTalent",
 			type_text: label,
 			is_activated: tree.is_activated ?? tree.level > 0
 		});
 	}
+	const visibleSkills = filterVisibleProfileSkills(allSkills);
 
 	const isMemosprite = (skill: Skill) => {
 		const label = profileSkillLabel(skill);
@@ -1270,9 +1273,8 @@ async function drawProfileTraces(
 			label === "Elation Skill"
 		);
 	};
-	const regularSkills = allSkills.filter(
+	const regularSkills = visibleSkills.filter(
 		skill =>
-			!isTechniqueSkill(skill) &&
 			!isMemosprite(skill) &&
 			!isElation(skill) &&
 			(skill.point_type === 2 ||
@@ -1282,14 +1284,16 @@ async function drawProfileTraces(
 		character.servant_detail?.servant_skills?.length
 	);
 	const specialSkills: Skill[] = [];
-	for (const skill of allSkills) {
+	for (const skill of visibleSkills) {
 		if (!isElation(skill) && (hasServantSkills || !isMemosprite(skill)))
 			continue;
 		const label = profileSkillLabel(skill);
 		if (!specialSkills.some(item => profileSkillLabel(item) === label))
 			specialSkills.push(skill);
 	}
-	const servantSkills = character.servant_detail?.servant_skills || [];
+	const servantSkills = filterVisibleProfileSkills(
+		character.servant_detail?.servant_skills || []
+	);
 	const mainSkills: Array<Skill | ServantSkill> = [
 		...regularSkills,
 		...specialSkills,

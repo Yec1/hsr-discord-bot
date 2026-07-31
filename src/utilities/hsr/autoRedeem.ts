@@ -37,6 +37,7 @@ interface RedeemCode {
 	code: string;
 	status?: string;
 	message?: string;
+	rewards?: string;
 }
 
 interface RedeemResult {
@@ -241,7 +242,11 @@ class AutoRedeemSystem {
 				description.push(
 					`✅**${code.code}** - (${tr("redeem_Success")})`
 				);
-				codeResults.push({ code: code.code, rewards: (code as any).rewards, status: "success" });
+				codeResults.push({
+					code: code.code,
+					...(code.rewards?.trim() ? { rewards: code.rewards.trim() } : {}),
+					status: "success"
+				});
 				stats.success++;
 			} else if (status.alreadyClaimed) {
 				// 已兌換：默默跳過不推送通知（已加入 redeemedCodes，下次不會再試）
@@ -250,7 +255,11 @@ class AutoRedeemSystem {
 				description.push(
 					`❌ **${code.code}** - (${tr("redeem_Invalid")})`
 				);
-				codeResults.push({ code: code.code, rewards: (code as any).rewards, status: "invalid" });
+				codeResults.push({
+					code: code.code,
+					...(code.rewards?.trim() ? { rewards: code.rewards.trim() } : {}),
+					status: "invalid"
+				});
 				stats.invalid++;
 			} else {
 				// 失敗類型（如 Cookie 待刷新、風控）不廣播至頻道
@@ -660,6 +669,7 @@ export default async function autoRedeem(): Promise<void> {
 							tag,
 							account: {
 								uid: result.uid,
+								nickname: result.nickname,
 								codes: result.codeResults || [],
 							},
 							hasSuccess: result.hasSuccess,
